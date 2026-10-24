@@ -20,14 +20,17 @@ To run the full native suite and generate fixture files, use the runner:
 
 ```powershell
 ./tests/ff8_items/run_tests.ps1 `
-  -GameExe 'C:/Games/FF8/FF8_EN.exe' `
+  -ExeDirectory 'C:/FF8Releases' `
   -Kernel 'C:/Extracted/main/kernel.bin' `
   -Mitem 'C:/Extracted/menu/mitem.bin' `
   -Price 'C:/Extracted/menu/price.bin'
 ```
 
-The runner requires extracted vanilla English item sections and the 2013 English
-executable. It uses an explicit build directory under `.build`, creates fixture
+`-ExeDirectory` holds the release executables named as in `release_externals.h`
+(`FF8_EN.exe`, `FF8_FR.exe`, `FF8_DE.exe`, `FF8_ES.exe`, `FF8_IT.exe`, `FF8_JP.exe`,
+`FF8_JP_NV.exe`, and the 1.2 US `FF8.exe` copied as `FF8_EN2000.exe`); missing ones are
+skipped with a warning. The harness runs once per executable. The kernel and menu inputs are
+the extracted vanilla English files. It uses an explicit build directory under `.build`, creates fixture
 copies there, compiles the pure inventory test and freestanding native test, and
 runs both. The executable and input assets are read only. Use `-VisualStudio` to
 select an installation directory if automatic discovery selects another version.
@@ -47,6 +50,7 @@ state, native save construction and both vanilla CRC copies, accepted-load
 migration, and bounded asset loading/reloads. Rendering and input presentation
 still require an interactive game test.
 
-The SHA-256-guarded `ida_annotations.py` replays the 40 item audit comments and
-eight verified helper names in IDA. It changes annotations only. Save the IDB
-after applying if automatic saving is disabled.
+`generate_layouts.py` rebuilds the per-release columns of `src/ff8/kernel_item_layouts.h` and
+`release_externals.h` from the English column and the release executables, and checks that no
+release uses a moved array outside the listed operands (`--write` rewrites both files; without
+it, it only checks). It needs `capstone` and `pefile`.

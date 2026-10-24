@@ -1,17 +1,21 @@
 # Extended items and inventory pages
 
-AddMoreItems supports the verified 2013 English executable. A kernel with extended
-item sections enables **255 inventory slots across 24 pages**, instead
-of the original 198 slots / 18 pages. The first 23 pages hold 11 items each;
-the final page has two usable rows. Vanilla
-kernels do not enable the extension or change the number of pages.
+A kernel with extended item sections enables **255 inventory slots across 24 pages**, instead
+of the original 198 slots / 18 pages. The first 23 pages hold 11 items each; the final page
+has two usable rows. Vanilla kernels do not enable the extension or change the number of pages.
 
-The first implementation checks all native operands and hook signatures before
-installing any item patches. Extended item kernels on another executable, or on
-an incompatible patched executable, load without the added items: the log names the
-check that failed (an operand, function start or call site another mod patched) and
-items 0-198 work as usual.
-The existing Magic/Ability/Command features retain their own version support.
+| Area | Original game | Extended |
+| --- | --- | --- |
+| Item IDs | 1-198 | 1-255 |
+| Player inventory | 198 slots | 255 slots |
+| Player item menu | 18 pages of 11 | 24 pages; the last one has two usable rows |
+| Battle item types | 32 | 88: original 32 plus 56 added types |
+| Shop sell menu | 25 pages of eight | 32 pages of eight |
+
+It works on the 2013 releases (English, French, German, Spanish, Italian, Japanese) and the
+1.2 releases. Before changing anything it checks every native operand and call site it is about
+to change; if one differs (another mod patching the same code), the log names it and items
+199-255 are ignored, while items 0-198 work as usual.
 
 ## File format
 
@@ -106,19 +110,36 @@ preserve/use every extended item or inventory slot. Saving through software that
 clears the tail discards the extension. Keep backups when moving saves between
 extended and vanilla environments.
 
+## Native code
+
+The extension moves the native arrays it grows (inventory, battle item records, the live battle
+item list, the battle list window's per-row marks, shop prices and quantities) into FFNx and
+redirects the instructions that use them. `src/ff8/kernel_item_layouts.h` lists those
+instructions: each native function is reached from an FFNx external through calls or absolute
+references, and each operand is an offset in that function, per release layout (JP_NV shares
+JP's, the 1.2 releases their 2013 counterpart's). Functions whose whole logic changes are
+replaced in C++: item names and descriptions, building and refreshing the battle item list,
+the random battle item pick and the battle-order reservation (the native one reads item IDs as
+signed bytes).
+
+`tests/ff8_items/generate_layouts.py` rebuilds the table from the executables and checks it:
+every reference to a moved array in each release must be a listed operand or sit in a function
+left alone on purpose (debug menus, the unused `ShopMenu_Enter`, functions replaced in C++).
+
 ## Validation and fixtures
 
 `tests/ff8_items/inventory_tests.cpp` covers all 255 item IDs, capacity and quantity
 limits, sorting, normalization, save round trips, legacy files and corrupt blocks.
 
-The isolated x86 native harness executes the production item module and private
-copies of retail machine code. It verifies the complete guarded patch set,
-unsupported/mismatched executable rejection, native later-slot lookup/removal,
-high-ID battle-order exclusion, shop staging/purchase/writeback,
-battle quantity/consumption/writeback, native page wrapping and partial-page
-cursor bounds, manual rearrangement, Sort interception,
-the native save builder and both vanilla CRC copies, accepted-load migration,
-and safe extended/missing/invalid/oversized menu metadata.
+The isolated x86 native harness executes the production item module and private copies of
+retail machine code, once per release executable. For each one it resolves every native
+function from that release's FFNx externals, checks every operand, rejects a modified operand
+or call site, and runs native acquisition/removal/lookup, shop staging and writeback, the
+battle item list, battle quantity/consumption/writeback, the battle list window and the
+battle-order reservation (against the native function on 64 inventories). On the 2013 English
+release it also runs native page wrapping and partial-page cursor bounds, manual rearrangement,
+the intercepted Sort state, the native save builder and both vanilla CRC copies, accepted-load
+migration, and bounded menu metadata loads.
 
 `make_fixture.py` builds an English test kernel and extended menu files from the
 user's extracted vanilla assets, without changing the inputs or deploying to a
@@ -128,6 +149,3 @@ records for IDs 199-254. Fixtures are generated locally and are not committed.
 See [test instructions](../../tests/ff8_items/README.md). Native harness checks
 are not an interactive in-game graphics/input validation; test the resulting DLL
 with a copied save and modded assets before using this branch for a playthrough.
-
-See the [implementation summary](item_expansion_summary.md) for the changes,
-validation status and exported IDA annotations.

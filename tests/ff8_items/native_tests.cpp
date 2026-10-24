@@ -3,22 +3,24 @@
 #define FF8_ITEM_NATIVE_TEST
 #include "../../src/ff8/kernel.cpp"
 #include "../../src/ff8/kernel_item.cpp"
+#include "release_externals.h"
 
 extern "C" uint8_t retail_image_space[0x2C00000];
 item_test_externals ff8_externals{};
-int version = 5;
+item_test_common_externals common_externals{};
+int version = 0;
+bool trace_all = false;
 
 extern "C" void *__cdecl memcpy(void *to, const void *from, size_t n) { auto d = static_cast<uint8_t *>(to); auto s = static_cast<const uint8_t *>(from); for (size_t i = 0; i < n; ++i) d[i] = s[i]; return to; }
 extern "C" void *__cdecl memset(void *to, int value, size_t n) { auto d = static_cast<uint8_t *>(to); for (size_t i = 0; i < n; ++i) d[i] = static_cast<uint8_t>(value); return to; }
 extern "C" void *__cdecl memmove(void *to, const void *from, size_t n) { auto d = static_cast<uint8_t *>(to); auto s = static_cast<const uint8_t *>(from); if (d < s) return memcpy(to, from, n); while (n) { --n; d[n] = s[n]; } return to; }
 extern "C" int __cdecl memcmp(const void *a, const void *b, size_t n) { auto x = static_cast<const uint8_t *>(a), y = static_cast<const uint8_t *>(b); for (size_t i = 0; i < n; ++i) if (x[i] != y[i]) return x[i] - y[i]; return 0; }
 extern "C" size_t __cdecl strlen(const char *s) { size_t n = 0; while (s[n]) ++n; return n; }
-extern "C" char *__cdecl strcpy(char *to, const char *from) { memcpy(to, from, strlen(from) + 1); return to; }
-extern "C" char *__cdecl strcat(char *to, const char *from) { strcpy(to + strlen(to), from); return to; }
 extern "C" const void *__cdecl memchr(const void *p, int value, size_t n) { auto s = static_cast<const uint8_t *>(p); for (size_t i = 0; i < n; ++i) if (s[i] == value) return s + i; return nullptr; }
 
 static void print(const char *message) { DWORD written; WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), message, static_cast<DWORD>(strlen(message)), &written, nullptr); }
-static void require(bool ok, const char *message) { print(ok ? "PASS: " : "FAIL: "); print(message); print("\n"); if (!ok) ExitProcess(1); }
+static const char *release_name = "";
+static void require(bool ok, const char *message) { print(ok ? "PASS " : "FAIL "); print(release_name); print(": "); print(message); print("\n"); if (!ok) ExitProcess(1); }
 void ffnx_warning(const char *message, ...) { print(message); }
 void ffnx_error(const char *message, ...) { print(message); }
 void ffnx_trace(const char *, ...) {}
@@ -26,8 +28,13 @@ void ffnx_info(const char *message, ...) { print(message); }
 void *item_test_malloc(unsigned size) { return HeapAlloc(GetProcessHeap(), 0, size); }
 void item_test_free(void *p) { HeapFree(GetProcessHeap(), 0, p); }
 void memcpy_code(uint32_t address, void *data, uint32_t size) { DWORD old; VirtualProtect(reinterpret_cast<void *>(address), size, PAGE_EXECUTE_READWRITE, &old); memcpy(reinterpret_cast<void *>(address), data, size); }
+void patch_code_byte(uint32_t address, unsigned char value) { memcpy_code(address, &value, 1); }
+void patch_code_word(uint32_t address, WORD value) { memcpy_code(address, &value, 2); }
+void patch_code_dword(uint32_t address, DWORD value) { memcpy_code(address, &value, 4); }
+uint32_t get_relative_call(uint32_t base, uint32_t offset) { return base + offset + 5 + *reinterpret_cast<const int32_t *>(base + offset + 1); }
+uint32_t get_absolute_value(uint32_t base, uint32_t offset) { return *reinterpret_cast<const uint32_t *>(base + offset); }
 struct function_backup { uint32_t address; uint8_t bytes[5]; };
-static function_backup backups[32];
+static function_backup backups[64];
 static unsigned backup_count;
 uint32_t replace_function(uint32_t address, void *function)
 {
@@ -59,7 +66,7 @@ static bytes read_file(const char *path)
 	require(data && ReadFile(file, data, size, &read, nullptr) && read == size, "read complete fixture");
 	CloseHandle(file); return { data, size };
 }
-static void map_executable(bytes file)
+static void map_executable(bytes file, const release_externals &release)
 {
 	require(reinterpret_cast<uint32_t>(retail_image_space) == 0x401000, "retail image reservation starts at 0x401000");
 	DWORD old; require(VirtualProtect(retail_image_space, sizeof(retail_image_space), PAGE_EXECUTE_READWRITE, &old), "map private executable image");
@@ -72,13 +79,33 @@ static void map_executable(bytes file)
 		require(section->VirtualAddress + section->Misc.VirtualSize < sizeof(retail_image_space), "retail section bounds");
 		memcpy(reinterpret_cast<void *>(0x400000 + section->VirtualAddress), file.data + section->PointerToRawData, section->SizeOfRawData);
 	}
-	ff8_externals.savemap = reinterpret_cast<savemap_ff8 *>(0x1CFDC58);
-	ff8_externals.kernel = reinterpret_cast<ff8_kernel_vanilla_data *>(0x1CF3E48);
-	ff8_externals.main_menu_controller = 0x4E3090;
-	ff8_externals.menu_use_items_sub_4F81F0 = reinterpret_cast<char(*)(int)>(0x4F81F0);
-	// As FFNx resolves it (main_loop + 0x9C): LoadFileToBuffer, not the au_re_SmPcRead wrapper
-	// that the main menu calls - taking it from that call site hid a check that always failed.
-	ff8_externals.sm_pc_read = reinterpret_cast<uint32_t(*)(char *, void *)>(0x52D400);
+	version = release.version;
+	ff8_externals.savemap = reinterpret_cast<savemap_ff8 *>(release.savemap);
+	ff8_externals.kernel = reinterpret_cast<ff8_kernel_vanilla_data *>(release.kernel);
+	ff8_externals.menu_callbacks = reinterpret_cast<item_test_menu_callback *>(release.menu_callbacks);
+	common_externals.execute_opcode_table = reinterpret_cast<uint32_t *>(release.execute_opcode_table);
+	ff8_externals.add_item_to_player_sub_47ED00 = release.add_item_to_player_sub_47ED00;
+	ff8_externals.battle_ai_opcode_sub_487DF0 = release.battle_ai_opcode_sub_487DF0;
+	ff8_externals.battle_sub_4877F0 = release.battle_sub_4877F0;
+	ff8_externals.battle_sub_48D200 = release.battle_sub_48D200;
+	ff8_externals.battle_sub_48FE20 = release.battle_sub_48FE20;
+	ff8_externals.loc_47D490 = release.loc_47D490;
+	ff8_externals.main_menu_controller = release.main_menu_controller;
+	ff8_externals.menu_junkshop_sub_4EA890 = release.menu_junkshop_sub_4EA890;
+	ff8_externals.menu_shop_sub_4EBE40 = release.menu_shop_sub_4EBE40;
+	ff8_externals.menu_shop_update_gil_and_items_4EB9F0 = release.menu_shop_update_gil_and_items_4EB9F0;
+	ff8_externals.menu_use_items_sub_4F81F0 = release.menu_use_items_sub_4F81F0;
+	ff8_externals.open_battle_vibrate_vib = release.open_battle_vibrate_vib;
+	ff8_externals.sub_485610 = release.sub_485610;
+	ff8_externals.sub_4AD8D0 = release.sub_4AD8D0;
+	ff8_externals.sub_4B3310 = release.sub_4B3310;
+	ff8_externals.sub_4BCBE0 = release.sub_4BCBE0;
+	ff8_externals.sub_4EA770 = release.sub_4EA770;
+	ff8_externals.sub_50B2A0 = release.sub_50B2A0;
+	ff8_externals.sub_54FDA0 = release.sub_54FDA0;
+	ff8_externals.worldmap_with_fog_sub_53FAC0 = release.worldmap_with_fog_sub_53FAC0;
+	// ff8_data.cpp: menu_shop_staged_items_1D8D058 = get_absolute_value(menu_shop_sub_4EBE40, 0x1C3), 200 bytes
+	ff8_externals.menu_shop_staged_items_1D8D058 = std::span(reinterpret_cast<uint8_t *>(get_absolute_value(release.menu_shop_sub_4EBE40, 0x1C3)), 200);
 	static char empty[] = ""; ff8_externals.unk_1CFF84C = empty;
 }
 
@@ -96,12 +123,6 @@ static int __cdecl asset_stub(void **destination, char *)
 	if (invalid_asset_type) static_cast<uint8_t *>(*destination)[4 * 198] = 255;
 	return asset_size;
 }
-static void redirect_original(uint32_t token, void *function)
-{
-	auto &backup = backups[token];
-	backup.bytes[0] = 0xE9;
-	*reinterpret_cast<uint32_t *>(backup.bytes + 1) = reinterpret_cast<uint32_t>(function) - backup.address - 5;
-}
 static LONG WINAPI exception_report(EXCEPTION_POINTERS *exception)
 {
 	char code[11] = "0x00000000";
@@ -111,13 +132,29 @@ static LONG WINAPI exception_report(EXCEPTION_POINTERS *exception)
 	ExitProcess(1);
 }
 
+template<typename T> static T native(item_fn id) { return reinterpret_cast<T>(fn[id]); }
+
 extern "C" void audit_start()
 {
 	SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 	SetUnhandledExceptionFilter(exception_report);
-	char path[MAX_PATH];
+	char path[MAX_PATH], name[MAX_PATH];
 	require(GetEnvironmentVariableA("FF8_ITEM_TEST_EXE", path, sizeof(path)), "FF8_ITEM_TEST_EXE configured");
-	map_executable(read_file(path));
+	require(GetEnvironmentVariableA("FF8_ITEM_TEST_RELEASE", name, sizeof(name)), "FF8_ITEM_TEST_RELEASE configured");
+	const release_externals *release = nullptr;
+	for (const auto &candidate : releases)
+	{
+		const char *a = candidate.exe, *b = name;
+		while (*a && *a == *b) { ++a; ++b; }
+		if (!*a && !*b) release = &candidate;
+	}
+	require(release != nullptr, "known release");
+	release_name = release->exe;
+	map_executable(read_file(path), *release);
+	// The 2013 English release also runs the menu/save/asset checks below, which stub
+	// rendering helpers at its own addresses.
+	const bool english_2013 = release->version == VERSION_FF8_12_US_NV;
+
 	if (GetEnvironmentVariableA("FF8_ITEM_TEST_VANILLA_KERNEL", path, sizeof(path)))
 	{
 		auto vanilla = read_file(path);
@@ -131,10 +168,31 @@ extern "C" void audit_start()
 	ff8_kernel_file file(reinterpret_cast<char *>(fixture.data), fixture.size);
 	require(file.valid(), "extended kernel parses");
 	bool changed;
-	version = 7;
-	require(!ff8_kernel_item_read(file, changed) && !active, "unsupported executable rejects extension before patching");
-	version = 5;
-	require(supported(), "all retail patch operands and hooks validate");
+	require(supported(), "every native function, operand and call site of this release validates");
+	bool all_found = true;
+	for (int i = 0; i < fn_count; ++i) all_found &= fn[i] != 0 || (i == fn_jp_shop_row_item && layout != layout_jp);
+	require(all_found, "every native item function resolves from the FFNx externals");
+	// Differential: the native battle-order reservation (vanilla inventory, IDs below 128 where
+	// its signed read is harmless) against the C++ replacement used once items are expanded.
+	constexpr int order_cases = 64;
+	static uint8_t order_inputs[order_cases][32], order_native[order_cases][32];
+	static savemap_ff8_item order_items[order_cases][FF8_ITEM_VANILLA_SLOTS];
+	static int order_ids[order_cases];
+	uint32_t seed = 12345;
+	auto next = [&seed](uint32_t range) { seed = seed * 1103515245u + 12345u; return (seed >> 16) % range; };
+	for (int c = 0; c < order_cases; ++c)
+	{
+		for (int i = 0; i < 32; ++i) order_inputs[c][i] = static_cast<uint8_t>(i);
+		for (int i = 31; i > 0; --i) std::swap(order_inputs[c][i], order_inputs[c][next(i + 1)]);
+		for (auto &item : order_items[c]) item = {};
+		for (int n = next(12); n > 0; --n) order_items[c][next(FF8_ITEM_VANILLA_SLOTS)] = { static_cast<uint8_t>(next(128)), static_cast<uint8_t>(next(3)) };
+		order_ids[c] = 1 + next(32);
+		std::copy_n(order_items[c], FF8_ITEM_VANILLA_SLOTS, ff8_externals.savemap->items.items);
+		std::copy_n(order_inputs[c], 32, ff8_externals.savemap->items.battle_order);
+		native<void(__cdecl *)(int)>(fn_reserve_battle_order)(order_ids[c]);
+		std::copy_n(ff8_externals.savemap->items.battle_order, 32, order_native[c]);
+	}
+	std::fill_n(ff8_externals.savemap->items.items, FF8_ITEM_VANILLA_SLOTS, savemap_ff8_item{});
 	auto &first_name = *reinterpret_cast<uint16_t *>(fixture.data + file.header().section_offsets[8]);
 	uint16_t original_name = first_name; first_name = 0xFFFE;
 	require(!ff8_kernel_item_read(file, changed) && !active, "out-of-range item text rejects before activation");
@@ -144,25 +202,41 @@ extern "C" void audit_start()
 	ff8_kernel_file oversized(reinterpret_cast<char *>(fixture.data), fixture.size);
 	require(oversized.valid() && !ff8_kernel_item_read(oversized, changed) && !active, "unsupported item counts reject before activation");
 	offsets[8] -= 120;
-	auto first = item_patches[0]; uint32_t bad = first.expected ^ 1;
-	memcpy_code(first.address, &bad, first.width);
-	require(!ff8_kernel_item_read(file, changed) && !active, "modified operand rejects the entire patch set");
-	memcpy_code(first.address, &first.expected, first.width);
+	for (const auto &site : item_sites)
+	{
+		// Every site is checked: change each one in turn, as another mod patching that code would.
+		const uint32_t address = site_address(site);
+		if (!address) continue;
+		const uint8_t saved = *reinterpret_cast<uint8_t *>(address);
+		patch_code_byte(address, uint8_t(saved ^ 1));
+		const bool rejected = !ff8_kernel_item_read(file, changed) && !active;
+		patch_code_byte(address, saved);
+		if (!rejected) require(false, "a modified operand rejects the entire patch set");
+	}
+	require(true, "each modified operand rejects the entire patch set");
+	const uint32_t first_call = call_address(save_image_calls[0]);
+	const uint8_t saved_opcode = *reinterpret_cast<uint8_t *>(first_call);
+	patch_code_byte(first_call, 0x90);
+	require(!ff8_kernel_item_read(file, changed) && !active, "a modified call site rejects the entire patch set");
+	patch_code_byte(first_call, saved_opcode);
 	require(ff8_kernel_item_read(file, changed) && active && changed, "production item module activates");
 	bool operands_ok = true;
-	for (const auto &patch : item_patches) operands_ok &= read_operand(patch) == patch_value(patch);
+	for (const auto &site : item_sites)
+		if (const uint32_t address = site_address(site)) operands_ok &= read_operand(address, site.width) == expanded_base(site.target) + site.value;
 	require(operands_ok, "all patch operands point to the correct expanded buffers");
 	// The shared native loader supplies these file-relative text offsets.
 	for (int i = 31; i < 56; ++i) ff8_externals.kernel->header.section_offsets[i] = reinterpret_cast<uint32_t>(file.bytes(static_cast<ff8_kernel_section>(i)).data()) - reinterpret_cast<uint32_t>(ff8_externals.kernel);
 	require(item_name(199)[0] && item_description(255)[0] && !item_name(256)[0], "new and boundary text lookups");
+	require(native<char *(__cdecl *)(int)>(fn_item_name)(199) == item_name(199) && native<char *(__cdecl *)(int)>(fn_item_description)(255) == item_description(255),
+		"native name and description lookups reach the replacements");
 	bool added = true;
 	for (int id = 1; id <= 198; ++id) added &= ff8_kernel_item_add(id, 1) == 0;
-	require(reinterpret_cast<int(__cdecl *)(int, char)>(0x47ED00)(199, 1) == 0 && inventory[198].item_id == 199,
+	require(native<int(__cdecl *)(int, char)>(fn_add_item)(199, 1) == 0 && inventory[198].item_id == 199,
 		"native acquisition can allocate the first additional inventory slot");
 	for (int id = 200; id <= 255; ++id) added &= ff8_kernel_item_add(id, 1) == 0;
 	require(added, "populate every item ID");
-	require(reinterpret_cast<int(__cdecl *)(int)>(0x56DAF0)(255) != 0, "native inventory lookup reaches ID 255 after slot 198");
-	reinterpret_cast<void(__cdecl *)(int)>(0x47ECD0)(254);
+	require(native<int(__cdecl *)(int)>(fn_has_item)(255) != 0, "native inventory lookup reaches ID 255 after slot 198");
+	native<void(__cdecl *)(int)>(fn_remove_one_item)(254);
 	require(inventory[253].item_quantity == 0 && inventory[254].item_quantity == 1, "native removal reaches later pages without corrupting neighbors");
 	inventory[253].item_quantity = 1;
 	for (int i = 0; i < 32; ++i) ff8_externals.savemap->items.battle_order[i] = static_cast<uint8_t>(i);
@@ -171,47 +245,96 @@ extern "C" void audit_start()
 	// A signed read would treat item 255 as -1 and read before battle_order.
 	auto before_order = ff8_externals.savemap->items.battle_order - 2;
 	uint8_t saved_before_order = *before_order; *before_order = 0;
-	reinterpret_cast<void(__cdecl *)(int)>(0x4AD0C0)(1);
+	native<void(__cdecl *)(int)>(fn_reserve_battle_order)(1);
 	require(ff8_externals.savemap->items.battle_order[0] == 0, "high item IDs do not reserve a vanilla battle-order entry");
 	*before_order = saved_before_order;
+	bool orders_match = true;
+	for (int c = 0; c < order_cases; ++c)
+	{
+		inventory.fill({});
+		std::copy_n(order_items[c], FF8_ITEM_VANILLA_SLOTS, inventory.begin());
+		std::copy_n(order_inputs[c], 32, ff8_externals.savemap->items.battle_order);
+		native<void(__cdecl *)(int)>(fn_reserve_battle_order)(order_ids[c]);
+		orders_match &= std::equal(order_native[c], order_native[c] + 32, ff8_externals.savemap->items.battle_order);
+	}
+	require(orders_match, "battle-order reservation matches the native function on 64 inventories");
+	inventory.fill({}); inventory[230] = { 2, 1 };
+	for (int i = 0; i < 32; ++i) ff8_externals.savemap->items.battle_order[i] = static_cast<uint8_t>(i);
+	ff8_externals.savemap->items.battle_order[0] = 5; ff8_externals.savemap->items.battle_order[4] = 0;
+	native<void(__cdecl *)(int)>(fn_reserve_battle_order)(1);
+	require(ff8_externals.savemap->items.battle_order[0] == 0 && ff8_externals.savemap->items.battle_order[4] == 5,
+		"items carried in added slots keep their battle-order positions");
+	for (int i = 0; i < 32; ++i) ff8_externals.savemap->items.battle_order[i] = static_cast<uint8_t>(i);
 	inventory = all_items;
-	reinterpret_cast<uint32_t(__cdecl *)()>(0x4EBA80)();
+	native<uint32_t(__cdecl *)()>(fn_shop_stage_inventory)();
 	require(shop_quantities[199] == 1 && shop_quantities[255] == 1, "native shop staging scans all inventory slots and high item IDs");
 	shop_quantities[255] = 3;
-	reinterpret_cast<void(__cdecl *)(uint32_t)>(0x4EB9F0)(1234);
+	native<void(__cdecl *)(uint32_t)>(fn_shop_commit)(1234);
 	require(inventory[254].item_id == 255 && inventory[254].item_quantity == 3, "native shop writeback reaches the last inventory slot");
 	inventory[254] = {};
-	reinterpret_cast<uint32_t(__cdecl *)()>(0x4EBA80)();
+	native<uint32_t(__cdecl *)()>(fn_shop_stage_inventory)();
 	shop_quantities[255] = 1;
-	reinterpret_cast<void(__cdecl *)(uint32_t)>(0x4EB9F0)(1234);
+	native<void(__cdecl *)(uint32_t)>(fn_shop_commit)(1234);
 	require(inventory[254].item_id == 255 && inventory[254].item_quantity == 1, "native shop purchase inserts a new high ID after the original capacity");
 	// A zero-data added record is a placeholder: its item stays out of the battle list, and
 	// the items after it keep their positions. Text offsets do not matter (editors rewrite them).
 	auto saved_record = battle_records[200];
-	std::memset(reinterpret_cast<uint8_t *>(&battle_records[200]) + 4, 0, sizeof(battle_records[200]) - 4);
+	std::fill_n(reinterpret_cast<uint8_t *>(&battle_records[200]) + 4, sizeof(battle_records[200]) - 4, uint8_t(0));
 	battle_records[200].offset_item_name = 0x1234;
-	build_battle_items();
+	native<void *(__cdecl *)()>(fn_build_battle_items)();
 	require(live_items[32].id == 199 && live_items[33].id == 0 && live_items[34].id == 201,
 		"a placeholder battle record keeps its item field-only without moving later battle items");
 	battle_records[200] = saved_record;
-	build_battle_items();
+	native<void *(__cdecl *)()>(fn_build_battle_items)();
 	require(live_items[32].id == 199 && live_items[87].id == 254 && live_items[88].id == 0, "extended battle list includes 56 new battle items; 255 remains field-only");
+	// BattleMenu_ListWindow_Init writes the battle UI context it reads at +0x130.
 	alignas(4) static uint8_t battle_context[128]{};
-	*reinterpret_cast<void **>(0x1D6D490) = battle_context;
-	std::fill(battle_ui.begin() + 52, battle_ui.end(), uint8_t{ 0xA5 });
+	*reinterpret_cast<void **>(get_absolute_value(fn[fn_list_window_init], 0x130)) = battle_context;
+	list_pending.fill(0xA5);
 	buy_prices[0] = 0x12345678;
-	reinterpret_cast<void *(__cdecl *)(int, int, unsigned char, int, char, void *)>(0x4FF0C0)(0, 2, 13, 96, 2, reinterpret_cast<void *>(0x4C8540));
+	const uint32_t list_state = native_base[size_t(item_target::list_pending)] - 0x34;
+	native<void *(__cdecl *)(int, int, unsigned char, int, char, uint32_t)>(fn_list_window_init)(0, 2, 13, 96, 2, fn[fn_battle_item_rows]);
 	bool reservations_clear = true;
-	for (size_t i = 52; i < battle_ui.size(); ++i) reservations_clear &= battle_ui[i] == 0;
-	require(battle_ui[36] == 96 && reservations_clear && buy_prices[0] == 0x12345678,
+	for (uint8_t pending : list_pending) reservations_clear &= pending == 0;
+	require(*reinterpret_cast<uint8_t *>(list_state + 0x24) == 96 && reservations_clear && buy_prices[0] == 0x12345678,
 		"native battle menu initializes 96 reservations without overwriting neighboring state");
-	require(reinterpret_cast<int(__cdecl *)(int)>(0x485E60)(254) == 1, "native battle quantity lookup reaches added item");
-	require(reinterpret_cast<int(__cdecl *)(int, int)>(0x486B40)(254, 1) == 0 && live_items[87].amount == 0, "native battle consumption reaches added item");
+	require(native<int(__cdecl *)(int)>(fn_battle_item_amount)(254) == 1, "native battle quantity lookup reaches added item");
+	require(native<int(__cdecl *)(int, int)>(fn_change_battle_item_amount)(254, 1) == 0 && live_items[87].amount == 0, "native battle consumption reaches added item");
 	// Keep the zero-quantity ID until the native writeback finds the saved slot.
 	live_items[87].id = 254;
-	reinterpret_cast<void(__cdecl *)()>(0x486C10)();
+	native<void(__cdecl *)()>(fn_battle_items_to_inventory)();
 	require(inventory[253].item_quantity == 0, "native battle writeback updates later inventory pages");
 	inventory[253].item_quantity = 1;
+	load_file_original = reinterpret_cast<uint32_t>(asset_stub);
+	void *asset = nullptr;
+	require(load_asset(&asset, const_cast<char *>("menu/mitem.bin")) == 1024 && static_cast<uint8_t *>(asset)[199 * 4] == 10, "menu assets are allocated for all IDs and missing rows are inactive");
+	item_test_free(asset);
+	asset_size = 1024;
+	require(load_asset(&asset, const_cast<char *>("menu/mitem.bin")) == 1024 && static_cast<uint8_t *>(asset)[255 * 4] == 7, "full extended field metadata is retained");
+	if (english_2013)
+	{
+		*reinterpret_cast<void **>(0x1D2BB2C) = asset;
+		require(reinterpret_cast<int(__cdecl *)(int)>(0x4F74F0)(255) == 7, "native field metadata lookup reaches item 255");
+		auto healing_row = static_cast<uint8_t *>(asset) + 4 * 199;
+		healing_row[0] = 0; healing_row[1] = 3; healing_row[2] = 2; healing_row[3] = 0;
+		require(reinterpret_cast<int(__cdecl *)(int)>(0x4F7510)(199) == 2 && reinterpret_cast<int(__cdecl *)(int)>(0x4F7530)(199) == 3,
+			"new field item retains its native healing parameters and target flags");
+	}
+	item_test_free(asset);
+	invalid_asset_type = true;
+	load_asset(&asset, const_cast<char *>("menu/mitem.bin"));
+	require(static_cast<uint8_t *>(asset)[198 * 4] == 10, "invalid field effect types cannot index the native dispatch table");
+	item_test_free(asset);
+	invalid_asset_type = false;
+	alignas(4) uint8_t reloaded[1028]{}; reloaded[1024] = 0xA5;
+	asset_size = 1028;
+	reload_direct(const_cast<char *>("menu/mitem.bin"), reloaded);
+	require(reloaded[1024] == 0xA5 && reloaded[255 * 4] == 10, "oversized reloads do not overflow existing menu allocations");
+	if (!english_2013)
+	{
+		print("PASS "); print(release_name); print(": native item expansion integration\n");
+		ExitProcess(0);
+	}
 	// Exercise native page-up/down and Sort through the production interception.
 	replace_function(0x4BFFC0, reinterpret_cast<void *>(layout_stub));
 	replace_function(0x4BD850, reinterpret_cast<void *>(zero));
@@ -277,31 +400,9 @@ extern "C" void audit_start()
 	ff8_item_inventory saved_items{};
 	saved_items[0] = { 1, 1 }; saved_items[200] = { 255, 1 };
 	ff8_item_save(image, saved_items);
-	image[384 + native_inventory - 0x1CFDC58 + 1] = 50;
+	image[384 + native_base[size_t(item_target::inventory)] - reinterpret_cast<uint32_t>(ff8_externals.savemap) + 1] = 50;
 	load_inventory(image.data() + 384, ff8_externals.savemap, 5028);
 	require(inventory[0].item_quantity == 50 && !inventory[200].item_id, "external native-inventory edits are not overwritten by a stale extension");
-	redirect_original(asset_hook, reinterpret_cast<void *>(asset_stub));
-	void *asset = nullptr;
-	require(load_asset(&asset, const_cast<char *>("menu/mitem.bin")) == 1024 && static_cast<uint8_t *>(asset)[199 * 4] == 10, "menu assets are allocated for all IDs and missing rows are inactive");
-	item_test_free(asset);
-	asset_size = 1024;
-	require(load_asset(&asset, const_cast<char *>("menu/mitem.bin")) == 1024 && static_cast<uint8_t *>(asset)[255 * 4] == 7, "full extended field metadata is retained");
-	*reinterpret_cast<void **>(0x1D2BB2C) = asset;
-	require(reinterpret_cast<int(__cdecl *)(int)>(0x4F74F0)(255) == 7, "native field metadata lookup reaches item 255");
-	auto healing_row = static_cast<uint8_t *>(asset) + 4 * 199;
-	healing_row[0] = 0; healing_row[1] = 3; healing_row[2] = 2; healing_row[3] = 0;
-	require(reinterpret_cast<int(__cdecl *)(int)>(0x4F7510)(199) == 2 && reinterpret_cast<int(__cdecl *)(int)>(0x4F7530)(199) == 3,
-		"new field item retains its native healing parameters and target flags");
-	item_test_free(asset);
-	invalid_asset_type = true;
-	load_asset(&asset, const_cast<char *>("menu/mitem.bin"));
-	require(static_cast<uint8_t *>(asset)[198 * 4] == 10, "invalid field effect types cannot index the native dispatch table");
-	item_test_free(asset);
-	invalid_asset_type = false;
-	alignas(4) uint8_t reloaded[1028]{}; reloaded[1024] = 0xA5;
-	asset_size = 1028;
-	reload_direct(const_cast<char *>("menu/mitem.bin"), reloaded);
-	require(reloaded[1024] == 0xA5 && reloaded[255 * 4] == 10, "oversized reloads do not overflow existing menu allocations");
-	print("PASS: native item expansion integration\n");
+	print("PASS "); print(release_name); print(": native item expansion integration\n");
 	ExitProcess(0);
 }

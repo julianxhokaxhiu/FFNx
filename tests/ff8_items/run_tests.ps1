@@ -1,5 +1,6 @@
 param(
-    [Parameter(Mandatory = $true)][string]$GameExe,
+    # Folder with the release executables named as in release_externals.h (FF8_EN.exe, FF8_FR.exe...).
+    [Parameter(Mandatory = $true)][string]$ExeDirectory,
     [Parameter(Mandatory = $true)][string]$Kernel,
     [Parameter(Mandatory = $true)][string]$Mitem,
     [Parameter(Mandatory = $true)][string]$Price,
@@ -11,10 +12,10 @@ $repo = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 if (-not $BuildDirectory) { $BuildDirectory = Join-Path $repo '.build/item-tests' }
 $build = [System.IO.Path]::GetFullPath($BuildDirectory)
 New-Item -ItemType Directory -Path $build -Force | Out-Null
-foreach ($path in @($GameExe, $Kernel, $Mitem, $Price)) {
+foreach ($path in @($Kernel, $Mitem, $Price)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing input: $path" }
 }
-$GameExe = (Resolve-Path -LiteralPath $GameExe).Path
+$ExeDirectory = (Resolve-Path -LiteralPath $ExeDirectory).Path
 $Kernel = (Resolve-Path -LiteralPath $Kernel).Path
 if (-not $VisualStudio) {
     $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
@@ -44,11 +45,21 @@ exit /b %ERRORLEVEL%
     [System.IO.File]::WriteAllText($buildScriptPath, $buildScript)
     & $buildScriptPath
     if ($LASTEXITCODE -ne 0) { throw 'Test compilation or inventory tests failed.' }
-    $env:FF8_ITEM_TEST_EXE = $GameExe
     $env:FF8_ITEM_TEST_KERNEL = Join-Path $fixture 'kernel.bin'
     $env:FF8_ITEM_TEST_VANILLA_KERNEL = $Kernel
-    & (Join-Path $build 'native_tests.exe')
-    if ($LASTEXITCODE -ne 0) { throw 'Native integration tests failed.' }
+    $releases = Select-String -Path tests/ff8_items/release_externals.h -Pattern '"(FF8_\w+\.exe)"' -AllMatches | ForEach-Object { $_.Matches.Groups[1].Value }
+    $tested = 0
+    foreach ($release in $releases) {
+        $exe = Join-Path $ExeDirectory $release
+        if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { Write-Warning "Skipping $release (not in $ExeDirectory)"; continue }
+        # One process per release: the harness maps that executable at its own base.
+        $env:FF8_ITEM_TEST_EXE = $exe
+        $env:FF8_ITEM_TEST_RELEASE = $release
+        & (Join-Path $build 'native_tests.exe')
+        if ($LASTEXITCODE -ne 0) { throw "Native integration tests failed for $release." }
+        $tested++
+    }
+    if (-not $tested) { throw "No release executable found in $ExeDirectory." }
 } finally {
     Pop-Location
 }

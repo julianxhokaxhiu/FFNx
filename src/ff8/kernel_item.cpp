@@ -1,5 +1,18 @@
-// Copyright (C) 2026 HobbitDur
-// SPDX-License-Identifier: GPL-3.0-or-later
+/****************************************************************************/
+//    Copyright (C) 2026 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2026 HobbitDur                                          //
+//                                                                          //
+//    This file is part of FFNx                                             //
+//                                                                          //
+//    FFNx is free software: you can redistribute it and/or modify          //
+//    it under the terms of the GNU General Public License as published by  //
+//    the Free Software Foundation, either version 3 of the License         //
+//                                                                          //
+//    FFNx is distributed in the hope that it will be useful,               //
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of        //
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         //
+//    GNU General Public License for more details.                          //
+/****************************************************************************/
 
 #include "kernel_item.h"
 #include "kernel.h"
@@ -17,7 +30,6 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstring>
 #include <string_view>
 
 namespace
@@ -28,20 +40,28 @@ constexpr int vanilla_battle_count = 33;
 // for field items; added battle items use global IDs 199-254.
 constexpr int max_battle_records = vanilla_battle_count + 56;
 constexpr int battle_slots = 96;
-constexpr uint32_t native_inventory = 0x1CFE79C;
-constexpr uint32_t native_battle_items = 0x1CF7778;
-constexpr uint32_t native_live_items = 0x1D28E78;
-constexpr uint32_t native_battle_ui = 0x1D768D0;
-constexpr uint32_t native_buy_price = 0x1D8CD18;
-constexpr uint32_t native_sell_price = 0x1D8D120;
-constexpr uint32_t native_shop_quantity = 0x1D8D058;
 
-enum class item_patch_target { inventory, battle_items, live_items, battle_ui, buy_price, sell_price, shop_quantity, constant };
-struct item_patch { uint32_t address, expected, value; uint8_t width; item_patch_target target; };
+enum class item_target { inventory, battle_items, live_items, list_pending, buy_prices, sell_prices, shop_quantities, constant, count };
 
-// Verified instruction operands for the 2013 EN executable. Each expected value
-// is checked before any item hook is installed. Other executables fail closed.
-#include "kernel_item_patches.h"
+#include "kernel_item_layouts.h"
+
+item_layout item_layout_of(int game_version)
+{
+	switch (game_version)
+	{
+	case VERSION_FF8_12_FR:
+	case VERSION_FF8_12_FR_NV: return layout_fr;
+	case VERSION_FF8_12_DE:
+	case VERSION_FF8_12_DE_NV: return layout_de;
+	case VERSION_FF8_12_SP:
+	case VERSION_FF8_12_SP_NV: return layout_es;
+	case VERSION_FF8_12_IT:
+	case VERSION_FF8_12_IT_NV: return layout_it;
+	case VERSION_FF8_12_JP:
+	case VERSION_FF8_12_JP_NV: return layout_jp;
+	default: return layout_en;
+	}
+}
 
 // Rendering reads all 11 rows even on the final partial page. Keep those reads
 // inside zeroed storage, while all inventory operations use only slots 0-254.
@@ -57,94 +77,140 @@ std::array<ff8_kernel_non_battle_item, 223> non_battle_records{};
 struct live_item { uint8_t id, amount, battle_flag, target_info, selectable; };
 static_assert(sizeof(live_item) == 5);
 std::array<live_item, battle_slots> live_items{};
-alignas(4) std::array<uint8_t, 52 + battle_slots> battle_ui{};
+// The battle list window marks rows already picked; it is the only part of the window
+// state indexed by row.
+std::array<uint8_t, battle_slots> list_pending{};
 std::array<uint32_t, FF8_ITEM_ID_COUNT> buy_prices{}, sell_prices{};
 std::array<uint8_t, FF8_ITEM_ID_COUNT> shop_quantities{};
 bool active = false;
 int item_count = first_added_item;
 int battle_record_count = vanilla_battle_count;
-uint32_t menu_hook, asset_hook, reload_hook;
+
+uint32_t fn[fn_count];
+item_layout layout = layout_en;
+uint32_t native_base[size_t(item_target::count)];
+uint32_t menu_hook;
 uint8_t *current_menu = nullptr;
 
-uint32_t read_operand(const item_patch &patch)
+// Original targets of the redirected calls.
+uint32_t save_image_original, load_inventory_original, new_game_original, read_file_original,
+	navigation_original, navigation_target_original, load_file_original, random_original;
+
+uint32_t site_address(const item_site &site)
 {
-	uint32_t value = 0;
-	std::memcpy(&value, reinterpret_cast<const void *>(patch.address), patch.width);
-	return value;
+	const uint16_t offset = site.offset.at[layout];
+	return offset && fn[site.fn] ? fn[site.fn] + offset : 0;
 }
 
-uint32_t patch_value(const item_patch &patch)
+uint32_t call_address(const item_call &call)
 {
-	uint32_t base = 0;
-	switch (patch.target)
+	const uint16_t offset = call.offset.at[layout];
+	return offset && fn[call.fn] ? fn[call.fn] + offset : 0;
+}
+
+uint32_t read_operand(uint32_t address, uint8_t width)
+{
+	switch (width)
 	{
-	case item_patch_target::inventory: base = reinterpret_cast<uint32_t>(inventory.data()); break;
-	case item_patch_target::battle_items: base = reinterpret_cast<uint32_t>(battle_records.data()); break;
-	case item_patch_target::live_items: base = reinterpret_cast<uint32_t>(live_items.data()); break;
-	case item_patch_target::battle_ui: base = reinterpret_cast<uint32_t>(battle_ui.data()); break;
-	case item_patch_target::buy_price: base = reinterpret_cast<uint32_t>(buy_prices.data()); break;
-	case item_patch_target::sell_price: base = reinterpret_cast<uint32_t>(sell_prices.data()); break;
-	case item_patch_target::shop_quantity: base = reinterpret_cast<uint32_t>(shop_quantities.data()); break;
-	case item_patch_target::constant: break;
+	case 1: return *reinterpret_cast<const uint8_t *>(address);
+	case 2: return *reinterpret_cast<const uint16_t *>(address);
+	default: return *reinterpret_cast<const uint32_t *>(address);
 	}
-	return base + patch.value;
 }
 
-bool call_is(uint32_t site, uint32_t target)
+uint32_t expanded_base(item_target target)
 {
-	return *reinterpret_cast<const uint8_t *>(site) == 0xE8 &&
-		site + 5 + *reinterpret_cast<const int32_t *>(site + 1) == target;
+	switch (target)
+	{
+	case item_target::inventory: return reinterpret_cast<uint32_t>(inventory.data());
+	case item_target::battle_items: return reinterpret_cast<uint32_t>(battle_records.data());
+	case item_target::live_items: return reinterpret_cast<uint32_t>(live_items.data());
+	case item_target::list_pending: return reinterpret_cast<uint32_t>(list_pending.data());
+	case item_target::buy_prices: return reinterpret_cast<uint32_t>(buy_prices.data());
+	case item_target::sell_prices: return reinterpret_cast<uint32_t>(sell_prices.data());
+	case item_target::shop_quantities: return reinterpret_cast<uint32_t>(shop_quantities.data());
+	default: return 0;
+	}
+}
+
+void find_item_functions()
+{
+	layout = item_layout_of(version);
+	std::fill(std::begin(fn), std::end(fn), 0u);
+	item_find_roots(fn);
+	for (const auto &ref : item_fn_refs)
+	{
+		const uint16_t offset = ref.offset.at[layout];
+		if (!offset || !fn[ref.from]) continue;
+		fn[ref.fn] = ref.call ? get_relative_call(fn[ref.from], offset) : get_absolute_value(fn[ref.from], offset);
+	}
 }
 
 // Every check names what it found: another mod (a hext, a DLL) patching the same code is the
 // usual reason, and the log has to say where to look.
 bool unsupported(const char *what, uint32_t address, uint32_t found, uint32_t expected)
 {
-	ffnx_error("AddMoreItems: %s at 0x%X is 0x%X, expected 0x%X (another mod patching this code?); "
-		"items stay vanilla.\n", what, address, found, expected);
+	ffnx_error("AddMoreItems: %s at 0x%X is 0x%X, expected 0x%X (another mod patching this code?); items stay vanilla.\n", what, address, found, expected);
 	return false;
 }
 
-bool call_site_is(uint32_t site, uint32_t target)
+// All calls of a group must still call one same function: that function is what the
+// redirection forwards to.
+bool calls_agree(const item_call *calls, size_t count, uint32_t &target)
 {
-	if (call_is(site, target)) return true;
-	const uint8_t opcode = *reinterpret_cast<const uint8_t *>(site);
-	return unsupported("call site", site, opcode == 0xE8 ? site + 5 + *reinterpret_cast<const int32_t *>(site + 1)
-		: 0xFF000000u | opcode, target);
+	target = 0;
+	for (size_t i = 0; i < count; ++i)
+	{
+		const uint32_t address = call_address(calls[i]);
+		if (!address) continue;
+		const uint8_t opcode = *reinterpret_cast<const uint8_t *>(address);
+		const uint32_t called = opcode == 0xE8 ? get_relative_call(address, 0) : 0;
+		if (!called) return unsupported("call site", address, opcode, 0xE8);
+		if (target && called != target) return unsupported("call site", address, called, target);
+		target = called;
+	}
+	return target != 0;
 }
+
+template<size_t N>
+bool calls_agree(const item_call (&calls)[N], uint32_t &target) { return calls_agree(calls, N, target); }
 
 bool supported()
 {
-	if (!FF8_US_VERSION)
-	{
-		ffnx_error("AddMoreItems: only the 2013 English executable is supported; items stay vanilla.\n");
-		return false;
-	}
-	const uint32_t inventory_address = reinterpret_cast<uint32_t>(ff8_externals.savemap->items.items);
-	if (inventory_address != native_inventory) return unsupported("savemap inventory", 0, inventory_address, native_inventory);
-	const uint32_t menu = reinterpret_cast<uint32_t>(ff8_externals.menu_use_items_sub_4F81F0);
-	if (menu != 0x4F81F0) return unsupported("item menu", 0, menu, 0x4F81F0);
-	if (ff8_externals.main_menu_controller != 0x4E3090)
-		return unsupported("main menu controller", 0, ff8_externals.main_menu_controller, 0x4E3090);
-	const uint32_t battle_items = reinterpret_cast<uint32_t>(ff8_externals.kernel->battle_items);
-	if (battle_items != native_battle_items) return unsupported("kernel battle items", 0, battle_items, native_battle_items);
-	for (const auto &patch : item_patches)
-		if (read_operand(patch) != patch.expected)
-			return unsupported("operand", patch.address, read_operand(patch), patch.expected);
-	for (const auto &hook : item_hook_signatures)
-		if (std::memcmp(reinterpret_cast<const void *>(hook.address), hook.bytes, hook.length))
+	find_item_functions();
+	for (int i = 0; i < fn_count; ++i)
+		if (!fn[i] && (i != fn_jp_shop_row_item || layout == layout_jp))
 		{
-			uint32_t found = 0, expected = 0;
-			std::memcpy(&found, reinterpret_cast<const void *>(hook.address), 4);
-			std::memcpy(&expected, hook.bytes, 4);
-			return unsupported("function start", hook.address, found, expected);
+			ffnx_error("AddMoreItems: native item function %d not found; items stay vanilla.\n", i);
+			return false;
 		}
-	return call_site_is(0x4E3BB0, 0x4E2EF0) && call_site_is(0x4E3C11, 0x4E2EF0) &&
-		call_site_is(0x4E4F1E, 0x49A7B0) && call_site_is(0x4E4401, 0x56DA10) &&
-		// The main menu reads its assets through au_re_SmPcRead (0x4ABF30), a thin wrapper of
-		// LoadFileToBuffer - FFNx's sm_pc_read - so the call never targets sm_pc_read itself.
-		call_site_is(0x4C0BCC, 0x4ABF30) &&
-		call_site_is(0x4F831B, 0x4C0A30) && call_site_is(0x4F8C50, 0x4C0A30) && call_site_is(0x4FB8E0, 0x4C0A30);
+
+	// Native arrays: the ones FFNx knows, then the others from their first operand.
+	std::fill(std::begin(native_base), std::end(native_base), 0u);
+	native_base[size_t(item_target::inventory)] = reinterpret_cast<uint32_t>(ff8_externals.savemap->items.items);
+	native_base[size_t(item_target::battle_items)] = reinterpret_cast<uint32_t>(ff8_externals.kernel->battle_items);
+	native_base[size_t(item_target::shop_quantities)] = reinterpret_cast<uint32_t>(ff8_externals.menu_shop_staged_items_1D8D058.data());
+	for (const auto &site : item_sites)
+	{
+		const uint32_t address = site_address(site);
+		if (!address || site.target == item_target::constant) continue;
+		uint32_t &base = native_base[size_t(site.target)];
+		if (!base) base = read_operand(address, site.width) - site.native;
+	}
+	for (const auto &site : item_sites)
+	{
+		const uint32_t address = site_address(site);
+		if (!address) continue;
+		const uint32_t expected = site.target == item_target::constant ? site.native : native_base[size_t(site.target)] + site.native;
+		const uint32_t found = read_operand(address, site.width);
+		if (found != expected) return unsupported("operand", address, found, expected);
+	}
+
+	return calls_agree(save_image_calls, save_image_original) && calls_agree(load_inventory_calls, load_inventory_original) &&
+		calls_agree(new_game_calls, new_game_original) && calls_agree(reload_direct_calls, read_file_original) &&
+		calls_agree(item_navigation_source_calls, navigation_original) && calls_agree(load_asset_calls, load_file_original) &&
+		calls_agree(random_calls, random_original) && calls_agree(item_navigation_target_calls, navigation_target_original) &&
+		(navigation_target_original == navigation_original || unsupported("call site", 0, navigation_target_original, navigation_original));
 }
 
 // An added battle record whose data (everything after the two text offsets) is all zero is
@@ -200,7 +266,7 @@ int item_navigation(int pad, int rows, int row, int cursor_offset)
 		rows = (std::min)(rows, FF8_ITEM_SLOT_COUNT - cursor / FF8_ITEM_PAGE_SIZE * FF8_ITEM_PAGE_SIZE);
 		row = std::clamp(row, 0, rows - 1);
 	}
-	return reinterpret_cast<int(__cdecl *)(int, int, int)>(0x4C0A30)(pad, rows, row);
+	return reinterpret_cast<int(__cdecl *)(int, int, int)>(navigation_original)(pad, rows, row);
 }
 int __cdecl item_navigation_source(int pad, int rows, int row) { return item_navigation(pad, rows, row, 0x54); }
 int __cdecl item_navigation_target(int pad, int rows, int row) { return item_navigation(pad, rows, row, 0x58); }
@@ -220,11 +286,17 @@ char __cdecl item_menu(int pointer)
 	unreplace_function(menu_hook);
 	auto previous_menu = current_menu;
 	current_menu = menu;
-	char result = reinterpret_cast<char(__cdecl *)(int)>(0x4F81F0)(pointer);
+	char result = reinterpret_cast<char(__cdecl *)(int)>(fn[fn_item_menu])(pointer);
 	current_menu = previous_menu;
 	rereplace_function(menu_hook);
 	clamp_item_cursors(menu);
 	return result;
+}
+
+void inventory_from_savemap()
+{
+	inventory.fill({});
+	std::copy_n(ff8_externals.savemap->items.items, FF8_ITEM_VANILLA_SLOTS, inventory.begin());
 }
 
 int __cdecl save_image(int slot, uint8_t *image)
@@ -232,34 +304,33 @@ int __cdecl save_image(int slot, uint8_t *image)
 	ff8_item_normalize(inventory);
 	// Keep the native projection current before its CRC is computed. The full
 	// inventory lives in our block; this projection aids vanilla readers/tools.
-	std::memcpy(ff8_externals.savemap->items.items, inventory.data(), FF8_ITEM_VANILLA_SLOTS * sizeof(savemap_ff8_item));
-	int result = reinterpret_cast<int(__cdecl *)(int, void *)>(0x4E2EF0)(slot, image);
+	std::copy_n(inventory.begin(), FF8_ITEM_VANILLA_SLOTS, ff8_externals.savemap->items.items);
+	int result = reinterpret_cast<int(__cdecl *)(int, void *)>(save_image_original)(slot, image);
 	if (result == FF8_ITEM_SAVE_IMAGE_SIZE) ff8_item_save({ image, FF8_ITEM_SAVE_IMAGE_SIZE }, inventory);
 	return result;
 }
 
 void __cdecl load_inventory(const void *source, void *destination, unsigned size)
 {
-	reinterpret_cast<void(__cdecl *)(const void *, void *, unsigned)>(0x49A7B0)(source, destination, size);
-	inventory.fill({});
-	std::memcpy(inventory.data(), ff8_externals.savemap->items.items, FF8_ITEM_VANILLA_SLOTS * sizeof(savemap_ff8_item));
+	reinterpret_cast<void(__cdecl *)(const void *, void *, unsigned)>(load_inventory_original)(source, destination, size);
+	inventory_from_savemap();
 	// Only this accepted-load call reaches us, after the vanilla checksum has
 	// passed. Preview reads never change the running inventory.
 	auto image = static_cast<const uint8_t *>(source) - 384;
 	ff8_item_inventory saved{};
 	if (ff8_item_load({ image, FF8_ITEM_SAVE_IMAGE_SIZE }, saved) &&
-		!std::memcmp(saved.data(), inventory.data(), FF8_ITEM_VANILLA_SLOTS * sizeof(savemap_ff8_item)))
+		std::equal(saved.begin(), saved.begin() + FF8_ITEM_VANILLA_SLOTS, inventory.begin(),
+			[](const savemap_ff8_item &a, const savemap_ff8_item &b) { return a.item_id == b.item_id && a.item_quantity == b.item_quantity; }))
 		inventory = saved;
-	else
+	else if (trace_all)
 		ffnx_trace("AddMoreItems: imported native inventory (no valid extension block).\n");
 	ff8_item_normalize(inventory);
 }
 
 int __cdecl new_game()
 {
-	int result = reinterpret_cast<int(__cdecl *)()>(0x56DA10)();
-	inventory.fill({});
-	std::memcpy(inventory.data(), ff8_externals.savemap->items.items, FF8_ITEM_VANILLA_SLOTS * sizeof(savemap_ff8_item));
+	int result = reinterpret_cast<int(__cdecl *)()>(new_game_original)();
+	inventory_from_savemap();
 	ff8_item_normalize(inventory);
 	return result;
 }
@@ -277,42 +348,35 @@ menu_asset asset_kind(const char *name)
 
 void copy_asset(void *destination, const void *source, int size, menu_asset kind)
 {
-	std::memset(destination, 0, FF8_ITEM_ID_COUNT * 4);
+	auto rows = static_cast<uint8_t *>(destination);
+	std::fill_n(rows, FF8_ITEM_ID_COUNT * 4, uint8_t(0));
 	if (kind == menu_asset::mitem)
-		for (int id = 0; id < FF8_ITEM_ID_COUNT; ++id) static_cast<uint8_t *>(destination)[id * 4] = 10; // refine only
+		for (int id = 0; id < FF8_ITEM_ID_COUNT; ++id) rows[id * 4] = 10; // refine only
 	if (size < 0 || size > FF8_ITEM_ID_COUNT * 4 || size % 4)
 	{
 		ffnx_warning("AddMoreItems: invalid %s length %d; disabled item effects/prices.\n", kind == menu_asset::mitem ? "mitem.bin" : "price.bin", size);
 		return;
 	}
-	if (source) std::memcpy(destination, source, size);
+	if (source) std::copy_n(static_cast<const uint8_t *>(source), size, rows);
 	if (kind == menu_asset::mitem)
 		for (int id = 0; id < size / 4; ++id)
 		{
-			auto row = static_cast<uint8_t *>(destination) + 4 * id;
+			auto row = rows + 4 * id;
 			if (row[0] > 21)
 			{
-				std::memset(row, 0, 4);
+				std::fill_n(row, 4, uint8_t(0));
 				row[0] = 10;
-				ffnx_warning("AddMoreItems: invalid field effect type for item %d; field use disabled.\n", id);
+				if (trace_all) ffnx_trace("AddMoreItems: invalid field effect type for item %d; field use disabled.\n", id);
 			}
 		}
-	if (size / 4 < item_count)
-		ffnx_warning("AddMoreItems: %s has %d rows for %d item IDs; missing rows use inactive defaults.\n", kind == menu_asset::mitem ? "mitem.bin" : "price.bin", size / 4, item_count);
-}
-
-int native_load_asset(void **destination, char *name)
-{
-	unreplace_function(asset_hook);
-	int result = reinterpret_cast<int(__cdecl *)(void **, char *)>(0x4B9530)(destination, name);
-	rereplace_function(asset_hook);
-	return result;
+	if (size / 4 < item_count && trace_all)
+		ffnx_trace("AddMoreItems: %s has %d rows for %d item IDs; missing rows use inactive defaults.\n", kind == menu_asset::mitem ? "mitem.bin" : "price.bin", size / 4, item_count);
 }
 
 int __cdecl load_asset(void **destination, char *name)
 {
 	menu_asset kind = asset_kind(name);
-	int size = native_load_asset(destination, name);
+	int size = reinterpret_cast<int(__cdecl *)(void **, char *)>(load_file_original)(destination, name);
 	if (kind == menu_asset::other || size <= 0) return size;
 	void *replacement = external_malloc(FF8_ITEM_ID_COUNT * 4);
 	if (!replacement) return 0;
@@ -322,31 +386,17 @@ int __cdecl load_asset(void **destination, char *name)
 	return FF8_ITEM_ID_COUNT * 4;
 }
 
-unsigned reload_asset(char *name, void *destination)
+// Menu reloads read straight into the allocation load_asset made: go through a temporary one
+// so an oversized file cannot overflow it.
+unsigned __cdecl reload_direct(char *name, void *destination)
 {
+	if (asset_kind(name) == menu_asset::other)
+		return reinterpret_cast<unsigned(__cdecl *)(char *, void *)>(read_file_original)(name, destination);
 	void *source = nullptr;
-	int size = native_load_asset(&source, name);
+	int size = reinterpret_cast<int(__cdecl *)(void **, char *)>(load_file_original)(&source, name);
 	copy_asset(destination, source, size, asset_kind(name));
 	if (source) external_free(source);
 	return FF8_ITEM_ID_COUNT * 4;
-}
-
-unsigned __cdecl reload_direct(char *name, void *destination) { return reload_asset(name, destination); }
-unsigned __cdecl reload_menu(char *prefix, const char *name, char *destination)
-{
-	if (asset_kind(name) != menu_asset::other)
-	{
-		char path[1024];
-		const char *directory = prefix ? prefix : reinterpret_cast<char *(__cdecl *)()>(0x482B80)();
-		if (std::strlen(directory) + std::strlen(name) >= sizeof(path)) return 0;
-		std::strcpy(path, directory);
-		std::strcat(path, name);
-		return reload_asset(path, destination);
-	}
-	unreplace_function(reload_hook);
-	unsigned result = reinterpret_cast<unsigned(__cdecl *)(char *, const char *, char *)>(0x4BE8C0)(prefix, name, destination);
-	rereplace_function(reload_hook);
-	return result;
 }
 
 void *__cdecl build_battle_items()
@@ -399,38 +449,72 @@ int __cdecl random_battle_item(int previous)
 	for (const auto &item : live_items)
 		if (item.id && (battle_records[item.id].random_select_flag & 1)) eligible[count++] = item.id;
 	if (!count) return 255;
-	unsigned random = reinterpret_cast<unsigned(__cdecl *)()>(0x48F020)();
+	unsigned random = reinterpret_cast<unsigned(__cdecl *)()>(random_original)();
 	return eligible[random % count];
+}
+
+// The native version reads item IDs as signed bytes: IDs 128-255 index before the battle
+// order. Same rule over the whole inventory: a battle item that is not carried yet takes
+// the first battle-order position no carried battle item uses.
+void __cdecl reserve_battle_order(int id)
+{
+	if (id <= 0 || id >= vanilla_battle_count) return;
+	auto order = ff8_externals.savemap->items.battle_order;
+	uint32_t used = 0;
+	for (const auto &item : inventory)
+	{
+		if (!item.item_quantity || !item.item_id || item.item_id >= vanilla_battle_count) continue;
+		if (item.item_id == id) return;
+		used |= 1u << (order[item.item_id - 1] & 31);
+	}
+	int free = 0;
+	while (free < 32 && (used >> free & 1)) ++free;
+	for (int slot = 0; slot < 32; ++slot)
+		if (order[slot] == (free < 32 ? free : 0xFF))
+		{
+			std::swap(order[id - 1], order[slot]);
+			return;
+		}
+}
+
+template<size_t N>
+void redirect(const item_call (&calls)[N], void *function)
+{
+	for (const auto &call : calls)
+		if (uint32_t address = call_address(call)) replace_call(address, function);
 }
 
 void arm()
 {
 	if (active) return;
-	inventory.fill({});
-	std::memcpy(inventory.data(), ff8_externals.savemap->items.items, FF8_ITEM_VANILLA_SLOTS * sizeof(savemap_ff8_item));
+	inventory_from_savemap();
 	ff8_item_normalize(inventory);
-	std::memcpy(battle_ui.data(), reinterpret_cast<void *>(native_battle_ui), 84);
-	for (const auto &patch : item_patches)
+	for (const auto &site : item_sites)
 	{
-		uint32_t value = patch_value(patch);
-		memcpy_code(patch.address, &value, patch.width);
+		const uint32_t address = site_address(site);
+		if (!address) continue;
+		const uint32_t value = expanded_base(site.target) + site.value;
+		switch (site.width)
+		{
+		case 1: patch_code_byte(address, uint8_t(value)); break;
+		case 2: patch_code_word(address, uint16_t(value)); break;
+		default: patch_code_dword(address, value); break;
+		}
 	}
-	replace_function(0x47EA30, reinterpret_cast<void *>(item_name));
-	replace_function(0x47EA90, reinterpret_cast<void *>(item_description));
-	menu_hook = replace_function(0x4F81F0, reinterpret_cast<void *>(item_menu));
-	asset_hook = replace_function(0x4B9530, reinterpret_cast<void *>(load_asset));
-	reload_hook = replace_function(0x4BE8C0, reinterpret_cast<void *>(reload_menu));
-	replace_function(0x48C6E0, reinterpret_cast<void *>(build_battle_items));
-	replace_function(0x48C670, reinterpret_cast<void *>(update_battle_items));
-	replace_function(0x483CA0, reinterpret_cast<void *>(random_battle_item));
-	replace_call(0x4E3BB0, reinterpret_cast<void *>(save_image));
-	replace_call(0x4E3C11, reinterpret_cast<void *>(save_image));
-	replace_call(0x4E4F1E, reinterpret_cast<void *>(load_inventory));
-	replace_call(0x4E4401, reinterpret_cast<void *>(new_game));
-	replace_call(0x4C0BCC, reinterpret_cast<void *>(reload_direct));
-	replace_call(0x4F831B, reinterpret_cast<void *>(item_navigation_source));
-	replace_call(0x4F8C50, reinterpret_cast<void *>(item_navigation_target));
-	replace_call(0x4FB8E0, reinterpret_cast<void *>(item_navigation_source));
+	replace_function(fn[fn_item_name], reinterpret_cast<void *>(item_name));
+	replace_function(fn[fn_item_description], reinterpret_cast<void *>(item_description));
+	menu_hook = replace_function(fn[fn_item_menu], reinterpret_cast<void *>(item_menu));
+	replace_function(fn[fn_build_battle_items], reinterpret_cast<void *>(build_battle_items));
+	replace_function(fn[fn_update_battle_items], reinterpret_cast<void *>(update_battle_items));
+	replace_function(fn[fn_random_battle_item], reinterpret_cast<void *>(random_battle_item));
+	replace_function(fn[fn_reserve_battle_order], reinterpret_cast<void *>(reserve_battle_order));
+	redirect(save_image_calls, reinterpret_cast<void *>(save_image));
+	redirect(load_inventory_calls, reinterpret_cast<void *>(load_inventory));
+	redirect(new_game_calls, reinterpret_cast<void *>(new_game));
+	redirect(reload_direct_calls, reinterpret_cast<void *>(reload_direct));
+	redirect(load_asset_calls, reinterpret_cast<void *>(load_asset));
+	redirect(item_navigation_source_calls, reinterpret_cast<void *>(item_navigation_source));
+	redirect(item_navigation_target_calls, reinterpret_cast<void *>(item_navigation_target));
 	ff8_externals.menu_shop_staged_items_1D8D058 = shop_quantities;
 	active = true;
 	ffnx_info("AddMoreItems: enabled %d item IDs, %d inventory slots (%d pages), %d battle item records.\n", item_count, FF8_ITEM_SLOT_COUNT, FF8_ITEM_PAGE_COUNT, battle_record_count);
@@ -473,7 +557,7 @@ bool ff8_kernel_item_read(const ff8_kernel_file &file, bool &changed)
 	auto valid_text = [&](ff8_kernel_section section, uint16_t offset) {
 		if (offset == 0xFFFF) return true;
 		auto bytes = file.bytes(section);
-		return offset < bytes.size() && std::memchr(bytes.data() + offset, 0, bytes.size() - offset);
+		return offset < bytes.size() && std::find(bytes.begin() + offset, bytes.end(), 0) != bytes.end();
 	};
 	for (const auto &entry : battle)
 		if (!valid_text(ff8_kernel_section::battle_item_text, entry.offset_item_name) || !valid_text(ff8_kernel_section::battle_item_text, entry.offset_item_description))

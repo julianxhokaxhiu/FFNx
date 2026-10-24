@@ -1,5 +1,18 @@
-// Copyright (C) 2026 HobbitDur
-// SPDX-License-Identifier: GPL-3.0-or-later
+/****************************************************************************/
+//    Copyright (C) 2026 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2026 HobbitDur                                          //
+//                                                                          //
+//    This file is part of FFNx                                             //
+//                                                                          //
+//    FFNx is free software: you can redistribute it and/or modify          //
+//    it under the terms of the GNU General Public License as published by  //
+//    the Free Software Foundation, either version 3 of the License         //
+//                                                                          //
+//    FFNx is distributed in the hope that it will be useful,               //
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of        //
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         //
+//    GNU General Public License for more details.                          //
+/****************************************************************************/
 
 #pragma once
 
@@ -7,7 +20,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cstring>
 #include <span>
 
 // Native consumers use byte slot indices with 255 as their failure sentinel.
@@ -105,14 +117,15 @@ inline void ff8_item_save(std::span<uint8_t> image, const ff8_item_inventory &in
 {
 	if (image.size() < FF8_ITEM_SAVE_OFFSET + sizeof(ff8_item_save_block)) return;
 	ff8_item_save_block block{ 0x4D495846u, 1, FF8_ITEM_SLOT_COUNT, ff8_item_save_checksum(inventory), inventory };
-	std::memcpy(image.data() + FF8_ITEM_SAVE_OFFSET, &block, sizeof(block));
+	auto bytes = reinterpret_cast<const uint8_t *>(&block);
+	std::copy(bytes, bytes + sizeof(block), image.begin() + FF8_ITEM_SAVE_OFFSET);
 }
 
 inline bool ff8_item_load(std::span<const uint8_t> image, ff8_item_inventory &inventory)
 {
 	if (image.size() < FF8_ITEM_SAVE_OFFSET + sizeof(ff8_item_save_block)) return false;
 	ff8_item_save_block block{};
-	std::memcpy(&block, image.data() + FF8_ITEM_SAVE_OFFSET, sizeof(block));
+	std::copy_n(image.begin() + FF8_ITEM_SAVE_OFFSET, sizeof(block), reinterpret_cast<uint8_t *>(&block));
 	if (block.magic != 0x4D495846u || block.version != 1 || block.slots != FF8_ITEM_SLOT_COUNT ||
 		block.checksum != ff8_item_save_checksum(block.inventory)) return false;
 	std::array<bool, FF8_ITEM_ID_COUNT> seen{};
