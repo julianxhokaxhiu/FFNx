@@ -17,15 +17,11 @@
 #include "kernel_item.h"
 #include "kernel.h"
 #include "item_inventory.h"
-#ifdef FF8_ITEM_NATIVE_TEST
-#include "../../tests/ff8_items/native_support.h"
-#else
 #include "../ff8.h"
 #include "../common.h"
 #include "../globals.h"
 #include "../log.h"
 #include "../patch.h"
-#endif
 
 #include <algorithm>
 #include <array>
