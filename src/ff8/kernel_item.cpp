@@ -14,7 +14,9 @@
 #include "../patch.h"
 #endif
 
+#include <algorithm>
 #include <array>
+#include <cstddef>
 #include <cstring>
 #include <string_view>
 
@@ -114,6 +116,16 @@ bool supported()
 		call_is(0x4E4F1E, 0x49A7B0) && call_is(0x4E4401, 0x56DA10) &&
 		call_is(0x4C0BCC, reinterpret_cast<uint32_t>(ff8_externals.sm_pc_read)) &&
 		call_is(0x4F831B, 0x4C0A30) && call_is(0x4F8C50, 0x4C0A30) && call_is(0x4FB8E0, 0x4C0A30);
+}
+
+// An added battle record whose data (everything after the two text offsets) is all zero is
+// a placeholder: that item has no battle use. Records map to IDs by position (record 33 + k
+// is item 199 + k), so an editor pads the IDs before a later battle item with these.
+bool battle_record_placeholder(int id)
+{
+	const auto bytes = reinterpret_cast<const uint8_t *>(&battle_records[id]);
+	constexpr size_t data = offsetof(ff8_kernel_battle_item, attack_animation_id);
+	return id >= first_added_item && std::all_of(bytes + data, bytes + sizeof(ff8_kernel_battle_item), [](uint8_t b) { return b == 0; });
 }
 
 char *item_text(int id, bool description)
@@ -325,7 +337,8 @@ void *__cdecl build_battle_items()
 			used[order] = true;
 			slot = order;
 		}
-		else if (item.item_id >= first_added_item && item.item_id - first_added_item < battle_record_count - vanilla_battle_count)
+		else if (item.item_id >= first_added_item && item.item_id - first_added_item < battle_record_count - vanilla_battle_count &&
+			!battle_record_placeholder(item.item_id))
 			slot = 32 + item.item_id - first_added_item;
 		if (slot < 0) continue;
 		const auto &record = battle_records[item.item_id];

@@ -30,6 +30,13 @@ appends up to 57 four-byte name/description records. Define corresponding sectio
 8 rows for every added battle item. Names and descriptions for all IDs 33-255
 come from section 8 / text section 39; original battle names use text section 38.
 
+An appended battle record whose 20 data bytes (everything after its two text
+offsets) are zero is a placeholder: that item has no battle use and stays out of
+the battle Item list. Because appended records map to IDs by position, this lets a
+mod give a battle record to, for example, ID 205 while IDs 199-204 remain field-only
+items: records for 199-204 are placeholders. The placeholder's text offsets are
+still validated but otherwise ignored.
+
 The extension validates record counts and checks every item text offset and
 terminator against its actual text section. `0xFFFF` means no string. Kernel
 loading still builds the existing native compatibility image, while item hooks

@@ -182,6 +182,15 @@ extern "C" void audit_start()
 	shop_quantities[255] = 1;
 	reinterpret_cast<void(__cdecl *)(uint32_t)>(0x4EB9F0)(1234);
 	require(inventory[254].item_id == 255 && inventory[254].item_quantity == 1, "native shop purchase inserts a new high ID after the original capacity");
+	// A zero-data added record is a placeholder: its item stays out of the battle list, and
+	// the items after it keep their positions. Text offsets do not matter (editors rewrite them).
+	auto saved_record = battle_records[200];
+	std::memset(reinterpret_cast<uint8_t *>(&battle_records[200]) + 4, 0, sizeof(battle_records[200]) - 4);
+	battle_records[200].offset_item_name = 0x1234;
+	build_battle_items();
+	require(live_items[32].id == 199 && live_items[33].id == 0 && live_items[34].id == 201,
+		"a placeholder battle record keeps its item field-only without moving later battle items");
+	battle_records[200] = saved_record;
 	build_battle_items();
 	require(live_items[32].id == 199 && live_items[87].id == 254 && live_items[88].id == 0, "extended battle list includes 56 new battle items; 255 remains field-only");
 	alignas(4) static uint8_t battle_context[128]{};

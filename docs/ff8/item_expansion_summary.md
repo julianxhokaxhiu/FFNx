@@ -11,7 +11,8 @@ Implemented on branch `AddMoreItems`. Runtime implementation commit: `07c50093`.
 | Shop sell menu | 25 pages of eight | 32 pages of eight |
 
 Original item IDs remain unchanged. New IDs 199-254 can have field and battle
-behavior; ID 255 is field-only because the native random battle-item helper uses
+behavior (an all-zero battle record keeps an ID field-only, so battle items need not
+come first); ID 255 is field-only because the native random battle-item helper uses
 255 as its failure result. Existing field-effect types and stack limit 100 remain.
 Irvine's eight ammunition types and the original battle-order editor retain their
 existing type counts.
