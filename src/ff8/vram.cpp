@@ -61,6 +61,7 @@ int next_do_not_clear_old_texture = false;
 Tim::Bpp next_bpp = Tim::Bpp16;
 int last_CLUT = 0;
 int8_t *next_rgba_modifier = nullptr;
+bool next_is_lzs_image_format = false;
 
 // Field background
 uint8_t *mim_texture_buffer = nullptr;
@@ -364,6 +365,18 @@ bool ff8_vram_save(const char *fileName, Tim::Bpp bpp)
 
 void ff8_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
 {
+	// Fix width/height according to file header
+	if (next_is_lzs_image_format) {
+		uint16_t *header = (uint16_t *)texture_buffer - 2;
+		if (header[0] <= 640) {
+			pos_and_size[2] = header[0];
+			pos_and_size[0] = (640 - pos_and_size[2]) / 2;
+		}
+		if (header[1] <= 480) {
+			pos_and_size[3] = header[1];
+		}
+	}
+
 	const int16_t x = pos_and_size[0];
 	const int16_t y = pos_and_size[1];
 	const int16_t w = pos_and_size[2];
@@ -401,6 +414,7 @@ void ff8_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
 	next_do_not_clear_old_texture = false;
 	next_texture_count = -1;
 	next_rgba_modifier = nullptr;
+	next_is_lzs_image_format = false;
 }
 
 void ff8_vram_copy_part(int x, int y, int w, int h, int target_x, int target_y)
@@ -861,6 +875,7 @@ uint32_t ff8_credits_open_texture(char *fileName, char *buffer)
 		}
 	}
 	next_bpp = Tim::Bpp16;
+	next_is_lzs_image_format = true;
 
 	uint32_t ret = ff8_externals.credits_open_file(fileName, buffer);
 
@@ -875,6 +890,7 @@ void ff8_cdcheck_error_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffe
 
 	strncpy(next_texture_name, "discerr.lzs", sizeof(next_texture_name));
 	next_bpp = Tim::Bpp16;
+	next_is_lzs_image_format = true;
 
 	if (save_textures) Tim::fromLzsData(texture_buffer - 8).save(next_texture_name);
 
