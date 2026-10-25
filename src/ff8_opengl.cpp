@@ -2053,6 +2053,29 @@ int ff8_worldmap_project_vertices(int vertex_count)
 	return result;
 }
 
+static int (*ff8_worldmap_model_store_depths)(uint32_t *, uint32_t *, uint32_t *);
+
+int ff8_worldmap_model_store_wide_depths(uint32_t *depth0, uint32_t *depth1, uint32_t *depth2)
+{
+	const int result = ff8_worldmap_model_store_depths(depth0, depth1, depth2);
+	const int clip_left = 4 * wide_viewport_x;
+	const int clip_right = clip_left + 4 * wide_viewport_width;
+	const int clip_top = 4 * (wide_viewport_y - 16);
+	const int clip_bottom = clip_top + 4 * wide_viewport_height;
+
+	// This projector clamps packet coordinates, so signed 16-bit X/Y cannot wrap.
+	for (uint32_t *depth : {depth0, depth1, depth2})
+	{
+		const int x = static_cast<int16_t>(depth[-1]);
+		const int y = static_cast<int16_t>(depth[-1] >> 16);
+		const uint32_t visibility = (x >= clip_left && x < clip_right ? 1u : 0u)
+			| (y >= clip_top && y < clip_bottom ? 0x100u : 0u);
+		*depth = (*depth & 0xFFFFu) | (visibility << 16);
+	}
+
+	return result;
+}
+
 void ff8_widescreen_hook_init() {
 	if (FF8_US_VERSION)
 	{
@@ -2068,6 +2091,15 @@ void ff8_widescreen_hook_init() {
 		patch_code_short(battle_stage_init + 0x85, battle_height);
 		patch_code_int(battle_stage_init + 0x90, battle_height);
 		patch_code_short(battle_stage_init + 0xD3, battle_height);
+
+		const uint32_t worldmap_draw_models = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x267);
+		const uint32_t worldmap_draw_model = get_relative_call(worldmap_draw_models, 0x5E5);
+		ff8_worldmap_model_store_depths = reinterpret_cast<int (*)(uint32_t *, uint32_t *, uint32_t *)>(get_relative_call(worldmap_draw_model, 0x10D));
+		replace_call(worldmap_draw_model + 0x10D, ff8_worldmap_model_store_wide_depths);
+		// Keep the projection loop intact, but do not overwrite the C++ visibility flags.
+		memset_code(worldmap_draw_model + 0x131, 0x90, 4);
+		memset_code(worldmap_draw_model + 0x14D, 0x90, 4);
+		memset_code(worldmap_draw_model + 0x172, 0x90, 4);
 	}
 
 	// Viewport fixes
