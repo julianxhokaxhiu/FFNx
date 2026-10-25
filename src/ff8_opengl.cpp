@@ -1993,23 +1993,30 @@ static uint32_t *ff8_worldmap_projected_vertices;
 int ff8_worldmap_project_vertices(int vertex_count)
 {
 	// World-map packet Y=0 maps to screen Y=16.
+	const int clip_left = 4 * wide_viewport_x;
+	const int clip_right = clip_left + 4 * wide_viewport_width;
 	const int clip_top = 4 * (wide_viewport_y - 16);
 	const int clip_bottom = clip_top + 4 * wide_viewport_height;
-	static std::vector<uint8_t> vertical_visibility;
+	static std::vector<uint8_t> visibility;
 
 	if (vertex_count > 0)
 	{
-		vertical_visibility.resize(vertex_count);
+		visibility.resize(vertex_count);
 		const int zoom = static_cast<uint16_t>(*ff8_externals.camera_zoom_dword_1CA92E4);
+		const int center_x = 8 * ff8_externals.word_1CA92DE[0];
 		const int center_y = 8 * ff8_externals.word_1CA92DE[2];
 		const float *const rotation = ff8_externals.flt_1CA9234;
 		const int *const translation = ff8_externals.dword_1CA9290;
 
-		// The native projector overwrites the source vertices and truncates screen Y to 16 bits.
+		// Test both full coordinates before the native projector overwrites them with 16-bit values.
 		for (int vertex_index = 0; vertex_index < vertex_count; ++vertex_index)
 		{
 			const int16_t *const source = reinterpret_cast<const int16_t *>(ff8_worldmap_projected_vertices + 2 * vertex_index);
 			// Match the native single-precision intermediate before integer projection.
+			const float camera_x = static_cast<float>(rotation[0] * (8.0 * source[2])
+				+ rotation[1] * (8.0 * source[1])
+				+ rotation[2] * (8.0 * source[0])
+				+ 8.0 * translation[0]);
 			const float camera_y = static_cast<float>(rotation[3] * (8.0 * source[2])
 				+ rotation[4] * (8.0 * source[1])
 				+ rotation[5] * (8.0 * source[0])
@@ -2018,11 +2025,17 @@ int ff8_worldmap_project_vertices(int vertex_count)
 				+ rotation[7] * static_cast<double>(source[1])
 				+ rotation[8] * static_cast<double>(source[0])
 				+ translation[2];
-			const double projected_y = center_y + (std::nearbyint(camera_z) > (zoom >> 1)
-				? std::nearbyint((static_cast<double>(zoom) / camera_z) * camera_y)
+			const bool perspective = std::nearbyint(camera_z) > (zoom >> 1);
+			const double scale = perspective ? static_cast<double>(zoom) / camera_z : 0.0;
+			const double projected_x = center_x + (perspective
+				? std::nearbyint(scale * camera_x)
+				: 2.0 * std::nearbyint(camera_x));
+			const double projected_y = center_y + (perspective
+				? std::nearbyint(scale * camera_y)
 				: 2.0 * std::nearbyint(camera_y));
 
-			vertical_visibility[vertex_index] = projected_y >= clip_top && projected_y < clip_bottom;
+			visibility[vertex_index] = (projected_x >= clip_left && projected_x < clip_right ? 1u : 0u)
+				| (projected_y >= clip_top && projected_y < clip_bottom ? 2u : 0u);
 		}
 	}
 
@@ -2033,9 +2046,7 @@ int ff8_worldmap_project_vertices(int vertex_count)
 		uint32_t *const projected = ff8_worldmap_projected_vertices + 2 * vertex_index;
 
 		// Only replace X/Y visibility; retain the native depth and near-plane flags.
-		projected[1] = (projected[1] & ~0x30000u) | 0x10000u;
-		if (vertical_visibility[vertex_index])
-			projected[1] |= 0x20000u;
+		projected[1] = (projected[1] & ~0x30000u) | (static_cast<uint32_t>(visibility[vertex_index]) << 16);
 	}
 
 	return result;
