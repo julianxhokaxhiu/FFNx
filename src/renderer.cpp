@@ -168,11 +168,10 @@ void Renderer::setCommonUniforms()
     };
     if (uniform_log) ffnx_trace("%s: gameLightingFlags XYZW(game_lighting %f, NULL, NULL, NULL)\n", __func__, internalState.gameLightingFlags[0]);
 
-    setUniform(RendererUniform::VS_FLAGS,  internalState.VSFlags.data());
     setUniform(RendererUniform::FS_ALPHA_FLAGS, internalState.FSAlphaFlags.data());
     setUniform(RendererUniform::FS_MISC_FLAGS, internalState.FSMiscFlags.data());
     setUniform(RendererUniform::FS_HDR_FLAGS, internalState.FSHDRFlags.data());
-    setTextureFlagsUniform();
+    setTextureFlagsUniforms();
     setUniform(RendererUniform::FS_MOVIE_FLAGS, internalState.FSMovieFlags.data());
     setUniform(RendererUniform::FS_MORE_MOVIE_FLAGS, internalState.FSMoreMovieFlags.data());
     setUniform(RendererUniform::WM_FLAGS, internalState.WMFlags.data());
@@ -197,8 +196,12 @@ void Renderer::setCommonUniforms()
     setUniform(RendererUniform::GAME_SCRIPTED_LIGHT_COLOR, internalState.gameScriptedLightColor);
 }
 
-void Renderer::setTextureFlagsUniform()
+void Renderer::setTextureFlagsUniforms()
 {
+    // isTexture
+    internalState.VSFlags[3] = (float)internalState.bIsTexture;
+    setUniform(RendererUniform::VS_FLAGS, internalState.VSFlags.data());
+
     internalState.FSTexFlags = {
         (float)(internalState.texHandlers[RendererTextureSlot::TEX_NML].idx != bgfx::kInvalidHandle),
         (float)(internalState.texHandlers[RendererTextureSlot::TEX_PBR].idx != bgfx::kInvalidHandle),

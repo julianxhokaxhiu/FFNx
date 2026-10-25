@@ -527,9 +527,7 @@ public:
 
     bgfx::UniformHandle setUniform(RendererUniform uniform, const void* uniformValue, int arraySize = 1);
     void setCommonUniforms();
-    // Only the texture flags uniform (which of the normal, PBR and IBL textures are bound), for draws that change
-    // textures between draws and don't need every common uniform again
-    void setTextureFlagsUniform();
+    void setTextureFlagsUniforms();
     void setLightingUniforms();
     void bindTextures();
 
