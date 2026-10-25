@@ -53,6 +53,7 @@
 #include "widescreen.h"
 
 #include <cmath>
+#include <vector>
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
@@ -1987,6 +1988,59 @@ int16_t ff8_battle_world_calc_zoom(int16_t *descriptor, int16_t **vertices, uint
 	return result;
 }
 
+static uint32_t *ff8_worldmap_projected_vertices;
+
+int ff8_worldmap_project_vertices(int vertex_count)
+{
+	// World-map packet Y=0 maps to screen Y=16.
+	const int clip_top = 4 * (wide_viewport_y - 16);
+	const int clip_bottom = clip_top + 4 * wide_viewport_height;
+	static std::vector<uint8_t> vertical_visibility;
+
+	if (vertex_count > 0)
+	{
+		vertical_visibility.resize(vertex_count);
+		const int zoom = static_cast<uint16_t>(*ff8_externals.camera_zoom_dword_1CA92E4);
+		const int center_y = 8 * ff8_externals.word_1CA92DE[2];
+		const float *const rotation = ff8_externals.flt_1CA9234;
+		const int *const translation = ff8_externals.dword_1CA9290;
+
+		// The native projector overwrites the source vertices and truncates screen Y to 16 bits.
+		for (int vertex_index = 0; vertex_index < vertex_count; ++vertex_index)
+		{
+			const int16_t *const source = reinterpret_cast<const int16_t *>(ff8_worldmap_projected_vertices + 2 * vertex_index);
+			// Match the native single-precision intermediate before integer projection.
+			const float camera_y = static_cast<float>(rotation[3] * (8.0 * source[2])
+				+ rotation[4] * (8.0 * source[1])
+				+ rotation[5] * (8.0 * source[0])
+				+ 8.0 * translation[1]);
+			const double camera_z = rotation[6] * static_cast<double>(source[2])
+				+ rotation[7] * static_cast<double>(source[1])
+				+ rotation[8] * static_cast<double>(source[0])
+				+ translation[2];
+			const double projected_y = center_y + (std::nearbyint(camera_z) > (zoom >> 1)
+				? std::nearbyint((static_cast<double>(zoom) / camera_z) * camera_y)
+				: 2.0 * std::nearbyint(camera_y));
+
+			vertical_visibility[vertex_index] = projected_y >= clip_top && projected_y < clip_bottom;
+		}
+	}
+
+	const int result = reinterpret_cast<int (*)(int)>(ff8_externals.sub_4023D0)(vertex_count);
+
+	for (int vertex_index = 0; vertex_index < vertex_count; ++vertex_index)
+	{
+		uint32_t *const projected = ff8_worldmap_projected_vertices + 2 * vertex_index;
+
+		// Only replace X/Y visibility; retain the native depth and near-plane flags.
+		projected[1] = (projected[1] & ~0x30000u) | 0x10000u;
+		if (vertical_visibility[vertex_index])
+			projected[1] |= 0x20000u;
+	}
+
+	return result;
+}
+
 void ff8_widescreen_hook_init() {
 	if (FF8_US_VERSION)
 	{
@@ -2007,12 +2061,18 @@ void ff8_widescreen_hook_init() {
 	// Viewport fixes
 	replace_function(ff8_externals.engine_setviewport_sub_45B4C0, ff8_engine_set_wide_viewport);
 
-	// Keep world-map polygons outside the original 0..320 horizontal viewport.
-	// Replace "cmp ecx, 0xA00" with STC so the following SBB sets the horizontal visibility bit.
-	memcpy_code(ff8_externals.sub_4023D0 + 0x211, "\xF9\x90\x90\x90\x90\x90", 6);
-	// Extend the original 224-line bottom test to the full widescreen viewport without disabling Y rejection.
-	patch_code_int(ff8_externals.sub_4023D0 + 0x201, 4 * (wide_viewport_y + wide_viewport_height));
+	ff8_worldmap_projected_vertices = reinterpret_cast<uint32_t *>(get_absolute_value(ff8_externals.sub_4023D0, 0xAA) - 4);
+	replace_call(ff8_externals.sub_53BB90 + (FF8_US_VERSION ? 0x402 : 0x410), ff8_worldmap_project_vertices);
+	replace_call(ff8_externals.sub_53BB90 + (FF8_US_VERSION ? 0xAB1 : 0xAE5), ff8_worldmap_project_vertices);
+
+	const int worldmap_clip_top = 4 * (wide_viewport_y - 16);
+	const int worldmap_clip_height = 4 * wide_viewport_height;
 	memset_code(ff8_externals.worldmap_fog_filter_polygons_fallback + 0x1D9, 0x90, 2);
+	// The fallback's unsigned Y tests also reject negative packet coordinates in the top strip.
+	patch_code_int(ff8_externals.worldmap_fog_filter_polygons_fallback + 0x1E0, worldmap_clip_top + worldmap_clip_height);
+	patch_code_byte(ff8_externals.worldmap_fog_filter_polygons_fallback + 0x1E8, 0x7E); // jle
+	patch_code_byte(ff8_externals.worldmap_fog_filter_polygons_fallback + 0x1EE, 0x7E); // jle
+	patch_code_byte(ff8_externals.worldmap_fog_filter_polygons_fallback + 0x1F5, 0x8F); // jg
 	if (FF8_US_VERSION)
 	{
 		memset_code(ff8_externals.worldmap_cull_blocks_sub_53D3C0 + 0x3A2, 0x90, 2);
