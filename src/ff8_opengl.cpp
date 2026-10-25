@@ -126,7 +126,7 @@ static void patch_ff8_remastered_battle_effect_layout()
 			break;
 		}
 
-		return reinterpret_cast<int (*)()>(0xB0BFC0)();
+		return ff8_externals.battle_process_effect_scripts();
 	};
 
 	static const ff8_battle_effect_layout_patch patches[] = {
@@ -422,21 +422,22 @@ static void ff8_battle_link_task_failed(const char *message)
 			caller, uint32_t(descriptor), uint32_t(records), stride, count, active);
 	}
 
-	reinterpret_cast<void (*)(const char *)>(0x403D99)(message);
+	reinterpret_cast<void (*)(const char *)>(common_externals.debug_print)(message);
 }
 
 static void patch_ff8_battle_link_task_diagnostic()
 {
 	if (!FF8_US_VERSION || !more_debug) return;
 
-	if (*reinterpret_cast<const uint8_t *>(0x5083A9) != 0xE8
-		|| 0x5083A9 + 5 + *reinterpret_cast<const int32_t *>(0x5083AA) != 0x403D99)
+	const uint32_t call_site = ff8_externals.battle_link_task_failed_call;
+	if (*reinterpret_cast<const uint8_t *>(call_site) != 0xE8
+		|| get_relative_call(call_site, 0) != common_externals.debug_print)
 	{
-		ffnx_warning("BdLinkTask diagnostic: unexpected call at 0x005083A9, skipping.\n");
+		ffnx_warning("BdLinkTask diagnostic: unexpected call at 0x%08X, skipping.\n", call_site);
 		return;
 	}
 
-	replace_call(0x5083A9, ff8_battle_link_task_failed);
+	replace_call(call_site, ff8_battle_link_task_failed);
 }
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object)

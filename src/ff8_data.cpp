@@ -272,6 +272,11 @@ void ff8_find_externals()
 	ff8_externals.sub_500CC0 = get_absolute_value(ff8_externals.sub_500C00, 0x9A);
 	if (FF8_US_VERSION)
 	{
+		uint32_t battle_link_task = get_relative_call(ff8_externals.sub_500CC0, 0x11A);
+		ff8_externals.battle_link_task_failed_call = battle_link_task + 0x49;
+	}
+	if (FF8_US_VERSION)
+	{
 		ff8_externals.sub_5099D0 = ff8_externals.sub_500870 + 0x9160;
 		ff8_externals.world_calc_zoom_sub_50F900 = reinterpret_cast<int16_t (*)(int16_t *, int16_t **, uint32_t **)>(get_relative_call(ff8_externals.sub_5099D0, 0xCD));
 	}
@@ -1130,6 +1135,11 @@ void ff8_find_externals()
 	ff8_externals.sub_50A9A0 = get_absolute_value(ff8_externals.sub_50A790, 0x7C);
 	ff8_externals.battle_read_effect_sub_50AF20 = get_relative_call(ff8_externals.sub_50A9A0, 0xF4);
 	ff8_externals.func_off_battle_effects_C81774 = (DWORD*)get_absolute_value(ff8_externals.battle_read_effect_sub_50AF20, 0x2C);
+	if (FF8_US_VERSION)
+	{
+		uint32_t alexander_callback = get_absolute_value(ff8_externals.func_off_battle_effects_C81774[FF8BattleEffect::Alexander], 0x45);
+		ff8_externals.battle_process_effect_scripts = (int (*)())get_relative_call(alexander_callback, 0x1BF);
+	}
 	ff8_externals.battle_magic_id = (int*)get_absolute_value(ff8_externals.battle_read_effect_sub_50AF20, 0x3E);
 	ff8_externals.sub_571870 = get_relative_call(ff8_externals.battle_read_effect_sub_50AF20, 0x63);
 	ff8_externals.func_off_battle_effect_textures_50AF93 = (DWORD*)get_absolute_value(ff8_externals.battle_read_effect_sub_50AF20, 0x6B);

@@ -1879,6 +1879,7 @@ struct ff8_externals
 	uint32_t sub_500870;
 	uint32_t sub_500C00;
 	uint32_t sub_500CC0;
+	uint32_t battle_link_task_failed_call;
 	uint32_t sub_5099D0;
 	int16_t (*world_calc_zoom_sub_50F900)(int16_t *, int16_t **, uint32_t **);
 	uint32_t sub_506C90;
@@ -1950,6 +1951,7 @@ struct ff8_externals
 	uint32_t sub_50A9A0;
 	uint32_t battle_read_effect_sub_50AF20;
 	DWORD* func_off_battle_effects_C81774;
+	int (*battle_process_effect_scripts)();
 	int* battle_magic_id;
 	uint32_t battle_magic_effect_start_call; // where sub_50A9A0 calls the loaded effect
 	uint32_t battle_play_camera_animation_sub_5099A0;
