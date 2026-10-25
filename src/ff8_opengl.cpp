@@ -2076,6 +2076,19 @@ int ff8_worldmap_model_store_wide_depths(uint32_t *depth0, uint32_t *depth1, uin
 	return result;
 }
 
+static uint32_t (*ff8_worldmap_submit_sky_quad)(int *, uint32_t *, int, int, int, int);
+
+uint32_t ff8_worldmap_submit_wide_sky_quad(int *ordering_table, uint32_t *packet, int z0, int z1, int z2, int z3)
+{
+	// These two native sky-gradient packets use quarter-pixel X coordinates.
+	const uint16_t left = static_cast<uint16_t>(4 * wide_viewport_x);
+	const uint16_t right = static_cast<uint16_t>(4 * (wide_viewport_x + wide_viewport_width));
+	for (int i = 0; i < 4; ++i)
+		packet[2 + 2 * i] = (packet[2 + 2 * i] & 0xFFFF0000u) | (i % 2 == 0 ? left : right);
+
+	return ff8_worldmap_submit_sky_quad(ordering_table, packet, z0, z1, z2, z3);
+}
+
 using ff8_shop_draw_panel = int (*)(int, int *, int, int, int);
 static ff8_shop_draw_panel ff8_shop_draw_owned;
 static ff8_shop_draw_panel ff8_shop_draw_items;
@@ -2130,6 +2143,12 @@ void ff8_widescreen_hook_init() {
 		memset_code(worldmap_draw_model + 0x131, 0x90, 4);
 		memset_code(worldmap_draw_model + 0x14D, 0x90, 4);
 		memset_code(worldmap_draw_model + 0x172, 0x90, 4);
+
+		const uint32_t worldmap_draw_sky = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0xA78);
+		const uint32_t worldmap_draw_sky_gradient = get_relative_call(worldmap_draw_sky, 0x1BA);
+		ff8_worldmap_submit_sky_quad = reinterpret_cast<decltype(ff8_worldmap_submit_sky_quad)>(get_relative_call(worldmap_draw_sky_gradient, 0xDE));
+		replace_call(worldmap_draw_sky_gradient + 0xDE, ff8_worldmap_submit_wide_sky_quad);
+		replace_call(worldmap_draw_sky_gradient + 0x1A7, ff8_worldmap_submit_wide_sky_quad);
 
 		const uint32_t shop_render = get_absolute_value(reinterpret_cast<uint32_t>(ff8_externals.menu_callbacks[11].func), 0x34);
 		ff8_shop_draw_owned = reinterpret_cast<ff8_shop_draw_panel>(get_relative_call(shop_render, 0x241));
