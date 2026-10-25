@@ -346,7 +346,7 @@ void ffnx_log_current_pc_specs()
 	try
 	{
 		const auto memory = hwinfo::memory();
-		ffnx_info("   [RAM]: Used: %d GB / Total: %d GB (Free: %d GB)\n", (int)(std::optional<hwinfo::Bytes>(memory->total - memory->free)->to(hwinfo::ByteUnit::GiB)), (int)(std::optional<hwinfo::Bytes>(memory->total)->to(hwinfo::ByteUnit::GiB)), (int)(std::optional<hwinfo::Bytes>(memory->free)->to(hwinfo::ByteUnit::GB)));
+		ffnx_info("   [RAM]: Used: %d GB / Total: %d GB (Free: %d GB)\n", (int)(std::optional<hwinfo::Bytes>(memory->total - memory->free)->to(hwinfo::ByteUnit::GiB)), (int)(std::optional<hwinfo::Bytes>(memory->total)->to(hwinfo::ByteUnit::GiB)), (int)(std::optional<hwinfo::Bytes>(memory->free)->to(hwinfo::ByteUnit::GiB)));
 	}
 	catch (const std::exception& e)
 	{
