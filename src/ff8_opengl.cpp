@@ -52,6 +52,8 @@
 #include "achievement.h"
 #include "widescreen.h"
 
+#include <cmath>
+
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
 int left_stick_y = 0x80;
@@ -701,6 +703,12 @@ void ff8_unload_texture(struct ff8_texture_set *texture_set)
 void swirl_sub_56D390(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
 	static struct tex_header *last_tex_header = 0;
+	if (widescreen_enabled)
+	{
+		// Match the capture rectangle to the widescreen-scaled swirl geometry.
+		x = std::lround(double(x) * wide_viewport_width / game_width);
+		w = std::lround(double(w) * wide_viewport_width / game_width);
+	}
 	struct tex_header *tex_header = make_framebuffer_tex(256, 256, x, y, w, h, false);
 
 	if(last_tex_header) ff8_destroy_tex_header((struct ff8_tex_header *)last_tex_header);
