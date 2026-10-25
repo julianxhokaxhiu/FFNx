@@ -1836,6 +1836,18 @@ void ff8_flip(struct game_obj *game_object)
 			{right, height, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
 		};
 		WORD indices[] = {0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6};
+		const bool is_field_mode = getmode_cached()->driver_mode == MODE_FIELD;
+		struct nvertex field_letterbox_vertices[] = {
+			{left, 0.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
+			{right, 0.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
+			{left, 16.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
+			{right, 16.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
+			{left, height - 16.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
+			{right, height - 16.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
+			{left, height, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
+			{right, height, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
+		};
+		WORD field_letterbox_indices[] = {0, 2, 1, 1, 2, 3, 4, 6, 5, 5, 6, 7};
 
 		struct driver_state saved_state;
 		gl_save_state(&saved_state);
@@ -1847,6 +1859,8 @@ void ff8_flip(struct game_obj *game_object)
 		internal_set_renderstate(V_NOCULL, 1, game_object);
 		internal_set_renderstate(V_WIREFRAME, 0, game_object);
 		gl_draw_indexed_primitive(RendererPrimitiveType::PT_TRIANGLES, TLVERTEX, vertices, nullptr, 8, indices, 12, nullptr, nullptr, nullptr, 0, 0);
+		if (is_field_mode)
+			gl_draw_indexed_primitive(RendererPrimitiveType::PT_TRIANGLES, TLVERTEX, field_letterbox_vertices, nullptr, 8, field_letterbox_indices, 12, nullptr, nullptr, nullptr, 0, 0);
 		gl_load_state(&saved_state);
 	}
 
