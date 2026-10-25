@@ -79,7 +79,24 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 			if(vertices[i]._.y > max_y) max_y = vertices[i]._.y;
 		}
 
-		if(max_x - min_x >= game_width)
+		bool is_screen_quad = true;
+		if(vertexcount == 4)
+		{
+			// FF8 also submits projected stage geometry as TL quads; do not stretch it as an overlay.
+			for(uint32_t i = 0; i < vertexcount; ++i)
+			{
+				if((vertices[i]._.x != min_x && vertices[i]._.x != max_x)
+					|| (vertices[i]._.y != min_y && vertices[i]._.y != max_y)
+					|| vertices[i]._.z != vertices[0]._.z
+					|| vertices[i].color.w != vertices[0].color.w)
+				{
+					is_screen_quad = false;
+					break;
+				}
+			}
+		}
+
+		if(is_screen_quad && max_x - min_x >= game_width)
 		{
 			float wide_min_x = min_x < wide_viewport_x ? min_x : wide_viewport_x;
 			float wide_max_x = max_x > wide_viewport_x + wide_viewport_width ? max_x : wide_viewport_x + wide_viewport_width;
