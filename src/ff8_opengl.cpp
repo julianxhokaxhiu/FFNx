@@ -2076,6 +2076,36 @@ int ff8_worldmap_model_store_wide_depths(uint32_t *depth0, uint32_t *depth1, uin
 	return result;
 }
 
+using ff8_shop_draw_panel = int (*)(int, int *, int, int, int);
+static ff8_shop_draw_panel ff8_shop_draw_owned;
+static ff8_shop_draw_panel ff8_shop_draw_items;
+static ff8_shop_draw_panel ff8_shop_draw_gil;
+
+static int ff8_shop_wide_panel_x(int x, int visible_x)
+{
+	const sprite_viewport &viewport = ff8_externals.menu_viewport[2];
+	const int hidden_x = static_cast<int>(ceil((wide_viewport_x + wide_viewport_width - viewport.offset_x) / viewport.scale_x));
+	const int extra_distance = hidden_x > 384 ? hidden_x - 384 : 0;
+
+	// Extend the native slide to X=384 without moving its visible endpoint.
+	return x + (x - visible_x) * extra_distance / (384 - visible_x);
+}
+
+int ff8_shop_draw_wide_owned(int menu, int *graphics, int output, int x, int y)
+{
+	return ff8_shop_draw_owned(menu, graphics, output, ff8_shop_wide_panel_x(x, 280), y);
+}
+
+int ff8_shop_draw_wide_items(int menu, int *graphics, int output, int x, int y)
+{
+	return ff8_shop_draw_items(menu, graphics, output, ff8_shop_wide_panel_x(x, 24), y);
+}
+
+int ff8_shop_draw_wide_gil(int menu, int *graphics, int output, int x, int y)
+{
+	return ff8_shop_draw_gil(menu, graphics, output, ff8_shop_wide_panel_x(x, 24), y);
+}
+
 void ff8_widescreen_hook_init() {
 	if (FF8_US_VERSION)
 	{
@@ -2100,6 +2130,14 @@ void ff8_widescreen_hook_init() {
 		memset_code(worldmap_draw_model + 0x131, 0x90, 4);
 		memset_code(worldmap_draw_model + 0x14D, 0x90, 4);
 		memset_code(worldmap_draw_model + 0x172, 0x90, 4);
+
+		const uint32_t shop_render = get_absolute_value(reinterpret_cast<uint32_t>(ff8_externals.menu_callbacks[11].func), 0x34);
+		ff8_shop_draw_owned = reinterpret_cast<ff8_shop_draw_panel>(get_relative_call(shop_render, 0x241));
+		ff8_shop_draw_items = reinterpret_cast<ff8_shop_draw_panel>(get_relative_call(shop_render, 0x26B));
+		ff8_shop_draw_gil = reinterpret_cast<ff8_shop_draw_panel>(get_relative_call(shop_render, 0x279));
+		replace_call(shop_render + 0x241, ff8_shop_draw_wide_owned);
+		replace_call(shop_render + 0x26B, ff8_shop_draw_wide_items);
+		replace_call(shop_render + 0x279, ff8_shop_draw_wide_gil);
 	}
 
 	// Viewport fixes
