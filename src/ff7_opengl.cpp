@@ -37,6 +37,70 @@
 unsigned char midi_fix[] = {0x8B, 0x4D, 0x14};
 WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};
 
+static ff7_polygon_set *ff7_swirl_update_60fps(ff7_game_obj *game_object, int update)
+{
+	const auto native_update = reinterpret_cast<ff7_polygon_set *(*)(ff7_game_obj *, int)>(ff7_externals.swirl_loop_sub_4026D4);
+	auto &animation = *ff7_externals.swirl_animation;
+	static ff7_swirl_animation previous;
+	static uint32_t last_frame;
+	static bool first_frame = true;
+	static bool midpoint = false;
+	static bool next_midpoint = false;
+
+	if (!update)
+	{
+		first_frame = true;
+		next_midpoint = false;
+		return native_update(game_object, update);
+	}
+	if (first_frame || last_frame != frame_counter)
+	{
+		first_frame = false;
+		last_frame = frame_counter;
+		midpoint = next_midpoint;
+		next_midpoint = !next_midpoint;
+	}
+	if (!midpoint)
+	{
+		previous = animation;
+		return native_update(game_object, update);
+	}
+
+	const auto saved = animation;
+	// Native drawing uses the transform before advancing it to the next tick.
+	animation.rotation.z = (int(previous.rotation.z) + saved.rotation.z) / 2;
+	animation.scale.x = (previous.scale.x + saved.scale.x) / 2;
+	animation.scale.y = (previous.scale.y + saved.scale.y) / 2;
+	--animation.frame_count;
+	if (saved.frame_count >= 46)
+	{
+		// Execute the native color update even at the first halfway fade step.
+		animation.frame_count = saved.frame_count == 46 ? 46 : saved.frame_count - 1;
+		animation.fade = (saved.fade > 2 ? saved.fade - 2 : 0) + 4;
+	}
+	auto *result = native_update(game_object, update);
+	animation = saved;
+	return result;
+}
+
+static int ff7_swirl_draw_quad(const uint8_t *quad, ff7_graphics_object *graphics_object)
+{
+	const int result = ff7_externals.swirl_draw_quad(quad, graphics_object);
+	nvertex *vertices = reinterpret_cast<nvertex *>(graphics_object->vertex_transform);
+
+	// PSX UV endpoints are inclusive; triangles need the outer texel boundaries.
+	vertices[1].u += graphics_object->u_offset;
+	vertices[3].u += graphics_object->u_offset;
+	vertices[2].v += graphics_object->v_offset;
+	vertices[3].v += graphics_object->v_offset;
+	if (quad[12] == 1)
+	{
+		vertices[0].u = 0.0f;
+		vertices[2].u = 0.0f;
+	}
+	return result;
+}
+
 uint32_t ff7_credits_loop_gfx_begin_scene(uint32_t unknown, struct game_obj *game_object)
 {
 	if (drawFFNxLogoFrame(game_object)) {
@@ -105,6 +169,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 
 	// replace framebuffer access routine with our own version
 	replace_function(ff7_externals.sub_673F5C, sub_673F5C);
+
+	for (uint32_t offset : {0x609, 0x63C, 0x675, 0x6A7})
+		replace_call_function(ff7_externals.swirl_loop_sub_4026D4 + offset, ff7_swirl_draw_quad);
 
 	replace_function(ff7_externals.destroy_d3d2_indexed_primitive, destroy_d3d2_indexed_primitive);
 
@@ -266,16 +333,14 @@ void ff7_init_hooks(struct game_obj *_game_object)
 			{
 				common_frame_multiplier = 2;
 
-				// Swirl mode 60FPS fix
-				patch_multiply_code<byte>(ff7_externals.swirl_main_loop + 0x184, common_frame_multiplier); // wait frames before swirling
-				patch_multiply_code<byte>(ff7_externals.swirl_main_loop + 0x79, common_frame_multiplier); // swirling sound delay
-				patch_code_byte(ff7_externals.swirl_loop_sub_4026D4 + 0x3E, 50); // replace 48 with a bigger number without multiplying in order to have fading effect correctly
-				patch_code_byte(ff7_externals.swirl_loop_sub_4026D4 + 0x111, 0x7F); // cannot multiply otherwise char overflow
-				patch_divide_code<byte>(ff7_externals.swirl_loop_sub_4026D4 + 0x61, common_frame_multiplier); // decrease fading speed
-				patch_divide_code<double>(get_absolute_value(ff7_externals.swirl_loop_sub_4026D4, 0x1AB), common_frame_multiplier);
-				patch_divide_code<double>(get_absolute_value(ff7_externals.swirl_loop_sub_4026D4, 0x1B1), common_frame_multiplier);
-				patch_divide_code<double>(get_absolute_value(ff7_externals.swirl_loop_sub_4026D4, 0x1E4), common_frame_multiplier);
-				patch_divide_code<double>(get_absolute_value(ff7_externals.swirl_loop_sub_4026D4, 0x1EA), common_frame_multiplier);
+				static const double swirl_fps = 60.0;
+				patch_code_dword(ff7_externals.swirl_enter_40164E + 0x181, (uint32_t)&swirl_fps);
+				patch_code_byte(ff7_externals.swirl_main_loop + 0x79, 6);
+				patch_code_byte(ff7_externals.swirl_main_loop + 0x184, 6);
+				for (uint32_t offset : {0xC9, 0x124})
+					replace_call_function(ff7_externals.swirl_main_loop + offset, ff7_swirl_update_60fps);
+				// 1 - sqrt(1 - 64/255): preserve approximately the native trail decay at twice the draw rate.
+				patch_code_dword((uint32_t)ff7_externals.swirl_draw_quad + 0x9, 34);
 			}
 		}
 	}

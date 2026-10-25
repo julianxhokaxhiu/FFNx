@@ -116,9 +116,9 @@ void Renderer::setCommonUniforms()
         (float)internalState.alphaRef,
         (float)internalState.alphaFunc,
         (float)internalState.bDoAlphaTest,
-        NULL
+        (float)internalState.bFBTextureColorKey
     };
-    if (uniform_log) ffnx_trace("%s: FSAlphaFlags XYZW(inAlphaRef %f, inAlphaFunc %f, bDoAlphaTest %f, NULL)\n", __func__, internalState.FSAlphaFlags[0], internalState.FSAlphaFlags[1], internalState.FSAlphaFlags[2]);
+    if (uniform_log) ffnx_trace("%s: FSAlphaFlags XYZW(inAlphaRef %f, inAlphaFunc %f, bDoAlphaTest %f, fbTextureColorKey %f)\n", __func__, internalState.FSAlphaFlags[0], internalState.FSAlphaFlags[1], internalState.FSAlphaFlags[2], internalState.FSAlphaFlags[3]);
 
     internalState.FSMiscFlags = {
         NULL,
@@ -845,7 +845,7 @@ void Renderer::bindTextures()
                         {
                             if (internalState.bDoMirrorTextureWrap) flags |= BGFX_SAMPLER_U_MIRROR | BGFX_SAMPLER_V_MIRROR | BGFX_SAMPLER_W_CLAMP;
 
-                            if (internalState.bIsMovie) flags |= BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
+                            if (internalState.bIsMovie || internalState.bIsFBTexture) flags |= BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
 
                             // we always need chroma interpolation for YUV420 movies
                             if (internalState.bIsMovie && (idx > RendererTextureSlot::TEX_Y)){
@@ -1590,7 +1590,16 @@ void Renderer::show()
     // Reset internal state
     resetState();
 
-    if (internalState.bHasDrawBeenDone)
+    const bool presentFrame = internalState.bHasDrawBeenDone
+        || internalState.bHasColorClearBeenDone;
+
+    if (presentFrame && !internalState.bHasDrawBeenDone)
+    {
+        bgfx::setViewFrameBuffer(backendViewId, backendFrameBuffer);
+        bgfx::setViewRect(backendViewId, 0, 0, framebufferWidth, framebufferHeight);
+    }
+
+    if (presentFrame)
     {
         renderFrame();
 
@@ -1613,7 +1622,12 @@ void Renderer::show()
         );
     }
 
-    bgfx::frame(doCaptureFrame ? BGFX_FRAME_DEBUG_CAPTURE : BGFX_FRAME_NONE);
+    uint8_t frameFlags = doCaptureFrame ? BGFX_FRAME_DEBUG_CAPTURE : BGFX_FRAME_NONE;
+    if (!presentFrame) frameFlags |= BGFX_FRAME_FLUSH;
+    bgfx::frame(frameFlags);
+
+    internalState.bHasDrawBeenDone = false;
+    internalState.bHasColorClearBeenDone = false;
 
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s\n", __func__);
 
@@ -1746,7 +1760,7 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
         case MODE_FIELD:
             {
                 // Keep the default scissor for widescreen disabled movies and fields
-                bool isKeepDefaultScissor = false;
+                bool isKeepDefaultScissor = ff8;
                 if (!ff8)
                 {
                      bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
@@ -1830,7 +1844,7 @@ void Renderer::setClearFlags(bool doClearColor, bool doClearDepth)
     bgfx::setViewClear(backendViewId, clearFlags, internalState.clearColorValue, 1.0f);
     bgfx::touch(backendViewId);
 
-    internalState.bHasDrawBeenDone = false;
+    internalState.bHasColorClearBeenDone |= doClearColor;
 }
 
 void Renderer::setBackgroundColor(float r, float g, float b, float a)
@@ -2156,7 +2170,23 @@ uint32_t Renderer::createBlitTexture(uint32_t x, uint32_t y, uint32_t width, uin
     uint16_t newWidth = getInternalCoordX(width);
     uint16_t newHeight = getInternalCoordY(height);
 
-    bgfx::TextureHandle ret = bgfx::createTexture2D(newWidth, newHeight, false, 1, internalState.bIsHDR ? bgfx::TextureFormat::RGB10A2 : bgfx::TextureFormat::RGBA16, BGFX_TEXTURE_BLIT_DST);
+    const auto format = internalState.bIsHDR ? bgfx::TextureFormat::RGB10A2 : bgfx::TextureFormat::RGBA16;
+    bgfx::TextureInfo info;
+    bgfx::calcTextureSize(info, newWidth, newHeight, 1, false, false, 1, format);
+    if (!doesItFitInMemory(info.storageSize))
+    {
+        ffnx_error("Cannot initialize framebuffer texture %ux%u: insufficient memory for %u bytes\n", newWidth, newHeight, info.storageSize);
+        return bgfx::kInvalidHandle;
+    }
+    const bgfx::Memory *pixels = bgfx::alloc(info.storageSize);
+    if (pixels == nullptr)
+    {
+        ffnx_error("Cannot allocate %u bytes for framebuffer texture %ux%u\n", info.storageSize, newWidth, newHeight);
+        return bgfx::kInvalidHandle;
+    }
+    // Native captures pad areas outside the screen with black.
+    memset(pixels->data, 0, pixels->size);
+    bgfx::TextureHandle ret = bgfx::createTexture2D(newWidth, newHeight, false, 1, format, BGFX_TEXTURE_BLIT_DST, pixels);
 
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => XY(%u,%u) WH(%u,%u)\n", __func__, ret.idx, newX, newY, newWidth, newHeight);
 
@@ -2196,7 +2226,12 @@ void Renderer::blitTexture(uint16_t dest, uint32_t x, uint32_t y, uint32_t width
     backendViewId++;
 
     bgfx::TextureHandle texHandle = { dest };
-    bgfx::blit(backendViewId, {.handle = texHandle, .x = 0, .y = dstY}, {.handle = bgfx::getTexture(backendFrameBuffer, 0), .x = newX, .y = newY, .width = newWidth, .height = newHeight} );
+    if (newX < framebufferWidth && newY < framebufferHeight && dstY < newHeight)
+    {
+        const auto copyWidth = static_cast<uint16_t>(std::min<uint32_t>(newWidth, framebufferWidth - newX));
+        const auto copyHeight = static_cast<uint16_t>(std::min<uint32_t>(newHeight - dstY, framebufferHeight - newY));
+        bgfx::blit(backendViewId, {.handle = texHandle, .x = 0, .y = dstY}, {.handle = bgfx::getTexture(backendFrameBuffer, 0), .x = newX, .y = newY, .width = copyWidth, .height = copyHeight} );
+    }
     bgfx::touch(backendViewId);
     setClearFlags(false, false);
 
@@ -2310,9 +2345,10 @@ void Renderer::isTexture(bool flag)
     internalState.bIsTexture = flag;
 };
 
-void Renderer::isFBTexture(bool flag)
+void Renderer::isFBTexture(bool flag, bool colorKey)
 {
     internalState.bIsFBTexture = flag;
+    internalState.bFBTextureColorKey = flag && colorKey;
 };
 
 void Renderer::isFullRange(bool flag)

@@ -329,6 +329,7 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 	}
 
 	bool isLightingEnabledTexture = true;
+	bool framebufferColorKey = false;
 
 	// If we're attaching a texture, and it is an external one, then use a better blending that considers the alpha channel
 	if (current_state.texture_set)
@@ -336,6 +337,12 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 		VOBJ(texture_set, texture_set, current_state.texture_set);
 
 		if (VREF(texture_set, ogl.external)) newRenderer.isExternalTexture(true);
+
+		if (current_state.fb_texture)
+		{
+			VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
+			framebufferColorKey = VREF(tex_header, color_key) != 0;
+		}
 
 		if(enable_lighting && VREF(texture_set, ogl.gl_set->disable_lighting))
 		{
@@ -354,7 +361,7 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 	}
 
 	newRenderer.isTLVertex(vertextype == TLVERTEX);
-	newRenderer.isFBTexture(current_state.fb_texture);
+	newRenderer.isFBTexture(current_state.fb_texture, framebufferColorKey);
 
 	newRenderer.doModulateAlpha(true);
 
@@ -417,6 +424,17 @@ uint32_t gl_draw_text(uint32_t x, uint32_t y, uint32_t color, uint32_t alpha, ch
 	return true;
 }
 
+// The current field's model scale (from its model loader data), or 0 when no field is loaded
+float gl_get_field_model_scale()
+{
+	byte *level_data = *ff7_externals.field_level_data_pointer;
+	if (!level_data) return 0.0f;
+
+	uint32_t model_loader_offset = *(uint32_t *)(level_data + 0x0E);
+	auto pScale = (short*)(level_data + model_loader_offset + 0x8);
+	return static_cast<float>((*pScale)) / 128.0f;
+}
+
 // Every texture slot is set for every part, so a part never samples the previous part's textures.
 // A part without a base color texture is drawn with its material color instead of being discarded.
 static void gl_use_external_mesh_textures(const Shape& shape)
@@ -437,18 +455,14 @@ static void gl_use_external_mesh_textures(const Shape& shape)
 }
 
 void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightdata)
-{	
+{
 	if(gl_defer_external_mesh(externalMesh, lightdata)) return;
 
-	byte *level_data = *ff7_externals.field_level_data_pointer;
-	if (!level_data)
+	auto scale = gl_get_field_model_scale();
+	if (scale == 0.0f)
 	{
 		return;
 	}
-
-	uint32_t model_loader_offset = *(uint32_t *)(level_data + 0x0E);
-	auto pScale = (short*)(level_data + model_loader_offset + 0x8);
-	auto scale = static_cast<float>((*pScale)) / 128.0f;
 
 	std::array<struct matrix, MAX_BONE_MATRICES> matrix_palette;
 	size_t jointCount = 0;

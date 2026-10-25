@@ -20,6 +20,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 #include "vibration.h"
+#include "esc_menu.h"
 #include "../ff8.h"
 #include "../log.h"
 #include "../patch.h"
@@ -39,6 +40,8 @@ int ff8_vibrate_capability(int port)
 int ff8_game_is_paused(int callback)
 {
 	if (trace_all) ffnx_trace("%s callback=%p\n", __func__, callback);
+
+	if (ff8_esc_menu_is_open()) return ff8_esc_menu_pause_screen(callback);
 
 	if (nxVibrationEngine.canRumble())
 	{
@@ -221,6 +224,8 @@ int ff8_set_vibration(const uint8_t *data, int set, int intensity)
 
 ff8_draw_menu_sprite_texture_infos *alternate_pause_battle(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos)
 {
+	if (ff8_esc_menu_is_open()) return ff8_esc_menu_battle_pause_window(a1, draw_infos);
+
 	if (nxVibrationEngine.canRumble())
 	{
 		uint16_t keyon = *(uint16_t *)(*(int *)ff8_externals.battle_menu_state + 0x14);

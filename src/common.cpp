@@ -83,6 +83,7 @@
 #include "ff8/ambient.h"
 #include "ff8/file.h"
 #include "ff8/remaster.h"
+#include "ff8/fonts.h"
 
 #include "wine.h"
 
@@ -313,54 +314,54 @@ void ffnx_log_current_pc_specs()
 	// CPU
 	try
 	{
-		auto cpus = hwinfo::getAllCPUs();
-		for (const auto& cpu : cpus) {
-			ffnx_info("   CPU: %s\n", cpu.modelName().c_str());
+		const auto cpus = hwinfo::cpus();
+		for (const auto& cpu : *cpus) {
+			ffnx_info("   [CPU]: %s\n", cpu.model.c_str());
 		}
 	}
 	catch (const std::exception& e)
 	{
-		ffnx_info("   CPU: Unknown\n");
+		ffnx_info("   [CPU]: Unknown\n");
 	}
 
 	// GPU
 	try
 	{
-		auto gpus = hwinfo::getAllGPUs();
-		for (auto& gpu : gpus) {
-			uint16_t vendorId = std::stoi(gpu.vendor_id(), 0, 16), deviceId = std::stoi(gpu.device_id(), 0, 16);
+		const auto gpus = hwinfo::gpus();
+		for (const auto& gpu : *gpus) {
+			uint16_t vendorId = gpu.pci->vendor_id, deviceId = gpu.pci->device_id;
 			if (
 				(newRenderer.getCaps()->vendorId == vendorId && newRenderer.getCaps()->deviceId == deviceId) ||
 				(newRenderer.getCaps()->vendorId == vendorId && renderer_backend == RENDERER_BACKEND_OPENGL)
 			)
-				ffnx_info("   GPU: %s @ %d Mhz (Dedicated: %d MB / Shared: %d MB) [%s @ %s]\n", gpu.name().c_str(), (int)(gpu.frequency_hz() / 1000.0 / 1000.0), (int)(gpu.dedicated_memory_Bytes() / 1024.0 / 1024.0), (int)(gpu.shared_memory_Bytes() / 1024.0 / 1024.0), newRenderer.currentRenderer.c_str(), gpu.driverVersion().c_str());
+				ffnx_info("   [GPU]: %s @ %d Mhz (Dedicated: %d GB / Shared: %d GB) [%s @ %s]\n", gpu.name.c_str(), (int)(gpu.max_frequency->to(hwinfo::FrequencyUnit::MHz)), (int)(gpu.dedicated_memory->to(hwinfo::ByteUnit::GB)), (int)(gpu.shared_memory->to(hwinfo::ByteUnit::GB)), newRenderer.currentRenderer.c_str(), gpu.driver_version.value().c_str());
 		}
 	}
 	catch (const std::exception& e)
 	{
-		ffnx_info("   GPU: Unknown\n");
+		ffnx_info("   [GPU]: Unknown\n");
 	}
 
 	// RAM
 	try
 	{
-		hwinfo::Memory memory;
-		ffnx_info("   RAM: %dMB/%dMB (Free: %dMB)\n", (int)((memory.size() - memory.free()) / 1024.0 / 1024.0), (int)(memory.size() / 1024.0 / 1024.0), (int)(memory.free() / 1024.0 / 1024.0));
+		const auto memory = hwinfo::memory();
+		ffnx_info("   [RAM]: Used: %d GB / Total: %d GB (Free: %d GB)\n", (int)(std::optional<hwinfo::Bytes>(memory->total - memory->free)->to(hwinfo::ByteUnit::GiB)), (int)(std::optional<hwinfo::Bytes>(memory->total)->to(hwinfo::ByteUnit::GiB)), (int)(std::optional<hwinfo::Bytes>(memory->free)->to(hwinfo::ByteUnit::GiB)));
 	}
 	catch (const std::exception& e)
 	{
-		ffnx_info("   RAM: Unknown\n");
+		ffnx_info("   [RAM]: Unknown\n");
 	}
 
 	// OS
 	try
 	{
-		hwinfo::OS os;
-		ffnx_info("    OS: %s %s (build %s)\n", os.name().c_str(), (os.is32bit() ? "32 bit" : "64 bit"), os.version().c_str());
+		const auto os = hwinfo::os();
+		ffnx_info("    [OS]: %s %s %s (build %s, kernel %s)\n", os->name.c_str(), os->marketing_name.c_str(), (os->bits == 32 ? "32-bit" : "64-bit"), os->version.c_str(), os->kernel.c_str());
 	}
 	catch (const std::exception& e)
 	{
-		ffnx_info("   OS: Unknown\n");
+		ffnx_info("    [OS]: Unknown\n");
 	}
 
 	// WINE+PROTON
@@ -369,17 +370,17 @@ void ffnx_log_current_pc_specs()
 	{
 		try
 		{
-			ffnx_info("  WINE: v%s\n", GetWineVersion());
+			ffnx_info("  [WINE]: v%s\n", GetWineVersion());
 
 			const std::regex proton_regex("([Pp]roton[\\s\\-\\w.()]+)");
 			std::smatch base_match;
 			std::string s_wineloader = std::string(env_wineloader);
 			if (std::regex_search(s_wineloader, base_match, proton_regex))
-				ffnx_info("PROTON: %s\n", base_match[1].str().c_str());
+				ffnx_info("  [PROTON]: %s\n", base_match[1].str().c_str());
 		}
 		catch (const std::exception& e)
 		{
-			ffnx_info("   WINE: Unknown\n");
+			ffnx_info("  [WINE]: Unknown\n");
 		}
 	}
 
@@ -1055,6 +1056,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 					if (ff8_remastered_edition) {
 						ff8_remaster_init();
 					}
+					fonts_init();
 					if (widescreen_enabled)
 					{
 						*ff8_externals.current_viewport_x_dword_1A7764C = wide_viewport_x;

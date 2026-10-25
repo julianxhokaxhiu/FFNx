@@ -373,6 +373,20 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
         skins.push_back(outSkin);
     }
 
+    // The skeleton's root node is the non-joint parent of its top joint. Its channels carry the root motion
+    // (the height that stands the model on the floor, moves like jumps)
+    cgltf_node* rootNode = nullptr;
+    if (data->skins_count > 0)
+    {
+        const cgltf_skin& skin = data->skins[0];
+        for (size_t j = 0; j < skin.joints_count && rootNode == nullptr; j++)
+        {
+            cgltf_node* parent = skin.joints[j]->parent;
+            if (parent != nullptr && std::find(skin.joints, skin.joints + skin.joints_count, parent) == skin.joints + skin.joints_count)
+                rootNode = parent;
+        }
+    }
+
     for (size_t i = 0; i < data->animations_count; i++)
     {
         cgltf_animation anim = data->animations[i];
@@ -402,9 +416,26 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
                 }
             }
 
-            if(targetJointIndex == -1) continue;
-
             float* samplerBuffer = (float*)((char*)channel.sampler->output->buffer_view->buffer->data + channel.sampler->output->buffer_view->offset);
+
+            if(targetJointIndex == -1)
+            {
+                if (rootNode != nullptr && channel.target_node == rootNode)
+                {
+                    if (channel.target_path == cgltf_animation_path_type_translation)
+                    {
+                        for (int k = 0; k < channel.sampler->output->count; ++k)
+                            outAnim.rootTranslation.push_back({ samplerBuffer[k * 3 + 0], samplerBuffer[k * 3 + 1], samplerBuffer[k * 3 + 2] });
+                    }
+                    else if (channel.target_path == cgltf_animation_path_type_rotation)
+                    {
+                        for (int k = 0; k < channel.sampler->output->count; ++k)
+                            outAnim.rootRotation.push_back({ samplerBuffer[k * 4 + 0], samplerBuffer[k * 4 + 1], samplerBuffer[k * 4 + 2], samplerBuffer[k * 4 + 3] });
+                    }
+                }
+
+                continue;
+            }
         
             KeyFrame& outKeyFrame = outAnim.keyFrames[targetJointIndex];
             if (channel.target_path == cgltf_animation_path_type_translation)
@@ -604,4 +635,43 @@ int ExternalMesh::getFrameInterval(std::string tex_name)
     }
 
     return 0;
+}
+
+// Builds the game's root matrix for this frame (as its root animation would) from the gltf root node's keys.
+// translationScale converts gltf units to the game's, normally the scale the mesh is drawn with.
+// Returns false when the animation doesn't animate the root node, so the game's own root motion is used.
+bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, float translationScale, struct matrix* outMatrix)
+{
+    auto it = animations.find(animName);
+    if (it == animations.end()) return false;
+
+    const Animation& anim = it->second;
+    if (anim.rootTranslation.empty() || anim.rootRotation.empty()) return false;
+
+    const auto& t = anim.rootTranslation[std::clamp(frame, 0, static_cast<int>(anim.rootTranslation.size()) - 1)];
+    const auto& q = anim.rootRotation[std::clamp(frame, 0, static_cast<int>(anim.rootRotation.size()) - 1)];
+
+    // glTF rotation as a column-vector matrix
+    float r[3][3] = {
+        { 1 - 2 * (q.y * q.y + q.z * q.z), 2 * (q.x * q.y - q.z * q.w), 2 * (q.x * q.z + q.y * q.w) },
+        { 2 * (q.x * q.y + q.z * q.w), 1 - 2 * (q.x * q.x + q.z * q.z), 2 * (q.y * q.z - q.x * q.w) },
+        { 2 * (q.x * q.z - q.y * q.w), 2 * (q.y * q.z + q.x * q.w), 1 - 2 * (q.x * q.x + q.y * q.y) }
+    };
+
+    // glTF -> game: a 180 degree turn around Z (X and Y mirrored) for both the rotation and the translation.
+    // The game's matrices are row-vector, so the rotation is stored transposed.
+    const float flip[3] = { -1.0f, -1.0f, 1.0f };
+    for (int row = 0; row < 3; ++row)
+        for (int col = 0; col < 3; ++col)
+            outMatrix->m[col][row] = flip[row] * r[row][col];
+
+    outMatrix->_14 = 0.0f;
+    outMatrix->_24 = 0.0f;
+    outMatrix->_34 = 0.0f;
+    outMatrix->_41 = -t.x * translationScale;
+    outMatrix->_42 = -t.y * translationScale;
+    outMatrix->_43 = t.z * translationScale;
+    outMatrix->_44 = 1.0f;
+
+    return true;
 }

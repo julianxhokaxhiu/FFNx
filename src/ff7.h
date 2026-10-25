@@ -2853,6 +2853,18 @@ struct ff7_channel_6_state
 	float panning;
 };
 
+struct ff7_swirl_animation
+{
+	vector4<short> rotation;
+	vector4<int> scale;
+	int field_1144;
+	int velocity;
+	int frame_count;
+	int field_1150;
+	int fade;
+};
+static_assert(sizeof(ff7_swirl_animation) == 0x2C);
+
 // memory addresses and function pointers from FF7.exe
 struct ff7_externals
 {
@@ -3763,6 +3775,9 @@ struct ff7_externals
 	uint32_t swirl_loop_sub_4026D4;
 	uint32_t swirl_enter_40164E;
 	uint32_t swirl_enter_sub_401810;
+	vector4<short> (*swirl_grid)[9];
+	ff7_swirl_animation *swirl_animation;
+	int (*swirl_draw_quad)(const uint8_t *, ff7_graphics_object *);
 
 	uint32_t field_culling_model_639252;
 	uint32_t field_sub_63AC66;

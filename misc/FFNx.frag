@@ -68,6 +68,7 @@ uniform vec4 gameScriptedLightColor;
 #define isAlphaGEqual abs(FSAlphaFlags.y - 6.0) < 0.00001
 
 #define doAlphaTest FSAlphaFlags.z > 0.0
+#define fbTextureColorKey FSAlphaFlags.w > 0.0
 
 
 // ---
@@ -96,6 +97,9 @@ void main()
 
         // This stanza pertains to 2D textures (aside from YUV movies) and textures on 3D objects if advanced lighting is disabled
         vec4 texture_color = texture2D(tex_0, v_texcoord0.xy);
+
+        // Captured RGB surfaces have no alpha, regardless of render-target alpha.
+        if (isFBTexture) texture_color.a = 1.0;
 
         if (doAlphaTest)
         {
@@ -143,19 +147,16 @@ void main()
         if (isNotFBTexture && texture_color.a == 0.0) discard;
         if (isFBTexture)
         {
-            if(all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
+            if (fbTextureColorKey && all(equal(texture_color.rgb, vec3_splat(0.0)))) discard;
 
-            // This was previously in gamma space, so linearize again.
-            texture_color.rgb = toLinear(texture_color.rgb);
+            // The original framebuffer modulation operates on encoded RGB.
+            color.rgb = toLinear(v_color0.rgb * texture_color.rgb);
         }
+        else color.rgb *= texture_color.rgb;
 
         // multiply by v_color0
-        if (modulateAlpha) color *= texture_color;
-        else
-        {
-            color.rgb *= texture_color.rgb;
-            color.a = texture_color.a;
-        }
+        if (modulateAlpha) color.a *= texture_color.a;
+        else color.a = texture_color.a;
 
     } //end if (isTexture)
 

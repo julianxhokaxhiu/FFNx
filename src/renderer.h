@@ -282,6 +282,7 @@ private:
         bool bTexturesBound = false;
 
         bool bHasDrawBeenDone = false;
+        bool bHasColorClearBeenDone = false;
 
         bool bDoAlphaTest = false;
         float alphaRef = 0.0f;
@@ -293,6 +294,7 @@ private:
 
         bool bIsTLVertex = false;
         bool bIsFBTexture = false;
+        bool bFBTextureColorKey = false;
         bool bIsTexture = false;
         bool bDoTextureFiltering = false;
         bool bDoMirrorTextureWrap = false;
@@ -554,7 +556,7 @@ public:
     void isTLVertex(bool flag = false);
     void setBlendMode(RendererBlendMode mode = RendererBlendMode::BLEND_NONE);
     void isTexture(bool flag = false);
-    void isFBTexture(bool flag = false);
+    void isFBTexture(bool flag = false, bool colorKey = false);
     void isFullRange(bool flag = false);
     void doModulateAlpha(bool flag = false);
     void doTextureFiltering(bool flag = false);

@@ -18,6 +18,9 @@
 - Core: Add support for [Universal Button Prompts](docs/ff7/universal_buttons.md)
 - Core: Add support for Field text window autoresize for all languages
 - Core: Add 2026 multilanguage support for DE, FR and SP editions
+- Core: Fix battle swirl battle effect to correctly match the software renderer
+- 60FPS: Interpolate native battle swirl transforms and fading while keeping the original speed
+- Widescreen: Fix battle swirl to correctly capture the widescreen content instead of the original 4:3
 - Lighting: Minor adjustment to ambient light and shadow map resolution default values ( https://github.com/julianxhokaxhiu/FFNx/pull/1007 )
 - Core: Fix a crash on exit after the world map loaded gltf models ( https://github.com/julianxhokaxhiu/FFNx/pull/1004 )
 - Renderer: Draw untextured gltf model parts with their material color ( https://github.com/julianxhokaxhiu/FFNx/pull/1003 )
@@ -29,17 +32,26 @@
 - Renderer: Fix gltf model parts drawn flat-shaded or twice with advanced lighting ( https://github.com/julianxhokaxhiu/FFNx/pull/1011 )
 - Core: Log gltf models that fail to load, and their load time with `trace_loaders` ( https://github.com/julianxhokaxhiu/FFNx/pull/1012 )
 - Core: Fix a memory leak in the model draw with external meshes enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/1008 )
+- Renderer: Skin the normals of smooth-skinned gltf models, so game lighting follows their pose ( https://github.com/julianxhokaxhiu/FFNx/pull/1010 )
+- Core: gltf models follow the animation's root motion, from the gltf when it has its own ( https://github.com/julianxhokaxhiu/FFNx/pull/1044 )
 
 ## FF8
 
+- Core: Add extended item definitions and 24 inventory pages, with persistent save-tail inventory storage (see [item documentation](docs/ff8/items.md)) ( https://github.com/julianxhokaxhiu/FFNx/pull/1051 )
 - Core: Extend the battle actor sound table through c0m199 ( https://github.com/julianxhokaxhiu/FFNx/pull/999 )
+- Core: Give monsters c0m144-c0m199 their own Scan camera framing, editable through the `battle_scan_cameras.bin` exe data file ( https://github.com/julianxhokaxhiu/FFNx/pull/1045 )
 - Core: Show "Has nothing" instead of "[Card]" when a monster has an empty Draw list
 - Core: Add monster-AI `target` opcode values 228-248 to target two battle slots at once ( https://github.com/julianxhokaxhiu/FFNx/pull/961 )
+- Core: Load battle effect cameras from `<direct_mode_path>/exe/effect_NNN.bcam`, one file per effect ( [docs](docs/ff8/mods/effect_camera.md) )
 - Core: Add support for remastered version, [see manual](https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/how_to_install.md#remastered-release) for more informations ( https://github.com/julianxhokaxhiu/FFNx/pull/887 https://github.com/julianxhokaxhiu/FFNx/pull/977 https://github.com/julianxhokaxhiu/FFNx/pull/979 )
 - Core: Fix IT and DE versions crashing on launch ( https://github.com/julianxhokaxhiu/FFNx/pull/957 )
 - Core: Fix crash when entering battle in JP version ( https://github.com/julianxhokaxhiu/FFNx/pull/1022 )
+- Core: Support extended kernel.bin abilities (up to 128), battle commands (up to 176) and command ability data (up to 255), including ability removal, reserved command slots and a full typed kernel mapping, [see manual](docs/ff8/kernel_abilities.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/1016 )
 - Core: Support kernel.bin Magic sections beyond the vanilla 57 spells, unlocking ids 57-63 and 96-255 (64-95 reserved for GFs) ( https://github.com/julianxhokaxhiu/FFNx/pull/956 )
 - Core: Unlock unused battle monster models c0m144-c0m199 (EN/FR/DE/IT/SP/JP), selectable via `enemy_com_value` 160-215 in scene.out ( https://github.com/julianxhokaxhiu/FFNx/pull/955 )
+- Core: Add an Esc menu to return to the game, restart it or exit it ( https://github.com/julianxhokaxhiu/FFNx/pull/1019 )
+- Core: Fix normal and boss battle transition animations
+- Renderer: Fix frozen battle-end transitions and stale-frame wobbling ( https://github.com/julianxhokaxhiu/FFNx/issues/1021 )
 - Achievements: Add support for remastered achievements
 - Audio: Add a Sound screen to the Config menu, to set the sound effects, music, voice, ambient and movie volumes in game ( https://github.com/julianxhokaxhiu/FFNx/pull/1015 )
 - Direct mode: Optionally add the language prefix to the path for multi-language mods ( https://github.com/julianxhokaxhiu/FFNx/pull/898 )
@@ -47,14 +59,16 @@
 - Exe data: Ensure files loaded only once ( https://github.com/julianxhokaxhiu/FFNx/pull/898 )
 - External textures: Disable texture filtering in worldmap when filtering is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/954 )
 - External textures: Change texture color for model field external textures, depending on the current map ( https://github.com/julianxhokaxhiu/FFNx/pull/981 )
+- Japanese support: Add ability to use Japanese data with a non-jp exe ( https://github.com/julianxhokaxhiu/FFNx/pull/844 )
 - Widescreen: Fix text dialogues in battles when using 16:9 ( https://github.com/julianxhokaxhiu/FFNx/pull/960 )
 - Movie: Add support for Music/Voice layer for external movies
 - Movie: Fix field models and scripts running too fast on top of movies above 15 FPS, models move smoothly between the 15 FPS steps
 - Voice: Add main character and enemy voice actions (attack, magic, etc.)
+- Widescreen: Refine 16:9 mode by unlocking true 16:9 for 3D scenes while keeping 4:3 for the remaining ones until they can be ported natively
 
 ## FF8 Remastered
 
-- Add support for multi language switch ( https://github.com/julianxhokaxhiu/FFNx/pull/982 )
+- Add support for multi language switch ( https://github.com/julianxhokaxhiu/FFNx/pull/982 https://github.com/julianxhokaxhiu/FFNx/pull/844 )
 
 # 1.24.3
 
