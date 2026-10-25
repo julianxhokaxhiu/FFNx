@@ -1814,57 +1814,11 @@ static bool ff8_is_widescreen_mode(uint32_t mode)
 		|| mode == MODE_MENU || mode == MODE_MAIN_MENU;
 }
 
-void ff8_flip(struct game_obj *game_object)
+void ff8_clear(uint32_t clear_color, uint32_t clear_depth, uint32_t unknown, struct game_obj *game_object)
 {
-	if (widescreen_enabled && !ff8_is_widescreen_mode(getmode_cached()->driver_mode))
-	{
-		// Cover overflow and retained pixels only after all game geometry has been drawn.
-		gl_draw_sorted_deferred();
-
-		const float left = wide_viewport_x;
-		const float right = wide_viewport_x + wide_viewport_width;
-		const float width = game_width;
-		const float height = game_height;
-		struct nvertex vertices[] = {
-			{left, 0.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
-			{left, height, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
-			{0.0f, 0.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
-			{0.0f, height, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
-			{width, 0.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
-			{width, height, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
-			{right, 0.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
-			{right, height, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
-		};
-		WORD indices[] = {0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6};
-		const bool is_field_mode = getmode_cached()->driver_mode == MODE_FIELD;
-		struct nvertex field_letterbox_vertices[] = {
-			{left, 0.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
-			{right, 0.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
-			{left, 16.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
-			{right, 16.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
-			{left, height - 16.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
-			{right, height - 16.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
-			{left, height, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
-			{right, height, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
-		};
-		WORD field_letterbox_indices[] = {0, 2, 1, 1, 2, 3, 4, 6, 5, 5, 6, 7};
-
-		struct driver_state saved_state;
-		gl_save_state(&saved_state);
-		gl_bind_texture_set(nullptr);
-		gl_set_blend_func(RendererBlendMode::BLEND_NONE);
-		internal_set_renderstate(V_DEPTHTEST, 0, game_object);
-		internal_set_renderstate(V_DEPTHMASK, 0, game_object);
-		internal_set_renderstate(V_ALPHATEST, 0, game_object);
-		internal_set_renderstate(V_NOCULL, 1, game_object);
-		internal_set_renderstate(V_WIREFRAME, 0, game_object);
-		gl_draw_indexed_primitive(RendererPrimitiveType::PT_TRIANGLES, TLVERTEX, vertices, nullptr, 8, indices, 12, nullptr, nullptr, nullptr, 0, 0);
-		if (is_field_mode)
-			gl_draw_indexed_primitive(RendererPrimitiveType::PT_TRIANGLES, TLVERTEX, field_letterbox_vertices, nullptr, 8, field_letterbox_indices, 12, nullptr, nullptr, nullptr, 0, 0);
-		gl_load_state(&saved_state);
-	}
-
-	common_flip(game_object);
+	// Native-size scenes must not retain pixels outside their viewport from a preceding widescreen scene.
+	const bool clear_native_viewport = widescreen_enabled && !ff8_is_widescreen_mode(getmode_cached()->driver_mode);
+	common_clear(clear_color || clear_native_viewport, clear_depth, unknown, game_object);
 }
 
 void* ff8_engine_set_wide_viewport(int x, int y, int w, int h)
@@ -2579,8 +2533,8 @@ struct ff8_gfx_driver *ff8_load_driver(void* _game_object)
 	ret->cleanup = common_cleanup;
 	ret->lock = common_lock;
 	ret->unlock = common_unlock;
-	ret->flip = ff8_flip;
-	ret->clear = common_clear;
+	ret->flip = common_flip;
+	ret->clear = ff8_clear;
 	ret->clear_all= common_clear_all;
 	ret->setviewport = common_setviewport;
 	ret->setbg = common_setbg;

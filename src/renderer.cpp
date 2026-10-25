@@ -1752,7 +1752,7 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
         case MODE_FIELD:
             {
                 // Keep the default scissor for widescreen disabled movies and fields
-                bool isKeepDefaultScissor = false;
+                bool isKeepDefaultScissor = ff8;
                 if (!ff8)
                 {
                      bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
