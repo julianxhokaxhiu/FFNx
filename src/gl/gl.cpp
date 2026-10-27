@@ -456,6 +456,9 @@ static void gl_use_external_mesh_textures(const Shape& shape)
 
 void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightdata)
 {
+	auto shapeCount = externalMesh->shapes.size();
+	if (shapeCount == 0) return;
+
 	if(gl_defer_external_mesh(externalMesh, lightdata)) return;
 
 	auto scale = gl_get_field_model_scale();
@@ -584,11 +587,10 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 	}
 
 	// The common and lighting uniforms are set once per model, with the first part's textures picked
-	if (externalMesh->shapes.size() > 0) gl_use_external_mesh_textures(externalMesh->shapes[0]);
+	gl_use_external_mesh_textures(externalMesh->shapes[0]);
 	newRenderer.setCommonUniforms();
 	if (enable_lighting) newRenderer.setLightingUniforms();
 
-	auto shapeCount = externalMesh->shapes.size();
 	int vertexOffset = 0;
 	int indexOffset = 0;
 
