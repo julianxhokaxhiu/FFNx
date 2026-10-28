@@ -15,14 +15,16 @@ Kernel data sections 12 through 18 contain eight-byte ability records. Ability I
 | 14      | Stat percentage |                39 |             19 |             0 |               126 |
 | 15      | Character       |                58 |             20 |             0 |               126 |
 | 16      | Party           |                78 |              5 |             0 |               126 |
-| 17      | GF              |                83 |              9 |             0 |               126 |
+| 17      | GF              |                83 |              9 |             0 |               254 |
 | 18      | Menu            |                92 |             24 |             0 |                32 |
 
-\* Each maximum assumes all other ability sections are reduced to their minimum counts. Only junction ability 0 (None) must remain; other groups may be empty. Junction's maximum includes None. These maxima cannot be used simultaneously. The original 116 abilities leave 12 shared slots; removing original abilities frees more.
+\* Each maximum assumes all other ability sections are reduced to their minimum counts. Only junction ability 0 (None) must remain; other groups may be empty. Junction's maximum includes None. These maxima cannot be used simultaneously. The original 116 abilities leave 139 shared slots; removing original abilities frees more.
 
-The first six sections together can contain at most 127 entries because the menu group must start below ID 128, even when empty. This makes the maximum 126 for any one non-junction, non-menu section after retaining None. A menu entry can occupy the remaining ID 127: for example, 1 junction entry + 126 GF entries + 1 menu entry = 128.
+Ability sections may grow or shrink; keep entry 0 in the junction section because ID 0 means no ability. The combined count must not exceed **255** (IDs 0-254; 255 means no ability). Sections 12-16 together must end below ID 128, so the GF group starts at 127 or below: junction, command and character code compares these IDs with signed byte values. GF and menu abilities may use IDs 128-254. The menu group has an additional **32-entry** limit because its learned capabilities use one 32-bit value. Adding records changes the IDs of every later record; adding in the middle of a group also changes the IDs of its later entries.
 
-Ability sections may grow or shrink; keep entry 0 in the junction section because ID 0 means no ability. The combined count must not exceed **128**: each GF save record has a 128-bit learned-ability mask. The menu group has an additional **32-entry** limit because its learned capabilities use one 32-bit value. Group start IDs must stay below 128; when the menu group is empty, the preceding groups can therefore use at most 127 entries. Adding records changes the IDs of every later record; adding in the middle of a group also changes the IDs of its later entries.
+### Saves
+
+Each GF save record has a 128-bit learned-ability mask for IDs 0-127; FFNx keeps using it unchanged. When the kernel has more than 128 abilities, FFNx learns IDs 128-254 in its own table and writes them to a block in the unused tail of the save file, after the [item](items.md) block. The block repeats the 128-bit masks: when they no longer match the save, for example after the vanilla game saved over it, FFNx ignores the block. A save without the block loads with abilities 128 and above unlearned. The vanilla game ignores the block.
 
 The junction menu builds command candidates from section 13 and passive candidates from sections 14-16, using the current section boundaries during initialization and each menu refresh. Empty ranges produce no candidates.
 
@@ -50,7 +52,7 @@ The GF learns the section 13 ability; that ability grants the section 1 battle c
 
 ## Removing entries
 
-SolomonRing can remove original abilities in sections 12-18, clear GF references to the removed ability and shift later IDs. Cleared learning slots (ability 0, None) do not appear in the GF Learn list. Learned bits beyond the current kernel are also ignored. If the game reloads a changed kernel, the ability records and group bounds refresh with its GF slots and text. This frees shared IDs for other ability sections. Empty groups are supported; GF effects still work when their IDs move below 64. Use a fresh or migrated save after changing IDs.
+SolomonRing can remove original abilities in sections 12-18, clear GF references to the removed ability and shift later IDs. Cleared learning slots (ability 0, None) do not appear in the GF Learn list. Learned bits beyond the current kernel are also ignored. If the game reloads a changed kernel, the ability records and group bounds refresh with its GF slots and text. This frees shared IDs for other ability sections. Empty groups are supported; GF effects work at any ID. Use a fresh or migrated save after changing IDs.
 
 Original battle commands use **Disable command / Reactivate command** in SolomonRing. They retain their slots, settings and command-ability references. Disabled commands remain visible with a locked editing panel; reactivation restores editing and player access. Disabling does not free capacity or shift later IDs. Command 0 remains reserved as the empty action.
 
