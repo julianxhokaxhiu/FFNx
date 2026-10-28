@@ -20,6 +20,7 @@
 /****************************************************************************/
 
 #include "widescreen.h"
+#include "battle/effects.h"
 
 #include "../common.h"
 #include "../ff8.h"
@@ -93,6 +94,8 @@ void* ff8_swirl_set_wide_viewport(int x, int y, int w, int h)
 }
 
 static bool ff8_battle_stage_projection = false;
+static void **ff8_battle_active_effect = nullptr;
+static void *ff8_the_end_effect = nullptr;
 
 int ff8_battle_stage_draw(uint32_t *model, int descriptor, int depth_table, int depth_shift, int output)
 {
@@ -111,6 +114,9 @@ int16_t ff8_battle_world_calc_zoom(int16_t *descriptor, int16_t **vertices, uint
 	const int16_t clip_height = descriptor[13];
 	int16_t *const source_begin = *vertices;
 	uint32_t *const projected_begin = *projected_vertices;
+	// The End's custom scenery uses native Y projection; its actors must use the same coordinates.
+	const bool native_vertical_projection = ff8_battle_active_effect != nullptr
+		&& *ff8_battle_active_effect == ff8_the_end_effect;
 
 	if (getmode_cached()->driver_mode == MODE_BATTLE)
 	{
@@ -175,7 +181,7 @@ int16_t ff8_battle_world_calc_zoom(int16_t *descriptor, int16_t **vertices, uint
 			}
 		}
 	}
-	if (getmode_cached()->driver_mode == MODE_BATTLE && clip_height == 216)
+	if (getmode_cached()->driver_mode == MODE_BATTLE && clip_height == 216 && !native_vertical_projection)
 	{
 		const int clip_top = 8 * descriptor[11];
 		const int source_height = 8 * clip_height;
@@ -332,9 +338,148 @@ int ff8_shop_draw_wide_gil(int menu, int *graphics, int output, int x, int y)
 	return ff8_shop_draw_gil(menu, graphics, output, ff8_shop_wide_panel_x(x, 24), y);
 }
 
+struct ff8_battle_packet_viewport
+{
+	int left, top, right, bottom;
+};
+
+static ff8_battle_packet_viewport ff8_battle_get_packet_viewport(int units)
+{
+	const double scale_x = 320.0 * units / *ff8_externals.ssigpu_viewport_width_dword_B7CBF8;
+	const double scale_y = 240.0 * units / *ff8_externals.ssigpu_viewport_height_dword_B7CBFC;
+	const int x = *ff8_externals.ssigpu_viewport_x_dword_1CA89D8;
+	const int y = *ff8_externals.ssigpu_viewport_y_dword_1CA89DC;
+	return {
+		static_cast<int>(floor((wide_viewport_x - x) * scale_x)),
+		static_cast<int>(floor((wide_viewport_y - y) * scale_y)),
+		static_cast<int>(ceil((wide_viewport_x + wide_viewport_width - x) * scale_x)),
+		static_cast<int>(ceil((wide_viewport_y + wide_viewport_height - y) * scale_y))
+	};
+}
+
+static int (*ff8_the_end_store_triangle)(uint32_t *, uint32_t *, uint32_t *);
+static uint32_t *(*ff8_the_end_store_fourth)(uint32_t *);
+static uint32_t (*ff8_battle_submit_unprojected_quad)(int *, uint32_t *);
+// Projecting a quad's fourth vertex shifts the GTE FIFO, so keep the first three packet coordinates.
+static uint32_t ff8_the_end_projected_vertices[4];
+
+static int ff8_the_end_store_wide_triangle(uint32_t *xy0, uint32_t *xy1, uint32_t *xy2)
+{
+	const int result = ff8_the_end_store_triangle(xy0, xy1, xy2);
+	ff8_the_end_projected_vertices[0] = *xy0;
+	ff8_the_end_projected_vertices[1] = *xy1;
+	ff8_the_end_projected_vertices[2] = *xy2;
+	return result;
+}
+
+static uint32_t *ff8_the_end_store_wide_fourth(uint32_t *xy)
+{
+	uint32_t *const result = ff8_the_end_store_fourth(xy);
+	ff8_the_end_projected_vertices[3] = *xy;
+	return result;
+}
+
+template<uint32_t vertex_count>
+static uint32_t ff8_the_end_clip_polygon()
+{
+	const ff8_battle_packet_viewport viewport = ff8_battle_get_packet_viewport(8);
+	uint32_t outside = 3;
+	for (uint32_t i = 0; i < vertex_count; ++i)
+	{
+		const int x = static_cast<int16_t>(ff8_the_end_projected_vertices[i]);
+		const int y = static_cast<int16_t>(ff8_the_end_projected_vertices[i] >> 16);
+		const uint32_t flags = (x < viewport.left || x > viewport.right ? 1u : 0u)
+			| (y < viewport.top || y > viewport.bottom ? 2u : 0u);
+		outside &= flags;
+	}
+
+	// Preserve native rejection on each axis: wrapped sky polygons must not bridge opposite screen edges.
+	return outside != 0 ? (1u << vertex_count) - 1 : 0;
+}
+
+template<bool bottom>
+static uint32_t ff8_the_end_submit_wide_cinema(int *ordering_table, uint32_t *packet)
+{
+	const ff8_battle_packet_viewport viewport = ff8_battle_get_packet_viewport(1);
+	// Anchor each bar to its screen edge without changing the native animated thickness.
+	const int y_offset = bottom ? viewport.bottom - 216 : viewport.top;
+	for (uint32_t i = 0; i < 4; ++i)
+	{
+		const int x = static_cast<int16_t>(packet[2 + i]);
+		const int y = static_cast<int16_t>(packet[2 + i] >> 16) + y_offset;
+		const int wide_x = x == 0 ? viewport.left : viewport.right;
+		packet[2 + i] = static_cast<uint16_t>(wide_x) | (static_cast<uint32_t>(static_cast<uint16_t>(y)) << 16);
+	}
+	return ff8_battle_submit_unprojected_quad(ordering_table, packet);
+}
+
+static uint32_t ff8_battle_submit_wide_flash(int *ordering_table, uint32_t *packet)
+{
+	const ff8_battle_packet_viewport viewport = ff8_battle_get_packet_viewport(1);
+	for (uint32_t i = 0; i < 4; ++i)
+	{
+		const int x = static_cast<int16_t>(packet[2 + i]);
+		const int y = static_cast<int16_t>(packet[2 + i] >> 16);
+		const int wide_x = x == 0 ? viewport.left : (x == 320 ? viewport.right : x);
+		const int wide_y = y == 0 ? viewport.top : (y == 240 ? viewport.bottom : y);
+		packet[2 + i] = static_cast<uint16_t>(wide_x) | (static_cast<uint32_t>(static_cast<uint16_t>(wide_y)) << 16);
+	}
+	return ff8_battle_submit_unprojected_quad(ordering_table, packet);
+}
+
+static void ff8_the_end_widescreen_init()
+{
+	const uint32_t effect = ff8_externals.func_off_battle_effects_C81774[FF8BattleEffect::TheEnd];
+	ff8_the_end_effect = reinterpret_cast<void *>(get_absolute_value(effect, 0xB));
+	ff8_battle_active_effect = reinterpret_cast<void **>(get_absolute_value(ff8_externals.battle_magic_effect_start_call, 0x7));
+	ff8_the_end_store_triangle = reinterpret_cast<decltype(ff8_the_end_store_triangle)>(get_relative_call(effect, 0x1802));
+	ff8_the_end_store_fourth = reinterpret_cast<decltype(ff8_the_end_store_fourth)>(get_relative_call(effect, 0x1AD5));
+	ff8_battle_submit_unprojected_quad = reinterpret_cast<decltype(ff8_battle_submit_unprojected_quad)>(get_relative_call(effect, 0x9082));
+
+	// Flat, textured and Gouraud primitives, including the subdivided scenery path.
+	for (uint32_t offset : {0x1802u, 0x1A1Du, 0x1CE1u, 0x216Bu, 0x26AEu, 0x28FEu, 0x2C19u, 0x312Au, 0x835Cu})
+		replace_call(effect + offset, ff8_the_end_store_wide_triangle);
+	for (uint32_t offset : {0x1AD5u, 0x222Au, 0x29B6u, 0x31ECu, 0x841Eu})
+		replace_call(effect + offset, ff8_the_end_store_wide_fourth);
+
+	const struct
+	{
+		uint32_t reduction, secondary_test, secondary_size;
+		bool quad, compares_dl;
+	} clips[] = {
+		{0x1882, 0x188B, 8, false, false},
+		{0x1B10, 0x1B1D, 11, true, false},
+		{0x1D68, 0x1D76, 12, false, true},
+		{0x2265, 0x2272, 15, true, false},
+		{0x272E, 0x273B, 12, false, false},
+		{0x29F2, 0x29FF, 15, true, false},
+		{0x2CA3, 0x2CB1, 12, false, true},
+		{0x322A, 0x3238, 15, true, true},
+		{0x845C, 0x846A, 15, true, true}
+	};
+	for (const auto &clip : clips)
+	{
+		// Replace the five-byte outcode reduction, leaving projection, depth and winding checks intact.
+		replace_call_function(effect + clip.reduction, clip.quad ? ff8_the_end_clip_polygon<4> : ff8_the_end_clip_polygon<3>);
+		if (clip.compares_dl)
+			patch_code_byte(effect + clip.reduction + 6, 0xF8); // cmp al, mask instead of cmp dl, mask
+		memset_code(effect + clip.secondary_test, 0x90, clip.secondary_size);
+	}
+
+	replace_call(effect + 0x9082, ff8_the_end_submit_wide_cinema<false>);
+	replace_call(effect + 0x90CD, ff8_the_end_submit_wide_cinema<true>);
+
+	// This shared flash callback emits four quarter-screen quads, not one full-screen primitive.
+	const uint32_t flash_callback = get_absolute_value(effect, 0xCE5);
+	const uint32_t flash_draw = get_absolute_value(flash_callback, 0x19);
+	for (uint32_t offset : {0xB7u, 0xFFu, 0x147u, 0x18Eu})
+		replace_call(flash_draw + offset, ff8_battle_submit_wide_flash);
+}
+
 void ff8_widescreen_hook_init() {
 	if (FF8_US_VERSION)
 	{
+		ff8_the_end_widescreen_init();
 		replace_call(ff8_externals.swirl_enter + 0x111, ff8_swirl_set_wide_viewport);
 		replace_call(ff8_externals.sub_5099D0 + 0xCD, ff8_battle_world_calc_zoom);
 		replace_call(ff8_externals.sub_500870 + 0x760 + 0x15E, ff8_battle_stage_draw);
@@ -398,7 +543,7 @@ void ff8_widescreen_hook_init() {
 	ff8_externals.menu_viewport[2].offset_x = -64.0;
 }
 
-static void ff8_expand_screen_overlay(struct nvertex *vertices, uint32_t vertexcount)
+static void ff8_expand_screen_overlay(struct nvertex *vertices, uint32_t vertexcount, float minimum_height = 0.0f)
 {
 	float min_x = vertices[0]._.x;
 	float max_x = vertices[0]._.x;
@@ -426,7 +571,7 @@ static void ff8_expand_screen_overlay(struct nvertex *vertices, uint32_t vertexc
 		}
 	}
 
-	if(max_x - min_x < game_width) return;
+	if(max_x - min_x < game_width || floor(max_y - min_y) < floor(minimum_height)) return;
 
 	float wide_min_x = min_x < wide_viewport_x ? min_x : wide_viewport_x;
 	float wide_max_x = max_x > wide_viewport_x + wide_viewport_width ? max_x : wide_viewport_x + wide_viewport_width;
@@ -485,11 +630,13 @@ void ff8_widescreen_adjust_vertices(uint32_t mode, uint32_t vertextype, struct n
 		}
 		if(is_quad_batch)
 		{
+			// A full-width strip is not a full-screen flash (The End's cinema bars share these batches).
+			const float screen_height = *ff8_externals.ssigpu_viewport_height_dword_B7CBFC * (216.0f / 240.0f);
 			for(uint32_t base = 0; base < vertexcount; base += 4)
 			{
 				// Native packets without projection depths use RHW=1; do not widen batched 3D scenery.
 				if(vertexcount == 4 || vertices[base].color.w == 1.0f)
-					ff8_expand_screen_overlay(vertices + base, 4);
+					ff8_expand_screen_overlay(vertices + base, 4, screen_height);
 			}
 		}
 	}

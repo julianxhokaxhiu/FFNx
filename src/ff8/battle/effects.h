@@ -30,6 +30,7 @@ namespace FF8BattleEffect {
         Leviathan = 5,
         Scan = 39,
         Scan2 = 67,
+        TheEnd = 84,
         Tonberry = 89,
         Siren = 94,
         Minimog = 95,
