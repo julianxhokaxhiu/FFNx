@@ -55,6 +55,7 @@ namespace FF8BattleEffect {
         Meteor = 222,
         Carbuncle = 277,
         Pandemona = 290,
+        WhiteWind = 296,
         Diablos = 324,
         GilgameshZantetsukenReverse = 325,
         GilgameshZantetsuken = 326,
