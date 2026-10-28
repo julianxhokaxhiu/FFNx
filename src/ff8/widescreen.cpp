@@ -30,6 +30,7 @@
 #include "../widescreen.h"
 
 #include <cmath>
+#include <initializer_list>
 #include <vector>
 
 static bool ff8_is_widescreen_mode(uint32_t mode)
@@ -357,37 +358,37 @@ static ff8_battle_packet_viewport ff8_battle_get_packet_viewport(int units)
 	};
 }
 
-static int (*ff8_the_end_store_triangle)(uint32_t *, uint32_t *, uint32_t *);
-static uint32_t *(*ff8_the_end_store_fourth)(uint32_t *);
+static int (*ff8_battle_store_triangle)(uint32_t *, uint32_t *, uint32_t *);
+static uint32_t *(*ff8_battle_store_fourth)(uint32_t *);
 static uint32_t (*ff8_battle_submit_unprojected_quad)(int *, uint32_t *);
 // Projecting a quad's fourth vertex shifts the GTE FIFO, so keep the first three packet coordinates.
-static uint32_t ff8_the_end_projected_vertices[4];
+static uint32_t ff8_battle_projected_vertices[4];
 
-static int ff8_the_end_store_wide_triangle(uint32_t *xy0, uint32_t *xy1, uint32_t *xy2)
+static int ff8_battle_store_wide_triangle(uint32_t *xy0, uint32_t *xy1, uint32_t *xy2)
 {
-	const int result = ff8_the_end_store_triangle(xy0, xy1, xy2);
-	ff8_the_end_projected_vertices[0] = *xy0;
-	ff8_the_end_projected_vertices[1] = *xy1;
-	ff8_the_end_projected_vertices[2] = *xy2;
+	const int result = ff8_battle_store_triangle(xy0, xy1, xy2);
+	ff8_battle_projected_vertices[0] = *xy0;
+	ff8_battle_projected_vertices[1] = *xy1;
+	ff8_battle_projected_vertices[2] = *xy2;
 	return result;
 }
 
-static uint32_t *ff8_the_end_store_wide_fourth(uint32_t *xy)
+static uint32_t *ff8_battle_store_wide_fourth(uint32_t *xy)
 {
-	uint32_t *const result = ff8_the_end_store_fourth(xy);
-	ff8_the_end_projected_vertices[3] = *xy;
+	uint32_t *const result = ff8_battle_store_fourth(xy);
+	ff8_battle_projected_vertices[3] = *xy;
 	return result;
 }
 
 template<uint32_t vertex_count>
-static uint32_t ff8_the_end_clip_polygon()
+static uint32_t ff8_battle_clip_polygon()
 {
 	const ff8_battle_packet_viewport viewport = ff8_battle_get_packet_viewport(8);
 	uint32_t outside = 3;
 	for (uint32_t i = 0; i < vertex_count; ++i)
 	{
-		const int x = static_cast<int16_t>(ff8_the_end_projected_vertices[i]);
-		const int y = static_cast<int16_t>(ff8_the_end_projected_vertices[i] >> 16);
+		const int x = static_cast<int16_t>(ff8_battle_projected_vertices[i]);
+		const int y = static_cast<int16_t>(ff8_battle_projected_vertices[i] >> 16);
 		const uint32_t flags = (x < viewport.left || x > viewport.right ? 1u : 0u)
 			| (y < viewport.top || y > viewport.bottom ? 2u : 0u);
 		outside &= flags;
@@ -395,6 +396,27 @@ static uint32_t ff8_the_end_clip_polygon()
 
 	// Preserve native rejection on each axis: wrapped sky polygons must not bridge opposite screen edges.
 	return outside != 0 ? (1u << vertex_count) - 1 : 0;
+}
+
+struct ff8_battle_polygon_clip
+{
+	uint32_t store_triangle, store_fourth, reduction, secondary_test, secondary_size;
+	bool patch_compare;
+};
+
+static void ff8_battle_patch_polygon_clips(uint32_t renderer, std::initializer_list<ff8_battle_polygon_clip> clips)
+{
+	for (const auto &clip : clips)
+	{
+		replace_call(renderer + clip.store_triangle, ff8_battle_store_wide_triangle);
+		if (clip.store_fourth != 0)
+			replace_call(renderer + clip.store_fourth, ff8_battle_store_wide_fourth);
+		// Replace only the screen rejection; retain native projection, depth and winding checks.
+		replace_call_function(renderer + clip.reduction, clip.store_fourth != 0 ? ff8_battle_clip_polygon<4> : ff8_battle_clip_polygon<3>);
+		if (clip.patch_compare)
+			patch_code_byte(renderer + clip.reduction + 6, 0xF8); // cmp al, mask instead of cl/dl
+		memset_code(renderer + clip.secondary_test, 0x90, clip.secondary_size);
+	}
 }
 
 template<bool bottom>
@@ -432,39 +454,22 @@ static void ff8_the_end_widescreen_init()
 	const uint32_t effect = ff8_externals.func_off_battle_effects_C81774[FF8BattleEffect::TheEnd];
 	ff8_the_end_effect = reinterpret_cast<void *>(get_absolute_value(effect, 0xB));
 	ff8_battle_active_effect = reinterpret_cast<void **>(get_absolute_value(ff8_externals.battle_magic_effect_start_call, 0x7));
-	ff8_the_end_store_triangle = reinterpret_cast<decltype(ff8_the_end_store_triangle)>(get_relative_call(effect, 0x1802));
-	ff8_the_end_store_fourth = reinterpret_cast<decltype(ff8_the_end_store_fourth)>(get_relative_call(effect, 0x1AD5));
+	ff8_battle_store_triangle = reinterpret_cast<decltype(ff8_battle_store_triangle)>(get_relative_call(effect, 0x1802));
+	ff8_battle_store_fourth = reinterpret_cast<decltype(ff8_battle_store_fourth)>(get_relative_call(effect, 0x1AD5));
 	ff8_battle_submit_unprojected_quad = reinterpret_cast<decltype(ff8_battle_submit_unprojected_quad)>(get_relative_call(effect, 0x9082));
 
 	// Flat, textured and Gouraud primitives, including the subdivided scenery path.
-	for (uint32_t offset : {0x1802u, 0x1A1Du, 0x1CE1u, 0x216Bu, 0x26AEu, 0x28FEu, 0x2C19u, 0x312Au, 0x835Cu})
-		replace_call(effect + offset, ff8_the_end_store_wide_triangle);
-	for (uint32_t offset : {0x1AD5u, 0x222Au, 0x29B6u, 0x31ECu, 0x841Eu})
-		replace_call(effect + offset, ff8_the_end_store_wide_fourth);
-
-	const struct
-	{
-		uint32_t reduction, secondary_test, secondary_size;
-		bool quad, compares_dl;
-	} clips[] = {
-		{0x1882, 0x188B, 8, false, false},
-		{0x1B10, 0x1B1D, 11, true, false},
-		{0x1D68, 0x1D76, 12, false, true},
-		{0x2265, 0x2272, 15, true, false},
-		{0x272E, 0x273B, 12, false, false},
-		{0x29F2, 0x29FF, 15, true, false},
-		{0x2CA3, 0x2CB1, 12, false, true},
-		{0x322A, 0x3238, 15, true, true},
-		{0x845C, 0x846A, 15, true, true}
-	};
-	for (const auto &clip : clips)
-	{
-		// Replace the five-byte outcode reduction, leaving projection, depth and winding checks intact.
-		replace_call_function(effect + clip.reduction, clip.quad ? ff8_the_end_clip_polygon<4> : ff8_the_end_clip_polygon<3>);
-		if (clip.compares_dl)
-			patch_code_byte(effect + clip.reduction + 6, 0xF8); // cmp al, mask instead of cmp dl, mask
-		memset_code(effect + clip.secondary_test, 0x90, clip.secondary_size);
-	}
+	ff8_battle_patch_polygon_clips(effect, {
+		{0x1802, 0, 0x1882, 0x188B, 8, false},
+		{0x1A1D, 0x1AD5, 0x1B10, 0x1B1D, 11, false},
+		{0x1CE1, 0, 0x1D68, 0x1D76, 12, true},
+		{0x216B, 0x222A, 0x2265, 0x2272, 15, false},
+		{0x26AE, 0, 0x272E, 0x273B, 12, false},
+		{0x28FE, 0x29B6, 0x29F2, 0x29FF, 15, false},
+		{0x2C19, 0, 0x2CA3, 0x2CB1, 12, true},
+		{0x312A, 0x31EC, 0x322A, 0x3238, 15, true},
+		{0x835C, 0x841E, 0x845C, 0x846A, 15, true}
+	});
 
 	replace_call(effect + 0x9082, ff8_the_end_submit_wide_cinema<false>);
 	replace_call(effect + 0x90CD, ff8_the_end_submit_wide_cinema<true>);
@@ -476,10 +481,28 @@ static void ff8_the_end_widescreen_init()
 		replace_call(flash_draw + offset, ff8_battle_submit_wide_flash);
 }
 
+static void ff8_battle_effects_widescreen_init()
+{
+	const uint32_t gilgamesh = ff8_externals.func_off_battle_effects_C81774[FF8BattleEffect::GilgameshZantetsuken];
+	const uint32_t renderer = get_relative_call(gilgamesh, 0xA79);
+	// Shared GTE primitive paths used by Gilgamesh's sky, swords and slash.
+	ff8_battle_patch_polygon_clips(renderer, {
+		{0x116, 0, 0x166, 0x170, 8, true},
+		{0x3D6, 0x43C, 0x45F, 0x46C, 11, false},
+		{0x65B, 0, 0x6A9, 0x6B3, 7, true},
+		{0x884, 0x906, 0x92A, 0x934, 9, true},
+		{0xABD, 0, 0xB0B, 0xB19, 11, true},
+		{0xCB6, 0xD1C, 0xD3F, 0xD4C, 15, false},
+		{0xF7A, 0, 0xFC8, 0xFD6, 11, true},
+		{0x11C4, 0x1246, 0x126A, 0x1278, 13, true}
+	});
+}
+
 void ff8_widescreen_hook_init() {
 	if (FF8_US_VERSION)
 	{
 		ff8_the_end_widescreen_init();
+		ff8_battle_effects_widescreen_init();
 		replace_call(ff8_externals.swirl_enter + 0x111, ff8_swirl_set_wide_viewport);
 		replace_call(ff8_externals.sub_5099D0 + 0xCD, ff8_battle_world_calc_zoom);
 		replace_call(ff8_externals.sub_500870 + 0x760 + 0x15E, ff8_battle_stage_draw);
@@ -643,12 +666,20 @@ void ff8_widescreen_adjust_vertices(uint32_t mode, uint32_t vertextype, struct n
 
 }
 
-void ff8_widescreen_swirl_capture(uint32_t &x, uint32_t &w)
+void ff8_widescreen_framebuffer_capture(uint32_t &x, uint32_t &w)
 {
 	if (widescreen_enabled)
 	{
-		// Match the capture rectangle to the widescreen-scaled swirl geometry.
-		x = std::lround(double(x) * wide_viewport_width / game_width);
-		w = std::lround(double(w) * wide_viewport_width / game_width);
+		if (getmode_cached()->driver_mode == MODE_BATTLE)
+		{
+			// Battle feedback already uses the wide viewport; its origin is relative to the 4:3 canvas.
+			x -= wide_viewport_x;
+		}
+		else
+		{
+			// Match the capture rectangle to the widescreen-scaled swirl geometry.
+			x = std::lround(double(x) * wide_viewport_width / game_width);
+			w = std::lround(double(w) * wide_viewport_width / game_width);
+		}
 	}
 }

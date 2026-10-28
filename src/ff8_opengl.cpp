@@ -704,7 +704,7 @@ void ff8_unload_texture(struct ff8_texture_set *texture_set)
 void swirl_sub_56D390(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
 	static struct tex_header *last_tex_header = 0;
-	ff8_widescreen_swirl_capture(x, w);
+	ff8_widescreen_framebuffer_capture(x, w);
 	struct tex_header *tex_header = make_framebuffer_tex(256, 256, x, y, w, h, false);
 
 	if(last_tex_header) ff8_destroy_tex_header((struct ff8_tex_header *)last_tex_header);
