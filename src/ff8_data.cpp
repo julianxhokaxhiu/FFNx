@@ -268,6 +268,7 @@ void ff8_find_externals()
 
 	ff8_externals.loc_47D490 = ff8_externals.sub_47CCB0 + 0xDA + 0x4 + *((int32_t *)(ff8_externals.sub_47CCB0 + 0xDA));
 	ff8_externals.sub_500870 = get_relative_call(ff8_externals.loc_47D490, 0x85);
+	ff8_externals.battle_exit_sub_4868C0 = get_relative_call(ff8_externals.loc_47D490, 0x1F);
 	ff8_externals.sub_500C00 = get_relative_call(ff8_externals.sub_500870, 0x31);
 	ff8_externals.sub_500CC0 = get_absolute_value(ff8_externals.sub_500C00, 0x9A);
 	if (FF8_US_VERSION)
@@ -1149,6 +1150,8 @@ void ff8_find_externals()
 	ff8_externals.battle_magic_effect_start_call = ff8_externals.sub_50A9A0 + 0x27F;
 	ff8_externals.battle_play_camera_animation_sub_5099A0 = get_relative_call(ff8_externals.func_off_battle_effects_C81774[FF8BattleEffect::Cure], 0xA3);
 	ff8_externals.battle_set_camera_track_sub_509970 = get_relative_call(ff8_externals.battle_play_camera_animation_sub_5099A0, 0x5);
+	ff8_externals.battle_bind_anim_set_sub_5022C0 = get_relative_call(ff8_externals.func_off_battle_effects_C81774[FF8BattleEffect::WhiteWind], 0x76);
+	ff8_externals.battle_set_com_file_data_sub_502270 = get_relative_call(ff8_externals.battle_bind_anim_set_sub_5022C0, 0x2F);
 
 	ff8_externals.sub_6C3640 = get_relative_call(ff8_externals.func_off_battle_effects_C81774[FF8BattleEffect::Quezacotl], 0x5);
 	ff8_externals.sub_6C3760 = get_absolute_value(ff8_externals.sub_6C3640, 0x8B);

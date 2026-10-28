@@ -1276,6 +1276,38 @@ struct ff8_battle_magic_cast_context {
 	uint8_t unk_0B;
 };
 
+// AnimSeq state of a battle model
+struct ff8_battle_anim_sequence_state {
+	uint8_t current_sequence;
+	uint8_t delay;
+	uint8_t base_sequence;
+	uint8_t next_sequence;
+	uint8_t unk_04[0x0E];
+	uint16_t saved_base_sequence;
+};
+
+// Battle model slot (0x9C bytes, one per battle entity)
+struct ff8_battle_entity_state {
+	uint8_t entity_flags;
+	uint8_t status_flags;
+	uint16_t combat_flags; // 0x08: an external anim set is bound
+	uint8_t com_id; // below 0x10: party character
+	uint8_t unk_05[0x5B];
+	uint8_t anim_header[0x0C];
+	uint8_t anim_cmd[0x08];
+	ff8_battle_anim_sequence_state *sequence_state;
+	void *weapon_anim_header;
+	uint8_t unk_7C[0x20];
+};
+
+// Sections a model uses, the anim set bind block holds one per pool (body, then weapon)
+struct ff8_battle_com_file_data {
+	void *skeleton;
+	void *geometry;
+	void *animations;
+	void *sequences;
+};
+
 struct ff8_menu_callback {
 	void (*func)(int);
 	uint32_t field_4;
@@ -1956,6 +1988,9 @@ struct ff8_externals
 	uint32_t battle_magic_effect_start_call; // where sub_50A9A0 calls the loaded effect
 	uint32_t battle_play_camera_animation_sub_5099A0;
 	uint32_t battle_set_camera_track_sub_509970;
+	uint32_t battle_bind_anim_set_sub_5022C0;
+	uint32_t battle_set_com_file_data_sub_502270;
+	uint32_t battle_exit_sub_4868C0;
 	uint32_t sub_571870;
 	DWORD* func_off_battle_effect_textures_50AF93;
 	uint32_t get_battle_effect_buffer_sub_571B50;

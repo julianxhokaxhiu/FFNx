@@ -42,6 +42,7 @@
 - Core: Show "Has nothing" instead of "[Card]" when a monster has an empty Draw list
 - Core: Add monster-AI `target` opcode values 228-248 to target two battle slots at once ( https://github.com/julianxhokaxhiu/FFNx/pull/961 )
 - Core: Load battle effect cameras from `<direct_mode_path>/exe/effect_NNN.bcam`, one file per effect ( [docs](docs/ff8/mods/effect_camera.md) )
+- Core: Load battle anim sets (limit breaks, Blue Magic...) from `<direct_mode_path>/exe/effect_NNN.animset` ( [docs](docs/ff8/mods/battle_anim_sets.md) )
 - Core: Add support for remastered version, [see manual](https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/how_to_install.md#remastered-release) for more informations ( https://github.com/julianxhokaxhiu/FFNx/pull/887 https://github.com/julianxhokaxhiu/FFNx/pull/977 https://github.com/julianxhokaxhiu/FFNx/pull/979 )
 - Core: Fix IT and DE versions crashing on launch ( https://github.com/julianxhokaxhiu/FFNx/pull/957 )
 - Core: Fix crash when entering battle in JP version ( https://github.com/julianxhokaxhiu/FFNx/pull/1022 )
