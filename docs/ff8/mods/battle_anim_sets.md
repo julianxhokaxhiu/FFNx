@@ -39,8 +39,6 @@ Files are read the first time the set is used in a battle, and dropped when the 
 | `effect_228` | Ice Strike | Edea |
 | `effect_261`, `262`, `263` | Desperado, Blood Pain, Massive Anchor | Laguna, Kiros, Ward |
 
-The victory poses (`r0win.dat`) and the GF summon files also bind anim sets, but they are already read from the game files, so they are not concerned.
-
 ## File format
 
 The file is an anim set exactly as the exe stores it. All values are little-endian, and every offset is relative, so a set can be copied out of the exe as it is.
@@ -67,7 +65,7 @@ Set `trace_battle_animation = true` in `FFNx.toml` to log which files are used, 
 
 The animations and sequences can be changed freely: more animations, more frames, longer sequences. They play on the model of the action, so the animations must use the bone count of that model, and the sequences may only start animations that exist in the set. (Massive Anchor, `effect_263`, also carries 8 body animations made for a 2-bone model after Ward's 8: its sequence never plays them.)
 
-FF8UltimateEditor writes every vanilla set as these files from any FF8 exe (Fujin, "Export anim sets"), as they are or converted to 30 fps, and edits them on the character's model (Ifrit, "Exe - Limit anim." tab).
+FF8UltimateEditor allows to create those files.
 
 ## How it works
 
