@@ -65,7 +65,9 @@ A file is ignored, and the vanilla set used, when:
 
 Set `trace_battle_animation = true` in `FFNx.toml` to log which files are used, and why a file is ignored.
 
-The animations and sequences can be changed freely: more animations, more frames, longer sequences. They play on the model of the action, so the animations must use the bone count of that model, and the sequences may only start animations that exist in the set.
+The animations and sequences can be changed freely: more animations, more frames, longer sequences. They play on the model of the action, so the animations must use the bone count of that model, and the sequences may only start animations that exist in the set. (Massive Anchor, `effect_263`, also carries 8 body animations made for a 2-bone model after Ward's 8: its sequence never plays them.)
+
+FF8UltimateEditor writes every vanilla set as these files from any FF8 exe (Fujin, "Export anim sets"), as they are or converted to 30 fps, and edits them on the character's model (Ifrit, "Exe - Limit anim." tab).
 
 ## How it works
 
