@@ -1216,6 +1216,9 @@ void ff8_find_externals()
 		ff8_externals.fps_limiter = get_relative_call(ff8_externals.fps_limiter, 0x0);
 	}
 	ff8_externals.time_volume_change_related_1A78BE0 = (double *)get_absolute_value(ff8_externals.fps_limiter, 0x3F);
+	ff8_externals.menu_main_loop = get_absolute_value(ff8_externals.main_loop, JP_VERSION ? 0x514 : 0x526);
+	ff8_externals.menu_timestamp = (uint64_t *)get_absolute_value(ff8_externals.menu_main_loop, 0x166);
+	ff8_externals.menu_frame_time = (double *)get_absolute_value(ff8_externals.menu_main_loop, 0x18F);
 
 	ff8_externals.field_vars_stack_1CFE9B8 = get_absolute_value(ff8_externals.opcode_pshm_w, 0x1E);
 

@@ -52,6 +52,7 @@
 - Core: Unlock unused battle monster models c0m144-c0m199 (EN/FR/DE/IT/SP/JP), selectable via `enemy_com_value` 160-215 in scene.out ( https://github.com/julianxhokaxhiu/FFNx/pull/955 )
 - Core: Add an Esc menu to return to the game, restart it or exit it ( https://github.com/julianxhokaxhiu/FFNx/pull/1019 )
 - Core: Fix normal and boss battle transition animations
+- Core: Speedhack now works for Menus and Tutorials
 - Renderer: Fix frozen battle-end transitions and stale-frame wobbling ( https://github.com/julianxhokaxhiu/FFNx/issues/1021 )
 - Achievements: Add support for remastered achievements
 - Audio: Add a Sound screen to the Config menu, to set the sound effects, music, voice, ambient and movie volumes in game ( https://github.com/julianxhokaxhiu/FFNx/pull/1015 )

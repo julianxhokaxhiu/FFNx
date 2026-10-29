@@ -1801,6 +1801,15 @@ int ff8_limit_fps()
 		}
 	}
 
+	switch (mode->mode)
+	{
+	case FF8_MODE_MENU:
+	case FF8_MODE_TUTO:
+	case FF8_MODE_11:
+		framerate = 60.0f;
+		break;
+	}
+
 	framerate *= gamehacks.getCurrentSpeedhack();
 	double frame_time = game_object->countspersecond / framerate;
 
@@ -1810,6 +1819,15 @@ int ff8_limit_fps()
 	last_gametime = gametime;
 
 	return 0;
+}
+
+double ff8_menu_limit_fps(time_t *)
+{
+	ff8_limit_fps();
+	common_externals.get_time(ff8_externals.menu_timestamp);
+
+	// Satisfy the native comparison so it does not wait a second time.
+	return *ff8_externals.menu_frame_time;
 }
 
 void ff8_field_3d_models_push_rects(int a1, uint16_t *a2, int a3, int a4)
@@ -2009,6 +2027,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		game_object->countspersecond = (double)game_object->_countspersecond;
 
 		replace_function(ff8_externals.fps_limiter, ff8_limit_fps);
+
+		replace_call(ff8_externals.menu_main_loop + 0x188, ff8_menu_limit_fps);
+		replace_call(ff8_externals.menu_main_loop + 0x1C1, ff8_menu_limit_fps);
 	}
 
 	// Gamepad
