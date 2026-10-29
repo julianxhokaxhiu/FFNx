@@ -24,12 +24,13 @@ class ff8_kernel_file;
 // more than the vanilla 116 entries between them. The seven sections are one
 // contiguous array of 8-byte entries to the exe, indexed by a unified ability
 // id 0..115; growing any of them shifts the ids of every group behind it. The
-// savemap's per-GF learned mask is 128 bits, so the array can reach 128
-// entries - 12 more than vanilla - with no save format change.
+// savemap's per-GF learned mask is 128 bits. IDs 128-254 are learned in an
+// FFNx table and saved in a block of the save image's unused tail; the savemap
+// itself is unchanged.
 //
-// The sections may grow or shrink within 128 IDs; ability zero remains reserved.
-// GF effects scan all 128 learned bits. Completely inert while the
-// loaded kernel.bin is vanilla.
+// The sections may grow or shrink within 255 IDs; ability zero remains reserved.
+// Sections 12-16 must end below ID 128. Completely inert while the loaded
+// kernel.bin is vanilla.
 //
 // Shares AddMoreMagic's kernel.bin load hook: the exe is handed a
 // vanilla-layout image, and the full ability array is kept FFNx-side.

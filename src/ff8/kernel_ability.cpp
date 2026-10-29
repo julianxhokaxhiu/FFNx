@@ -17,6 +17,7 @@
 #include "kernel_ability.h"
 #include "kernel_magic.h"
 #include "kernel.h"
+#include "item_inventory.h"
 
 #include "../ff8.h"
 #include "../patch.h"
@@ -34,8 +35,12 @@
 // kernel sections. See docs/ff8/kernel_abilities.md for the file and save limits.
 
 #define ABILITY_ENTRY_SIZE sizeof(ff8_kernel_ability)
-// The savemap's per-GF learned-ability bitfield is 16 bytes wide.
-#define MAX_ABILITY_COUNT          128
+// Ability IDs are bytes, and 0xFF means "no ability" in the battle results.
+#define MAX_ABILITY_COUNT          255
+// The savemap's per-GF learned-ability bitfield is 16 bytes wide. IDs past it
+// are learned in FFNx's own table and saved in a block of the save image.
+#define NATIVE_ABILITY_COUNT       128
+#define LEARNED_BYTES              32
 #define VANILLA_ABILITY_COUNT      116
 #define ABILITY_GROUP_COUNT        7
 // Ability block start, relative to the kernel.bin buffer.
@@ -81,6 +86,13 @@ static_assert(sizeof(ff8_kernel_menu_range_check) == 13);
 
 enum ability_layout { ABILITY_LAYOUT_US, ABILITY_LAYOUT_LATIN, ABILITY_LAYOUT_JP };
 
+// Every operand addressing the savemap learned bitfield (SG GF +0x14), and every
+// loop end one past the 16th GF record, relative to BuildGFAbilityList. The
+// first operand is in BattleResult_Init, which also reads the GF's exists and
+// learning bytes through the same pointer.
+#define LEARNED_OPERAND_COUNT      21
+#define LEARNED_END_COUNT          11
+
 struct ability_layout_offsets
 {
 	uint32_t menu_mask_call;
@@ -98,6 +110,15 @@ struct ability_layout_offsets
 	int32_t call_shop_list;
 	int32_t draw_list_row;
 	uint32_t popup_chain[ABILITY_GROUP_COUNT - 1];
+	// Abilities past ID 127.
+	int32_t demo_apply_save;
+	int32_t demo_restore_save;
+	uint32_t popup_name_call;
+	uint32_t popup_icon_call;
+	uint32_t load_save_call;
+	uint32_t new_game_call;
+	int32_t learned_operands[LEARNED_OPERAND_COUNT];
+	int32_t learned_ends[LEARNED_END_COUNT];
 };
 
 static const ability_layout_offsets ability_layouts[] = {
@@ -118,6 +139,15 @@ static const ability_layout_offsets ability_layouts[] = {
 		.call_shop_list = 0x3AC30,
 		.draw_list_row = 0x3BCF0,
 		.popup_chain = { 0x059, 0x068, 0x077, 0x086, 0x095, 0x0A6 },
+		.demo_apply_save = 0x1CE70,
+		.demo_restore_save = 0x1E230,
+		.popup_name_call = 0x028,
+		.popup_icon_call = 0x197,
+		.load_save_call = 0x1E8E,
+		.new_game_call = 0x1371,
+		.learned_operands = { -0x6122, 0x63, 0x634D, 0x27AE6, 0x2D811, 0x2D87D, 0x31222, 0x31ADD, 0x32838, 0x32F4E, 0x33558,
+			0x335D8, 0x337F9, 0x4E52D, 0x4E53C, 0x4E5AB, 0x4E5B1, 0x4FBC5, 0x4FBCC, 0x4FC64, 0x4FC6B },
+		.learned_ends = { 0x63A4, 0x2D842, 0x2D910, 0x312AC, 0x31B65, 0x328C9, 0x32FB2, 0x33589, 0x33605, 0x3383C, 0x4E5E3 },
 	},
 	// DE, ES, FR, IT
 	{
@@ -136,6 +166,15 @@ static const ability_layout_offsets ability_layouts[] = {
 		.call_shop_list = 0x3AC70,
 		.draw_list_row = 0x3BD30,
 		.popup_chain = { 0x059, 0x068, 0x077, 0x086, 0x095, 0x0A6 },
+		.demo_apply_save = 0x1CE70,
+		.demo_restore_save = 0x1E230,
+		.popup_name_call = 0x028,
+		.popup_icon_call = 0x197,
+		.load_save_call = 0x1ED2,
+		.new_game_call = 0x1371,
+		.learned_operands = { -0x6122, 0x63, 0x634D, 0x27AE6, 0x2D811, 0x2D87D, 0x31222, 0x31ADD, 0x32838, 0x32F4E, 0x33558,
+			0x335D8, 0x337F9, 0x4E56D, 0x4E57C, 0x4E5EB, 0x4E5F1, 0x4FC05, 0x4FC0C, 0x4FCA4, 0x4FCAB },
+		.learned_ends = { 0x63A4, 0x2D842, 0x2D910, 0x312AC, 0x31B65, 0x328C9, 0x32FB2, 0x33589, 0x33605, 0x3383C, 0x4E623 },
 	},
 	// JP, JP_NV
 	{
@@ -154,6 +193,15 @@ static const ability_layout_offsets ability_layouts[] = {
 		.call_shop_list = 0x3A870,
 		.draw_list_row = 0x3B900,
 		.popup_chain = { 0x041, 0x04E, 0x05D, 0x06C, 0x07B, 0x08C },
+		.demo_apply_save = 0x1CDC0,
+		.demo_restore_save = 0x1E180,
+		.popup_name_call = 0x01B,
+		.popup_icon_call = 0x186,
+		.load_save_call = 0x1F8C,
+		.new_game_call = 0x13E9,
+		.learned_operands = { -0x61D2, 0x63, 0x635D, 0x27966, 0x2D5B1, 0x2D61D, 0x30FC2, 0x3187D, 0x325D8, 0x32CEE, 0x332F8,
+			0x33378, 0x33599, 0x4DEEF, 0x4DEFE, 0x4DF6D, 0x4DF73, 0x4F545, 0x4F54C, 0x4F5E4, 0x4F5EB },
+		.learned_ends = { 0x63B4, 0x2D5E2, 0x2D6B0, 0x3104C, 0x31905, 0x32669, 0x32D52, 0x33329, 0x333A5, 0x335DC, 0x4DFA5 },
 	},
 };
 
@@ -224,6 +272,22 @@ static struct
 	uint32_t command_candidates;    // {id, group}[20] the junction menu builds
 	uint32_t passive_candidates;    // {id, group}[48], right behind it
 	uint32_t menu_candidates;       // field menu ability ids, 24 bytes in vanilla
+
+	// Abilities past ID 127.
+	uint32_t fn_battle_result;      // BattleResult_Init
+	uint32_t fn_demo_apply_save;    // tutorial demo: mock save over the savemap
+	uint32_t fn_demo_restore_save;  // tutorial demo: real save back
+	uint32_t fn_gf_level;           // GetGFLevelFromExperience(exp, gf)
+	uint32_t fn_gf_hp;              // getGFhpForLvl(level, gf)
+	uint8_t *gf_battle_stats;       // 12 bytes per GF, filled by computeGFBattleStats
+	uint32_t battle_result_call;
+	uint32_t demo_apply_call;
+	uint32_t demo_restore_call;
+	uint32_t popup_name_call;
+	uint32_t popup_icon_call;
+	uint32_t save_image_calls[2];
+	uint32_t load_save_call;
+	uint32_t new_game_call;
 } ability_ext;
 
 static ff8_kernel_ability ff8_ability_table[MAX_ABILITY_COUNT];
@@ -236,6 +300,74 @@ static uint8_t ff8_menu_candidates[MAX_MENU_ABILITIES];
 static bool ff8_ability_armed = false;
 static bool ff8_ability_checked = false;
 static bool ff8_ability_supported = false;
+
+// Learned abilities once the kernel holds more than 128: one row per GF with the
+// savemap record's size and field offsets, so the game's own indexing (GF * 0x44
+// + ID / 8) keeps working on it. Bytes 0-15 mirror the savemap bitfield on load
+// and save; bytes 16-31 are IDs 128-255. BattleResult_Init also reads exists and
+// learning through its learned-bit pointer, so those two are mirrored around it.
+struct ff8_learned_row
+{
+	uint8_t unused1[0x11];
+	uint8_t exists;
+	uint8_t unused2[2];
+	uint8_t learned[LEARNED_BYTES];
+	uint8_t unused3[0xC];
+	uint8_t learning;
+	uint8_t unused4[3];
+};
+static_assert(sizeof(ff8_learned_row) == sizeof(savemap_ff8_gf));
+static_assert(offsetof(ff8_learned_row, exists) == offsetof(savemap_ff8_gf, exists));
+static_assert(offsetof(ff8_learned_row, learned) == offsetof(savemap_ff8_gf, complete_abilities));
+static_assert(offsetof(ff8_learned_row, learning) == offsetof(savemap_ff8_gf, learning));
+static_assert(sizeof(savemap_ff8_gf::complete_abilities) * 8 == NATIVE_ABILITY_COUNT);
+
+static ff8_learned_row ff8_learned_rows[G_FORCE_NUM];
+static ff8_learned_row ff8_demo_learned_rows[G_FORCE_NUM];
+static bool ff8_demo_save_active = false;
+static bool ff8_ability_wide_checked = false;
+static bool ff8_ability_wide_supported = false;
+static bool ff8_ability_wide_armed = false;
+// Original targets of the redirected calls; another extension may already have
+// redirected the same save calls, and is then called through these.
+static uint32_t ff8_save_image_original, ff8_load_save_original, ff8_new_game_original;
+static uint32_t ff8_engine_restore_original, ff8_popup_icon_original;
+static int ff8_popup_ability = 0;
+
+// Learned IDs 128+ live in the unused tail of the 8192-byte decompressed save
+// image, after the AddMoreItems block. The savemap bitfield is stored again so
+// a block left behind by a save written without FFNx is recognized as stale.
+#define ABILITY_SAVE_OFFSET        0x1810
+// The loaded savemap starts after the save image header.
+#define SAVE_IMAGE_HEADER_SIZE     0x180
+#define ABILITY_SAVE_MAGIC         0x42415846u // "FXAB"
+
+#pragma pack(push, 1)
+struct ff8_ability_save_block
+{
+	uint32_t magic;
+	uint16_t version;
+	uint16_t gf_count;
+	uint32_t checksum;
+	uint8_t native[G_FORCE_NUM][NATIVE_ABILITY_COUNT / 8];
+	uint8_t extended[G_FORCE_NUM][LEARNED_BYTES - NATIVE_ABILITY_COUNT / 8];
+};
+#pragma pack(pop)
+static_assert(ABILITY_SAVE_OFFSET >= FF8_ITEM_SAVE_OFFSET + sizeof(ff8_item_save_block));
+static_assert(ABILITY_SAVE_OFFSET + sizeof(ff8_ability_save_block) <= FF8_ITEM_SAVE_IMAGE_SIZE);
+static ff8_ability_save_block ff8_ability_save;
+
+struct ff8_gf_battle_stats
+{
+	uint16_t hp;
+	uint16_t max_hp;
+	uint32_t exp;
+	uint8_t level;
+	uint8_t summon_bonus;
+	uint8_t hp_percent;
+	uint8_t flags;                  // Boost enabled, 0x80 = HP below a quarter
+};
+static_assert(sizeof(ff8_gf_battle_stats) == 12);
 
 // ---- Patch locations ----------------------------------------------------
 
@@ -509,6 +641,32 @@ static void ff8_kernel_ability_find_externals()
 	ability_ext.group_table = list ? get_absolute_value(list, 0x28A) : 0;
 }
 
+// Addresses only abilities past ID 127 need. Calls are checked before their
+// targets are read.
+static void ff8_kernel_ability_find_wide_externals()
+{
+	uint32_t list = ability_ext.fn_build_list;
+	const ability_layout_offsets &layout = layout_of(version);
+
+	ability_ext.battle_result_call = ff8_externals.sub_47CCB0 + 0xF6;
+	ability_ext.fn_demo_apply_save = list + layout.demo_apply_save;
+	ability_ext.fn_demo_restore_save = list + layout.demo_restore_save;
+	ability_ext.demo_apply_call = ability_ext.fn_demo_apply_save + 0x172;
+	ability_ext.demo_restore_call = ability_ext.fn_demo_restore_save + 0x5B;
+	ability_ext.popup_name_call = ability_ext.fn_learned_popup + layout.popup_name_call;
+	ability_ext.popup_icon_call = ability_ext.fn_learned_popup + layout.popup_icon_call;
+	// The same save calls AddMoreItems redirects.
+	ability_ext.save_image_calls[0] = ff8_externals.main_menu_controller + 0xB20;
+	ability_ext.save_image_calls[1] = ff8_externals.main_menu_controller + 0xB81;
+	ability_ext.load_save_call = ff8_externals.main_menu_controller + layout.load_save_call;
+	ability_ext.new_game_call = ff8_externals.main_menu_controller + layout.new_game_call;
+}
+
+static bool ff8_is_call(uint32_t address)
+{
+	return address && *(const uint8_t *)address == 0xE8;
+}
+
 // ---- Validation ---------------------------------------------------------
 
 // Validate all required sites before installing any patch.
@@ -690,7 +848,90 @@ static bool ff8_kernel_ability_validate()
 	return ok;
 }
 
+// Abilities past ID 127 move every learned-bit access to ff8_learned_rows and
+// hook the save, load and new-game paths. Check all of it before patching any.
+static bool ff8_kernel_ability_validate_wide()
+{
+	const ability_layout_offsets &layout = layout_of(version);
+	uint32_t list = ability_ext.fn_build_list;
+	uint32_t learned = (uint32_t)ff8_externals.savemap->gfs[0].complete_abilities;
+	uint32_t gf_records = (uint32_t)ff8_externals.savemap->gfs;
+	bool ok = true;
+
+	for (int32_t offset : layout.learned_operands)
+	{
+		if (get_absolute_value(list, offset) == learned) continue;
+		if (trace_all) ffnx_trace("AddMoreAbility: learned ability operand at 0x%X is not the savemap bitfield.\n", list + offset);
+		ok = false;
+	}
+	for (int32_t offset : layout.learned_ends)
+	{
+		if (get_absolute_value(list, offset) == learned + sizeof(ff8_externals.savemap->gfs)) continue;
+		if (trace_all) ffnx_trace("AddMoreAbility: learned ability loop end at 0x%X is not past the last GF.\n", list + offset);
+		ok = false;
+	}
+
+	ability_ext.fn_battle_result = ff8_is_call(ability_ext.battle_result_call) ? get_relative_call(ability_ext.battle_result_call, 0) : 0;
+	if (!ability_ext.fn_battle_result || ability_ext.fn_battle_result + 0x3CE != list + layout.learned_operands[0])
+	{
+		if (trace_all) ffnx_trace("AddMoreAbility: BattleResult_Init call at 0x%X is not the vanilla one.\n", ability_ext.battle_result_call);
+		ok = false;
+	}
+
+	// Both demo functions copy whole GF records and end with the same call.
+	if (get_absolute_value(ability_ext.fn_demo_apply_save, 0x55) != gf_records || get_absolute_value(ability_ext.fn_demo_restore_save, 0x25) != gf_records
+		|| !ff8_is_call(ability_ext.demo_apply_call) || !ff8_is_call(ability_ext.demo_restore_call)
+		|| get_relative_call(ability_ext.demo_apply_call, 0) != get_relative_call(ability_ext.demo_restore_call, 0))
+	{
+		if (trace_all) ffnx_trace("AddMoreAbility: tutorial demo save functions are not the vanilla ones.\n");
+		ok = false;
+	}
+
+	if (!ff8_is_call(ability_ext.popup_name_call) || get_relative_call(ability_ext.popup_name_call, 0) != ability_ext.fn_get_name || !ff8_is_call(ability_ext.popup_icon_call))
+	{
+		if (trace_all) ffnx_trace("AddMoreAbility: learned popup calls at 0x%X are not the vanilla ones.\n", ability_ext.fn_learned_popup);
+		ok = false;
+	}
+
+	if (!ff8_is_call(ability_ext.save_image_calls[0]) || !ff8_is_call(ability_ext.save_image_calls[1])
+		|| get_relative_call(ability_ext.save_image_calls[0], 0) != get_relative_call(ability_ext.save_image_calls[1], 0)
+		|| !ff8_is_call(ability_ext.load_save_call) || !ff8_is_call(ability_ext.new_game_call))
+	{
+		if (trace_all) ffnx_trace("AddMoreAbility: save, load or new game call in 0x%X is not the vanilla one.\n", ff8_externals.main_menu_controller);
+		ok = false;
+	}
+
+	// computeGFBattleStats is rewritten: its two calls and its stats table.
+	const uint8_t *stats_lea = (const uint8_t *)(ability_ext.fn_gf_battle_stats + 0x23);
+	if (!ff8_is_call(ability_ext.fn_gf_battle_stats + 0x3C) || !ff8_is_call(ability_ext.fn_gf_battle_stats + 0xC9)
+		|| stats_lea[0] != 0x8D || stats_lea[1] != 0x34 || stats_lea[2] != 0x8D)
+	{
+		if (trace_all) ffnx_trace("AddMoreAbility: computeGFBattleStats at 0x%X is not the vanilla one.\n", ability_ext.fn_gf_battle_stats);
+		ok = false;
+	}
+	else
+	{
+		ability_ext.fn_gf_level = get_relative_call(ability_ext.fn_gf_battle_stats, 0x3C);
+		ability_ext.fn_gf_hp = get_relative_call(ability_ext.fn_gf_battle_stats, 0xC9);
+		ability_ext.gf_battle_stats = (uint8_t *)get_absolute_value(ability_ext.fn_gf_battle_stats, 0x26);
+	}
+
+	return ok;
+}
+
 // ---- Runtime replacements -----------------------------------------------
+
+// The learned-ability bits of a GF: FFNx's wide table once abilities past ID 127
+// are enabled, the savemap's 128 bits before that.
+static const uint8_t *ff8_learned_abilities(int gf)
+{
+	return ff8_ability_wide_armed ? ff8_learned_rows[gf].learned : ff8_externals.savemap->gfs[gf].complete_abilities;
+}
+
+static bool ff8_has_learned(int gf, int id)
+{
+	return ff8_learned_abilities(gf)[id / 8] & (1u << (id % 8));
+}
 
 static int ff8_build_gf_ability_list(int gf, ff8_gf_ability_entry *out, int include_learnable)
 {
@@ -702,7 +943,7 @@ static int ff8_build_gf_ability_list(int gf, ff8_gf_ability_entry *out, int incl
 	// None and bits beyond the current kernel are never real abilities.
 	for (int id = 1; id < ff8_ability_count && count < GF_ABILITY_LIST_SIZE; ++id)
 	{
-		if (!(save.complete_abilities[id / 8] & (1u << (id % 8)))) continue;
+		if (!ff8_has_learned(gf, id)) continue;
 		entries[id].state = 2;
 		entries[id].slot = 0xFF;
 		++count;
@@ -799,12 +1040,201 @@ static int ff8_build_chara_ability_lists(int character)
 	for (int gf = 0; gf < G_FORCE_NUM; ++gf)
 	{
 		if (!(junctioned_gfs & (1u << gf))) continue;
-		for (int byte = 0; byte < 16; ++byte)
-			ability_ext.chara_ability_mask[byte] |= ff8_externals.savemap->gfs[gf].complete_abilities[byte];
+		// Junction candidates all sit below ID 128.
+		for (int byte = 0; byte < NATIVE_ABILITY_COUNT / 8; ++byte)
+			ability_ext.chara_ability_mask[byte] |= ff8_learned_abilities(gf)[byte];
 	}
 	ability_ext.candidate_counts[0] = ff8_build_ability_candidates(ff8_command_candidates, ff8_group_first[GROUP_COMMAND], ff8_group_first[GROUP_STAT_PERCENT]);
 	ability_ext.candidate_counts[1] = ff8_build_ability_candidates(ff8_passive_candidates, ff8_group_first[GROUP_STAT_PERCENT], ff8_group_first[GROUP_GF]);
 	return ((int (*)(int))ability_ext.fn_equipped_ability_mask)(character);
+}
+
+// ---- Abilities past ID 127 ----------------------------------------------
+
+static int ff8_ability_group(int id)
+{
+	int group = 0;
+	while (group + 1 < ABILITY_GROUP_COUNT && id >= ff8_group_first[group + 1]) ++group;
+	return group;
+}
+
+// The native getters compare IDs against sign-extended byte immediates, which
+// cannot name a group starting at 128 or above.
+static int __cdecl ff8_ability_group_from_id(int id)
+{
+	return ff8_ability_group(id);
+}
+
+static char *ff8_ability_text(int id, bool description)
+{
+	if (id < 0 || id >= MAX_ABILITY_COUNT) return ff8_externals.unk_1CFF84C;
+	const auto &entry = ff8_ability_table[id].common;
+	uint16_t offset = description ? entry.description_offset : entry.name_offset;
+	if (offset == 0xFFFF) return ff8_externals.unk_1CFF84C;
+	unsigned section = static_cast<unsigned>(ff8_kernel_section::junction_ability_text) + ff8_ability_group(id);
+	return reinterpret_cast<char *>(ff8_externals.kernel) + ff8_externals.kernel->header.section_offsets[section] + offset;
+}
+
+static char *__cdecl ff8_ability_name(int id)
+{
+	return ff8_ability_text(id, false);
+}
+
+static char *__cdecl ff8_ability_description(int id)
+{
+	return ff8_ability_text(id, true);
+}
+
+// The "Learned X!" popup picks its group icon (0xD8 + group) with the same kind
+// of compares. Remember the ID its name lookup receives and fix the icon.
+static char *__cdecl ff8_popup_ability_name(int id)
+{
+	ff8_popup_ability = id;
+	return ((char *(*)(int))ability_ext.fn_get_name)(id);
+}
+
+static int __cdecl ff8_popup_draw_icon(int ot, int prim, int icon, int x, int y, int palette)
+{
+	if (icon >= 0xD8 && icon < 0xD8 + ABILITY_GROUP_COUNT) icon = 0xD8 + ff8_ability_group(ff8_popup_ability);
+	return ((int (*)(int, int, int, int, int, int))ff8_popup_icon_original)(ot, prim, icon, x, y, palette);
+}
+
+// computeGFBattleStats walks the learned bits through the savemap record;
+// rewritten to read every GF ability ID.
+static int __cdecl ff8_compute_gf_battle_stats(int gf)
+{
+	auto &save = ff8_externals.savemap->gfs[gf];
+	auto &stats = reinterpret_cast<ff8_gf_battle_stats *>(ability_ext.gf_battle_stats)[gf];
+
+	stats.flags = 0;
+	stats.summon_bonus = 0;
+	stats.hp_percent = 100;
+	stats.level = ((int (*)(uint32_t, int))ability_ext.fn_gf_level)(save.exp, gf);
+	stats.exp = save.exp;
+
+	for (int id = ff8_group_first[GROUP_GF]; id < ff8_group_first[GROUP_MENU]; ++id)
+	{
+		if (!ff8_has_learned(gf, id)) continue;
+		const auto &ability = ff8_ability_table[id].gf;
+		stats.flags |= ability.enable_boost;
+		if (uint8_t(ability.stat_to_increase) == 0) stats.summon_bonus += ability.increase_value;
+		else if (uint8_t(ability.stat_to_increase) == 1) stats.hp_percent += ability.increase_value;
+	}
+
+	int hp = int16_t(((int (*)(int, int))ability_ext.fn_gf_hp)(stats.level, gf)) * stats.hp_percent / 100;
+	if (hp > 0x270F) hp = 0x270F;
+	stats.max_hp = hp;
+	if (int16_t(hp) < save.HPs) save.HPs = hp;
+	stats.hp = save.HPs;
+	if (int16_t(stats.hp) < int16_t(stats.max_hp) >> 2) stats.flags |= 0x80;
+	return save.HPs;
+}
+
+// BattleResult_Init reaches the GF's exists and learning bytes through its
+// learned-bit pointer, which now points at ff8_learned_rows.
+static void __cdecl ff8_battle_result_init()
+{
+	for (int gf = 0; gf < G_FORCE_NUM; ++gf)
+	{
+		ff8_learned_rows[gf].exists = ff8_externals.savemap->gfs[gf].exists;
+		ff8_learned_rows[gf].learning = ff8_externals.savemap->gfs[gf].learning;
+	}
+	((void (*)())ability_ext.fn_battle_result)();
+	for (int gf = 0; gf < G_FORCE_NUM; ++gf)
+		ff8_externals.savemap->gfs[gf].learning = ff8_learned_rows[gf].learning;
+}
+
+// Savemap bitfield -> FFNx table, for a savemap the game just replaced.
+static void ff8_learned_from_savemap()
+{
+	for (int gf = 0; gf < G_FORCE_NUM; ++gf)
+	{
+		uint32_t row = (uint32_t)ff8_learned_rows[gf].learned;
+		memset_code(row, 0, LEARNED_BYTES);
+		memcpy_code(row, ff8_externals.savemap->gfs[gf].complete_abilities, NATIVE_ABILITY_COUNT / 8);
+	}
+}
+
+static void ff8_learned_to_savemap()
+{
+	for (int gf = 0; gf < G_FORCE_NUM; ++gf)
+		memcpy_code((uint32_t)ff8_externals.savemap->gfs[gf].complete_abilities, ff8_learned_rows[gf].learned, NATIVE_ABILITY_COUNT / 8);
+}
+
+static uint32_t ff8_ability_save_checksum(const ff8_ability_save_block &block)
+{
+	uint32_t hash = 2166136261u;
+	auto bytes = reinterpret_cast<const uint8_t *>(block.native);
+	for (size_t i = 0; i < sizeof(block.native) + sizeof(block.extended); ++i)
+		hash = (hash ^ bytes[i]) * 16777619u;
+	return hash;
+}
+
+static int __cdecl ff8_ability_save_image(int slot, uint8_t *image)
+{
+	ff8_learned_to_savemap();
+	int result = ((int (*)(int, uint8_t *))ff8_save_image_original)(slot, image);
+	if (result != FF8_ITEM_SAVE_IMAGE_SIZE) return result;
+
+	auto &block = ff8_ability_save;
+	block.magic = ABILITY_SAVE_MAGIC;
+	block.version = 1;
+	block.gf_count = G_FORCE_NUM;
+	for (int gf = 0; gf < G_FORCE_NUM; ++gf)
+	{
+		memcpy_code((uint32_t)block.native[gf], ff8_learned_rows[gf].learned, sizeof(block.native[gf]));
+		memcpy_code((uint32_t)block.extended[gf], ff8_learned_rows[gf].learned + sizeof(block.native[gf]), sizeof(block.extended[gf]));
+	}
+	block.checksum = ff8_ability_save_checksum(block);
+	memcpy_code((uint32_t)(image + ABILITY_SAVE_OFFSET), &block, sizeof(block));
+	return result;
+}
+
+// Only an accepted load reaches this call, after the vanilla checksum passed.
+static void __cdecl ff8_ability_load_save(const void *source, void *destination, unsigned size)
+{
+	((void (*)(const void *, void *, unsigned))ff8_load_save_original)(source, destination, size);
+	ff8_learned_from_savemap();
+
+	auto image = static_cast<const uint8_t *>(source) - SAVE_IMAGE_HEADER_SIZE;
+	const auto &block = *reinterpret_cast<const ff8_ability_save_block *>(image + ABILITY_SAVE_OFFSET);
+	bool valid = block.magic == ABILITY_SAVE_MAGIC && block.version == 1 && block.gf_count == G_FORCE_NUM && block.checksum == ff8_ability_save_checksum(block);
+	for (int gf = 0; valid && gf < G_FORCE_NUM; ++gf)
+		for (int byte = 0; valid && byte < NATIVE_ABILITY_COUNT / 8; ++byte)
+			valid = block.native[gf][byte] == ff8_externals.savemap->gfs[gf].complete_abilities[byte];
+	if (!valid)
+	{
+		if (trace_all) ffnx_trace("AddMoreAbility: no ability block in this save, abilities past ID 127 start unlearned.\n");
+		return;
+	}
+	for (int gf = 0; gf < G_FORCE_NUM; ++gf)
+		memcpy_code((uint32_t)(ff8_learned_rows[gf].learned + sizeof(block.native[gf])), block.extended[gf], sizeof(block.extended[gf]));
+}
+
+static int __cdecl ff8_ability_new_game()
+{
+	int result = ((int (*)())ff8_new_game_original)();
+	ff8_learned_from_savemap();
+	return result;
+}
+
+// The tutorial demos copy a mock save over the savemap and the real one back.
+// Keep the real wide table aside meanwhile, so the demo neither shows nor edits it.
+static int __cdecl ff8_demo_apply_save_done()
+{
+	int result = ((int (*)())ff8_engine_restore_original)();
+	if (!ff8_demo_save_active) memcpy_code((uint32_t)ff8_demo_learned_rows, ff8_learned_rows, sizeof(ff8_learned_rows));
+	ff8_demo_save_active = true;
+	ff8_learned_from_savemap();
+	return result;
+}
+
+static int __cdecl ff8_demo_restore_save_done()
+{
+	int result = ((int (*)())ff8_engine_restore_original)();
+	if (ff8_demo_save_active) memcpy_code((uint32_t)ff8_learned_rows, ff8_demo_learned_rows, sizeof(ff8_learned_rows));
+	ff8_demo_save_active = false;
+	return result;
 }
 
 // ---- Patch installation -------------------------------------------------
@@ -927,6 +1357,45 @@ void ff8_kernel_ability_arm()
 	ff8_patch_ability_menus();
 }
 
+// Abilities past ID 127: learned bits move to ff8_learned_rows, which the save,
+// load and new-game hooks keep in step with the savemap and the save block.
+static void ff8_kernel_ability_arm_wide()
+{
+	if (ff8_ability_wide_armed) return;
+
+	const ability_layout_offsets &layout = layout_of(version);
+	uint32_t list = ability_ext.fn_build_list;
+	uint32_t rows = (uint32_t)ff8_learned_rows[0].learned;
+
+	ff8_learned_from_savemap();
+	ff8_ability_wide_armed = true;
+
+	for (int32_t offset : layout.learned_operands) patch_code_dword(list + offset, rows);
+	for (int32_t offset : layout.learned_ends) patch_code_dword(list + offset, rows + sizeof(ff8_learned_rows));
+
+	replace_function(ability_ext.fn_get_name, (void *)ff8_ability_name);
+	replace_function(ability_ext.fn_get_desc, (void *)ff8_ability_description);
+	replace_function(ability_ext.fn_group_from_id, (void *)ff8_ability_group_from_id);
+	replace_function(ability_ext.fn_gf_battle_stats, (void *)ff8_compute_gf_battle_stats);
+
+	ff8_popup_icon_original = get_relative_call(ability_ext.popup_icon_call, 0);
+	replace_call(ability_ext.popup_name_call, (void *)ff8_popup_ability_name);
+	replace_call(ability_ext.popup_icon_call, (void *)ff8_popup_draw_icon);
+	replace_call(ability_ext.battle_result_call, (void *)ff8_battle_result_init);
+
+	ff8_engine_restore_original = get_relative_call(ability_ext.demo_apply_call, 0);
+	replace_call(ability_ext.demo_apply_call, (void *)ff8_demo_apply_save_done);
+	replace_call(ability_ext.demo_restore_call, (void *)ff8_demo_restore_save_done);
+
+	// Forward to whatever these calls reach now, AddMoreItems' hooks included.
+	ff8_save_image_original = get_relative_call(ability_ext.save_image_calls[0], 0);
+	for (uint32_t call : ability_ext.save_image_calls) replace_call(call, (void *)ff8_ability_save_image);
+	ff8_load_save_original = get_relative_call(ability_ext.load_save_call, 0);
+	replace_call(ability_ext.load_save_call, (void *)ff8_ability_load_save);
+	ff8_new_game_original = get_relative_call(ability_ext.new_game_call, 0);
+	replace_call(ability_ext.new_game_call, (void *)ff8_ability_new_game);
+}
+
 // ---- Kernel loading and initialization ----------------------------------
 
 bool ff8_kernel_ability_section_may_grow(int section)
@@ -980,10 +1449,24 @@ bool ff8_kernel_ability_read(const ff8_kernel_file &file)
 
 	if (!ff8_ability_supported) return false;
 
-	// Group comparisons sign-extend their byte immediates, including an empty menu group.
-	if (first[GROUP_MENU] >= MAX_ABILITY_COUNT)
+	// Character and junction code compares IDs against sign-extended byte
+	// immediates, up to the GF group's start.
+	if (first[GROUP_GF] >= NATIVE_ABILITY_COUNT)
 	{
-		if (trace_all) ffnx_trace("AddMoreAbility: group start IDs must remain below %d - ignoring the extension.\n", MAX_ABILITY_COUNT);
+		if (trace_all) ffnx_trace("AddMoreAbility: sections 12-16 must end below ID %d (the GF group starts at %d) - ignoring the extension.\n", NATIVE_ABILITY_COUNT, first[GROUP_GF]);
+		return false;
+	}
+
+	bool wide = total > NATIVE_ABILITY_COUNT || first[GROUP_MENU] >= NATIVE_ABILITY_COUNT;
+	if (wide && !ff8_ability_wide_checked)
+	{
+		ff8_ability_wide_checked = true;
+		ff8_kernel_ability_find_wide_externals();
+		ff8_ability_wide_supported = ff8_kernel_ability_validate_wide();
+	}
+	if (wide && !ff8_ability_wide_supported)
+	{
+		if (trace_all) ffnx_trace("AddMoreAbility: this build cannot store abilities past ID %d - ignoring the extension.\n", NATIVE_ABILITY_COUNT - 1);
 		return false;
 	}
 
@@ -1004,6 +1487,7 @@ bool ff8_kernel_ability_read(const ff8_kernel_file &file)
 	// its bounds together; retaining old records would mix two kernel versions.
 	if (ff8_ability_armed) ff8_patch_ability_groups();
 	else ff8_kernel_ability_arm();
+	if (wide) ff8_kernel_ability_arm_wide();
 	ff8_patch_command_ability_roles();
 
 	return true;
