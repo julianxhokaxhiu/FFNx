@@ -1415,7 +1415,7 @@ struct ff8_externals
 	uint32_t sub_467C00;
 	uint32_t sub_468810;
 	uint32_t dinput_get_input_device_capabilities_number_of_buttons;
-	uint32_t get_command_key;
+	uint8_t (*get_command_key)(int, int, int);
 	uint32_t sub_468BD0;
 	uint32_t pubintro_cleanup;
 	uint32_t pubintro_cleanup_textures;
@@ -1572,7 +1572,6 @@ struct ff8_externals
 	LPDIRECTINPUTDEVICE8A dinput_gamepad_device;
 	LPDIJOYSTATE2 dinput_gamepad_state;
 	uint32_t dinput_init_gamepad;
-	BYTE* engine_gamepad_button_pressed;
 	DWORD* engine_mapped_buttons;
 	uint32_t draw_movie_frame;
 	struct ff8_movie_obj *movie_object;

@@ -207,21 +207,12 @@ ff8_draw_menu_sprite_texture_infos *ff8_jp_font_transform_icon_to_text(int a1, f
 
 int ff8_draw_gamepad_icon_or_keyboard_key(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int icon_id, uint16_t x, uint16_t y)
 {
-    // Keep the "keys" if it is a keyboard and not a gamepad
     if (icon_id >= 128 && icon_id < 140)
     {
-        BYTE is_gamepad = *ff8_externals.engine_gamepad_button_pressed != 0;
-        
-        if (ff8_use_gamepad_icons && is_gamepad)
+        if (ff8_use_gamepad_icons)
         {
-            int val = ((int(*)(int,int,int))ff8_externals.get_command_key)(is_gamepad, icon_id - 128, 0);
-            
-            if (val == 0) {
-                val = ((int(*)(int,int,int))ff8_externals.get_command_key)(!is_gamepad, icon_id - 128, 0);
-            }
-            
-            int rgbButton = val - 224;
-            
+            const int rgbButton = ff8_externals.get_command_key(1, icon_id - 128, 0) - 224;
+
             switch (rgbButton)
             {
             case 0: // Cross (Steam)/Square
@@ -245,29 +236,32 @@ int ff8_draw_gamepad_icon_or_keyboard_key(int a1, ff8_draw_menu_sprite_texture_i
             case 9: // R2 (Steam)/START
                 return steam_stock_launcher ? 129 : 139;
             }
+
+            // Unmapped buttons keep the command's default controller icon.
+            return icon_id;
         }
-        
+
         ((void(*)(int, ff8_draw_menu_sprite_texture_infos*, int, uint16_t, uint16_t))ff8_externals.draw_controller_or_keyboard_icons)(a1, draw_infos, icon_id, x, y);
-        
+
         return -1;
     }
-    
+
     return icon_id;
 }
 
 unsigned int *ff8_draw_icon_get_icon_sp1_infos(int icon_id, int &states_count)
 {
     int *icon_sp1_data = ((int*(*)())ff8_externals.get_icon_sp1_data)();
-    
+
     if (icon_id >= icon_sp1_data[0])
     {
         states_count = 0;
-        
+
         return nullptr;
     }
-    
+
     states_count = HIWORD(icon_sp1_data[icon_id + 1]);
-    
+
     return (unsigned int *)((char *)icon_sp1_data + uint16_t(icon_sp1_data[icon_id + 1]));
 }
 
@@ -289,15 +283,15 @@ ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key(
     {
         return ret;
     }
-    
+
     int states_count = 0;
     unsigned int *sp1_section_data = ff8_draw_icon_get_icon_sp1_infos(icon_id, states_count);
-    
+
     if (sp1_section_data == nullptr)
     {
         return draw_infos;
     }
-    
+
     for (int i = states_count; i > 0; --i)
     {
         draw_infos->command = 0x5000000;
@@ -324,7 +318,7 @@ ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key(
         }
         sp1_section_data += 2;
     }
-    
+
     return draw_infos;
 }
 
@@ -360,15 +354,15 @@ ff8_draw_menu_sprite_texture_infos_short *ff8_draw_icon_or_key6(int a1, ff8_draw
     {
         return draw_infos;
     }
-    
+
     int states_count = 0;
     unsigned int *sp1_section_data = ff8_draw_icon_get_icon_sp1_infos(icon_id, states_count);
-    
+
     if (sp1_section_data == nullptr)
     {
         return draw_infos;
     }
-    
+
     for (int i = states_count; i > 0; --i)
     {
         draw_infos->texID = 0x4000000;
@@ -381,7 +375,7 @@ ff8_draw_menu_sprite_texture_infos_short *ff8_draw_icon_or_key6(int a1, ff8_draw
         draw_infos += 1;
         sp1_section_data += 2;
     }
-    
+
     return draw_infos;
 }
 
@@ -689,7 +683,7 @@ void ff8_fonts_jp_build_icon_graphic_object_font8(ff8_draw_menu_sprite_texture_i
             texture_infos_short->u += 128; // u >= 256
             texture_infos_short->v += 104; // v >= 256 && v < 304
             texture_infos_short->palID = (((ff8_tex_header *)(((ff8_texture_set *)(graphic_object->hundred_data->texture_set))->tex_header))->field_DC >> 4) & 0x3F | ((LOWORD(((ff8_tex_header *)(((ff8_texture_set *)(graphic_object->hundred_data->texture_set))->tex_header))->field_E0) + uint16_t(v4 / 2)) << 6);
-            
+
             return ((void(*)(ff8_draw_menu_sprite_texture_infos_short*,ff8_graphics_object*))ff8_externals.sub_49B300)(texture_infos_short, graphic_object);
         }
     }

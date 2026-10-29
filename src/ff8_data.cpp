@@ -407,7 +407,7 @@ void ff8_find_externals()
 	ff8_externals.ff8_draw_icon_or_key1 = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0x1CF);
 	ff8_externals.get_icon_sp1_data = get_relative_call(ff8_externals.ff8_draw_icon_or_key1, 0x2);
 	ff8_externals.draw_controller_or_keyboard_icons = get_relative_call(ff8_externals.ff8_draw_icon_or_key1, 0x40);
-	ff8_externals.get_command_key = get_relative_call(ff8_externals.draw_controller_or_keyboard_icons, 0x31);
+	ff8_externals.get_command_key = (uint8_t(*)(int,int,int))get_relative_call(ff8_externals.draw_controller_or_keyboard_icons, 0x31);
 	ff8_externals.sub_49BB30 = get_relative_call(ff8_externals.ff8_draw_icon_or_key1, 0xF6);
 	ff8_externals.vibration_apply = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xB4);
 	ff8_externals.vibration_set_is_enabled = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xF3);
@@ -718,7 +718,6 @@ void ff8_find_externals()
 	ff8_externals.engine_eval_is_button_pressed = get_relative_call((uint32_t)ff8_externals.engine_eval_keyboard_gamepad_input, 0x4A6);
 	ff8_externals.engine_input_confirmed_buttons = (uint32_t*)get_absolute_value(ff8_externals.engine_eval_is_button_pressed, 0x62);
 	ff8_externals.engine_input_valid_buttons = (uint32_t*)get_absolute_value(ff8_externals.engine_eval_is_button_pressed, 0x3C);
-	ff8_externals.engine_gamepad_button_pressed = (BYTE*)get_absolute_value((uint32_t)ff8_externals.has_keyboard_gamepad_input, 0x22);
 	ff8_externals.engine_mapped_buttons = (DWORD*)get_absolute_value((uint32_t)ff8_externals.engine_eval_keyboard_gamepad_input, 0xB9);
 
 	common_externals.get_keyboard_state = get_relative_call((uint32_t)ff8_externals.engine_eval_keyboard_gamepad_input, 0x11);
