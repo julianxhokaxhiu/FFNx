@@ -1322,7 +1322,7 @@ void ff8_jp_menu_name_controller(int a1)
     const bool lastPage = tab == 2;
     const uint8_t last_row = lastPage ? 3 : 5;
     const uint16_t *rowlist = tab == 0 ? ff8_jp_name_grid_page0 : (tab == 1 ? ff8_jp_name_grid_page1 : ff8_jp_name_grid_page2);
-    int16_t dword_1D76A9A = *(int16_t *)(ff8_externals.menu_data_1D76A9C - 2);
+    int16_t dword_1D76A9A = *(reinterpret_cast<int16_t *>(ff8_externals.menu_data_1D76A9C) - 1);
     int16_t dword_1D76A9C = *(int16_t *)ff8_externals.menu_data_1D76A9C;
 
     switch (*(WORD *)(a1 + 16)) {
@@ -1639,94 +1639,6 @@ void ff8_fonts_copy_name_griever(char *dst, const char *src)
     strcpy(dst, ((char *(*)(int, int, int, int))ff8_externals.get_text_data)(1, 5, 79, 0));
 }
 
-int16_t ff8_jp_key_invert_controls(int16_t keys)
-{
-    if ((ff8_externals.savemap->config.flags & 0x20) != 0) {
-        int custom_keys = 0;
-        uint8_t *key_mapping = &ff8_externals.savemap->config.l2;
-
-        for (int i = 0; i < 12; ++i) {
-            if (((1 << i) & keys & 0xFFF) != 0) {
-                char key = key_mapping[i];
-                if (key) {
-                    custom_keys |= 1 << (key - 1);
-                }
-            }
-        }
-
-        keys = keys & 0xF000 | custom_keys;
-    }
-
-    int16_t keys_new = keys;
-
-    // Invert keys for jp version
-    if ((keys & 0x10) != 0) {
-        keys_new &= ~0x10; // Clear
-        keys_new |= 0x20;
-    }
-
-    if ((keys & 0x20) != 0) {
-        keys_new &= ~0x20; // Clear
-        keys_new |= 0x40;
-    }
-
-    if ((keys & 0x40) != 0) {
-        keys_new &= ~0x40; // Clear
-        keys_new |= 0x10;
-    }
-
-    return keys_new;
-}
-
-int ff8_jp_cancel_controls_invertion(int keys)
-{
-    int16_t keys_new = keys;
-
-    // Bring back normal keys
-    if ((keys & 0x10) != 0) {
-        keys_new &= ~0x10; // Clear
-        keys_new |= 0x40;
-    }
-
-    if ((keys & 0x20) != 0) {
-        keys_new &= ~0x20; // Clear
-        keys_new |= 0x10;
-    }
-
-    if ((keys & 0x40) != 0) {
-        keys_new &= ~0x40; // Clear
-        keys_new |= 0x20;
-    }
-
-    return keys_new;
-}
-
-int ff8_jp_keyscan_cancel_controls_invertion(void *a1)
-{
-    uint32_t *keyscan = ff8_externals.field_keys_scanned, keyscan_bak = *keyscan;
-
-    *keyscan = ff8_jp_cancel_controls_invertion(*keyscan);
-
-    int ret = ff8_externals.opcode_keyscan(a1);
-
-    *keyscan = keyscan_bak;
-
-    return ret;
-}
-
-int ff8_jp_keyon_cancel_controls_invertion(void *a1)
-{
-    uint32_t *keyon = ff8_externals.field_keys_pressed, keyon_bak = *keyon;
-
-    *keyon = ff8_jp_cancel_controls_invertion(*keyon);
-
-    int ret = ff8_externals.opcode_keyon(a1);
-
-    *keyon = keyon_bak;
-
-    return ret;
-}
-
 void fonts_init_jp()
 {
     if (trace_all) ffnx_trace("%s: jp_fonts_initialized=%d is_japanese_font_loaded=%d\n", __func__, jp_fonts_initialized, fonts_sysevn->graphics_object48 != nullptr);
@@ -1823,10 +1735,6 @@ void fonts_init_jp()
     replace_call(ff8_externals.main_menu_controller + 0x13B2, ff8_fonts_copy_name_boko);
     replace_call(ff8_externals.main_menu_controller + 0x13C1, ff8_fonts_copy_name_griever);
 
-    // Invert controls X/O
-    replace_function(ff8_externals.input_get_key_using_savemap_sub_4A2D60, ff8_jp_key_invert_controls); // Replace everywhere
-    common_externals.execute_opcode_table[0x6D] = uint32_t(ff8_jp_keyscan_cancel_controls_invertion); // Except for field script parsing
-    common_externals.execute_opcode_table[0x6E] = uint32_t(ff8_jp_keyon_cancel_controls_invertion);
 }
 
 void ff8_load_fonts_jp(ff8_file_container *file_container, int is_exit_menu)

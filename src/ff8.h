@@ -1400,7 +1400,6 @@ struct ff8_externals
 	uint32_t field_fade_sub_47B980;
 	uint32_t field_draw_shadows_sub_472F20;
 	ff8_field_fade *field_fade;
-	uint32_t *field_keys_scanned;
 	uint32_t *field_keys_pressed;
 	char (*sub_47CA90)();
 	uint32_t field_update_seed_level_52B140;
@@ -1665,9 +1664,6 @@ struct ff8_externals
 	uint32_t opcode_ames;
 	uint32_t opcode_amesw;
 	int (*opcode_keyon)(void*);
-	int (*opcode_keyscan)(void*);
-	int (*opcode_keyscan2)(void*);
-	int (*opcode_keyon2)(void*);
 	uint32_t opcode_ramesw;
 	uint32_t opcode_ask;
 	uint32_t opcode_aask;
@@ -2109,7 +2105,6 @@ struct ff8_externals
 	uint32_t render_save_entry_sub_4E6020;
 	uint32_t draw_icons_sub_49F850;
 	uint32_t sub_4BE100;
-	uint32_t input_get_key_using_savemap_sub_4A2D60;
 	uint32_t play_sfx_menu_sub_4B92A0;
 	uint32_t menu_draw_text_sub_4BDE30;
 	uint32_t word_1D77148;

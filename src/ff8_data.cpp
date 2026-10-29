@@ -445,10 +445,7 @@ void ff8_find_externals()
 	ff8_externals.opcode_amesw = common_externals.execute_opcode_table[0x64];
 	ff8_externals.opcode_ames = common_externals.execute_opcode_table[0x65];
 	ff8_externals.opcode_battle = common_externals.execute_opcode_table[0x69];
-	ff8_externals.opcode_keyscan = (int(*)(void*))common_externals.execute_opcode_table[0x6D];
 	ff8_externals.opcode_keyon = (int(*)(void*))common_externals.execute_opcode_table[0x6E];
-	ff8_externals.opcode_keyscan2 = (int(*)(void*))common_externals.execute_opcode_table[0x14C];
-	ff8_externals.opcode_keyon2 = (int(*)(void*))common_externals.execute_opcode_table[0x14D];
 	ff8_externals.opcode_aask = common_externals.execute_opcode_table[0x6F];
 	ff8_externals.opcode_setvibrate = common_externals.execute_opcode_table[0xA1];
 	ff8_externals.opcode_movieready = common_externals.execute_opcode_table[0xA3];
@@ -473,7 +470,6 @@ void ff8_find_externals()
 	ff8_externals.cardgame_deck_id_1DCD7AD = (uint8_t*)get_absolute_value((uint32_t)ff8_externals.opcode_cardgame, 0xAE);
 	ff8_externals.vibrate_data_field = (uint8_t*)get_absolute_value(ff8_externals.opcode_setvibrate, 0x27);
 	ff8_externals.current_tutorial_id = (BYTE*)get_absolute_value(ff8_externals.opcode_tuto, 0x2A);
-	ff8_externals.field_keys_scanned = (uint32_t *)get_absolute_value(uint32_t(ff8_externals.opcode_keyscan), 0x7);
 	ff8_externals.field_keys_pressed = (uint32_t *)get_absolute_value(uint32_t(ff8_externals.opcode_keyon), 0x7);
 
 	common_externals.cross_fade_midi = get_relative_call(ff8_externals.opcode_crossmusic, 0x5C);
@@ -650,7 +646,6 @@ void ff8_find_externals()
 	ff8_externals.draw_icons_sub_49F850 = get_relative_call(ff8_externals.render_save_entry_sub_4E6020, JP_VERSION ? 0xC2 : 0xC3);
 	ff8_externals.dword_1D2B100 = (uint32_t *)get_absolute_value(ff8_externals.draw_icons_sub_49F850, 0x7);
 	ff8_externals.sub_4BE100 = get_relative_call(ff8_externals.sub_4B3410, 0x37);
-	ff8_externals.input_get_key_using_savemap_sub_4A2D60 = get_relative_call(ff8_externals.sub_4BE100, 0x2D);
 	ff8_externals.sub_4BE4D0 = get_relative_call(ff8_externals.sub_4B3410, 0x68);
 	ff8_externals.sub_4BECC0 = get_relative_call(ff8_externals.sub_4BE4D0, 0x39);
 	ff8_externals.menu_draw_text = get_relative_call(ff8_externals.sub_4BECC0, 0x127);
