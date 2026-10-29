@@ -640,6 +640,9 @@ uint8_t TextureModStandard::scale(int vramPalXBpp2, int vramPalY) const
 	const uint8_t paletteId = computePaletteId(vramPalXBpp2, vramPalY);
 	const auto *layout = ff8_remastered_edition
 		? remastered_battle_texture::findImageLayout(originalTexture().remasteredName()) : nullptr;
+	if (layout != nullptr && layout->animationFrameCount > 0
+		&& (_currentAnimationFrame < 0 || _currentAnimationFrame >= layout->animationFrameCount))
+		return 0;
 	if (layout != nullptr && !layout->paletteLayers.empty())
 	{
 		uint8_t layerScale = 0;
@@ -677,6 +680,9 @@ TexturePacker::TextureTypes TextureModStandard::drawToImage(
 	const remastered_battle_texture::ImageLayout *layout = ff8_remastered_edition
 		? remastered_battle_texture::findImageLayout(originalTexture().remasteredName())
 		: nullptr;
+	if (layout != nullptr && layout->animationFrameCount > 0
+		&& (_currentAnimationFrame < 0 || _currentAnimationFrame >= layout->animationFrameCount))
+		return TexturePacker::NoTexture;
 	if (layout != nullptr && !layout->paletteLayers.empty())
 	{
 		const uint8_t paletteId = computePaletteId(vramPalXBpp2, vramPalY);
@@ -689,13 +695,17 @@ TexturePacker::TextureTypes TextureModStandard::drawToImage(
 			const auto &mip = image->second.mip();
 			const int imageW = mip.m_width / image->second.scale();
 			const int imageH = mip.m_height / image->second.scale();
-			const int layerX = layer.alignRight ? std::max(0, targetW - imageW) : 0;
+			const bool isAnimatedLayer = layout->animationFrameCount > 0 && layer.imageIndex == layout->imageIndex;
+			const int frameWidth = isAnimatedLayer ? imageW / layout->animationFrameCount : imageW;
+			const int sourceFrame = isAnimatedLayer
+				? (layout->reverseAnimation ? layout->animationFrameCount - 1 - _currentAnimationFrame : _currentAnimationFrame) : 0;
+			const int layerX = layer.alignRight ? std::max(0, targetW - frameWidth) : 0;
 			const int layerY = layer.alignBottom ? std::max(0, targetH - imageH) : 0;
-			const int width = std::min(imageW, targetW - layerX);
+			const int width = std::min(frameWidth, targetW - layerX);
 			const int height = std::min(imageH, targetH - layerY);
 			if (width <= 0 || height <= 0) continue;
 			drawImage(reinterpret_cast<const uint32_t *>(mip.m_data), imageW, image->second.scale(),
-				targetRgba, targetW, targetScale, 0, 0, width, height, layerX, layerY);
+				targetRgba, targetW, targetScale, sourceFrame * frameWidth, 0, width, height, layerX, layerY);
 			drawn = true;
 		}
 		return drawn ? TexturePacker::ExternalTexture : TexturePacker::NoTexture;

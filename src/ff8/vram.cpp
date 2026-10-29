@@ -254,6 +254,19 @@ const remastered_battle_texture::ImageLayout *remastered_battle_texture::findIma
 	return nullptr;
 }
 
+bool remastered_battle_texture::shouldPreservePalette(const std::string &textureName)
+{
+	for (const Mapping &mapping : mappings)
+	{
+		if (mapping.kind == MappingKind::PreservePalette && _stricmp(mapping.battleName, textureName.c_str()) == 0)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 struct VramPos {
 	uint16_t x, y;
 };
@@ -839,6 +852,10 @@ int ff8_write_palette_to_driver(int source_offset, int size, uint32_t *source_rg
 					|| palette.h() <= 1 || pal_index >= palette.h())
 				{
 					continue;
+				}
+				if (remastered_battle_texture::shouldPreservePalette(identifiedTexture.name()))
+				{
+					break;
 				}
 
 				const int expectedPaletteX = palette.x();
