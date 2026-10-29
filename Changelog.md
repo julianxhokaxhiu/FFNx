@@ -23,6 +23,7 @@
 - Widescreen: Fix battle swirl to correctly capture the widescreen content instead of the original 4:3
 - Lighting: Minor adjustment to ambient light and shadow map resolution default values ( https://github.com/julianxhokaxhiu/FFNx/pull/1007 )
 - Core: Fix a crash on exit after the world map loaded gltf models ( https://github.com/julianxhokaxhiu/FFNx/pull/1004 )
+- Renderer: Draw untextured gltf model parts with their material color ( https://github.com/julianxhokaxhiu/FFNx/pull/1003 )
 - Core: Match gltf animation names case-insensitively ( https://github.com/julianxhokaxhiu/FFNx/pull/1002 )
 - Renderer: Raise the gltf bone limit to 255 ( https://github.com/julianxhokaxhiu/FFNx/pull/1001 )
 - Renderer: Re-enable smooth skinning for gltf models without slowing down other draws ( https://github.com/julianxhokaxhiu/FFNx/pull/1000 )

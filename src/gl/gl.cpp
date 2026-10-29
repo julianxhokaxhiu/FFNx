@@ -435,8 +435,30 @@ float gl_get_field_model_scale()
 	return static_cast<float>((*pScale)) / 128.0f;
 }
 
+// Every texture slot is set for every part, so a part never samples the previous part's textures.
+// A part without a base color texture is drawn with its material color instead of being discarded.
+static void gl_use_external_mesh_textures(const Shape& shape)
+{
+	auto pMaterial = shape.pMaterial;
+	bgfx::TextureHandle baseColorTexHandle = BGFX_INVALID_HANDLE;
+	bgfx::TextureHandle normalTexHandle = BGFX_INVALID_HANDLE;
+	bgfx::TextureHandle pbrTexHandle = BGFX_INVALID_HANDLE;
+	if(pMaterial != nullptr)
+	{
+		if(pMaterial->baseColorTexHandles.size() > 0) baseColorTexHandle = pMaterial->baseColorTexHandles[pMaterial->texIndex];
+		if(pMaterial->normalTexHandles.size() > 0) normalTexHandle = pMaterial->normalTexHandles[0];
+		if(pMaterial->pbrTexHandles.size() > 0) pbrTexHandle = pMaterial->pbrTexHandles[0];
+	}
+	newRenderer.useTexture(bgfx::isValid(baseColorTexHandle) ? baseColorTexHandle.idx : 0, RendererTextureSlot::TEX_Y);
+	newRenderer.useTexture(bgfx::isValid(normalTexHandle) ? normalTexHandle.idx : 0, RendererTextureSlot::TEX_NML);
+	newRenderer.useTexture(bgfx::isValid(pbrTexHandle) ? pbrTexHandle.idx : 0, RendererTextureSlot::TEX_PBR);
+}
+
 void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightdata)
 {
+	auto shapeCount = externalMesh->shapes.size();
+	if (shapeCount == 0) return;
+
 	if(gl_defer_external_mesh(externalMesh, lightdata)) return;
 
 	auto scale = gl_get_field_model_scale();
@@ -564,10 +586,11 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 		}
 	}
 
+	// The common and lighting uniforms are set once per model, with the first part's textures picked
+	gl_use_external_mesh_textures(externalMesh->shapes[0]);
 	newRenderer.setCommonUniforms();
 	if (enable_lighting) newRenderer.setLightingUniforms();
 
-	auto shapeCount = externalMesh->shapes.size();
 	int vertexOffset = 0;
 	int indexOffset = 0;
 
@@ -582,34 +605,11 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 		externalMesh->bindField3dVertexBuffer(vertexOffset, shape.vertices.size());
 		externalMesh->bindField3dIndexBuffer(indexOffset, shape.indices.size());
 
-		if(shape.pMaterial != nullptr)
-		{
-			if(shape.pMaterial->baseColorTexHandles.size() > 0)
-			{
-				auto baseColorTexHandle = shape.pMaterial->baseColorTexHandles[shape.pMaterial->texIndex];
-				if(bgfx::isValid(baseColorTexHandle))
-					newRenderer.useTexture(baseColorTexHandle.idx, RendererTextureSlot::TEX_Y);
-				else newRenderer.useTexture(0, RendererTextureSlot::TEX_Y);
-			}
+		gl_use_external_mesh_textures(shape);
+		newRenderer.bindTextures();
 
-			if(shape.pMaterial->normalTexHandles.size() > 0)
-			{
-				auto normalTexHandle = shape.pMaterial->normalTexHandles[0];
-				if(bgfx::isValid(normalTexHandle))
-					newRenderer.useTexture(normalTexHandle.idx, RendererTextureSlot::TEX_NML);
-				else newRenderer.useTexture(0, RendererTextureSlot::TEX_NML);
-			}
-
-			if(shape.pMaterial->pbrTexHandles.size() > 0)
-			{
-				auto pbrTexHandle = shape.pMaterial->pbrTexHandles[0];
-				if(bgfx::isValid(pbrTexHandle))
-					newRenderer.useTexture(pbrTexHandle.idx, RendererTextureSlot::TEX_PBR);
-				else newRenderer.useTexture(0, RendererTextureSlot::TEX_PBR);
-			}
-
-			newRenderer.bindTextures();      
-		}
+		// The first part's flags were set with the common uniforms; the others update the ones that depend on textures
+		if (i > 0) newRenderer.setTextureFlagsUniforms();
 
  		if (enable_lighting)
 		{

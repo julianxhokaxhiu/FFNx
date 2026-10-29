@@ -529,6 +529,7 @@ public:
 
     bgfx::UniformHandle setUniform(RendererUniform uniform, const void* uniformValue, int arraySize = 1);
     void setCommonUniforms();
+    void setTextureFlagsUniforms();
     void setLightingUniforms();
     void bindTextures();
 
