@@ -780,17 +780,32 @@ void fill_texture_infos_for_font(ff8_draw_menu_sprite_texture_infos *texture_inf
     }
 }
 
-int get_icon_id(uint8_t icon_param, bool bound_icon_param_to_63 = false)
+int ff8_get_text_button_key(int key_id)
+{
+    if (!JP_VERSION && key_id >= 4 && key_id <= 6) {
+        if (game_language == GAME_LANGUAGE_JP) {
+            constexpr int action_keys[] = {5, 6, 4}; // Menu, Confirm, Cancel
+            key_id = action_keys[key_id - 4];
+        } else if (ff8_remastered_edition) {
+            constexpr int action_keys[] = {5, 4, 6}; // Menu, Cancel, Confirm
+            key_id = action_keys[key_id - 4];
+        }
+    }
+
+    return ((int(*)(int))ff8_externals.sub_4A2DF0)(key_id);
+}
+
+int get_icon_id(int icon_param)
 {
     int icon_id = 0;
     if (icon_param >= 64) {
         icon_id = ff8_externals.word_B86D84[icon_param];
     } else if (icon_param < 32 || icon_param > 47) {
-        if (icon_param >= 48 && (!bound_icon_param_to_63 || icon_param <= 63)) {
+        if (icon_param >= 48) {
             icon_id = icon_param + 80;
         }
     } else {
-        int key_from_key_id = ((int(*)(int))ff8_externals.sub_4A2DF0)(icon_param - 32);
+        int key_from_key_id = ff8_get_text_button_key(icon_param - 32);
         if (key_from_key_id >= 0) {
             icon_id = key_from_key_id + 128;
         }
@@ -1084,7 +1099,7 @@ void ff8_fonts_parse_and_render_field_texts(int *a1, ff8_win_obj *win)
 
             if (current_byte == 5) { // Icons
                 // x is modified
-                texture_infos = fill_texture_infos_for_icon(a1, texture_infos, x, y, get_icon_id(*text_data++, true));
+                texture_infos = fill_texture_infos_for_icon(a1, texture_infos, x, y, get_icon_id(*text_data++));
             } else if (current_byte == 6) { // Color
                 current_color = (*text_data++) & 0xF;
             } else if (current_byte <= 15) {
@@ -1916,6 +1931,13 @@ void ff8_cleanup_fonts_jp()
 void fonts_init()
 {
     bool ff8_enable_japanese_font = game_language == GAME_LANGUAGE_JP;
+
+    if (!JP_VERSION && (ff8_remastered_edition || ff8_enable_japanese_font)) {
+        replace_function(get_relative_call(ff8_externals.menu_draw_text_sub_4BDE30, 0xBA), get_icon_id);
+        replace_call(ff8_externals.font_text_size_calculation_sub_4A0D10 + 0x6F, ff8_get_text_button_key);
+        replace_call(ff8_externals.font_parse_and_render_menu_2_sub_4A1200 + 0x246, ff8_get_text_button_key);
+        replace_call(ff8_externals.render_text_field_sub_4A1570 + 0x30D, ff8_get_text_button_key);
+    }
 
     // Use hardcoded values for remastered edition
     if (ff8_remastered_edition && !ff8_enable_japanese_font) {
