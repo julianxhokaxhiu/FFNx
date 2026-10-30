@@ -52,6 +52,7 @@
 #include "achievement.h"
 #include "ff8/widescreen.h"
 
+#include <chrono>
 #include <vector>
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
@@ -1821,6 +1822,63 @@ int ff8_limit_fps()
 	return 0;
 }
 
+int ff8_main_menu_controller(ff8_menu_save_task *task)
+{
+	constexpr unsigned save_count = 30;
+	constexpr unsigned full_progress = 4096;
+	constexpr unsigned max_updates = 8;
+	const bool main_menu = getmode_cached()->mode == FF8_MODE_MAIN_MENU;
+	const bool scanning = main_menu && task->state >= 24 && task->state <= 27;
+	const bool loading = main_menu && task->state >= 72 && task->state <= 76;
+	auto controller = reinterpret_cast<int(*)(ff8_menu_save_task *)>(ff8_externals.main_menu_controller);
+
+	if (!scanning && !loading)
+	{
+		return controller(task);
+	}
+
+	const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(2);
+	int ret = 0;
+	for (unsigned update = 0; update < max_updates; ++update)
+	{
+		const uint16_t previous_state = task->state;
+		const uint8_t previous_index = task->scan_index;
+		const uint16_t previous_progress = task->state == 24 ? 0 : task->progress;
+
+		// Let native I/O checks decide completion instead of waiting for the bar to fill.
+		if ((scanning && task->state == 25 && task->scan_index >= save_count)
+			|| (loading && task->state == 75))
+		{
+			task->progress = full_progress;
+		}
+
+		ret = controller(task);
+
+		if (scanning)
+		{
+			if (task->state < 25 || task->state > 27) break;
+
+			unsigned half_slots = 2 * std::min<unsigned>(task->scan_index, save_count);
+			if (task->state == 26 || task->state == 27) ++half_slots;
+			unsigned progress = std::max<unsigned>(previous_progress, half_slots * full_progress / (2 * save_count));
+			task->progress = static_cast<uint16_t>(std::min(full_progress, progress));
+		}
+		else if (task->state < 72 || task->state > 76)
+		{
+			break;
+		}
+
+		// Yield on pending I/O or the frame budget instead of spinning through more polls.
+		if ((task->state == previous_state && task->scan_index == previous_index)
+			|| std::chrono::steady_clock::now() >= deadline)
+		{
+			break;
+		}
+	}
+
+	return ret;
+}
+
 double ff8_menu_limit_fps(time_t *)
 {
 	ff8_limit_fps();
@@ -2009,6 +2067,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 	memcpy_code(ff8_externals.sub_465720 + 0xB3, texture_reload_fix2, sizeof(texture_reload_fix2));
 	replace_function(ff8_externals.sub_465720 + 0xB3 + sizeof(texture_reload_fix2), texture_reload_hack2);
+
+	patch_code_dword(uint32_t(ff8_externals.menu_callbacks[16].func) + 0x8, uint32_t(ff8_main_menu_controller));
+	patch_code_word(ff8_externals.main_menu_render_sub_4E5550 + 0xF6, 0xFFFF);
 
 	// #####################
 	// new timer calibration

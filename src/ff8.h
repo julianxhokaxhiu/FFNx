@@ -770,6 +770,15 @@ struct ff8_menu_config_task {
 	uint8_t gap3[79];
 };
 
+struct ff8_menu_save_task {
+	uint8_t gap1[16];
+	uint16_t state;
+	uint8_t gap2[44];
+	uint16_t progress;
+	uint8_t gap3[14];
+	uint8_t scan_index;
+};
+
 struct ff8_draw_menu_sprite_texture_infos_short {
 	uint32_t texID; // 2 bits = depth | 2 bits = blend | 1 bit = draw | 4 bits = textureID
 	uint32_t color;

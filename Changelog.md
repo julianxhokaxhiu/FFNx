@@ -53,6 +53,7 @@
 - Core: Add an Esc menu to return to the game, restart it or exit it ( https://github.com/julianxhokaxhiu/FFNx/pull/1019 )
 - Core: Fix normal and boss battle transition animations
 - Core: Speedhack now works for Menus and Tutorials
+- Core: Save/Load screen progress bar now follow file disk read speed instead of being artificially slow
 - Renderer: Fix frozen battle-end transitions and stale-frame wobbling ( https://github.com/julianxhokaxhiu/FFNx/issues/1021 )
 - Achievements: Add support for remastered achievements
 - Audio: Add a Sound screen to the Config menu, to set the sound effects, music, voice, ambient and movie volumes in game ( https://github.com/julianxhokaxhiu/FFNx/pull/1015 )
