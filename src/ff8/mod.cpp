@@ -640,15 +640,15 @@ uint8_t TextureModStandard::scale(int vramPalXBpp2, int vramPalY) const
 	const uint8_t paletteId = computePaletteId(vramPalXBpp2, vramPalY);
 	const auto *layout = ff8_remastered_edition
 		? remastered_battle_texture::findImageLayout(originalTexture().remasteredName()) : nullptr;
-	if (layout != nullptr && layout->animationFrameCount > 0
-		&& (_currentAnimationFrame < 0 || _currentAnimationFrame >= layout->animationFrameCount))
-		return 0;
 	if (layout != nullptr && !layout->paletteLayers.empty())
 	{
 		uint8_t layerScale = 0;
 		for (const auto &layer : layout->paletteLayers)
 		{
 			if (!layer.matchesPalette(paletteId)) continue;
+			if (layout->animationFrameCount > 0 && layer.imageIndex == layout->imageIndex
+				&& (_currentAnimationFrame < 0 || _currentAnimationFrame >= layout->animationFrameCount))
+				continue;
 			const auto image = _textures.find(layer.imageIndex);
 			if (image != _textures.end()) layerScale = std::max(layerScale, image->second.scale());
 		}
@@ -680,9 +680,6 @@ TexturePacker::TextureTypes TextureModStandard::drawToImage(
 	const remastered_battle_texture::ImageLayout *layout = ff8_remastered_edition
 		? remastered_battle_texture::findImageLayout(originalTexture().remasteredName())
 		: nullptr;
-	if (layout != nullptr && layout->animationFrameCount > 0
-		&& (_currentAnimationFrame < 0 || _currentAnimationFrame >= layout->animationFrameCount))
-		return TexturePacker::NoTexture;
 	if (layout != nullptr && !layout->paletteLayers.empty())
 	{
 		const uint8_t paletteId = computePaletteId(vramPalXBpp2, vramPalY);
@@ -690,12 +687,14 @@ TexturePacker::TextureTypes TextureModStandard::drawToImage(
 		for (const auto &layer : layout->paletteLayers)
 		{
 			if (!layer.matchesPalette(paletteId)) continue;
+			const bool isAnimatedLayer = layout->animationFrameCount > 0 && layer.imageIndex == layout->imageIndex;
+			if (isAnimatedLayer && (_currentAnimationFrame < 0 || _currentAnimationFrame >= layout->animationFrameCount))
+				continue;
 			const auto image = _textures.find(layer.imageIndex);
 			if (image == _textures.end()) continue;
 			const auto &mip = image->second.mip();
 			const int imageW = mip.m_width / image->second.scale();
 			const int imageH = mip.m_height / image->second.scale();
-			const bool isAnimatedLayer = layout->animationFrameCount > 0 && layer.imageIndex == layout->imageIndex;
 			const int frameWidth = isAnimatedLayer ? imageW / layout->animationFrameCount : imageW;
 			const int sourceFrame = isAnimatedLayer
 				? (layout->reverseAnimation ? layout->animationFrameCount - 1 - _currentAnimationFrame : _currentAnimationFrame) : 0;
