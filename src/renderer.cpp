@@ -1408,6 +1408,7 @@ void Renderer::draw(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, 
     }
     else if ((backendProgram == RendererProgram::POSTPROCESSING) || (backendProgram == RendererProgram::POSTPROCESSING_NTSCJ))
     {
+        bgfx::setViewFrameBuffer(backendViewId, BGFX_INVALID_HANDLE);
         bgfx::setViewRect(backendViewId, 0, 0, window_size_x, window_size_y);
 
         // Set current view transform
