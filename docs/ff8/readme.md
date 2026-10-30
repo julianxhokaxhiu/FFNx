@@ -6,3 +6,4 @@
  - [VRAM](vram.md)
  - [List of external textures](mods/external_textures.md)
  - [Battle effect cameras](mods/effect_camera.md)
+ - [Battle anim sets](mods/battle_anim_sets.md)

@@ -41,6 +41,7 @@
 #include "ff8/kernel_item.h"
 #include "ff8/battle/ai.h"
 #include "ff8/battle/effect_camera.h"
+#include "ff8/battle/anim_set.h"
 #include "ff8/field/movie.h"
 #include "ff8/kernel_magic.h"
 #include "ff8/kernel_ability.h"
@@ -2395,6 +2396,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// Battle effect cameras from <direct_mode_path>/exe/effect_NNN.bcam
 	// #####################
 	ff8_battle_effect_camera_init();
+
+	// #####################
+	// Battle anim sets (limit breaks, Blue Magic...) from <direct_mode_path>/exe/effect_NNN.animset
+	// #####################
+	ff8_battle_anim_set_init();
 
 	// #####################
 	// Field scripts and models in sync with movies above 15 FPS
