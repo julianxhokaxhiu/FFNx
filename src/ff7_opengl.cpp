@@ -133,6 +133,10 @@ void ff7_init_hooks(struct game_obj *_game_object)
 
 	ff7_data(game_object);
 
+	// Fix CTRL button status check
+	const unsigned char quit_modifier_fix[] = {0xC1, 0xE9, 0x1F};
+	memcpy_code((uint32_t)common_externals.engine_wndproc + 0x1D7, quit_modifier_fix, sizeof(quit_modifier_fix));
+
 	if (game_width == 1280)
 		MessageBoxA(gameHwnd, "Using this driver with the old high-res patch is NOT recommended, there will be glitches.", "Warning", 0);
 

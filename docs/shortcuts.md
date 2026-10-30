@@ -100,8 +100,12 @@ Shortcuts:
 
 - Keyboard Shortcut: `ESC`
 
-### Quit Game ( FF8 only! )
+### Quit Game
+
+This shortcut will allow you to close the game.
 
 Shortcuts:
 
-- Keyboard Shortcut: `CTRL + Q` (hold for 2 seconds)
+- Keyboard Shortcut: `CTRL + Q`
+  - FF7: Press and release
+  - FF8: Hold for 2 seconds
