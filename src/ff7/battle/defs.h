@@ -34,6 +34,7 @@ namespace ff7::battle
     void animations_hook_init();
 
     // Battle
+    void battle_hook_init();
     void magic_thread_start(void (*func)());
     void load_battle_stage(int param_1, int battle_location_id, int **param_3);
     void battle_sub_5C7F94(int param_1, int param_2);

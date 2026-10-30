@@ -22,11 +22,53 @@
 #include "../../globals.h"
 #include "../../log.h"
 #include "../../achievement.h"
+#include "../../patch.h"
 
 #include "defs.h"
 
 namespace ff7::battle
 {
+	namespace
+	{
+		ff7_graphics_object *(*get_effect_graphics)(int, void *);
+		void (*set_primitive_graphics)(int, int, ff7_graphics_object *);
+		void (*set_primitive_blend_mode)(int);
+		void (*set_primitive_overlay)(int);
+
+		ff7_graphics_object *bind_hyperjump_texture(int index, void *resources)
+		{
+			auto *graphics = get_effect_graphics(index, resources);
+			if (!graphics)
+				ffnx_error("Hyper Jump: could not load the debris texture\n");
+
+			set_primitive_blend_mode(1);
+			set_primitive_overlay(0);
+			set_primitive_graphics(9, 1, graphics);
+			return graphics;
+		}
+	}
+
+	void battle_hook_init()
+	{
+		uint32_t hyperjump = ff7_externals.limit_break_effects_fn_table[30];
+		uint32_t load_resources = get_relative_call(hyperjump, 0x4);
+		uint32_t init = get_relative_call(hyperjump, 0x9D);
+		uint32_t main_loop = get_absolute_value(init, 0x20);
+		uint32_t dome = get_absolute_value(main_loop, 0x2F7);
+		uint32_t debris = get_absolute_value(dome, 0x245);
+
+		// Replace the unused DOMU5 model with its debris texture: additive, flat-textured triangles.
+		uint32_t resource = get_absolute_value(load_resources, 0x28) + 7 * 20;
+		patch_code_dword(resource, 0x00192839);
+		patch_code_dword(resource + 4, reinterpret_cast<uint32_t>("DOMU1.TIM"));
+
+		get_effect_graphics = reinterpret_cast<decltype(get_effect_graphics)>(get_relative_call(debris, 0x21));
+		set_primitive_graphics = reinterpret_cast<decltype(set_primitive_graphics)>(get_relative_call(ff7_externals.roulette_skill_main_loop_566287, 0x1F4));
+		set_primitive_blend_mode = reinterpret_cast<decltype(set_primitive_blend_mode)>(get_relative_call(ff7_externals.roulette_skill_main_loop_566287, 0x3EF));
+		set_primitive_overlay = reinterpret_cast<decltype(set_primitive_overlay)>(get_relative_call(ff7_externals.battle_draw_quad_5BD473, 0x88));
+		replace_call_function(debris + 0x21, bind_hyperjump_texture);
+	}
+
 	void magic_thread_start(void (*func)())
 	{
 		ff7_externals.destroy_magic_effects();

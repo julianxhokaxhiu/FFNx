@@ -216,6 +216,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_function(ff7_externals.lgp_seek_file, lgp_seek_file);
 
 	replace_function(ff7_externals.magic_thread_start, ff7::battle::magic_thread_start);
+	ff7::battle::battle_hook_init();
 
 	replace_function(ff7_externals.kernel2_reset_counters, kernel2_reset_counters);
 	replace_function(ff7_externals.kernel2_add_section, kernel2_add_section);
