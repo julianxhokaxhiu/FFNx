@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 #include "./file.h"
+#include "input.h"
 #include "../globals.h"
 #include "../patch.h"
 #include "../log.h"
@@ -784,8 +785,7 @@ int ff8_get_text_button_key(int key_id)
 {
     if (!JP_VERSION && key_id >= 4 && key_id <= 6) {
         if (game_language == GAME_LANGUAGE_JP) {
-            constexpr int action_keys[] = {5, 6, 4}; // Menu, Confirm, Cancel
-            key_id = action_keys[key_id - 4];
+            key_id = ff8_japanese_action_to_engine(key_id);
         } else if (ff8_remastered_edition) {
             constexpr int action_keys[] = {5, 4, 6}; // Menu, Cancel, Confirm
             key_id = action_keys[key_id - 4];

@@ -48,11 +48,14 @@
 #include "ff8/remaster.h"
 #include "ff8/menu/volume.h"
 #include "ff8/esc_menu.h"
+#include "ff8/input.h"
 #include "metadata.h"
 #include "achievement.h"
 #include "ff8/widescreen.h"
 
+#include <array>
 #include <chrono>
+#include <cstring>
 #include <vector>
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
@@ -1058,6 +1061,21 @@ int ff8_get_input_device_capabilities_number_of_buttons(int a1)
 	return (use_sdl_gamepad || xinput_connected) ? 10 : std::min<DWORD>(joystick.GetCaps()->dwButtons, 10);
 }
 
+static int (*ff8_field_key_tests[4])(ff8_field_state_common *);
+
+template<size_t Index>
+static int ff8_field_key_test(ff8_field_state_common *field)
+{
+	uint8_t *argument = field->stack_data + field->stack_current_position * sizeof(uint32_t);
+	uint32_t buttons;
+	std::memcpy(&buttons, argument, sizeof(buttons));
+	const uint32_t mapped_buttons = ff8_japanese_buttons_to_engine(buttons);
+	std::memcpy(argument, &mapped_buttons, sizeof(mapped_buttons));
+	const int result = ff8_field_key_tests[Index](field);
+	std::memcpy(argument, &buttons, sizeof(buttons));
+	return result;
+}
+
 int ff8_get_key_state(WPARAM dinput_scan_code)
 {
 	int virt_key = 0;
@@ -1929,6 +1947,19 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 	replace_function(ff8_externals.engine_eval_process_input, ff8_is_window_active);
 	replace_function(ff8_externals.get_key_state, ff8_get_key_state);
+
+	if (ff8_remastered_edition && !JP_VERSION && game_language == GAME_LANGUAGE_JP)
+	{
+		// Localized scripts use Japanese action bits; physical input keeps the engine's configured bindings.
+		constexpr uint32_t opcodes[] = {0x6D, 0x6E, 0x14C, 0x14D};
+		constexpr auto handlers = std::array{ff8_field_key_test<0>, ff8_field_key_test<1>, ff8_field_key_test<2>, ff8_field_key_test<3>};
+
+		for (size_t i = 0; i < handlers.size(); ++i)
+		{
+			ff8_field_key_tests[i] = reinterpret_cast<int (*)(ff8_field_state_common *)>(common_externals.execute_opcode_table[opcodes[i]]);
+			patch_code_dword(uint32_t(&common_externals.execute_opcode_table[opcodes[i]]), uint32_t(handlers[i]));
+		}
+	}
 
 	replace_function(ff8_externals.swirl_sub_56D390, swirl_sub_56D390);
 	patch_code_byte(ff8_externals.swirl_wipe_init + 0x42, 0xA); // Native smooth 2D quads instead of smooth lines.
