@@ -67,6 +67,18 @@ namespace ff7::battle
 		set_primitive_blend_mode = reinterpret_cast<decltype(set_primitive_blend_mode)>(get_relative_call(ff7_externals.roulette_skill_main_loop_566287, 0x3EF));
 		set_primitive_overlay = reinterpret_cast<decltype(set_primitive_overlay)>(get_relative_call(ff7_externals.battle_draw_quad_5BD473, 0x88));
 		replace_call_function(debris + 0x21, bind_hyperjump_texture);
+
+		uint32_t shadow_flare = ff7_externals.enemy_skill_effects_fn_table[22];
+		uint32_t shadow_flare_load_resources = get_relative_call(shadow_flare, 0x3);
+		uint32_t shadow_flare_resources = get_absolute_value(shadow_flare_load_resources, 0x28);
+
+		// PSX Shadow Flare textures use subtractive TPAGE blending, not the PC port's average blending.
+		for (uint32_t i = 0; i < 4; ++i)
+		{
+			uint32_t texture_resource = shadow_flare_resources + i * 20;
+			uint32_t flags = *reinterpret_cast<const uint32_t *>(texture_resource);
+			patch_code_dword(texture_resource, (flags & ~7u) | 2u);
+		}
 	}
 
 	void magic_thread_start(void (*func)())

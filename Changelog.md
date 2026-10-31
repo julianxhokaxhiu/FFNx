@@ -34,6 +34,7 @@
 - Music: Fix repeated world-map music updates causing sustained slowdowns after region changes, and allow regional tracks sharing a music ID to switch correctly ( https://github.com/julianxhokaxhiu/FFNx/issues/818 )
 - Renderer: Draw untextured gltf model parts with their material color ( https://github.com/julianxhokaxhiu/FFNx/pull/1003 )
 - Renderer: Draw mogu_1 water before its additive lighting, matching PSX compositing ( https://github.com/julianxhokaxhiu/FFNx/issues/926 )
+- Renderer: Restore PSX subtractive blending and stock texture palettes for Shadow Flare ( https://github.com/julianxhokaxhiu/FFNx/issues/279 )
 - Renderer: Raise the gltf bone limit to 255 ( https://github.com/julianxhokaxhiu/FFNx/pull/1001 )
 - Renderer: Re-enable smooth skinning for gltf models without slowing down other draws ( https://github.com/julianxhokaxhiu/FFNx/pull/1000 )
 - Renderer: Fix a crash when drawing gltf models ( https://github.com/julianxhokaxhiu/FFNx/pull/998 )

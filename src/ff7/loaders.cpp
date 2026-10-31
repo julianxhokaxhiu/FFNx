@@ -262,6 +262,53 @@ void destroy_tex_header(struct ff7_tex_header *tex_header)
 	external_free(tex_header);
 }
 
+static void restore_shadow_flare_palette(struct ff7_tex_header *tex_header)
+{
+	static constexpr struct
+	{
+		const char *name;
+		uint8_t pc_colors[16];
+		uint8_t psx_colors[16];
+	} palettes[] = {
+		{"magic/ff7/data/battle/blue/sflea/flea_3",
+		 {0, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 1},
+		 {0, 29, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 31}},
+		{"magic/ff7/data/battle/blue/sflea/flea_4",
+		 {0, 2, 2, 3, 4, 5, 6, 7, 7, 8, 9, 10, 11, 12, 13, 1},
+		 {0, 31, 28, 26, 24, 22, 20, 18, 16, 13, 11, 9, 7, 5, 3, 1}},
+		{"magic/ff7/data/battle/blue/sflea/flea_5",
+		 {0, 2, 2, 3, 4, 5, 6, 7, 7, 8, 9, 10, 11, 12, 13, 1},
+		 {0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1}},
+	};
+
+	for (const auto &palette : palettes)
+	{
+		if (_stricmp(tex_header->file.pc_name, palette.name)) continue;
+
+		const auto &format = tex_header->tex_format;
+		bool is_stock_palette = format.use_palette && format.palette_data && format.palette_size == 16;
+		for (uint32_t i = 0; is_stock_palette && i < 16; ++i)
+		{
+			uint32_t color = palette.pc_colors[i] * 255u / 31u;
+			uint32_t expected = i == 0 ? 0 : 0xFE000000u | (color * 0x010101u);
+			is_stock_palette = format.palette_data[i] == expected;
+		}
+		if (!is_stock_palette)
+		{
+			ffnx_trace("Shadow Flare: preserving custom palette for %s\n", tex_header->file.pc_name);
+			return;
+		}
+
+		// The PC port changed the grey ramp for average blending; retain its swapped transparent index.
+		for (uint32_t i = 1; i < 16; ++i)
+		{
+			uint32_t color = palette.psx_colors[i] * 255u / 31u;
+			format.palette_data[i] = 0xFE000000u | (color * 0x010101u);
+		}
+		return;
+	}
+}
+
 // load .tex file, save modpath name somewhere we can retrieve it later
 struct ff7_tex_header *load_tex_file(struct file_context *file_context, char *filename)
 {
@@ -296,6 +343,7 @@ struct ff7_tex_header *load_tex_file(struct file_context *file_context, char *fi
 	}
 
 	ret->file.pc_name = make_pc_name(file_context, file, filename);
+	restore_shadow_flare_palette(ret);
 
 	close_file(file);
 	return ret;
@@ -305,4 +353,3 @@ error:
 	close_file(file);
 	return 0;
 }
-
