@@ -52,6 +52,7 @@
 #include "metadata.h"
 #include "achievement.h"
 #include "ff8/widescreen.h"
+#include "ff8/world.h"
 
 #include <array>
 #include <chrono>
@@ -2385,6 +2386,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// #####################
 	replace_call(ff8_externals.sub_530C30 + 0x46A, ff8_field_3d_models_push_rects);
 	replace_call(uint32_t(ff8_externals.field_push_mch_vertices_rect_sub_533A90) + 0x4D, ff8_field_calc_triangle_condition);
+	ff8_worldmap_model_depth_init();
 
 	// #####################
 	// Config menu: Sound volumes

@@ -45,6 +45,7 @@
 ## FF8
 
 - Achievements: Add support for remastered achievements
+- Core: Preserve per-vertex depth in the world-map vehicle renderer while retaining native polygon sorting ( https://github.com/julianxhokaxhiu/FFNx/issues/879 )
 - Audio: Add a Sound screen to the Config menu, to set the sound effects, music, voice, ambient and movie volumes in game ( https://github.com/julianxhokaxhiu/FFNx/pull/1015 )
 - Core: Add extended item definitions and 24 inventory pages, with persistent save-tail inventory storage (see [item documentation](docs/ff8/items.md)) ( https://github.com/julianxhokaxhiu/FFNx/pull/1051 )
 - Core: Extend the battle actor sound table through c0m199 ( https://github.com/julianxhokaxhiu/FFNx/pull/999 )
