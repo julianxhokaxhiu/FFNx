@@ -158,6 +158,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_id = (WORD *)get_absolute_value(field_main_loop, 0x326);
 
 	ff7_externals.open_field_file = get_relative_call(field_main_loop, 0x331);
+	ff7_externals.field_load_tut_file_60DAD4 = (void (*)(ff7_game_obj*))get_relative_call(ff7_externals.open_field_file, 0x9E);
 	ff7_externals.field_file_name = (char *)get_absolute_value(ff7_externals.open_field_file, 0x77);
 	ff7_externals.read_field_file = get_relative_call(ff7_externals.open_field_file, 0xCF);
 

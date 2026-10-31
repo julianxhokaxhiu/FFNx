@@ -38,6 +38,8 @@
 #include "enter.h"
 #include "model.h"
 
+#include <bit>
+
 namespace ff7::field
 {
     // helper function initializes page dst, copies texture from src and applies
@@ -256,8 +258,46 @@ namespace ff7::field
         }
     }
 
+    static bool recalculate_background_depths = false;
+
+    void field_load_tut_file(ff7_game_obj* game_object)
+    {
+        ff7_externals.field_load_tut_file_60DAD4(game_object);
+
+        // The loader must copy the original near plane to the foreground-depth threshold first.
+        const float near_plane = std::bit_cast<float>(game_object->field_9A0);
+        recalculate_background_depths = near_plane > 50.0f;
+        if (recalculate_background_depths)
+        {
+            game_object->field_9A0 = std::bit_cast<uint32_t>(50.0f);
+        }
+    }
+
+    void field_initialize_background_depths(int world_x, int world_y)
+    {
+        ((void (*)(int, int))ff7_externals.field_sub_661B68)(world_x, world_y);
+
+        if (recalculate_background_depths)
+        {
+            // PC field files contain baked Z values; rebuild them from the retained raw tile depths.
+            field_tile* tiles = *ff7_externals.field_layer2_tiles;
+            for (int i = 0; i < *ff7_externals.field_layer2_tiles_num; ++i)
+            {
+                tiles[i].z = ff7_externals.field_layer_sub_623C0F(
+                    ff7_externals.field_camera_rotation_matrix_CFF3D8, tiles[i].flags,
+                    2 * tiles[i].x + 320, 2 * tiles[i].y + 240);
+            }
+        }
+    }
+
     void ff7_field_hook_init()
     {
+        // Fix camera model clipping in various fields
+        replace_call_function(ff7_externals.open_field_file + 0x9E, field_load_tut_file);
+        replace_call_function(ff7_externals.enter_field + 0xB5, field_load_tut_file);
+        replace_call_function(ff7_externals.enter_field + 0x2CA, field_load_tut_file);
+        replace_call_function(ff7_externals.field_sub_60DCED + 0x94, field_initialize_background_depths);
+
         std::copy(common_externals.execute_opcode_table, &common_externals.execute_opcode_table[OPCODE_COUNT - 1], &original_opcode_table[0]);
         // Init stuff
         replace_call_function(ff7_externals.field_sub_60DCED + 0x178, ff7_field_initialize_variables);
