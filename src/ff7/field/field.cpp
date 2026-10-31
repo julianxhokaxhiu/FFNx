@@ -29,6 +29,7 @@
 #include "../../log.h"
 #include "../../patch.h"
 #include "../../common.h"
+#include "../../gl.h"
 #include "../widescreen.h"
 #include "../defs.h"
 
@@ -42,6 +43,26 @@
 
 namespace ff7::field
 {
+    static int (*field_draw_effect_pages_original)(ff7_game_obj*, uint16_t, uint16_t);
+
+    static int field_draw_effect_pages(ff7_game_obj* game_object, uint16_t first_page, uint16_t end_page)
+    {
+        const char* field_name = get_current_field_name();
+        if (!field_name || strcmp(field_name, "mogu_1") != 0 || first_page != 15 || end_page != 26)
+            return field_draw_effect_pages_original(game_object, first_page, end_page);
+
+        // PSX draws the water at depth 4094 before the screen lighting at depth 1.
+        const int result = field_draw_effect_pages_original(game_object, 24, end_page);
+        const uint32_t depthtest = current_state.depthtest;
+        const uint32_t depthmask = current_state.depthmask;
+        internal_set_renderstate(V_DEPTHTEST, false, (game_obj*)game_object);
+        internal_set_renderstate(V_DEPTHMASK, false, (game_obj*)game_object);
+        field_draw_effect_pages_original(game_object, first_page, 24);
+        internal_set_renderstate(V_DEPTHTEST, depthtest, (game_obj*)game_object);
+        internal_set_renderstate(V_DEPTHMASK, depthmask, (game_obj*)game_object);
+        return result;
+    }
+
     // helper function initializes page dst, copies texture from src and applies
     // blend_mode
     void field_load_textures_helper(struct ff7_game_obj *game_object, struct struc_3 *struc_3, uint32_t src, uint32_t dst, uint32_t blend_mode)
@@ -292,6 +313,9 @@ namespace ff7::field
 
     void ff7_field_hook_init()
     {
+        field_draw_effect_pages_original = (decltype(field_draw_effect_pages_original))get_relative_call(ff7_externals.field_draw_everything, 0x348);
+        replace_call_function(ff7_externals.field_draw_everything + 0x348, field_draw_effect_pages);
+
         // Fix camera model clipping in various fields
         replace_call_function(ff7_externals.open_field_file + 0x9E, field_load_tut_file);
         replace_call_function(ff7_externals.enter_field + 0xB5, field_load_tut_file);
