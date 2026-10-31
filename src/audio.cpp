@@ -699,15 +699,17 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 	if (!options.useNameAsFullPath) {
 		overloadPlayArgumentsFromConfig(overloadedName, &id, &options);
 	}
+	const bool sameMusic = currentMusicId(channel) == id && (!options.matchName || _musics[channel].sourceName == name);
 	// Same music is already playing on this channel
-	if (isMusicPlaying(channel) && currentMusicId(channel) == id) {
+	if (isMusicPlaying(channel) && sameMusic) {
 		if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %s is already playing on channel %d\n", __func__, overloadedName, channel);
 
 		return false;
 	}
 	// Same music is paused on this channel or in backup channel
-	bool restore = !_musicStack.empty() && _musicStack.top().id == id;
-	if ((isChannelValid(channel) && currentMusicId(channel) == id) || restore) {
+	bool restore = !_musicStack.empty() && _musicStack.top().id == id
+		&& (!options.matchName || _musicStack.top().sourceName == name);
+	if ((isChannelValid(channel) && sameMusic) || restore) {
 		resumeMusic(channel, options.fadetime == 0.0 ? 1.0 : options.fadetime, restore); // Slight fade
 
 		return true;
@@ -730,6 +732,7 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 		const float initialVolume = options.fadetime > 0.0 || offsetSeconds > 0.0 ? 0.0f : music.wantedMusicVolume * _musicMasterVolume;
 		music.handle = _engine.playBackground(*audioSource, initialVolume, offsetSeconds > 0.0);
 		music.id = id;
+		music.sourceName = name;
 		music.sync = options.sync;
 
 		// Keep audioSource pointer somewhere to delete it after musicHandle is stopped
@@ -927,6 +930,7 @@ void NxAudioEngine::backupMusic(int channelSource)
 	// Save for later usage
 	backup.id = music.id;
 	backup.handle = music.handle;
+	backup.sourceName = music.sourceName;
 	backup.sync = music.sync;
 
 	_musicStack.push(backup);
@@ -952,6 +956,7 @@ void NxAudioEngine::restoreMusic(int channelDest, double stopTime)
 	// Restore
 	music.id = backup.id;
 	music.handle = backup.handle;
+	music.sourceName = backup.sourceName;
 	music.sync = backup.sync;
 
 	_musicStack.pop();

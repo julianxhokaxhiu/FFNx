@@ -326,8 +326,11 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 
 		mode = getmode_cached();
 
+		options.matchName = next_music_is_world && !next_music_is_battle;
+
 		if (external_music_resume) {
-			if (nxAudioEngine.currentMusicId(0) == main_theme_midi_id || channel == 1) {
+			if ((nxAudioEngine.currentMusicId(0) == main_theme_midi_id || channel == 1)
+				&& (!options.matchName || nxAudioEngine.currentMusicId(channel) != music_id)) {
 				// Backup current state of the music
 				nxAudioEngine.pauseMusic(0, options.fadetime == 0.0 ? (next_music_is_battle && !external_music_sync ? 0.2 : 1.0) : options.fadetime, true);
 			}
@@ -385,12 +388,7 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 		}
 		else if (next_music_is_world)
 		{
-			ff7_last_region_id = ff7_externals.world_get_player_walkmap_region();
-
-			sprintf(new_music_name, "%s_a%d", music_name, ff7_last_region_id);
-
-			// Since world music comes with the same ID, we need to stop manually the channel to allow the new per region file to load again
-			if (nxAudioEngine.canPlayMusic(new_music_name)) nxAudioEngine.stopMusic(channel);
+			sprintf(new_music_name, "%s_a%d", music_name, ff7_externals.world_get_player_walkmap_region());
 
 			playing = nxAudioEngine.playMusic(new_music_name, music_id, channel, options);
 		}
@@ -472,7 +470,7 @@ void ff7_play_midi(uint32_t music_id)
 {
 	const int channel = external_music_resume ? next_music_channel : 0;
 
-	if (nxAudioEngine.currentMusicId(0) != music_id && nxAudioEngine.currentMusicId(1) != music_id)
+	if (next_music_is_world || (nxAudioEngine.currentMusicId(0) != music_id && nxAudioEngine.currentMusicId(1) != music_id))
 	{
 		if (is_gameover(music_id)) music_flush();
 
@@ -546,7 +544,7 @@ void ff7_cross_fade_midi(uint32_t music_id, uint32_t steps)
 			music_id = (nxAudioEngine.currentMusicId(channel) != 1) + 1;
 		}
 
-		if (nxAudioEngine.currentMusicId(channel) != music_id)
+		if (next_music_is_world || nxAudioEngine.currentMusicId(channel) != music_id)
 		{
 			NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions();
 			options.fadetime = time;
@@ -732,7 +730,12 @@ void ff7_worldmap_on_loop()
 	(*ff7_externals.world_dword_DE68FC)();
 
 	// If we change region while moving in the worldmap, trigger a new music change
-	if (ff7_last_region_id != ff7_externals.world_get_player_walkmap_region()) next_music_is_world = true;
+	const uint32_t region_id = ff7_externals.world_get_player_walkmap_region();
+	if (ff7_last_region_id != region_id)
+	{
+		ff7_last_region_id = region_id;
+		next_music_is_world = true;
+	}
 
 	if (next_music_is_battle || next_music_is_world)
 	{

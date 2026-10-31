@@ -52,14 +52,15 @@ public:
 			noIntro(false),
 			sync(false),
 			useNameAsFullPath(false),
-			suppressOpeningSilence(false)
+			suppressOpeningSilence(false),
+			matchName(false)
 		{}
 		SoLoud::time offsetSeconds;
 		SoLoud::time fadetime;
 		float targetVolume;
 		float relativeSpeed;
 		char format[12];
-		bool noIntro, sync, useNameAsFullPath, suppressOpeningSilence;
+		bool noIntro, sync, useNameAsFullPath, suppressOpeningSilence, matchName;
 	};
 
 	struct NxAudioEngineSFX
@@ -96,6 +97,7 @@ public:
 		}
 		SoLoud::handle handle;
 		int32_t id;
+		std::string sourceName;
 		float wantedMusicVolume;
 		SoLoud::time lastMusicOffset;
 		bool sync;
