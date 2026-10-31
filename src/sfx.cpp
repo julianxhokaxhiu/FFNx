@@ -938,6 +938,9 @@ void sfx_init()
 		{
 			ff7_sfx_fix_volume_curve();
 
+			// Volume updates must not cancel the pending intro-to-loop callback.
+			memset_code(ff7_externals.sfx_update_volume + 0x331, 0x90, 7);
+
 			/*
 			* Set sound volume on channel changes
 			* When this sub is called, it set two fields of sfx_state,

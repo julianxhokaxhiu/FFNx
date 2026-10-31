@@ -38,6 +38,7 @@
 - Core: gltf models follow the animation's root motion, from the gltf when it has its own ( https://github.com/julianxhokaxhiu/FFNx/pull/1044 )
 - Input: Fix held menu buttons firing again when another button is pressed, while preserving normal input repeat ( https://github.com/julianxhokaxhiu/FFNx/issues/713 )
 - SFX: Correct the vanilla DirectSound volume curve so low-volume effects remain audible, without changing native music or external SFX ( https://github.com/julianxhokaxhiu/FFNx/issues/744 )
+- SFX: Preserve looping sound effects during volume fades, including the wind in Cloud and Tifa's scene under the Highwind ( https://github.com/julianxhokaxhiu/FFNx/issues/745 )
 
 ## FF8
 
