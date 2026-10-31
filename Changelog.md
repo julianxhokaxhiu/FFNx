@@ -10,6 +10,7 @@
 - Core: Fix a crash during startup when a file signature check fails, which left FFNx.log truncated instead of naming the file ( https://github.com/julianxhokaxhiu/FFNx/pull/986 )
 - Renderer: Improved super sampling to prevent aliasing and shimmering ( https://github.com/julianxhokaxhiu/FFNx/pull/990 )
 - Movie: Rework movie hardware and software decoding, allowing to smoothly decode 4K movies in both cases
+- SFX: Allow effects to fallback to the original vanilla one when external ones are not found and `use_external_sfx` is enabled
 
 ## FF7
 

@@ -74,6 +74,8 @@ public:
 		{}
 		int game_id;
 		int id;
+		std::string sourceName;
+		bool original = false;
 		SoLoud::VGMStream *stream;
 		SoLoud::handle handle;
 		float volume;
@@ -237,7 +239,7 @@ public:
 	// SFX
 	int getSFXIdFromChannel(int channel);
 	void unloadSFX(int id);
-	bool playSFX(const char* name, int id, int channel, float panning, bool loop = false, float volume = 1.0f);
+	bool playSFX(const char* name, int id, int channel, float panning, bool loop = false, float volume = 1.0f, bool fallbackToOriginal = false);
 	void stopSFX(int channel, double time = 0);
 	void pauseSFX(int channel);
 	void resumeSFX(int channel);

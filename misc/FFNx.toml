@@ -199,6 +199,7 @@ external_audio_sample_rate = 44100
 
 #[USE EXTERNAL SFX]
 # This flag will enable/disable the support of an enhanced audio layer to reproduce sounds in-game.
+# Missing external effects fall back to the original FF7/FF8 sound archive after all external layers are checked.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 use_external_sfx = false
 

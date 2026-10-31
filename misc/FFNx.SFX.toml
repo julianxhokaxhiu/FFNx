@@ -8,6 +8,9 @@
 # [ID]
 # flag = value
 # another_flag = value
+# -----------------------------------------------------------------------------
+# Missing files fall back to the original game effect after all external layers.
+# Shuffle and sequential IDs can also resolve to original game effects.
 ###############################################################################
 
 ### SUPPORTED FLAGS: ##########################################################

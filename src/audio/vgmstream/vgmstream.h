@@ -22,6 +22,8 @@
 #pragma once
 
 #include <soloud.h>
+#include <span>
+#include <stdint.h>
 
 #if defined(__cplusplus)
 extern "C" {
@@ -38,6 +40,7 @@ namespace SoLoud
 	class VGMStream : public AudioSource
 	{
 		static VGMSTREAM* init_vgmstream_with_extension(const char* aFilename, const char* ext);
+		result finishLoad();
 	public:
 		VGMSTREAM* mStream;
 		unsigned int mSampleCount;
@@ -48,6 +51,8 @@ namespace SoLoud
 		VGMStream();
 		virtual ~VGMStream();
 		result load(const char* aFilename, const char* ext = nullptr);
+		result loadWavFromArchive(const char* filename, uint32_t offset, uint32_t length,
+			std::span<const uint8_t> format, uint32_t loopStart = 0, uint32_t loopEnd = 0);
 
 		virtual AudioSourceInstance* createInstance();
 		time getLength();

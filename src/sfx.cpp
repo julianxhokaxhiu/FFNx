@@ -25,6 +25,8 @@
 
 #include "sfx.h"
 
+#include <mmreg.h>
+
 uint32_t sfx_volumes[5];
 ff7_field_sfx_state sfx_buffers[4];
 uint32_t real_volume;
@@ -32,8 +34,91 @@ ff7_field_sfx_state* sfx_state = nullptr;
 ff7_channel_6_state sfx_channel_6_state;
 
 constexpr auto FF8_MAX_CHANNEL_NUMBER = 0x1F;
+constexpr auto FF7_MAX_SFX_ID = 750;
 
 //=============================================================================
+
+SoLoud::VGMStream* sfx_load_original(int id, bool loop)
+{
+	uint32_t length, offset, loopStart, loopEnd;
+	const WAVEFORMATEX* format;
+	if (ff8)
+	{
+		if (ff8_externals.sfx_sound_count == nullptr || ff8_externals.sfx_audio_fmt == nullptr ||
+			*ff8_externals.sfx_audio_fmt == nullptr)
+		{
+			ffnx_error("%s: Original FF8 SFX metadata is not initialized\n", __func__);
+			return nullptr;
+		}
+		if (id < 0 || id >= *ff8_externals.sfx_sound_count)
+		{
+			ffnx_error("%s: Invalid FF8 SFX ID %d\n", __func__, id);
+			return nullptr;
+		}
+		const auto& entry = (*ff8_externals.sfx_audio_fmt)[id];
+		length = entry.length;
+		offset = entry.offset;
+		loopStart = entry.loop_start;
+		loopEnd = entry.loop_end;
+		format = entry.wave_format;
+	}
+	else
+	{
+		if (ff7_externals.sfx_fmt_header == nullptr)
+		{
+			ffnx_error("%s: Original FF7 SFX metadata is not initialized\n", __func__);
+			return nullptr;
+		}
+		if (id < 1 || id > FF7_MAX_SFX_ID)
+		{
+			ffnx_error("%s: Invalid FF7 SFX ID %d\n", __func__, id);
+			return nullptr;
+		}
+		const auto& entry = ff7_externals.sfx_fmt_header[id - 1];
+		length = entry.length;
+		offset = entry.offset;
+		loopStart = entry.loop_start;
+		loopEnd = entry.loop_end;
+		format = entry.wave_format;
+	}
+
+	if (length == 0)
+	{
+		if (trace_all || trace_sfx) ffnx_trace("%s: Original SFX %d is empty\n", __func__, id);
+		return nullptr;
+	}
+	if (format == nullptr || format->nChannels == 0 ||
+		(format->wFormatTag != WAVE_FORMAT_PCM && format->wFormatTag != WAVE_FORMAT_ADPCM))
+	{
+		ffnx_error("%s: Invalid or unsupported original format for SFX %d\n", __func__, id);
+		return nullptr;
+	}
+
+	// Archive loop offsets address decoded PCM bytes, not compressed ADPCM bytes.
+	const uint32_t bytesPerFrame = format->nChannels *
+		(format->wFormatTag == WAVE_FORMAT_ADPCM ? 2 : format->wBitsPerSample / 8);
+	if (bytesPerFrame == 0 || (loop && (loopStart % bytesPerFrame || loopEnd % bytesPerFrame)))
+	{
+		ffnx_error("%s: Invalid original loop offsets for SFX %d\n", __func__, id);
+		return nullptr;
+	}
+
+	char filename[MAX_PATH];
+	snprintf(filename, sizeof(filename), "%s\\data\\sound\\audio.dat", basedir);
+	auto stream = new SoLoud::VGMStream();
+	stream->setLooping(loop);
+	const auto result = stream->loadWavFromArchive(filename, offset, length,
+		{reinterpret_cast<const uint8_t*>(format), sizeof(WAVEFORMATEX) + format->cbSize},
+		loopStart / bytesPerFrame, loopEnd / bytesPerFrame);
+	if (result != SoLoud::SO_NO_ERROR)
+	{
+		ffnx_error("%s: Cannot load original SFX %d from %s (SoLoud error: %u)\n", __func__, id, filename, result);
+		delete stream;
+		return nullptr;
+	}
+	if (trace_all || trace_sfx) ffnx_trace("%s: Using original SFX %d\n", __func__, id);
+	return stream;
+}
 
 void ff7_sfx_release(IDirectSoundBuffer *buffer)
 {
@@ -217,6 +302,9 @@ bool ff7_sfx_play_layered(float panning, int id, int channel)
 		sprintf(track_name, "%d", id);
 	}
 
+	if (std::to_string(id) == track_name)
+		return nxAudioEngine.playSFX(track_name, id, channel, panning, ff7_should_sfx_loop(id), 1.0f, true);
+
 	// If any overridden layer could not be played, fallback to default
 	if (!(playing = nxAudioEngine.playSFX(track_name, id, channel, panning, ff7_should_sfx_loop(id))))
 	{
@@ -226,13 +314,13 @@ bool ff7_sfx_play_layered(float panning, int id, int channel)
 			if (!(playing = nxAudioEngine.playSFX(track_name, id, channel, panning, ff7_should_sfx_loop(id))))
 			{
 				sprintf(track_name, "%d", id);
-				playing = nxAudioEngine.playSFX(track_name, id, channel, panning, ff7_should_sfx_loop(id));
+				playing = nxAudioEngine.playSFX(track_name, id, channel, panning, ff7_should_sfx_loop(id), 1.0f, true);
 			}
 		}
 		else
 		{
 			sprintf(track_name, "%d", id);
-			playing = nxAudioEngine.playSFX(track_name, id, channel, panning, ff7_should_sfx_loop(id));
+			playing = nxAudioEngine.playSFX(track_name, id, channel, panning, ff7_should_sfx_loop(id), 1.0f, true);
 		}
 	}
 
@@ -249,7 +337,7 @@ bool ff8_sfx_play_layered(int channel, int id, int volume, float panning)
 	bool loop = false;
 
 	// Get loop info from audio.fmt
-	if (id <= *ff8_externals.sfx_sound_count) {
+	if (id >= 0 && id < *ff8_externals.sfx_sound_count) {
 		loop = (*ff8_externals.sfx_audio_fmt)[id].loop;
 	}
 
@@ -276,11 +364,14 @@ bool ff8_sfx_play_layered(int channel, int id, int volume, float panning)
 		sprintf(track_name, "%d", id);
 	}
 
+	if (std::to_string(id) == track_name)
+		return nxAudioEngine.playSFX(track_name, id, channel, panningf, loop, volumef, true);
+
 	// If any overridden layer could not be played, fallback to default
-	if (!(playing = nxAudioEngine.playSFX(track_name, id, channel, panningf, loop, volumef)))
+	if (!playing && !(playing = nxAudioEngine.playSFX(track_name, id, channel, panningf, loop, volumef)))
 	{
 		sprintf(track_name, "%d", id);
-		playing = nxAudioEngine.playSFX(track_name, id, channel, panningf, loop, volumef);
+		playing = nxAudioEngine.playSFX(track_name, id, channel, panningf, loop, volumef, true);
 	}
 
 	return playing;
@@ -699,7 +790,7 @@ void sfx_process_wm_footstep(int player_model_id, int player_walkmap_type)
 			if(!playing)
 			{
 				sprintf(track_name, "wm_footsteps_%d_%d", player_walkmap_type, footstep_id);
-				playing = nxAudioEngine.playSFX(track_name, footstep_id, 7, 0.0f);
+				playing = nxAudioEngine.playSFX(track_name, footstep_id, 7, 0.0f, false, 1.0f, true);
 			}
 		}
 		else
@@ -723,7 +814,7 @@ void sfx_process_wm_highwind(bool is_old_highwind, bool is_highwind_moving)
 		{
 			char track_name[64];
 			sprintf(track_name, "sfx_highwind_%d", (is_old_highwind) ? 0 : 1);
-			playing = nxAudioEngine.playSFX(track_name, default_sfx_id, default_channel, 0.0f, true);
+			playing = nxAudioEngine.playSFX(track_name, default_sfx_id, default_channel, 0.0f, true, 1.0f, true);
 		}
 		else
 		{
