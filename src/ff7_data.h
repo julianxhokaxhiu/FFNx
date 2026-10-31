@@ -436,6 +436,13 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	// japanese name-entry screen (used by the ff7_japanese_edition path)
 	ff7_externals.menu_sub_718B9A = get_relative_call(ff7_externals.menu_sub_718DBE, 0x1C0);
 	ff7_externals.menu_input_check_6F53F1 = (uint32_t (*)(uint32_t))get_relative_call(ff7_externals.menu_sub_718DBE, 0x25F);
+	ff7_externals.input_query_repeatable = get_relative_call((uint32_t)ff7_externals.menu_input_check_6F53F1, 0x7);
+	ff7_externals.get_button_held = (int (*)(int))get_relative_call(ff7_externals.input_query_repeatable, 0x10);
+	ff7_externals.input_repeat_interval = (uint32_t *)get_absolute_value(ff7_externals.input_query_repeatable, 0x5);
+	ff7_externals.input_repeat_gate = (uint32_t *)get_absolute_value(ff7_externals.input_query_repeatable, 0x2B);
+	// The repeat updater follows the query and its interval accessors.
+	uint32_t input_repeat_update = ff7_externals.input_query_repeatable + 0x6F;
+	ff7_externals.input_repeat_active = (uint32_t *)get_absolute_value(input_repeat_update, 0x18);
 	ff7_externals.name_menu_selected_pane_921ED4 = (uint32_t *)get_absolute_value(ff7_externals.menu_sub_718DBE, 0x234);
 	ff7_externals.name_menu_pane_cursor_rows_DD453C = get_absolute_value(ff7_externals.menu_sub_718DBE, 0x284);
 	ff7_externals.name_menu_action_jump_table_719B61 = get_absolute_value(ff7_externals.menu_sub_718DBE, 0x29B);

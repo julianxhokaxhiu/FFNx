@@ -36,6 +36,7 @@
 - Core: Fix a memory leak in the model draw with external meshes enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/1008 )
 - Renderer: Skin the normals of smooth-skinned gltf models, so game lighting follows their pose ( https://github.com/julianxhokaxhiu/FFNx/pull/1010 )
 - Core: gltf models follow the animation's root motion, from the gltf when it has its own ( https://github.com/julianxhokaxhiu/FFNx/pull/1044 )
+- Input: Fix held menu buttons firing again when another button is pressed, while preserving normal input repeat ( https://github.com/julianxhokaxhiu/FFNx/issues/713 )
 
 ## FF8
 

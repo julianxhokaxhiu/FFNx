@@ -37,6 +37,18 @@
 unsigned char midi_fix[] = {0x8B, 0x4D, 0x14};
 WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};
 
+static int ff7_query_repeatable_input(int mask)
+{
+	if (*ff7_externals.input_repeat_interval == 0)
+		return ff7_externals.get_button_held(mask);
+
+	// A fresh press opens the shared gate, but must not repeat other held buttons.
+	if (*ff7_externals.input_repeat_active == 0)
+		return ff7_externals.get_button_pressed(mask);
+
+	return ff7_externals.get_button_held(mask) ? *ff7_externals.input_repeat_gate : 0;
+}
+
 static ff7_polygon_set *ff7_swirl_update_60fps(ff7_game_obj *game_object, int update)
 {
 	const auto native_update = reinterpret_cast<ff7_polygon_set *(*)(ff7_game_obj *, int)>(ff7_externals.swirl_loop_sub_4026D4);
@@ -132,6 +144,8 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	common_externals.make_pixelformat = game_object->externals->make_pixelformat;
 
 	ff7_data(game_object);
+
+	replace_function(ff7_externals.input_query_repeatable, ff7_query_repeatable_input);
 
 	// Fix CTRL button status check
 	const unsigned char quit_modifier_fix[] = {0xC1, 0xE9, 0x1F};

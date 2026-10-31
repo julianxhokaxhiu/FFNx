@@ -3074,6 +3074,11 @@ struct ff7_externals
 	uint32_t menu_sub_719B81;
 	uint32_t menu_sub_718B9A;
 	uint32_t (*menu_input_check_6F53F1)(uint32_t);
+	uint32_t input_query_repeatable;
+	int (*get_button_held)(int);
+	uint32_t *input_repeat_interval;
+	uint32_t *input_repeat_gate;
+	uint32_t *input_repeat_active;
 	uint32_t *name_menu_selected_pane_921ED4;
 	uint32_t name_menu_pane_cursor_rows_DD453C;
 	uint32_t name_menu_action_jump_table_719B61;
