@@ -26,17 +26,22 @@ display_index = -1
 renderer_backend = 0
 
 #[FULLSCREEN]
-# If off, it will run in window mode.
+# Enables fullscreen with display mode switching.
+# If off, it will run in window mode unless borderless is enabled.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 fullscreen = false
 
 #[BORDERLESS]
-# If off, it will run using the default window style.
+# Covers the selected monitor, including the taskbar area, without borders
+# or changing the desktop resolution and refresh rate.
+# This mode is selected at startup; runtime display-mode switching is disabled.
+# Ignored when fullscreen is enabled.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 borderless = false
 
 #[RESOLUTION]
 # Resolution of the game.
+# Borderless fullscreen always uses the desktop resolution and ignores these values.
 # Default (value = 0):
 # - Window mode will use 640x480 (1024x768 on FF8:Remastered)
 # - Fullscreen mode will use your desktop resolution

@@ -23,7 +23,6 @@
 
 #include <windows.h>
 #include <windowsx.h>
-#include <dwmapi.h>
 #include <stdio.h>
 #include <sys/timeb.h>
 #include <hwinfo/hwinfo.h>
@@ -524,106 +523,6 @@ char* get_current_field_name()
 	return ret;
 }
 
-bool maximized(HWND hwnd) {
-	WINDOWPLACEMENT placement;
-	if (!GetWindowPlacement(hwnd, &placement)) {
-				return false;
-	}
-
-	return placement.showCmd == SW_MAXIMIZE;
-}
-
-/* Adjust client rect to not spill over monitor edges when maximized.
-* rect(in/out): in: proposed window rect, out: calculated client rect
-* Does nothing if the window is not maximized.
-*/
-void adjust_maximized_client_rect(HWND window, RECT& rect) {
-	if (!maximized(window)) {
-			return;
-	}
-
-	auto monitor = MonitorFromWindow(window, MONITOR_DEFAULTTONULL);
-	if (!monitor) {
-			return;
-	}
-
-	MONITORINFO monitor_info{};
-	monitor_info.cbSize = sizeof(monitor_info);
-	if (!GetMonitorInfoW(monitor, &monitor_info)) {
-			return;
-	}
-
-	// when maximized, make the client area fill just the monitor (without task bar) rect,
-	// not the whole window rect which extends beyond the monitor.
-	rect = monitor_info.rcWork;
-}
-
-bool composition_enabled() {
-	BOOL composition_enabled = FALSE;
-	bool success = DwmIsCompositionEnabled(&composition_enabled) == S_OK;
-	return composition_enabled && success;
-}
-
-LRESULT window_hit_test(HWND hwnd, POINT cursor) {
-	// identify borders and corners to allow resizing the window.
-	// Note: On Windows 10, windows behave differently and
-	// allow resizing outside the visible window frame.
-	// This implementation does not replicate that behavior.
-	const POINT border{
-			::GetSystemMetrics(SM_CXFRAME) + ::GetSystemMetrics(SM_CXPADDEDBORDER),
-			::GetSystemMetrics(SM_CYFRAME) + ::GetSystemMetrics(SM_CXPADDEDBORDER)
-	};
-	SetRectEmpty(&gameWindowRect);
-	if (!::GetWindowRect(hwnd, &gameWindowRect)) {
-			return HTNOWHERE;
-	}
-
-	enum region_mask {
-			client = 0b0000,
-			left   = 0b0001,
-			right  = 0b0010,
-			top    = 0b0100,
-			bottom = 0b1000,
-	};
-
-	const auto result =
-			left    * (cursor.x <  (gameWindowRect.left   + border.x)) |
-			right   * (cursor.x >= (gameWindowRect.right  - border.x)) |
-			top     * (cursor.y <  (gameWindowRect.top    + border.y)) |
-			bottom  * (cursor.y >= (gameWindowRect.bottom - border.y));
-
-	switch (result) {
-			case left          : return HTLEFT;
-			case right         : return HTRIGHT;
-			case top           : return HTTOP;
-			case bottom        : return HTBOTTOM;
-			case top | left    : return HTTOPLEFT;
-			case top | right   : return HTTOPRIGHT;
-			case bottom | left : return HTBOTTOMLEFT;
-			case bottom | right: return HTBOTTOMRIGHT;
-			case client        : return HTCAPTION;
-			default            : return HTNOWHERE;
-	}
-}
-
-void set_window_shadow() {
-	if (composition_enabled()) {
-		static const MARGINS shadow_state{1,1,1,1};
-		::DwmExtendFrameIntoClientArea(gameHwnd, &shadow_state);
-	}
-}
-
-void toggle_borderless() {
-	DWORD style = borderless ? WS_POPUP | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX : WS_OVERLAPPEDWINDOW;
-
-	SetWindowLongPtr(gameHwnd, GWL_STYLE, style | WS_VISIBLE);
-
-	set_window_shadow();
-
-	SetWindowPos(gameHwnd, HWND_TOP, 0, 0, borderless ? window_size_x : gameWindow[GameWindowState::CURRENT].w, borderless ? window_size_y : gameWindow[GameWindowState::CURRENT].h, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
-	ShowWindow(gameHwnd, SW_SHOW);
-}
-
 void calc_window_size(uint32_t width, uint32_t height) {
 	SetRectEmpty(&gameWindowRect);
 
@@ -645,30 +544,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (uMsg)
 		{
-		case WM_NCCALCSIZE:
-			if (wParam == TRUE && borderless) {
-					auto& params = *reinterpret_cast<NCCALCSIZE_PARAMS*>(lParam);
-					adjust_maximized_client_rect(hwnd, params.rgrc[0]);
-					return 0;
-			}
-			break;
-		case WM_NCHITTEST:
-			// When we have no border or title bar, we need to perform our
-			// own hit testing to allow resizing and moving.
-			if (borderless) {
-					return window_hit_test(gameHwnd, POINT{
-							GET_X_LPARAM(lParam),
-							GET_Y_LPARAM(lParam)
-					});
-			}
-			break;
-		case WM_NCACTIVATE:
-			if (!composition_enabled()) {
-					// Prevents window frame reappearing on window activation
-					// in "basic" theme, where no aero shadow is present.
-					return 1;
-			}
-			break;
 		case WM_KEYDOWN:
 			if ((::GetKeyState(VK_CONTROL) & 0x8000) != 0)
 			{
@@ -705,24 +580,18 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						newRenderer.reset();
 					}
 					break;
-				case VK_RETURN:
-					if (!fullscreen)
-					{
-						borderless = !borderless;
-						toggle_borderless();
-						newRenderer.reset();
-					}
-					break;
 				}
 			}
 			break;
 		case WM_SIZE:
+			if (wParam == SIZE_MINIMIZED) break;
+
 			window_size_x = (long)LOWORD(lParam);
 			window_size_y = (long)HIWORD(lParam);
 
-			calc_window_size(window_size_x, window_size_y);
+			if (!borderless) calc_window_size(window_size_x, window_size_y);
 
-			if (wParam != SIZE_MINIMIZED) newRenderer.reset();
+			newRenderer.reset();
 
 			if (wParam == SIZE_MAXIMIZED) gameWindowWasMaximized = true;
 			else if (wParam == SIZE_RESTORED && gameWindowWasMaximized) gameWindowWasMaximized = false;
@@ -744,6 +613,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case WM_MENUCHAR:
 			if (LOWORD(wParam) == VK_RETURN)
 			{
+				if (borderless) return MAKELRESULT(0, MNC_CLOSE);
+
 				const auto& targetMonitor = monitors[display_index-1];
 				if (fullscreen)
 				{
@@ -960,19 +831,25 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 			gameWindow[GameWindowState::PRE_FULLSCREEN] = gameWindow[GameWindowState::CURRENT];
 		}
 		// Otherwise if windowed mode is requested on start, use the given resolution as a starting point
-		else
+		else if (!borderless)
 			calc_window_size(window_size_x, window_size_y);
 
 		const RECT& monitorRect = targetMonitor.rcMonitor;
+		if (borderless)
+		{
+			window_size_x = monitorRect.right - monitorRect.left;
+			window_size_y = monitorRect.bottom - monitorRect.top;
+		}
+
 		hWnd = CreateWindowExA(
 			WS_EX_APPWINDOW,
 			VREF(game_object, window_class),
 			VREF(game_object, window_title),
-			fullscreen ? WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS : WS_OVERLAPPEDWINDOW,
-			monitorRect.left + (fullscreen ? 0 : gameWindow[GameWindowState::CURRENT].x),
-			monitorRect.top + (fullscreen ? 0 : gameWindow[GameWindowState::CURRENT].y),
-			fullscreen ? window_size_x : gameWindow[GameWindowState::CURRENT].w,
-			fullscreen ? window_size_y : gameWindow[GameWindowState::CURRENT].h,
+			(fullscreen || borderless) ? WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS : WS_OVERLAPPEDWINDOW,
+			monitorRect.left + ((fullscreen || borderless) ? 0 : gameWindow[GameWindowState::CURRENT].x),
+			monitorRect.top + ((fullscreen || borderless) ? 0 : gameWindow[GameWindowState::CURRENT].y),
+			(fullscreen || borderless) ? window_size_x : gameWindow[GameWindowState::CURRENT].w,
+			(fullscreen || borderless) ? window_size_y : gameWindow[GameWindowState::CURRENT].h,
 			0,
 			0,
 			hInstance,
@@ -1096,8 +973,6 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 					}
 
 					nxAudioEngine.init();
-
-					if (borderless) toggle_borderless();
 
 					if (VREF(game_object, engine_loop_obj.enter_main))
 						VREF(game_object, engine_loop_obj.enter_main)(game_object);

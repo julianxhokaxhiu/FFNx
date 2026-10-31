@@ -5,18 +5,11 @@ FFNx comes with various built-in shortcuts which would allow you to boost or enj
 ### Fullscreen
 
 You can toggle the fullscreen mode in any moment while playing by using the related shortcuts.
+This shortcut is disabled when borderless fullscreen is active.
 
 Shortcuts:
 
 - Keyboard Shortcut: `Alt + Enter`
-
-### Borderless
-
-You can toggle the borderless mode in any moment while playing by using the related shortcuts.
-
-Shortcuts:
-
-- Keyboard Shortcut: `Shift + Enter`
 
 ### Aspect Ratio
 

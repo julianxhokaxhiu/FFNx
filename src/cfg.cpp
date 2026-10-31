@@ -262,7 +262,7 @@ void read_cfg()
 	aspect_ratio = config["aspect_ratio"].value_or(0);
 	enable_uncrop = config["enable_uncrop"].value_or(false);
 	fullscreen = config["fullscreen"].value_or(false);
-	borderless = config["borderless"].value_or(false);
+	borderless = !fullscreen && config["borderless"].value_or(false);
 	refresh_rate = config["refresh_rate"].value_or(0);
 	enable_vsync = config["enable_vsync"].value_or(true);
 	mdef_fix = config["mdef_fix"].value_or(true);
