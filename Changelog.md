@@ -72,6 +72,10 @@
 - Voice: Add main character and enemy voice actions (attack, magic, etc.)
 - Widescreen: Refine 16:9 mode by unlocking true 16:9 for 3D scenes while keeping 4:3 for the remaining ones until they can be ported natively
 
+## FF7/FF8 Steam
+
+- Metadata: Recreate missing Steam save metadata for FF7 and FF8, including existing saves and Chocobo World, to prevent launcher save deletion
+
 ## FF8 Remastered
 
 - Add support for multi language switch ( https://github.com/julianxhokaxhiu/FFNx/pull/982 https://github.com/julianxhokaxhiu/FFNx/pull/844 )

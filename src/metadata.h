@@ -22,6 +22,8 @@
 #pragma once
 
 #include <io.h>
+#include <cstdint>
+#include <string>
 
 #include <pugiconfig.hpp>
 #include <pugixml.hpp>
@@ -37,8 +39,9 @@ private:
 	char savePath[260]{ 0 };
 
 	void calcNow();
-	void loadXml();
+	bool loadXml();
 	void saveXml();
+	bool updateSignature(pugi::xml_node savefile, const char* filename, bool current);
 
 public:
 	void init();
