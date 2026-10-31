@@ -79,6 +79,14 @@ namespace ff7::battle
 			uint32_t flags = *reinterpret_cast<const uint32_t *>(texture_resource);
 			patch_code_dword(texture_resource, (flags & ~7u) | 2u);
 		}
+
+		uint32_t ifrit = get_relative_call(ff7_externals.run_summon_animations_5C0E4B, 0x3FC);
+		uint32_t ifrit_load_resources = get_relative_call(ifrit, 0x122);
+		uint32_t ifrit_resources = get_absolute_value(ifrit_load_resources, 0x2C);
+
+		// Only the CIRCLE ground-hole model is subtractive; Ifrit's flames remain additive.
+		uint32_t ifrit_ground_flags = *reinterpret_cast<const uint32_t *>(ifrit_resources);
+		patch_code_dword(ifrit_resources, (ifrit_ground_flags & ~7u) | 2u);
 	}
 
 	void magic_thread_start(void (*func)())

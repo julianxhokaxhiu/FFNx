@@ -35,6 +35,7 @@
 - Renderer: Draw untextured gltf model parts with their material color ( https://github.com/julianxhokaxhiu/FFNx/pull/1003 )
 - Renderer: Draw mogu_1 water before its additive lighting, matching PSX compositing ( https://github.com/julianxhokaxhiu/FFNx/issues/926 )
 - Renderer: Restore PSX subtractive blending and stock texture palettes for Shadow Flare ( https://github.com/julianxhokaxhiu/FFNx/issues/279 )
+- Renderer: Restore PSX subtractive blending for Ifrit's ground hole, thanks to JakeIsYoshi ( https://github.com/julianxhokaxhiu/FFNx/issues/654 )
 - Renderer: Raise the gltf bone limit to 255 ( https://github.com/julianxhokaxhiu/FFNx/pull/1001 )
 - Renderer: Re-enable smooth skinning for gltf models without slowing down other draws ( https://github.com/julianxhokaxhiu/FFNx/pull/1000 )
 - Renderer: Fix a crash when drawing gltf models ( https://github.com/julianxhokaxhiu/FFNx/pull/998 )
