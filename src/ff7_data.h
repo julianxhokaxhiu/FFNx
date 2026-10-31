@@ -801,6 +801,20 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_camera_focal_sub_5C5714 = get_absolute_value(ff7_externals.set_camera_focal_position_scripts, 0x67D);
 
 	ff7_externals.battle_sub_430DD0 = get_relative_call(ff7_externals.battle_loop, 0x99E);
+	uint32_t battle_run_action_script = get_relative_call(ff7_externals.battle_loop, 0x447);
+	uint32_t battle_wait_for_action = get_relative_call(ff7_externals.battle_loop, 0x322);
+	uint32_t battle_arena_next_scene = get_relative_call(ff7_externals.battle_loop, 0x8C8);
+	uint32_t battle_chocobo_escape = get_relative_call(ff7_externals.battle_loop, 0x765);
+	ff7_externals.battle_substate_pointers = {
+		(uint32_t*)get_absolute_value(battle_run_action_script, 0x7),
+		(uint32_t*)get_absolute_value(battle_wait_for_action, 0x5),
+		(uint32_t*)get_absolute_value(ff7_externals.battle_loop, 0x6D6),
+		(uint32_t*)get_absolute_value(ff7_externals.battle_loop, 0x845),
+		(uint32_t*)get_absolute_value(ff7_externals.battle_loop, 0x94B),
+		(uint32_t*)get_absolute_value(ff7_externals.battle_sub_430DD0, 0x7),
+		(uint32_t*)get_absolute_value(battle_arena_next_scene, 0x13),
+		(uint32_t*)get_absolute_value(battle_chocobo_escape, 0xE),
+	};
 	ff7_externals.battle_sub_429D8A = get_absolute_value(ff7_externals.battle_loop, 0x59);
 	ff7_externals.update_battle_camera_sub_5C20CE = get_relative_call(ff7_externals.battle_sub_42D992, 0xFB);
 	ff7_externals.set_battle_camera_sub_5C22BD = get_relative_call(ff7_externals.update_battle_camera_sub_5C20CE, 0x5A);

@@ -2918,6 +2918,7 @@ struct ff7_externals
 	uint32_t battle_loop;
 	battle_actor_data *battle_actor_data;
 	DWORD *battle_mode;
+	std::array<uint32_t*, 8> battle_substate_pointers;
 	WORD *battle_location_id;
 	WORD *battle_formation_id;
 	uint32_t battle_sub_429AC0;
