@@ -67,6 +67,7 @@
 - Exe data: Ensure files loaded only once ( https://github.com/julianxhokaxhiu/FFNx/pull/898 )
 - External textures: Disable texture filtering in worldmap when filtering is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/954 )
 - External textures: Change texture color for model field external textures, depending on the current map ( https://github.com/julianxhokaxhiu/FFNx/pull/981 )
+- External textures: Reload changed static texture pages, fixing cars disappearing in Balamb during the dog chase ( https://github.com/julianxhokaxhiu/FFNx/issues/984 )
 - Input: Keep Japanese Remastered field scripts, including game over, on the engine's configured Confirm, Cancel, and Menu bindings
 - Japanese support: Add ability to use Japanese data with a non-jp exe ( https://github.com/julianxhokaxhiu/FFNx/pull/844 )
 - Movie: Add support for Music/Voice layer for external movies
