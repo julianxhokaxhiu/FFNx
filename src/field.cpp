@@ -33,6 +33,7 @@
 
 #include "ff7/defs.h"
 #include "ff7/field/model.h"
+#include "ff8/field_moments.h"
 
 // Data for debug map jumps
 int target_triangle = 0;
@@ -322,6 +323,67 @@ int map_jump_ff8(byte* entity, int arg)
 	return field_functions[0x5C](entity, 0); // MAPJUMP
 }
 
+static void field_progress_debug()
+{
+	static int target_game_moment = *common_externals.field_game_moment;
+	static ImGuiTextFilter moment_filter;
+	if (ImGui::IsWindowAppearing())
+		target_game_moment = *common_externals.field_game_moment;
+
+	ImGui::TextUnformatted(ff8 ? "Set Game Moment" : "Set Game Progress");
+	ImGui::SetNextItemWidth(100);
+	ImGui::InputInt(ff8 ? "Moment ID" : "Progress ID", &target_game_moment);
+
+	if (ff8)
+	{
+		char preview[128];
+		snprintf(preview, sizeof(preview), "%d (Custom)", target_game_moment);
+		for (const auto &moment : ff8_field_moments)
+		{
+			if (moment.id == target_game_moment)
+			{
+				snprintf(preview, sizeof(preview), "%u - %s", moment.id, moment.description);
+				break;
+			}
+		}
+
+		ImGui::SetNextItemWidth(400);
+		if (ImGui::BeginCombo("Known moments", preview, ImGuiComboFlags_HeightLarge))
+		{
+			moment_filter.Draw("Filter (ID, disc, location)", 300);
+			ImGui::BeginChild("Moment list", ImVec2(0, 250));
+			for (const auto &moment : ff8_field_moments)
+			{
+				char label[128];
+				snprintf(label, sizeof(label), "%u - %s", moment.id, moment.description);
+				if (!moment_filter.PassFilter(label)) continue;
+
+				bool selected = moment.id == target_game_moment;
+				if (ImGui::Selectable(label, selected))
+				{
+					target_game_moment = moment.id;
+					ImGui::CloseCurrentPopup();
+				}
+				if (selected) ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndChild();
+			ImGui::EndCombo();
+		}
+	}
+
+	bool valid_moment = target_game_moment >= 0 && target_game_moment <= UINT16_MAX;
+	if (!valid_moment) ImGui::TextUnformatted(ff8 ? "Moment ID must be between 0 and 65535." : "Progress ID must be between 0 and 65535.");
+	ImGui::BeginDisabled(!valid_moment);
+	if (ImGui::Button(ff8 ? "Set Moment" : "Set Progress"))
+	{
+		*common_externals.field_game_moment = static_cast<WORD>(target_game_moment);
+		ffnx_info("Field Debug: set %s to %u.\n", ff8 ? "FF8 game moment" : "FF7 game progress", *common_externals.field_game_moment);
+	}
+	ImGui::EndDisabled();
+	ImGui::TextWrapped("Changes only story progression, not the field, disc or other story flags.");
+	ImGui::Separator();
+}
+
 void field_debug(bool *isOpen)
 {
 	if (!ImGui::Begin("Field Debug", isOpen, ImGuiWindowFlags_::ImGuiWindowFlags_AlwaysAutoResize))
@@ -337,11 +399,13 @@ void field_debug(bool *isOpen)
 		return;
 	}
 
-	ImGui::Text("Game Moment: %u", *common_externals.field_game_moment);
+	ImGui::Text(ff8 ? "Game Moment: %u" : "Game Progress: %u", *common_externals.field_game_moment);
 	ImGui::Text("Current field ID: %u", *common_externals.current_field_id);
 	if (common_externals.current_triangle_id != 0) ImGui::Text("Current triangle ID: %d", *common_externals.current_triangle_id);
 	ImGui::Text("Previous field ID: %u", *common_externals.previous_field_id);
 	ImGui::Separator();
+
+	field_progress_debug();
 
 	// Inputs for changing field map
 	ImGui::Text("Switch Field"); ImGui::SetNextItemWidth(100);
