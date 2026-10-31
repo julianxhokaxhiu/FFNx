@@ -1608,7 +1608,7 @@ int ff8_field_open_chara_one(
 		j += 1;
 	}
 
-	int ret = ((int(*)(int,void*,VramPos*,VramPos*,const char*,const uint8_t*,int,int))ff8_externals.load_field_models)(current_data_pointer, models_infos, palette_vram_positions, texture_vram_positions, dir_name, pcb_data, allocated_size, pcb_data_size);
+	int ret = ((int(*)(int,void*,VramPos*,VramPos*,const char*,const uint8_t*,int,int))ff8_externals.load_field_models)(current_data_pointer, models_infos, pal_vram_pos, tex_vram_pos, dir_name, pcb_data, allocated_size, pcb_data_size);
 
 	if (ff8_remastered_edition) {
 		ff8_remaster_set_field_model_scaling(chara_one_models);
