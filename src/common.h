@@ -283,7 +283,7 @@ struct common_externals
 	uint32_t (*set_sfx_frequency_on_channel)(uint32_t, uint32_t);
 	uint32_t (*set_sfx_frequency_trans_on_channel)(uint32_t, uint32_t, uint32_t);
 	uint32_t *master_sfx_volume;
-	uint32_t* dsound_volume_table;
+	int32_t* dsound_volume_table;
 	IDirectInputDeviceA **keyboard_device;
 	uint32_t get_keyboard_state;
 	uint32_t *keyboard_connected;

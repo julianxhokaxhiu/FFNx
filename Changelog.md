@@ -37,6 +37,7 @@
 - Renderer: Skin the normals of smooth-skinned gltf models, so game lighting follows their pose ( https://github.com/julianxhokaxhiu/FFNx/pull/1010 )
 - Core: gltf models follow the animation's root motion, from the gltf when it has its own ( https://github.com/julianxhokaxhiu/FFNx/pull/1044 )
 - Input: Fix held menu buttons firing again when another button is pressed, while preserving normal input repeat ( https://github.com/julianxhokaxhiu/FFNx/issues/713 )
+- SFX: Correct the vanilla DirectSound volume curve so low-volume effects remain audible, without changing native music or external SFX ( https://github.com/julianxhokaxhiu/FFNx/issues/744 )
 
 ## FF8
 

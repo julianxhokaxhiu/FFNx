@@ -3159,6 +3159,8 @@ struct ff7_externals
 	uint32_t *sfx_initialized;
 	uint32_t sfx_play_summon;
 	uint32_t sfx_load_and_play_with_speed;
+	uint32_t sfx_update_volume;
+	uint32_t sfx_set_volume_per_effect;
 	ff7_audio_fmt* sfx_fmt_header;
 	DWORD *sfx_play_effects_id_channel_6;
 	uint32_t sfx_stop_channel_6;

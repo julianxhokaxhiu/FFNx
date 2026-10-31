@@ -25,6 +25,7 @@
 
 #include "sfx.h"
 
+#include <cmath>
 #include <mmreg.h>
 
 uint32_t sfx_volumes[5];
@@ -708,6 +709,45 @@ void sfx_fix_volume_values(char* log)
 	}
 }
 
+static void ff7_sfx_fix_volume_curve()
+{
+	static int32_t volume_table[128];
+	const uint32_t original_table = uint32_t(common_externals.dsound_volume_table);
+	const uint32_t set_volume = uint32_t(common_externals.set_sfx_volume_on_channel);
+	const uint32_t lookup_addresses[] = {
+		ff7_externals.sfx_update_volume + 0x2F7,
+		common_externals.play_sfx_on_channel + 0x35E,
+		common_externals.play_sfx_on_channel + 0x40D,
+		uint32_t(common_externals.play_sfx_effects) + 0x1CE,
+		set_volume + 0xCC,
+		set_volume + 0x108,
+		set_volume + 0x143,
+		ff7_externals.sfx_load_and_play_with_speed + 0xE1,
+		ff7_externals.sfx_load_and_play_with_speed + 0x1B8,
+		ff7_externals.sfx_set_volume_per_effect + 0x70,
+	};
+
+	for (const auto address : lookup_addresses)
+	{
+		if (get_absolute_value(address, 0) != original_table)
+		{
+			ffnx_error("%s: Unexpected SFX volume lookup at 0x%08X; volume curve fix not applied\n", __func__, address);
+			return;
+		}
+	}
+
+	// DirectSound uses hundredths of a decibel, not linear amplitude.
+	volume_table[0] = DSBVOLUME_MIN;
+	for (int volume = 1; volume < 128; ++volume)
+		volume_table[volume] = int32_t(std::lround(2000.0 * std::log10(volume / 127.0)));
+
+	// Music shares the original table and update routine; redirect only SFX lookups.
+	for (const auto address : lookup_addresses)
+		patch_code_uint(address, uint32_t(volume_table));
+
+	common_externals.dsound_volume_table = volume_table;
+}
+
 int sfx_play_battle_specific(IDirectSoundBuffer* buffer, uint32_t flags)
 {
 	if (buffer == nullptr) {
@@ -896,6 +936,8 @@ void sfx_init()
 		}
 		else
 		{
+			ff7_sfx_fix_volume_curve();
+
 			/*
 			* Set sound volume on channel changes
 			* When this sub is called, it set two fields of sfx_state,
