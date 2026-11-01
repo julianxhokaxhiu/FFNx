@@ -622,8 +622,14 @@ uint32_t TexturePacker::composeTextures(
 
 		if (scale > 1)
 		{
-			// convert source data
-			scale_up_image_data(rgbaImageData, target, originalW, originalH, scale);
+			const bool fullyReplaced = std::any_of(textures.begin(), textures.end(), [&](const IdentifiedTexture &texture)
+			{
+				return texture.mod() != nullptr && texture.mod()->coversImage(
+					texture.texture().pixelX() - tiledTex.pixelX(), texture.texture().y() - tiledTex.y(),
+					originalW, originalH, scale, tiledTex.bpp(), palette.x(), palette.y()
+				);
+			});
+			if (!fullyReplaced) scale_up_image_data(rgbaImageData, target, originalW, originalH, scale);
 		}
 	}
 
@@ -733,6 +739,23 @@ void TexturePacker::registerPaletteWrite(const uint8_t *texData, int palIndex, i
 
 		_tiledTexs[texData] = TiledTex(-1, -1, -1, -1, Tim::Bpp4, palX, palY);
 	}
+}
+
+bool TexturePacker::isPaletteDataChanged(const uint32_t *previous, const uint32_t *current, size_t paletteSize, uint32_t entries, uint32_t paletteIndex)
+{
+	if (entries == 0) return true;
+	const size_t offset = size_t(paletteIndex) * entries;
+	if (offset >= paletteSize) return false;
+	const size_t count = std::min(size_t(entries), paletteSize - offset);
+	return memcmp(previous + offset, current + offset, count * sizeof(uint32_t)) != 0;
+}
+
+uint32_t TexturePacker::releasePaletteTexture(uint32_t *textureHandles, uint32_t textureCount, uint32_t paletteIndex)
+{
+	const uint32_t handle = textureHandles[paletteIndex];
+	textureHandles[paletteIndex] = 0;
+	// Missing mod palettes can share the same fallback GPU texture.
+	return std::find(textureHandles, textureHandles + textureCount, handle) == textureHandles + textureCount ? handle : 0;
 }
 
 TexturePacker::TiledTex TexturePacker::getTiledTex(const uint8_t *texData) const

@@ -46,6 +46,7 @@
 #include "ff7.h"
 #include "ff8.h"
 #include "ff8/file.h"
+#include "ff8/mod.h"
 #include "patch.h"
 #include "gl.h"
 #include "movies.h"
@@ -1041,6 +1042,7 @@ void common_cleanup(struct game_obj *game_object)
 		SteamAPI_Shutdown();
 
 	nxAudioEngine.cleanup();
+	if (ff8) TextureImage::clearCache();
 	newRenderer.shutdown();
 }
 
@@ -1878,10 +1880,16 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 			}
 			else if(memcmp(VREF(tex_header, old_palette_data), tex_format->palette_data, 4 * tex_format->palette_size) != 0)
 			{
+				const uint32_t entries = VREF(tex_header, palette_entries);
+				if (entries == 0) ffnx_warning("%s: FF8 palette has no entries; invalidating all textures\n", __func__);
 				for (uint32_t idx = 0; idx < VREF(texture_set, ogl.gl_set->textures); idx++)
-					newRenderer.deleteTexture(VREF(texture_set, texturehandle[idx]));
-
-				memset(VREF(texture_set, texturehandle), 0, VREF(texture_set, ogl.gl_set->textures) * sizeof(uint32_t));
+				{
+					if (!TexturePacker::isPaletteDataChanged(
+						reinterpret_cast<const uint32_t *>(VREF(tex_header, old_palette_data)),
+						tex_format->palette_data, tex_format->palette_size, entries, idx)) continue;
+					newRenderer.deleteTexture(TexturePacker::releasePaletteTexture(
+						VREF(texture_set, texturehandle), VREF(texture_set, ogl.gl_set->textures), idx));
+				}
 				VREF(texture_set, ogl.gl_set->default_texture_id) = 0;
 
 				memcpy(VREF(tex_header, old_palette_data), tex_format->palette_data, 4 * tex_format->palette_size);
@@ -2124,9 +2132,9 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 			if(palettes)
 			{
 				for (uint32_t idx = 0; idx < palettes; idx++)
-					newRenderer.deleteTexture(VREF(texture_set, texturehandle[palette_index + idx]));
+					newRenderer.deleteTexture(TexturePacker::releasePaletteTexture(
+						VREF(texture_set, texturehandle), VREF(texture_set, ogl.gl_set->textures), palette_index + idx));
 
-				memset(VREFP(texture_set, texturehandle[palette_index]), 0, palettes * sizeof(uint32_t));
 				VREF(texture_set, ogl.gl_set->default_texture_id) = 0;
 			}
 

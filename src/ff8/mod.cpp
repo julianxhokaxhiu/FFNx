@@ -30,18 +30,79 @@
 #include "remaster.h"
 #include "remastered_battle_texture.h"
 
+#include <array>
+#include <list>
+#include <sys/stat.h>
+#include <tuple>
+
 bx::DefaultAllocator TextureImage::defaultAllocator;
+
+namespace {
+constexpr size_t DECODED_IMAGE_CACHE_LIMIT = 128 * 1024 * 1024;
+using DecodedImageCacheKey = std::tuple<std::string, int, int, int, int, bool, std::array<int8_t, 4>, int64_t, int64_t, int64_t>;
+
+struct DecodedImageCacheEntry {
+	TextureImage image;
+	std::list<DecodedImageCacheKey>::iterator recent;
+	size_t size;
+};
+
+std::map<DecodedImageCacheKey, DecodedImageCacheEntry> decodedImageCache;
+std::list<DecodedImageCacheKey> decodedImageCacheRecent;
+size_t decodedImageCacheSize = 0;
+
+void trimDecodedImageCache(size_t incomingSize)
+{
+	while (!decodedImageCacheRecent.empty() && decodedImageCacheSize + incomingSize > DECODED_IMAGE_CACHE_LIMIT)
+	{
+		auto it = decodedImageCache.find(decodedImageCacheRecent.back());
+		decodedImageCacheSize -= it->second.size;
+		decodedImageCache.erase(it);
+		decodedImageCacheRecent.pop_back();
+	}
+}
+}
 
 TextureImage::TextureImage() :
 	_image(nullptr), _scale(1)
 {
 }
 
-bool TextureImage::createImage(const char *filename, int originalTexturePixelWidth, int originalTextureHeight, int internalLodScale, int8_t *rgbaModifier)
+bool TextureImage::createImage(const char *filename, int originalTexturePixelWidth, int originalTextureHeight, int internalLodScale, int8_t *rgbaModifier, bool useCache)
 {
-	if (_image != nullptr)
+	destroyImage();
+
+	DecodedImageCacheKey cacheKey;
+	// Archive images have no filesystem timestamp; keep their existing loading path.
+	useCache = useCache && strncmp(filename, "zzz://", 6) != 0;
+	if (useCache)
 	{
-		destroyImage();
+		struct stat fileInfo;
+		if (stat(filename, &fileInfo) == 0)
+		{
+			std::array<int8_t, 4> modifier{};
+			if (rgbaModifier != nullptr) std::copy_n(rgbaModifier, modifier.size(), modifier.begin());
+			cacheKey = {filename, originalTexturePixelWidth, originalTextureHeight, internalLodScale, computeMaxScale(),
+				ff8_remastered_edition, modifier, fileInfo.st_size, fileInfo.st_mtime, fileInfo.st_ctime};
+			auto it = decodedImageCache.find(cacheKey);
+			if (it != decodedImageCache.end())
+			{
+				*this = it->second.image;
+				decodedImageCacheRecent.splice(decodedImageCacheRecent.begin(), decodedImageCacheRecent, it->second.recent);
+				if (trace_all || trace_loaders) ffnx_trace("TextureImage::%s: decoded cache hit %s\n", __func__, filename);
+				return true;
+			}
+		}
+		else
+		{
+			ffnx_warning("TextureImage::%s: cannot stat %s for decoded cache\n", __func__, filename);
+			useCache = false;
+		}
+	}
+
+	if (decodedImageCacheSize != 0 && !Renderer::doesItFitInMemory(DECODED_IMAGE_CACHE_LIMIT))
+	{
+		clearCache();
 	}
 
 	bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::BGRA8;
@@ -49,7 +110,7 @@ bool TextureImage::createImage(const char *filename, int originalTexturePixelWid
 	const char *extension = strrchr(filename, '.');
 	if (extension != nullptr && stricmp(extension + 1, "png") == 0) {
 		// Load PNG using libPNG
-		_image = loadPng(&defaultAllocator, filename, targetFormat);
+		setImage(loadPng(&defaultAllocator, filename, targetFormat));
 
 		// Remastered fix (Convert 768x288 to 768x384)
 		if (ff8_remastered_edition && _image != nullptr && _image->m_width == 768 && _image->m_height == 288 && _image->m_width == originalTexturePixelWidth * 3 * 2 && _image->m_height < originalTextureHeight * 3) {
@@ -57,6 +118,7 @@ bool TextureImage::createImage(const char *filename, int originalTexturePixelWid
 
 			if (resizedImage == nullptr) {
 				ffnx_error("%s: cannot resize PNG file %s\n", __func__, filename);
+				destroyImage();
 				return false;
 			}
 
@@ -64,7 +126,7 @@ bool TextureImage::createImage(const char *filename, int originalTexturePixelWid
 			memset((uint8_t *)resizedImage->m_data + _image->m_size, 0, (resizedImage->m_height - _image->m_height) * resizedImage->m_width * 4);
 
 			destroyImage();
-			_image = resizedImage;
+			setImage(resizedImage);
 		}
 
 		setLod(0);
@@ -75,12 +137,12 @@ bool TextureImage::createImage(const char *filename, int originalTexturePixelWid
 		if (parseDds(filename, image, metadata)) {
 			int lod = computeLod(originalTexturePixelWidth, metadata.width, metadata.mipLevels, internalLodScale, filename);
 			// Convert only the relevant lod to improve performance
-			_image = convertDds(&defaultAllocator, image, metadata, targetFormat, lod);
+			setImage(convertDds(&defaultAllocator, image, metadata, targetFormat, lod));
 			image.Release();
 			setLod(0);
 		}
 	} else {
-		_image = loadImageContainer(&defaultAllocator, filename, targetFormat);
+		setImage(loadImageContainer(&defaultAllocator, filename, targetFormat));
 
 		if (_image != nullptr)
 		{
@@ -112,16 +174,67 @@ bool TextureImage::createImage(const char *filename, int originalTexturePixelWid
 
 	alterColors(rgbaModifier);
 
+	if (useCache && _image->m_size <= DECODED_IMAGE_CACHE_LIMIT)
+	{
+		trimDecodedImageCache(_image->m_size);
+		decodedImageCacheRecent.push_front(cacheKey);
+		decodedImageCache.emplace(cacheKey, DecodedImageCacheEntry{*this, decodedImageCacheRecent.begin(), _image->m_size});
+		decodedImageCacheSize += _image->m_size;
+	}
+
 	return true;
 }
 
 void TextureImage::destroyImage()
 {
-	if (_image != nullptr)
+	_image.reset();
+	_mip = {};
+	_scale = 1;
+}
+
+void TextureImage::setImage(bimg::ImageContainer *image)
+{
+	if (image == nullptr) _image.reset();
+	else _image.reset(image, bimg::imageFree);
+}
+
+void TextureImage::clearCache()
+{
+	decodedImageCache.clear();
+	decodedImageCacheRecent.clear();
+	decodedImageCacheSize = 0;
+}
+
+uint32_t *TextureImage::writableData()
+{
+	if (_image == nullptr)
 	{
-		bimg::imageFree(_image);
-		_image = nullptr;
+		ffnx_error("TextureImage::%s: cannot modify an empty image\n", __func__);
+		return nullptr;
 	}
+
+	if (_image.use_count() > 1)
+	{
+		if (!Renderer::doesItFitInMemory(_mip.m_size)) clearCache();
+		if (_image.use_count() > 1)
+		{
+			if (!Renderer::doesItFitInMemory(_mip.m_size))
+			{
+				ffnx_error("TextureImage::%s: not enough memory to copy %dx%d image\n", __func__, _mip.m_width, _mip.m_height);
+				return nullptr;
+			}
+			bimg::ImageContainer *copy = bimg::imageAlloc(&defaultAllocator, _mip.m_format, _mip.m_width, _mip.m_height, 0, 1, false, false, _mip.m_data);
+			if (copy == nullptr)
+			{
+				ffnx_error("TextureImage::%s: cannot copy %dx%d image\n", __func__, _mip.m_width, _mip.m_height);
+				return nullptr;
+			}
+			setImage(copy);
+			setLod(0);
+		}
+	}
+
+	return const_cast<uint32_t *>(reinterpret_cast<const uint32_t *>(_mip.m_data));
 }
 
 void TextureImage::setLod(uint8_t lod)
@@ -429,6 +542,23 @@ void ModdedTexture::drawImage(
 
 	sourceRgbaW *= sourceScale;
 	targetRgbaW *= targetScale;
+	if (targetScale == sourceScale)
+	{
+		const int width = sourceW * sourceScale, height = sourceH * sourceScale;
+		const uint32_t *source = sourceRgba + sourceX * sourceScale + sourceY * sourceScale * sourceRgbaW;
+		uint32_t *target = targetRgba + targetX * targetScale + targetY * targetScale * targetRgbaW;
+		for (int y = 0; y < height; ++y)
+		{
+			for (int x = 0; x < width; ++x)
+			{
+				const uint32_t color = source[x];
+				target[x] = (color & 0xFFFFFF) | ((color & 0xFF000000) >= 0x7F000000 ? 0x7F000000 : 0);
+			}
+			source += sourceRgbaW;
+			target += targetRgbaW;
+		}
+		return;
+	}
 	const uint8_t scaleRatio = targetScale / sourceScale;
 
 	for (int y = 0; y < sourceH; ++y)
@@ -466,21 +596,11 @@ void ModdedTexture::copyRect(
 
 	for (int y = 0; y < sourceH; ++y)
 	{
-		memcpy(target, source, sizeof(uint32_t) * sourceW);
+		memmove(target, source, sizeof(uint32_t) * sourceW);
 
 		source += sourceRgbaW;
 		target += targetRgbaW;
 	}
-}
-
-TextureModStandard::~TextureModStandard()
-{
-	for (std::pair<uint8_t, TextureImage> image: _textures)
-	{
-		image.second.destroyImage();
-	}
-	_remasteredUpperImage.destroyImage();
-	_remasteredLowerImage.destroyImage();
 }
 
 bool TextureModStandard::createImages(int paletteCount, int internalLodScale, int8_t *rgbaModifier)
@@ -493,6 +613,8 @@ bool TextureModStandard::createImages(int paletteCount, int internalLodScale, in
 	char filename[MAX_PATH] = {}, *extension = nullptr, found_extension[16] = {};
 	int sourcePixelWidth = originalTexture().texture().pixelW();
 	int sourceHeight = originalTexture().texture().h();
+	const std::string &name = originalTexture().name();
+	const bool useCache = name.starts_with("battle/") || name.starts_with("magic/");
 	const std::string &remasteredName = originalTexture().remasteredName();
 	const remastered_battle_texture::ImageLayout *layout = ff8_remastered_edition
 		? remastered_battle_texture::findImageLayout(remasteredName)
@@ -514,7 +636,7 @@ bool TextureModStandard::createImages(int paletteCount, int internalLodScale, in
 			if (!findExternalTextureRemastered(imageName.c_str(), filename, layer.firstPaletteId, true, extension, found_extension)) continue;
 			extension = found_extension;
 			TextureImage externalTexture;
-			if (externalTexture.createImage(filename, sourcePixelWidth, sourceHeight, internalLodScale, rgbaModifier))
+			if (externalTexture.createImage(filename, sourcePixelWidth, sourceHeight, internalLodScale, rgbaModifier, useCache))
 				_textures[layer.imageIndex] = externalTexture;
 		}
 	}
@@ -545,7 +667,7 @@ bool TextureModStandard::createImages(int paletteCount, int internalLodScale, in
 		extension = found_extension;
 
 		TextureImage externalTexture;
-		if (!externalTexture.createImage(filename, sourcePixelWidth, sourceHeight, internalLodScale, rgbaModifier))
+		if (!externalTexture.createImage(filename, sourcePixelWidth, sourceHeight, internalLodScale, rgbaModifier, useCache))
 		{
 			continue;
 		}
@@ -816,16 +938,35 @@ TexturePacker::TextureTypes TextureModStandard::drawToImage(
 	return TexturePacker::ExternalTexture;
 }
 
+bool TextureModStandard::coversImage(int offsetX, int offsetY, int targetW, int targetH, uint8_t targetScale, Tim::Bpp targetBpp, int16_t vramPalXBpp2, int16_t vramPalY) const
+{
+	const auto &texture = originalTexture().texture();
+	// Remastered layouts may leave gaps between layers or companion images.
+	if (ff8_remastered_edition || texture.bpp() != targetBpp || offsetX > 0 || offsetY > 0)
+	{
+		return false;
+	}
+	const auto &image = textureImage(computePaletteId(vramPalXBpp2, vramPalY));
+	const int imageW = image.mip().m_width / image.scale(), imageH = image.mip().m_height / image.scale();
+	return targetScale >= image.scale() && imageH >= texture.h()
+		&& texture.pixelW() + offsetX >= targetW && texture.h() + offsetY >= targetH
+		&& imageW + offsetX >= targetW && imageH + offsetY >= targetH;
+}
+
 void TextureModStandard::copyRect(int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY)
 {
 	const TexturePacker::TextureInfos &texture = originalTexture().texture();
 
-	for (const std::pair<uint8_t, TextureImage> &image: _textures)
+	for (auto &image: _textures)
+	{
+		if (image.second.writableData() == nullptr) return;
+	}
+	for (auto &image: _textures)
 	{
 		const bimg::ImageMip &mip = image.second.mip();
 		ModdedTexture::copyRect(
 			reinterpret_cast<const uint32_t *>(mip.m_data), mip.m_width,
-			const_cast<uint32_t *>(reinterpret_cast<const uint32_t *>(mip.m_data)), mip.m_width,
+			image.second.writableData(), mip.m_width,
 			image.second.scale(), texture.bpp(),
 			sourceXBpp2 - texture.x(), sourceY - texture.y(), sourceWBpp2, sourceH,
 			targetXBpp2 - texture.x(), targetY - texture.y()
@@ -835,7 +976,7 @@ void TextureModStandard::copyRect(int sourceXBpp2, int sourceY, int sourceWBpp2,
 
 void TextureModStandard::copyRect(
 	int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY,
-	const TextureModStandard &targetTexture)
+	TextureModStandard &targetTexture)
 {
 	const TexturePacker::TextureInfos &tex = originalTexture().texture(),
 		&targetTex = targetTexture.originalTexture().texture();
@@ -844,26 +985,44 @@ void TextureModStandard::copyRect(
 		return;
 	}
 
-	for (const std::pair<uint8_t, TextureImage> &image: _textures)
+	std::array<const TextureImage *, MAX_SCALE + 1> lastSource{};
+	for (const auto &image: _textures)
 	{
-		const bimg::ImageMip &mip = image.second.mip();
+		lastSource[image.second.scale()] = &image.second;
+	}
+	for (auto &targetImage: targetTexture._textures)
+	{
+		if (lastSource[targetImage.second.scale()] != nullptr && targetImage.second.writableData() == nullptr) return;
+	}
 
-		for (const std::pair<uint8_t, TextureImage> &targetImage: targetTexture._textures)
+	const auto copyImage = [&](const TextureImage &image, TextureImage &targetImage)
+	{
+		const auto &mip = image.mip();
+		const auto &targetMip = targetImage.mip();
+		ModdedTexture::copyRect(
+			reinterpret_cast<const uint32_t *>(mip.m_data), mip.m_width,
+			targetImage.writableData(), targetMip.m_width,
+			image.scale(), tex.bpp(),
+			sourceXBpp2 - tex.x(), sourceY - tex.y(), sourceWBpp2, sourceH,
+			targetXBpp2 - targetTex.x(), targetY - targetTex.y()
+		);
+	};
+	if (&targetTexture == this)
+	{
+		for (const auto &image: _textures)
 		{
-			const bimg::ImageMip &targetMip = targetImage.second.mip();
-
-			if (image.second.scale() != targetImage.second.scale()) {
-				continue;
+			for (auto &targetImage: targetTexture._textures)
+			{
+				if (image.second.scale() == targetImage.second.scale()) copyImage(image.second, targetImage.second);
 			}
-
-			ModdedTexture::copyRect(
-				reinterpret_cast<const uint32_t *>(mip.m_data), mip.m_width,
-				const_cast<uint32_t *>(reinterpret_cast<const uint32_t *>(targetMip.m_data)), targetMip.m_width,
-				image.second.scale(), tex.bpp(),
-				sourceXBpp2 - tex.x(), sourceY - tex.y(), sourceWBpp2, sourceH,
-				targetXBpp2 - targetTex.x(), targetY - targetTex.y()
-			);
 		}
+		return;
+	}
+	// Every matching source writes the same destination rectangle; only the last survives.
+	for (auto &targetImage: targetTexture._textures)
+	{
+		const TextureImage *source = lastSource[targetImage.second.scale()];
+		if (source != nullptr) copyImage(*source, targetImage.second);
 	}
 }
 
@@ -884,11 +1043,6 @@ TextureBackground::TextureBackground(
 	const std::vector<Tile> &mapTiles
 ) : ModdedTexture(originalTexture), _mapTiles(mapTiles)
 {
-}
-
-TextureBackground::~TextureBackground()
-{
-	_texture.destroyImage();
 }
 
 bool TextureBackground::createImages(const char *extension, char *foundExtension)

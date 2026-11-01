@@ -80,6 +80,7 @@
 - Movie: Add support for Music/Voice layer for external movies
 - Movie: Fix field models and scripts running too fast on top of movies above 15 FPS, models move smoothly between the 15 FPS steps
 - Renderer: Fix frozen battle-end transitions and stale-frame wobbling ( https://github.com/julianxhokaxhiu/FFNx/issues/1021 )
+- Renderer: Reduce battle-effect texture mod stalls with a bounded decoded-image cache, faster texture composition and VRAM copies, and targeted palette invalidation
 - Voice: Add main character and enemy voice actions (attack, magic, etc.)
 - Widescreen: Fix text dialogues in battles when using 16:9 ( https://github.com/julianxhokaxhiu/FFNx/pull/960 )
 - Widescreen: Refine 16:9 mode by unlocking true 16:9 for 3D scenes while keeping 4:3 for the remaining ones until they can be ported natively

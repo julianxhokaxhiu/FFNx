@@ -48,6 +48,13 @@ Path: `{mod_path}\battle\{filename with extension in FS archive}-0_00`
 
 Example: `.\mods\Textures\battle\A0STG101.X-0_00.dds`
 
+Decoded filesystem images used by battle and magic texture replacements are
+cached with a 128 MiB least-recently-used limit. Cache eviction does not unload
+active textures, and VRAM animation copies do not modify cached originals.
+The cache distinguishes source dimensions, resolution/LOD settings, color
+modifiers, and file size/timestamps. Remastered archive images retain their
+existing loading path.
+
 ## Worldmap
 
 Path: `{mod_path}\world`

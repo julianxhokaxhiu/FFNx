@@ -172,6 +172,8 @@ public:
 	const TiledTex &registerTiledTex(const uint8_t *texData, int xBpp2, int y, int pixelW, int h, Tim::Bpp sourceBpp, int palX = -1, int palY = -1);
 	void registerPaletteWrite(const uint8_t *texData, int palIndex, int palX, int palY);
 	TiledTex getTiledTex(const uint8_t *texData) const;
+	static bool isPaletteDataChanged(const uint32_t *previous, const uint32_t *current, size_t paletteSize, uint32_t entries, uint32_t paletteIndex);
+	static uint32_t releasePaletteTexture(uint32_t *textureHandles, uint32_t textureCount, uint32_t paletteIndex);
 
 	uint32_t composeTextures(
 		const uint8_t *texData, uint32_t *rgbaImageData, int originalW, int originalH,
