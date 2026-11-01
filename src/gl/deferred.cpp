@@ -780,7 +780,7 @@ struct boundingbox calculateSceneAabb()
 }
 
 // draw all the layers we've accumulated in the correct order and reset queue
-void gl_draw_sorted_deferred()
+void gl_draw_sorted_deferred(bool defer_to_lighting)
 {
 	struct driver_state saved_state;
 
@@ -791,7 +791,8 @@ void gl_draw_sorted_deferred()
 
 	gl_save_state(&saved_state);
 
-	nodefer = true;
+	const uint32_t saved_nodefer = nodefer;
+	nodefer = !defer_to_lighting;
 
 	stats.deferred += num_sorted_deferred;
 
@@ -840,7 +841,7 @@ void gl_draw_sorted_deferred()
 
 	num_sorted_deferred = 0;
 
-	nodefer = false;
+	nodefer = saved_nodefer;
 
 	gl_load_state(&saved_state);
 }
@@ -886,4 +887,3 @@ void gl_cleanup_deferred()
 	driver_free(deferred_sorted_draws);
 	deferred_sorted_draws = nullptr;
 }
-

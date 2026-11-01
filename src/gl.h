@@ -146,7 +146,7 @@ uint32_t gl_defer_world_external_mesh();
 uint32_t gl_defer_cloud_external_mesh();
 void gl_draw_deferred(draw_field_shadow_callback shadow_callback);
 struct boundingbox calculateSceneAabb();
-void gl_draw_sorted_deferred();
+void gl_draw_sorted_deferred(bool defer_to_lighting = false);
 void gl_check_deferred(struct texture_set *texture_set);
 void gl_cleanup_deferred();
 uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, struct graphics_object *graphics_object, uint32_t clip, uint32_t mipmap);

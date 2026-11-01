@@ -20,6 +20,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <algorithm>
 #include <imgui.h>
 #include <stdint.h>
 
@@ -28,12 +29,15 @@
 #include "patch.h"
 #include "log.h"
 #include "utils.h"
+#include "gl.h"
+#include "renderer.h"
 
 #include "field.h"
 
 #include "ff7/defs.h"
 #include "ff7/field/kawai_eyetx.h"
 #include "ff7/field/kawai.h"
+#include "ff7/widescreen.h"
 #include "ff8/field_moments.h"
 
 // Data for debug map jumps
@@ -130,13 +134,86 @@ int field_calc_window_pos(int16_t WINDOW_ID, int16_t X, int16_t Y, int16_t W, in
 	return ff7_externals.sub_630C48(WINDOW_ID, X, ff7_field_center ? Y + 8 : Y, W, H);
 }
 
-int ff7_calc_opcode_type_2_fade_color(int16_t r, int16_t g, int16_t b)
+static uint16_t (*field_fade_screen_original)();
+static void (*field_draw_fade_original)(ff7_game_obj*);
+static uint32_t* field_final_fade_color;
+static uint32_t* field_fade_draw_flags;
+static uint32_t* field_system_fade;
+static uint32_t field_subtractive_fade_color;
+static uint16_t field_subtractive_fade_field_id;
+
+static uint32_t ff7_subtractive_fade_color(int16_t r, int16_t g, int16_t b, int16_t adjustment, bool inverse = true)
 {
-	uint8_t fade_b = (256 - b) * (256 - ff7_externals.modules_global_object->fade_adjustment / 2) / 256;
-	uint8_t fade_g = (256 - g) * (256 - ff7_externals.modules_global_object->fade_adjustment / 2) / 256;
-	uint8_t fade_r = (256 - r) * (256 - ff7_externals.modules_global_object->fade_adjustment / 2) / 256;
+	const int progress = std::clamp<int>(adjustment, 0, 255);
+	const auto channel = [progress, inverse](int16_t value) -> uint32_t {
+		const int color = std::clamp<int>(value, 0, 255);
+		return ((inverse ? 255 - color : color) * progress + 127) / 255;
+	};
+	const uint32_t fade_r = channel(r);
+	const uint32_t fade_g = channel(g);
+	const uint32_t fade_b = channel(b);
 
 	return 0xFF000000 | (fade_r << 16) | (fade_g << 8) | fade_b;
+}
+
+static uint16_t field_fade_screen()
+{
+	const uint16_t fade_type = ff7_externals.modules_global_object->fade_type;
+	const bool subtractive = fade_type == 2 || fade_type == 12 || (fade_type == 1 && !*field_system_fade);
+	field_subtractive_fade_color = 0;
+	const uint16_t result = field_fade_screen_original();
+
+	if (subtractive)
+	{
+		const auto& fade = *ff7_externals.modules_global_object;
+		// NFADE supplies the subtraction color directly and interpolates RGB, not opacity.
+		field_subtractive_fade_color = ff7_subtractive_fade_color(fade.fade_r, fade.fade_g, fade.fade_b,
+			fade_type == 12 ? 255 : static_cast<int16_t>(fade.fade_adjustment), fade_type != 12);
+		field_subtractive_fade_field_id = *common_externals.current_field_id;
+		// Keep native timing and state changes, but suppress both PC tinting paths.
+		*field_final_fade_color = 0xFFFFFFFF;
+		field_fade_draw_flags[0] = 0;
+	}
+
+	return result;
+}
+
+static void field_draw_fade(ff7_game_obj* game_object)
+{
+	field_draw_fade_original(game_object);
+	if (*field_system_fade || field_subtractive_fade_field_id != *common_externals.current_field_id ||
+		(field_subtractive_fade_color & 0xFFFFFF) == 0) return;
+
+	// Drain only scene draws; dialogue has not been submitted at this point.
+	gl_draw_sorted_deferred(true);
+
+	struct driver_state saved_state;
+	gl_save_state(&saved_state);
+	const bool time_filter = newRenderer.isTimeFilterEnabled();
+	newRenderer.setTimeFilterEnabled(false);
+	gl_bind_texture_set(nullptr);
+	current_state.kawai_effect = {};
+	gl_set_blend_func(static_cast<uint32_t>(RendererBlendMode::BLEND_SUB));
+	internal_set_renderstate(V_NOCULL, true, (game_obj*)game_object);
+	internal_set_renderstate(V_DEPTHTEST, false, (game_obj*)game_object);
+	internal_set_renderstate(V_DEPTHMASK, false, (game_obj*)game_object);
+	internal_set_renderstate(V_ALPHATEST, false, (game_obj*)game_object);
+
+	const float x = widescreen_enabled ? static_cast<float>(wide_viewport_x) : 0.0f;
+	const float width = widescreen_enabled ? static_cast<float>(wide_viewport_width) : static_cast<float>(game_width);
+	const float height = static_cast<float>(game_height);
+	struct nvertex vertices[] = {
+		{x, 0.0f, 0.0f, 1.0f, field_subtractive_fade_color, 0, 0.0f, 0.0f},
+		{x, height, 0.0f, 1.0f, field_subtractive_fade_color, 0, 0.0f, 0.0f},
+		{x + width, 0.0f, 0.0f, 1.0f, field_subtractive_fade_color, 0, 0.0f, 0.0f},
+		{x + width, height, 0.0f, 1.0f, field_subtractive_fade_color, 0, 0.0f, 0.0f},
+	};
+	WORD indices[] = {0, 1, 2, 1, 3, 2};
+	gl_draw_indexed_primitive(static_cast<uint32_t>(RendererPrimitiveType::PT_TRIANGLES), TLVERTEX,
+		vertices, nullptr, 4, indices, 6, nullptr, nullptr, nullptr, false, false);
+
+	gl_load_state(&saved_state);
+	newRenderer.setTimeFilterEnabled(time_filter);
 }
 
 int ff8_field_init_from_file(int unk1, int unk2, int unk3, int unk4)
@@ -168,11 +245,13 @@ void field_init()
 		// Proxy the window calculation formula so we can offset windows vertically
 		replace_call_function(common_externals.execute_opcode_table[0x50] + 0x174, field_calc_window_pos);
 
-		// Proxy FADE opcode color calculation
-		byte opcode_fade_patch[] = {0x0F, 0xBF, 0x45, 0x10, 0x50, 0x0F, 0xBF, 0x45, 0x0C, 0x50, 0x0F, 0xBF, 0x45, 0x08, 0x50, 0xE8, 0xFF, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x0C};
-		memcpy_code(ff7_externals.field_calc_fade_color_sub_63AE66 + 0x244, opcode_fade_patch, sizeof(opcode_fade_patch));
-		memset_code(ff7_externals.field_calc_fade_color_sub_63AE66 + 0x244 + sizeof(opcode_fade_patch), 0x90, 0xE1 - sizeof(opcode_fade_patch));
-		replace_call_function(ff7_externals.field_calc_fade_color_sub_63AE66 + 0x244 + 0xF, ff7_calc_opcode_type_2_fade_color);
+		field_fade_screen_original = (uint16_t(*)())ff7_externals.field_fade_screen_sub_63B84B;
+		field_draw_fade_original = (void(*)(ff7_game_obj*))get_relative_call(ff7_externals.field_draw_everything, 0x369);
+		field_final_fade_color = (uint32_t*)get_absolute_value(ff7_externals.field_calc_fade_color_sub_63AE66, 0x326);
+		field_fade_draw_flags = (uint32_t*)get_absolute_value((uint32_t)field_draw_fade_original, 0xB);
+		field_system_fade = (uint32_t*)get_absolute_value(ff7_externals.field_calc_fade_color_sub_63AE66, 0x35);
+		replace_call_function(ff7_externals.field_loop_sub_63C17F + 0x634, field_fade_screen);
+		replace_call_function(ff7_externals.field_draw_everything + 0x369, field_draw_fade);
 
 		ff7::field::ff7_field_initialize_eyetx();
 	}

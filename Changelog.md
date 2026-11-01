@@ -34,6 +34,7 @@
 - Music: Fix repeated world-map music updates causing sustained slowdowns after region changes, and allow regional tracks sharing a music ID to switch correctly ( https://github.com/julianxhokaxhiu/FFNx/issues/818 )
 - Renderer: Draw untextured gltf model parts with their material color ( https://github.com/julianxhokaxhiu/FFNx/pull/1003 )
 - Renderer: Draw mogu_1 water before its additive lighting, matching PSX compositing ( https://github.com/julianxhokaxhiu/FFNx/issues/926 )
+- Renderer: Use subtractive scene compositing for field FADE types 1 and 2 and NFADE type 12, preserving dialogue and native fade timing ( https://github.com/julianxhokaxhiu/FFNx/issues/805 )
 - Renderer: Restore PSX subtractive blending and stock texture palettes for Shadow Flare ( https://github.com/julianxhokaxhiu/FFNx/issues/279 )
 - Renderer: Restore PSX subtractive blending for Ifrit's ground hole, thanks to JakeIsYoshi ( https://github.com/julianxhokaxhiu/FFNx/issues/654 )
 - Renderer: Raise the gltf bone limit to 255 ( https://github.com/julianxhokaxhiu/FFNx/pull/1001 )
