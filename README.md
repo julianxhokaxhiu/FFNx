@@ -144,7 +144,7 @@ If you're curious to know, FFNx makes use of:
 - [openpsf](https://github.com/myst6re/openpsf) (MINIPSF emulation engine to playback PSX/PS2 music files)
 - [Steamworks SDK](https://github.com/julianxhokaxhiu/SteamworksSDKCI) (support achievements for the Steam editions of games)
 - [mimalloc](https://github.com/microsoft/mimalloc) (a compact general purpose allocator with excellent performance)
-- [SDL](https://libsdl.org/) (leveraging Gamepad API for enhanced controller support)
+- [SDL](https://libsdl.org/) (SDL's Gamepad API to extend controller support)
 
 ## How to build
 
