@@ -100,6 +100,12 @@ int opcode_kawai() {
 
 	if (subcode == 0) // The native EYETX handler immediately invokes advanced blinking.
 	{
+		if (trace_all || trace_opcodes)
+			ffnx_trace("opcode[EYETX]: field_id=%u,entity=%u,model=%u,script_position=%u,left=%u,right=%u,mouth=%u,advanced=%d,movie=%d\n",
+				*common_externals.current_field_id, entity_id, model_id,
+				ff7_externals.field_curr_script_position[entity_id],
+				get_field_parameter<byte>(2), get_field_parameter<byte>(3), get_field_parameter<byte>(4),
+				ff7_advanced_blinking, ff7_externals.movie_object->is_playing);
 		ff7::field::ff7_field_set_mouth_index(model_id, get_field_parameter<byte>(4));
 	}
 

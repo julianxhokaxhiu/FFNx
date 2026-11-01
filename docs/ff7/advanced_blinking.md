@@ -4,6 +4,8 @@ FFNx's advanced blinking system lets Final Fantasy VII field models use custom e
 
 This feature is for **field models**, not battle models or faces in movie files. Enabling it does not automatically add expressions or lip-sync: your mod must supply the artwork and any scripts that animate it.
 
+Field models can still use scripted expressions during movie playback, including scenes with models drawn over a movie background. This does not alter faces recorded in the movie itself.
+
 ## What you need
 
 - FFNx with advanced blinking enabled.

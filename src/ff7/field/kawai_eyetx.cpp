@@ -419,7 +419,7 @@ namespace ff7::field
 
         // A synchronous EYETX callback can run before the regular field reset.
         ensure_facial_texture_field();
-        if (ff7_advanced_blinking && !ff7_externals.movie_object->is_playing)
+        if (ff7_advanced_blinking)
         {
             if (field_anim_data->eye_texture_idx < 10)
             {
