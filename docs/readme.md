@@ -12,6 +12,7 @@ Welcome to the FFNx documentation!
 
 ## FF7
 
+- [Advanced Field Blinking and Facial Expressions](ff7/advanced_blinking.md)
 - [Multibyte Font Mode](ff7/multibyte_font.md)
 - [Universal Field Button Prompts](ff7/universal_buttons.md)
 
