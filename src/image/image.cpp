@@ -121,6 +121,9 @@ bimg::ImageContainer *loadPng(bx::AllocatorI *allocator, const char *filename, b
                         if (trace_all || trace_loaders) ffnx_trace("%s: overriding %s with %s\n", __func__, filename, overrideFilename.c_str());
                         return ret;
                     }
+                    if (trace_all || trace_loaders || show_missing_textures) {
+                        ffnx_warning("Could not load external texture: %s\n", overrideFilename.c_str());
+                    }
                 }
             }
         }

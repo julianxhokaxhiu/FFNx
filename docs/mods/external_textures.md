@@ -29,4 +29,6 @@ PNG is used. Existing Classic texture overrides retain their normal lookup prece
 
 Keep the Remastered texture's atlas layout and proportions, including any padding or multiple
 images on the same sheet. Enable `trace_loaders` to see which external file replaces each
-`zzz://textures/...` request. Remastered HD textures must be enabled for the relevant category.
+`zzz://textures/...` request and the full paths of failed replacement candidates.
+`show_missing_textures` also logs failed candidates. These warnings cover both missing files
+and files that could not be decoded. Remastered HD textures must be enabled for the relevant category.
