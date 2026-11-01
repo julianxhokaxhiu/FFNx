@@ -23,6 +23,7 @@
 - Core: Add 2026 multilanguage support for DE, FR and SP editions
 - Core: Fix battle swirl battle effect to correctly match the software renderer
 - Core: Fix Cid's Hyper Jump crashing ( https://github.com/julianxhokaxhiu/FFNx/issues/673 )
+- Core: Preserve hidden and multipart battle models after Pandora's Box, thanks to DLPB2 ( https://github.com/julianxhokaxhiu/FFNx/issues/795 )
 - Core: Fix a crash on exit after the world map loaded gltf models ( https://github.com/julianxhokaxhiu/FFNx/pull/1004 )
 - Core: Match gltf animation names case-insensitively ( https://github.com/julianxhokaxhiu/FFNx/pull/1002 )
 - Core: Fix the cull mode and fatal error switches falling through in the renderer ( https://github.com/julianxhokaxhiu/FFNx/pull/1009 )

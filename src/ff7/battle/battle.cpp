@@ -34,6 +34,31 @@ namespace ff7::battle
 		void (*set_primitive_graphics)(int, int, ff7_graphics_object *);
 		void (*set_primitive_blend_mode)(int);
 		void (*set_primitive_overlay)(int);
+		byte pandora_box_visibility_flags[10];
+		effect100_data *(*pandora_box_native_main_loop)();
+
+		effect100_data *pandora_box_main_loop()
+		{
+			const auto &effect = ff7_externals.effect100_array_data[*ff7_externals.effect100_array_idx];
+			uint16_t phase;
+			memcpy(&phase, effect.field_1C, sizeof(phase));
+			bool hide_models = !*ff7_externals.g_is_battle_paused && phase == 1 && effect.field_2 == 23;
+			bool reveal_models = !*ff7_externals.g_is_battle_paused && phase == 4 && effect.field_2 == 225;
+
+			// Preserve hidden/multipart bits at the native hide/reveal frames,
+			// without reverting unrelated animation flag updates.
+			if (hide_models)
+				for (size_t i = 0; i < ff7_externals.g_battle_model_state.size(); ++i)
+					pandora_box_visibility_flags[i] = ff7_externals.g_battle_model_state[i].field_25 & 0x06;
+
+			auto *result = pandora_box_native_main_loop();
+
+			if (reveal_models)
+				for (size_t i = 0; i < ff7_externals.g_battle_model_state.size(); ++i)
+					ff7_externals.g_battle_model_state[i].field_25 = (ff7_externals.g_battle_model_state[i].field_25 & 0xF9) | pandora_box_visibility_flags[i];
+
+			return result;
+		}
 
 		ff7_graphics_object *bind_hyperjump_texture(int index, void *resources)
 		{
@@ -50,6 +75,9 @@ namespace ff7::battle
 
 	void battle_hook_init()
 	{
+		pandora_box_native_main_loop = reinterpret_cast<decltype(pandora_box_native_main_loop)>(get_absolute_value(ff7_externals.pandora_box_skill_init_566871, 0x1F));
+		patch_code_dword(ff7_externals.pandora_box_skill_init_566871 + 0x1F, reinterpret_cast<uint32_t>(pandora_box_main_loop));
+
 		uint32_t hyperjump = ff7_externals.limit_break_effects_fn_table[30];
 		uint32_t load_resources = get_relative_call(hyperjump, 0x4);
 		uint32_t init = get_relative_call(hyperjump, 0x9D);
