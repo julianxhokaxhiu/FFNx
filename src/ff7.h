@@ -2839,12 +2839,6 @@ struct ff7_model_custom_data
 	char *right_eye_tex_filename;
 	p_hundred* left_eye_tex;
 	p_hundred* right_eye_tex;
-	byte is_kawai_active;
-	byte do_kawai_repeat;
-	byte init_kawai_opcode;
-	ff7_kawai_opcode_params* init_kawai_params;
-	byte exec_kawai_opcode;
-	ff7_kawai_opcode_params* exec_kawai_params;
 };
 
 struct ff7_channel_6_state
@@ -3357,7 +3351,6 @@ struct ff7_externals
 	int (*field_load_map_trigger_data_sub_6211C3)();
 	uint32_t field_fade_screen_sub_63B84B;
 	uint32_t field_calc_fade_color_sub_63AE66;
-	uint32_t field_apply_model_light_sub_685028;
 
 	// battle camera script externals
 	uint32_t handle_camera_functions;

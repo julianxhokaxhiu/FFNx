@@ -51,6 +51,7 @@ uniform vec4 gameLightDir1;
 uniform vec4 gameLightDir2;
 uniform vec4 gameLightDir3;
 uniform vec4 gameScriptedLightColor;
+uniform vec4 kawaiColorOffset;
 
 #define isTLVertex VSFlags.x > 0.0
 #define isFBTexture VSFlags.z > 0.0
@@ -182,5 +183,8 @@ void main()
         color.rgb *= gameGlobalLightColor.w * lightAmbient;
     }
     
+    if (!(isTLVertex) && kawaiColorOffset.w > 0.0)
+        color.rgb = ApplyKawaiColorOffset(color.rgb, kawaiColorOffset);
+
     gl_FragColor = color;
 }

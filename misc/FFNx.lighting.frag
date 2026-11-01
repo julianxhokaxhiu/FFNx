@@ -51,6 +51,7 @@ uniform vec4 gameLightDir1;
 uniform vec4 gameLightDir2;
 uniform vec4 gameLightDir3;
 uniform vec4 gameScriptedLightColor;
+uniform vec4 kawaiColorOffset;
 
 #define isTLVertex VSFlags.x > 0.0
 #define isFBTexture VSFlags.z > 0.0
@@ -303,5 +304,7 @@ void main()
 
     // return to sRGB gamma space so we can do alpha blending the same way FF7/8 did.
     gl_FragColor.rgb = toGamma(gl_FragColor.rgb);
+    if (!(isTLVertex) && debugOutput == DEBUG_OUTPUT_DISABLED && kawaiColorOffset.w > 0.0)
+        gl_FragColor.rgb = ApplyKawaiColorOffset(gl_FragColor.rgb, kawaiColorOffset);
 
 }

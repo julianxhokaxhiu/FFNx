@@ -75,6 +75,12 @@ vec3 convertGamut_SRGBtoREC2020(vec3 rgb_input)
 	return saturate(mul(toRec2020, rgb_input));
 }
 
+vec3 ApplyKawaiColorOffset(vec3 color, vec4 offset)
+{
+	if (offset.w > 0.0) return saturate(color + offset.rgb);
+	return color;
+}
+
 // Fog ---------------------------------------------
 vec3 ApplyWorldFog(vec3 color, vec3 viewPosition)
 {

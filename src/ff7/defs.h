@@ -101,6 +101,7 @@ void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, stru
 void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *anim_header, struct struc_110 *struc_110, struct hrc_data *hrc_data, struct ff7_game_obj *game_object);
 int battle_sub_684CC6(hrc_data *a1, ff7_game_obj *game_object);
 void fill_light_data(struct light_data* pOutLightData, struct ff7_polygon_set *polygon_set);
+void ff7_get_field_view_matrix(struct matrix *outViewMatrix);
 void update_view_matrix(struct ff7_game_obj *game_object);
 
 // loaders

@@ -194,6 +194,7 @@ void Renderer::setCommonUniforms()
     setUniform(RendererUniform::GAME_LIGHT_DIR2, internalState.gameLightDir2);
     setUniform(RendererUniform::GAME_LIGHT_DIR3, internalState.gameLightDir3);
     setUniform(RendererUniform::GAME_SCRIPTED_LIGHT_COLOR, internalState.gameScriptedLightColor);
+    setUniform(RendererUniform::KAWAI_COLOR_OFFSET, internalState.kawaiColorOffset.data());
 }
 
 void Renderer::setTextureFlagsUniforms()
@@ -1181,6 +1182,7 @@ void Renderer::init()
     bgfxUniformHandles[RendererUniform::GAME_LIGHT_DIR2] = createUniform("gameLightDir2", bgfx::UniformType::Vec4);
     bgfxUniformHandles[RendererUniform::GAME_LIGHT_DIR3] = createUniform("gameLightDir3", bgfx::UniformType::Vec4);
     bgfxUniformHandles[RendererUniform::GAME_SCRIPTED_LIGHT_COLOR] = createUniform("gameScriptedLightColor", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::KAWAI_COLOR_OFFSET] = createUniform("kawaiColorOffset", bgfx::UniformType::Vec4);
 
     bgfxUniformHandles[RendererUniform::BONE_MATRICES] = createUniform("boneMatrices", bgfx::UniformType::Mat4, MAX_BONE_MATRICES);
 
@@ -2662,6 +2664,8 @@ bool Renderer::isFogEnabled()
 void Renderer::setGameLightData(light_data* lightdata)
 {
     struct game_mode* mode = getmode_cached();
+    internalState.kawaiColorOffset = ff7::field::kawai::post_lighting_color_uniform(current_state.kawai_effect,
+        !ff8 && lightdata && game_lighting != GAME_LIGHTING_ORIGINAL);
 
     bool useGameLighting = lightdata != nullptr;
     if (enable_worldmap_external_mesh && mode->driver_mode == MODE_WORLDMAP)

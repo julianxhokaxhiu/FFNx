@@ -130,6 +130,7 @@ enum RendererUniform
     GAME_LIGHT_DIR2,
     GAME_LIGHT_DIR3,
     GAME_SCRIPTED_LIGHT_COLOR,
+    KAWAI_COLOR_OFFSET,
 
     LIGHTING_SETTINGS,
     LIGHT_DIR_DATA,
@@ -344,6 +345,7 @@ private:
         float gameLightDir3[4] = { 0.0, 0.0, 0.0, 0.0 };
         float gameLightColor3[4] = { 0.0, 0.0, 0.0, 0.0 };
         float gameScriptedLightColor[4] = { 0.0, 0.0, 0.0, 0.0 };
+        std::array<float, 4> kawaiColorOffset{};
 
         float d3dViewMatrix[16];
         float d3dProjectionMatrix[16];

@@ -25,8 +25,10 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <type_traits>
 
 #include "common.h"
+#include "ff7/field/kawai.h"
 
 #define VERTEX 1
 #define LVERTEX 2
@@ -66,7 +68,11 @@ struct driver_state
 	uint32_t alpharef;
 	struct matrix world_view_matrix;
 	struct matrix d3dprojection_matrix;
+	ff7::field::kawai::Effect kawai_effect;
+	struct matrix kawai_camera_matrix;
 };
+
+static_assert(std::is_trivially_copyable_v<driver_state>);
 
 struct deferred_draw
 {
