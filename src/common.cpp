@@ -1542,6 +1542,27 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 	uint32_t texture = 0;
 	struct gl_texture_set *gl_set = VREF(texture_set, ogl.gl_set);
 	struct texture_format* tex_format = VREFP(tex_header, tex_format);
+	char remasteredFilename[MAX_PATH] = {};
+	const bool hasRemasteredName = ff8_remastered_edition && !save_textures
+		&& (uint32_t)VREF(tex_header, file.pc_name) > 32
+		&& *(VREF(tex_header, file.pc_name) + 512) != '\0';
+
+	if (hasRemasteredName)
+	{
+		if (VREF(tex_header, palettes) > 1
+				&& ff8_is_remastered_font_asset()
+				&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "hires\\sysfnt00.tex", sizeof("hires\\sysfnt00.tex") - 1) == 0) {
+			_snprintf(remasteredFilename, sizeof(remasteredFilename), "zzz://textures\\%s\\%d_hd.png", VREF(tex_header, file.pc_name) + 512, VREF(tex_header, palette_index));
+		} else if (VREF(tex_header, palettes) > 1
+				&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "cards\\", sizeof("cards\\") - 1) != 0
+				&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "field.fs\\field_hd_new\\wmset_014_0", sizeof("field.fs\\field_hd_new\\wmset_014_0") - 1) != 0) {
+			_snprintf(remasteredFilename, sizeof(remasteredFilename), "zzz://textures\\%s\\%d.png", VREF(tex_header, file.pc_name) + 512, VREF(tex_header, palette_index));
+		} else if (VREF(tex_header, palette_index) == 0 && _strnicmp(VREF(tex_header, file.pc_name) + 512, "cards\\text_1", sizeof("cards\\text_1") - 1) == 0) {
+			_snprintf(remasteredFilename, sizeof(remasteredFilename), "zzz://textures\\cards\\text_1_mask%s.png", VREF(tex_header, file.pc_name) + 512 + sizeof("cards\\text_1") - 1);
+		} else {
+			_snprintf(remasteredFilename, sizeof(remasteredFilename), "zzz://textures\\%s.png", VREF(tex_header, file.pc_name) + 512);
+		}
+	}
 
 	if((uint32_t)VREF(tex_header, file.pc_name) > 32 && !save_textures)
 	{
@@ -1550,7 +1571,15 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 		// Don't use palette index on fallback (for keeping compatibility with Tonberry mods)
 		if(ff8 && _strnicmp(VREF(tex_header, file.pc_name), "field/mapdata/", strlen("field/mapdata/") - 1) == 0) saveload_palette_index |= 0x80000000;
 
-		texture = load_texture(image_data, dataSize, VREF(tex_header, file.pc_name), saveload_palette_index, VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), gl_set);
+		if (hasRemasteredName && ModdedTexture::hasRemasteredArchiveTextureOverride(remasteredFilename + 6))
+		{
+			texture = newRenderer.createTextureLibPng(remasteredFilename, VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height));
+		}
+
+		if (texture == 0)
+		{
+			texture = load_texture(image_data, dataSize, VREF(tex_header, file.pc_name), saveload_palette_index, VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), gl_set);
+		}
 
 		if (!ff8)
 		{
@@ -1576,15 +1605,6 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 			if(!_strnicmp(VREF(tex_header, file.pc_name), "menu/btl_win", strlen("menu/btl_win") - 1)) gl_set->force_zsort = true;
 
 			if(!_strnicmp(VREF(tex_header, file.pc_name), "flevel/hand_1", strlen("flevel/hand_1") - 1)) gl_set->force_filter = true;
-		}
-		else if (*(VREF(tex_header, file.pc_name) + 512) != '\0') // has secondary hd path
-		{
-			if(trace_all || trace_loaders) ffnx_trace("texture file name (alternative): %s\n", VREF(tex_header, file.pc_name) + 512);
-
-			if (texture == 0)
-			{
-				texture = load_texture(image_data, dataSize, VREF(tex_header, file.pc_name) + 512, VREF(tex_header, palettes) > 1 ? VREF(tex_header, palette_index) | 0xC0000000 : -1, VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), gl_set);
-			}
 		}
 	}
 
@@ -1616,25 +1636,9 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 		}
 	}
 
-	if (ff8_remastered_edition && texture == 0 && !save_textures
-		&& (uint32_t)VREF(tex_header, file.pc_name) > 32
-		&& *(VREF(tex_header, file.pc_name) + 512) != '\0')
+	if (hasRemasteredName && texture == 0)
 	{
-		char filename[MAX_PATH] = {};
-		if (VREF(tex_header, palettes) > 1
-				&& ff8_is_remastered_font_asset()
-				&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "hires\\sysfnt00.tex", sizeof("hires\\sysfnt00.tex") - 1) == 0) {
-			_snprintf(filename, sizeof(filename), "zzz://textures\\%s\\%d_hd.png", VREF(tex_header, file.pc_name) + 512, VREF(tex_header, palette_index));
-		} else if (VREF(tex_header, palettes) > 1
-				&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "cards\\", sizeof("cards\\") - 1) != 0
-				&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "field.fs\\field_hd_new\\wmset_014_0", sizeof("field.fs\\field_hd_new\\wmset_014_0") - 1) != 0) {
-			_snprintf(filename, sizeof(filename), "zzz://textures\\%s\\%d.png", VREF(tex_header, file.pc_name) + 512, VREF(tex_header, palette_index));
-		} else if (VREF(tex_header, palette_index) == 0 && _strnicmp(VREF(tex_header, file.pc_name) + 512, "cards\\text_1", sizeof("cards\\text_1") - 1) == 0) {
-			_snprintf(filename, sizeof(filename), "zzz://textures\\cards\\text_1_mask%s.png", VREF(tex_header, file.pc_name) + 512 + sizeof("cards\\text_1") - 1);
-		} else {
-			_snprintf(filename, sizeof(filename), "zzz://textures\\%s.png", VREF(tex_header, file.pc_name) + 512);
-		}
-		texture = newRenderer.createTextureLibPng(filename, VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height));
+		texture = newRenderer.createTextureLibPng(remasteredFilename, VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height));
 	}
 
 	if(texture)

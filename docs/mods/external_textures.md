@@ -12,23 +12,47 @@ By default, FFNx looks for textures relatively to the `./mods/Textures` director
 
 [List of external textures](../ff8/mods/external_textures.md)
 
-### FF8 Remastered archive textures
+### Lookup order
 
-Textures loaded from the ZZZ archives can also be overridden. Keep the archive-relative
-path, including the `textures` directory, under `mod_path`. For example, with the default
-configuration, `textures/battle.fs/hd_new/D4C009_1.png` can be replaced by:
+For each texture, FFNx stops at the first image found:
 
-```text
-mods/Textures/textures/battle.fs/hd_new/D4C009_1.png
-```
+1. **External overrides of `main.zzz` textures** (FF8 Remastered only), e.g. `mods/Textures/textures/battle.fs/hd_new/c0m007_0.dds`
+2. **Classic external textures** (all editions), e.g. `mods/Textures/battle/C0M007.DAT-0_00.dds`
+3. **The original `main.zzz` texture** (FF8 Remastered only)
+4. **The texture loaded by the game engine**
 
-The same layout is supported under `override_mod_path`, which is checked before `mod_path`.
-Within each path, formats are tried in the order configured by `mod_ext`, so a DDS replacement
-uses the same filename with a `.dds` extension. If no replacement loads, the original archive
-PNG is used. Existing Classic texture overrides retain their normal lookup precedence.
+Steps 1 and 3 apply only to textures that exist in `main.zzz`. Not every texture has a Remastered version; for example, many battle models have no entry in `main.zzz`. Such textures use only steps 2 and 4.
 
-Keep the Remastered texture's atlas layout and proportions, including any padding or multiple
-images on the same sheet. Enable `trace_loaders` to see which external file replaces each
-`zzz://textures/...` request and the full paths of failed replacement candidates.
-`show_missing_textures` also logs failed candidates. These warnings cover both missing files
-and files that could not be decoded. Remastered HD textures must be enabled for the relevant category.
+For textures that use multiple images or palettes, such as battle models, the source is chosen once for the whole texture:
+
+- If any `main.zzz` override exists, the Remastered images and layout are used. Images that are not overridden come from `main.zzz`.
+- Otherwise, if any classic external texture exists, only classic textures are used, with the classic layout. This lets a mod ship a modified model together with its classic textures without mixing in Remastered images.
+- Otherwise, the original `main.zzz` images are used.
+
+Within each step, formats are tried in the order configured by `mod_ext`. In step 1, `override_mod_path` is checked before `mod_path`. In step 2, the language subfolder (for example `eng/`) is tried before the root folder.
+
+### FF8 Remastered textures
+
+To replace a texture that FF8 Remastered loads from `main.zzz`, keep its full archive path, including the leading `textures` directory, under `mod_path`. Change the extension when using DDS.
+This applies to any texture in the archive:
+
+| `main.zzz` texture | External override |
+| --- | --- |
+| `textures/battle.fs/hd_new/<model>_<n>.png` | `mods/Textures/textures/battle.fs/hd_new/<model>_<n>.dds` |
+| `textures/field.fs/field_hd_new/<model>_<n>.png` | `mods/Textures/textures/field.fs/field_hd_new/<model>_<n>.dds` |
+| `textures/field.fs/field_hd/<model>_<n>.png` | `mods/Textures/textures/field.fs/field_hd/<model>_<n>.dds` |
+| `textures/hires/<name>.tex/<n>.png` | `mods/Textures/textures/hires/<name>.tex/<n>.dds` |
+| `textures/hires/<name>.tex/<lang>/<n>.png` | `mods/Textures/textures/hires/<name>.tex/<lang>/<n>.dds` |
+| `textures/icon.tex/<lang>/<n>.png` | `mods/Textures/textures/icon.tex/<lang>/<n>.dds` |
+| `textures/cards/<name>.png` | `mods/Textures/textures/cards/<name>.dds` |
+| `textures/<folder>/<name>.png` | `mods/Textures/textures/<folder>/<name>.dds` |
+
+Keep the Remastered texture's atlas layout and proportions, including any padding or multiple images on the same sheet.
+If an override exists but cannot be decoded, the original archive PNG is used.
+Remastered HD textures must be enabled for the relevant category.
+
+Enable `trace_loaders` and `show_missing_textures` to log each candidate path:
+
+- Missing step 1 and 2 candidates are logged as `Texture does not exist, skipping: ...`.
+- When step 3 is reached, the `main.zzz` override candidates are checked again and logged as `Could not load external texture: ...`.
+- `Zzz::lookup ... not found in main.zzz` means the archive has no Remastered version of that texture.

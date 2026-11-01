@@ -403,11 +403,49 @@ ModdedTexture::ModdedTexture(const TexturePacker::IdentifiedTexture &originalTex
 {
 }
 
-static bool findRemasteredArchiveTexture(const char *name, char *filename, char *foundExtension)
+bool ModdedTexture::hasRemasteredArchiveTextureOverride(const char *archiveFilename)
+{
+	if (!ff8_remastered_edition || !g_FF8ZzzArchiveMain.fileExists(archiveFilename))
+	{
+		return false;
+	}
+
+	std::string textureName = archiveFilename;
+	const size_t extensionOffset = textureName.find_last_of('.');
+	if (extensionOffset != std::string::npos)
+	{
+		textureName.resize(extensionOffset);
+	}
+
+	for (const std::string *texturePath : { &override_mod_path, &mod_path })
+	{
+		if (texturePath->empty())
+		{
+			continue;
+		}
+
+		for (const std::string &extension : mod_ext)
+		{
+			const std::string overrideFilename = std::string(basedir) + "/" + *texturePath + "/" + textureName + "." + extension;
+
+			if (fileExists(overrideFilename.c_str()))
+			{
+				return true;
+			}
+
+			if (trace_all || trace_loaders) ffnx_warning("Texture does not exist, skipping: %s\n", overrideFilename.c_str());
+		}
+	}
+
+	return false;
+}
+
+static bool findRemasteredArchiveTexture(const char *name, char *filename, char *foundExtension, bool externalOnly)
 {
 	_snprintf(filename, MAX_PATH, "textures\\%s.png", name);
 
-	if (ff8_remastered_edition && g_FF8ZzzArchiveMain.fileExists(filename))
+	if (externalOnly ? ModdedTexture::hasRemasteredArchiveTextureOverride(filename)
+		: ff8_remastered_edition && g_FF8ZzzArchiveMain.fileExists(filename))
 	{
 		_snprintf(filename, MAX_PATH, "zzz://textures\\%s.png", name);
 
@@ -427,19 +465,9 @@ bool ModdedTexture::findExternalTexture(char *outFilename, uint8_t palette_index
 {
 	std::string remasterName = originalTexture().remasteredName();
 
-	if (findExternalTexture(originalTexture().name().c_str(), outFilename, palette_index, hasPal, extension, foundExtension))
+	if (!ff8_remastered_edition || remasterName.empty())
 	{
-		return true;
-	}
-
-	if (remasterName.empty())
-	{
-		return false;
-	}
-
-	if (findExternalTexture(remasterName.c_str(), outFilename, palette_index, hasPal, extension, foundExtension))
-	{
-		return true;
+		return findExternalTexture(originalTexture().name().c_str(), outFilename, palette_index, hasPal, extension, foundExtension);
 	}
 
 	size_t pos = remasterName.find("field_hd_new");
@@ -447,14 +475,15 @@ bool ModdedTexture::findExternalTexture(char *outFilename, uint8_t palette_index
 	if (pos != std::string::npos)
 	{
 		fallbackName.replace(pos, sizeof("field_hd_new") - 1, "field_hd");
-		if (findExternalTexture(fallbackName.c_str(), outFilename, palette_index, hasPal, extension, foundExtension))
-		{
-			return true;
-		}
 	}
 
-	if (findRemasteredArchiveTexture(remasterName.c_str(), outFilename, foundExtension)
-		|| (pos != std::string::npos && findRemasteredArchiveTexture(fallbackName.c_str(), outFilename, foundExtension)))
+	const bool hasFallback = pos != std::string::npos;
+
+	if (findRemasteredArchiveTexture(remasterName.c_str(), outFilename, foundExtension, true)
+		|| (hasFallback && findRemasteredArchiveTexture(fallbackName.c_str(), outFilename, foundExtension, true))
+		|| findExternalTexture(originalTexture().name().c_str(), outFilename, palette_index, hasPal, extension, foundExtension)
+		|| findRemasteredArchiveTexture(remasterName.c_str(), outFilename, foundExtension, false)
+		|| (hasFallback && findRemasteredArchiveTexture(fallbackName.c_str(), outFilename, foundExtension, false)))
 	{
 		return true;
 	}
@@ -466,14 +495,8 @@ bool ModdedTexture::findExternalTexture(char *outFilename, uint8_t palette_index
 
 bool ModdedTexture::findExternalTextureRemastered(const char *name, char *filename, uint8_t palette_index, bool hasPal, const char *extension, char *found_extension)
 {
-	// Retry with remaster name
-	if (findExternalTexture(name, filename, palette_index, hasPal, extension, found_extension))
-	{
-		return true;
-	}
-
-	// Retry inside ZZZ archive
-	return findRemasteredArchiveTexture(name, filename, found_extension);
+	return findRemasteredArchiveTexture(name, filename, found_extension, true)
+		|| findRemasteredArchiveTexture(name, filename, found_extension, false);
 }
 
 bool ModdedTexture::findExternalTexture(const char *name, char *filename, uint8_t palette_index, bool hasPal, const char *extension, char *found_extension)
@@ -603,6 +626,66 @@ void ModdedTexture::copyRect(
 	}
 }
 
+static std::string remasteredImageName(const std::string &remasteredName, int imageIndex)
+{
+	return remasteredName.substr(0, remasteredName.find_last_of('_') + 1) + std::to_string(imageIndex);
+}
+
+static std::string remasteredFallbackName(const std::string &remasteredName)
+{
+	std::string fallbackName = remasteredName;
+	const size_t pos = fallbackName.find("field_hd_new");
+	if (pos == std::string::npos)
+	{
+		return std::string();
+	}
+
+	return fallbackName.replace(pos, sizeof("field_hd_new") - 1, "field_hd");
+}
+
+static std::vector<std::string> remasteredImageNames(const std::string &remasteredName,
+	const remastered_battle_texture::ImageLayout *layout, int modCount)
+{
+	std::vector<std::string> names;
+	if (layout != nullptr && !layout->paletteLayers.empty())
+	{
+		for (const auto &layer : layout->paletteLayers)
+		{
+			if (layer.firstPaletteId < modCount) names.push_back(remasteredImageName(remasteredName, layer.imageIndex));
+		}
+	}
+	else if (layout != nullptr && layout->palettePageImages)
+	{
+		for (int paletteId = 0; paletteId < std::min(modCount, 4); ++paletteId)
+		{
+			names.push_back(remasteredImageName(remasteredName, paletteId));
+		}
+	}
+	else
+	{
+		names.push_back(remasteredName);
+		const std::string fallbackName = remasteredFallbackName(remasteredName);
+		if (!fallbackName.empty()) names.push_back(fallbackName);
+	}
+
+	if (layout != nullptr && layout->companionPosition != remastered_battle_texture::CompanionPosition::None)
+	{
+		names.push_back(remasteredImageName(remasteredName, layout->companionIndex));
+	}
+
+	return names;
+}
+
+static bool findRemasteredTexture(const std::string &remasteredName, char *filename, char *foundExtension)
+{
+	const std::string fallbackName = remasteredFallbackName(remasteredName);
+
+	return findRemasteredArchiveTexture(remasteredName.c_str(), filename, foundExtension, true)
+		|| (!fallbackName.empty() && findRemasteredArchiveTexture(fallbackName.c_str(), filename, foundExtension, true))
+		|| findRemasteredArchiveTexture(remasteredName.c_str(), filename, foundExtension, false)
+		|| (!fallbackName.empty() && findRemasteredArchiveTexture(fallbackName.c_str(), filename, foundExtension, false));
+}
+
 bool TextureModStandard::createImages(int paletteCount, int internalLodScale, int8_t *rgbaModifier)
 {
 	paletteCount = paletteCount >= 0 ? paletteCount : originalTexture().palette().h(); // Works most of the time
@@ -616,9 +699,43 @@ bool TextureModStandard::createImages(int paletteCount, int internalLodScale, in
 	const std::string &name = originalTexture().name();
 	const bool useCache = name.starts_with("battle/") || name.starts_with("magic/");
 	const std::string &remasteredName = originalTexture().remasteredName();
-	const remastered_battle_texture::ImageLayout *layout = ff8_remastered_edition
+	const remastered_battle_texture::ImageLayout *layout = ff8_remastered_edition && !remasteredName.empty()
 		? remastered_battle_texture::findImageLayout(remasteredName)
 		: nullptr;
+
+	// Pick one source for the whole texture, so a mod shipping model + classic textures
+	// never gets mixed with the Remastered atlas layout from main.zzz.
+	_usesRemasteredImages = ff8_remastered_edition && !remasteredName.empty();
+	if (_usesRemasteredImages)
+	{
+		bool hasRemasteredOverride = false;
+		for (const std::string &imageName : remasteredImageNames(remasteredName, layout, modCount))
+		{
+			if (hasRemasteredArchiveTextureOverride(("textures\\" + imageName + ".png").c_str()))
+			{
+				hasRemasteredOverride = true;
+				break;
+			}
+		}
+
+		for (int paletteId = 0; !hasRemasteredOverride && paletteId < modCount; ++paletteId)
+		{
+			if (findExternalTexture(name.c_str(), filename, paletteId, true))
+			{
+				_usesRemasteredImages = false;
+				break;
+			}
+		}
+	}
+
+	if (!_usesRemasteredImages)
+	{
+		layout = nullptr;
+	}
+	_layout = layout;
+
+	if (trace_all || trace_vram) ffnx_trace("TextureModStandard::%s: %s uses %s textures\n", __func__, name.c_str(), _usesRemasteredImages ? "remastered" : "classic");
+
 	if (layout != nullptr && sourcePixelWidth % layout->sourceWidthDivisor == 0
 		&& sourceHeight % layout->sourceHeightDivisor == 0)
 	{
@@ -631,8 +748,7 @@ bool TextureModStandard::createImages(int paletteCount, int internalLodScale, in
 		for (const auto &layer : layout->paletteLayers)
 		{
 			if (layer.firstPaletteId >= modCount || _textures.find(layer.imageIndex) != _textures.end()) continue;
-			const size_t suffixSeparator = remasteredName.find_last_of('_');
-			const std::string imageName = remasteredName.substr(0, suffixSeparator + 1) + std::to_string(layer.imageIndex);
+			const std::string imageName = remasteredImageName(remasteredName, layer.imageIndex);
 			if (!findExternalTextureRemastered(imageName.c_str(), filename, layer.firstPaletteId, true, extension, found_extension)) continue;
 			extension = found_extension;
 			TextureImage externalTexture;
@@ -650,13 +766,16 @@ bool TextureModStandard::createImages(int paletteCount, int internalLodScale, in
 				continue;
 			}
 
-			const size_t suffixSeparator = remasteredName.find_last_of('_');
-			std::string paletteRemasteredName = remasteredName.substr(0, suffixSeparator + 1) + std::to_string(paletteId);
+			const std::string paletteRemasteredName = remasteredImageName(remasteredName, paletteId);
 			foundTexture = findExternalTextureRemastered(paletteRemasteredName.c_str(), filename, paletteId, true, extension, found_extension);
+		}
+		else if (_usesRemasteredImages)
+		{
+			foundTexture = findRemasteredTexture(remasteredName, filename, found_extension);
 		}
 		else
 		{
-			foundTexture = findExternalTexture(filename, paletteId, true, extension, found_extension);
+			foundTexture = findExternalTexture(name.c_str(), filename, paletteId, true, extension, found_extension);
 		}
 		if (!foundTexture)
 		{
@@ -705,9 +824,7 @@ uint8_t TextureModStandard::computePaletteId(int vramPalXBpp2, int vramPalY) con
 	}
 
 	const TexturePacker::TextureInfos &palette = originalTexture().palette();
-	const remastered_battle_texture::ImageLayout *layout = ff8_remastered_edition
-		? remastered_battle_texture::findImageLayout(originalTexture().remasteredName())
-		: nullptr;
+	const remastered_battle_texture::ImageLayout *layout = _layout;
 	if (layout != nullptr && !layout->paletteLayers.empty())
 	{
 		const int paletteOffset = vramPalY - palette.y();
@@ -760,8 +877,7 @@ uint8_t TextureModStandard::scale(int vramPalXBpp2, int vramPalY) const
 	if (trace_all || trace_vram) ffnx_trace("TextureModStandard::%s %s vramPal=(%d, %d) original=(%d, %d)\n", __func__, originalTexture().name().c_str(), vramPalXBpp2, vramPalY, originalTexture().palette().x(), originalTexture().palette().y());
 
 	const uint8_t paletteId = computePaletteId(vramPalXBpp2, vramPalY);
-	const auto *layout = ff8_remastered_edition
-		? remastered_battle_texture::findImageLayout(originalTexture().remasteredName()) : nullptr;
+	const auto *layout = _layout;
 	if (layout != nullptr && !layout->paletteLayers.empty())
 	{
 		uint8_t layerScale = 0;
@@ -799,9 +915,7 @@ TexturePacker::TextureTypes TextureModStandard::drawToImage(
 		sourceY = offsetY < 0 ? -offsetY : 0,
 		targetX = offsetX > 0 ? offsetX : 0,
 		targetY = offsetY > 0 ? offsetY : 0;
-	const remastered_battle_texture::ImageLayout *layout = ff8_remastered_edition
-		? remastered_battle_texture::findImageLayout(originalTexture().remasteredName())
-		: nullptr;
+	const remastered_battle_texture::ImageLayout *layout = _layout;
 	if (layout != nullptr && !layout->paletteLayers.empty())
 	{
 		const uint8_t paletteId = computePaletteId(vramPalXBpp2, vramPalY);
@@ -867,7 +981,7 @@ TexturePacker::TextureTypes TextureModStandard::drawToImage(
 			targetY = std::max(targetY, targetH - imageH);
 		}
 	}
-	const bool isWideRemasteredResource = ff8_remastered_edition
+	const bool isWideRemasteredResource = _usesRemasteredImages
 		&& imageW >= origTexture.pixelW() * 3
 		&& imageW % origTexture.pixelW() == 0;
 	const int animationFrame = _currentAnimationFrame;

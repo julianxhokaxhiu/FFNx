@@ -38,6 +38,11 @@
 #include "texture_packer.h"
 #include "field/background.h"
 
+namespace remastered_battle_texture
+{
+struct ImageLayout;
+}
+
 class TextureImage {
 public:
 	TextureImage();
@@ -97,6 +102,7 @@ public:
 	bool findExternalTexture(char *outFilename, uint8_t palette_index, bool hasPal, const char *extension = nullptr, char *foundExtension = nullptr) const;
 	static bool findExternalTextureRemastered(const char *name, char *filename, uint8_t palette_index, bool hasPal, const char *extension = nullptr, char *found_extension = nullptr);
 	static bool findExternalTexture(const char *name, char *outFilename, uint8_t palette_index, bool hasPal, const char *extension = nullptr, char *foundExtension = nullptr);
+	static bool hasRemasteredArchiveTextureOverride(const char *archiveFilename);
 protected:
 	static void drawImage(
 		const uint32_t *sourceRgba, int sourceRgbaW, uint8_t sourceScale,
@@ -119,7 +125,7 @@ private:
 
 class TextureModStandard : public ModdedTexture {
 public:
-	TextureModStandard(const TexturePacker::IdentifiedTexture &originalTexture) : ModdedTexture(originalTexture), _currentPalette(-1), _currentAnimationFrame(-1) {}
+	TextureModStandard(const TexturePacker::IdentifiedTexture &originalTexture) : ModdedTexture(originalTexture), _layout(nullptr), _usesRemasteredImages(false), _currentPalette(-1), _currentAnimationFrame(-1) {}
 	TextureModStandard(const TextureModStandard &other) = delete;
 	~TextureModStandard() override = default;
 	inline bool canCopyRect() const override {
@@ -147,6 +153,8 @@ private:
 	std::map<uint8_t, TextureImage> _textures; // Index: paletteId or current texture
 	TextureImage _remasteredUpperImage;
 	TextureImage _remasteredLowerImage;
+	const remastered_battle_texture::ImageLayout *_layout;
+	bool _usesRemasteredImages;
 	int8_t _currentPalette;
 	int _currentAnimationFrame;
 };
