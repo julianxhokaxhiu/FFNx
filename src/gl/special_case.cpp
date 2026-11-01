@@ -44,6 +44,9 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 	uint32_t defer = false, force_defer = false;
 	bool isExternalTexture = current_state.texture_set && VREF(texture_set, ogl.external);
 
+	if (ff8 && ff8_widescreen_draw_card_background(primitivetype, vertextype, vertices, graphics_object, clip))
+		return true;
+
 	// Force disabling filter for ff7 minigames internal textures
 	if(!ff8 && (mode == MODE_SUBMARINE || mode == MODE_COASTER) && !isExternalTexture) current_state.texture_filter = false;
 

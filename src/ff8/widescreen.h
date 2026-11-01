@@ -25,8 +25,12 @@
 
 struct game_obj;
 struct nvertex;
+struct graphics_object;
 
 void ff8_widescreen_hook_init();
 void ff8_widescreen_adjust_vertices(uint32_t mode, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, uint16_t *indices, uint32_t count);
 void ff8_widescreen_framebuffer_capture(uint32_t &x, uint32_t &w);
 void ff8_clear(uint32_t clear_color, uint32_t clear_depth, uint32_t unknown, struct game_obj *game_object);
+bool ff8_widescreen_draw_card_background(uint32_t primitivetype, uint32_t vertextype, const struct nvertex *vertices, const struct graphics_object *graphics_object, uint32_t clip);
+void ff8_widescreen_set_card_background_source(const uint8_t *image);
+void ff8_widescreen_reset_card_backgrounds();

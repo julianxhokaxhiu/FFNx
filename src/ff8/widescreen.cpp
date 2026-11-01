@@ -23,15 +23,215 @@
 #include "battle/effects.h"
 
 #include "../common.h"
+#include "../cfg.h"
 #include "../ff8.h"
 #include "../gl.h"
 #include "../globals.h"
+#include "../log.h"
+#include "../macro.h"
 #include "../patch.h"
+#include "../renderer.h"
+#include "../saveload.h"
+#include "../utils.h"
 #include "../widescreen.h"
+#include "file.h"
 
 #include <cmath>
 #include <initializer_list>
+#include <unordered_map>
 #include <vector>
+
+struct ff8_card_background
+{
+	uint32_t texture = 0;
+	bool attempted = false;
+	uint32_t frame = 0;
+	bool drawn = false;
+	bool traced_draw = false;
+};
+
+static ff8_card_background ff8_card_backgrounds[2];
+struct ff8_card_background_packet
+{
+	int background;
+	bool first_page;
+};
+
+static int ff8_card_background_source = -1;
+static int ff8_card_background_sprite = -1;
+static std::unordered_map<const void *, ff8_card_background_packet> ff8_card_background_packets;
+static std::unordered_map<const void *, int> ff8_card_background_objects;
+static uint32_t (*ff8_card_submit_background)(int *, uint32_t *, int, int, int, int);
+static void (*ff8_card_draw_sprite)(uint32_t *);
+static int (*ff8_card_append_sprite)(int, ff8_graphics_object *);
+
+void ff8_widescreen_reset_card_backgrounds()
+{
+	for (auto &background : ff8_card_backgrounds)
+	{
+		if (background.texture) newRenderer.deleteTexture(background.texture);
+		background = {};
+	}
+	ff8_card_background_source = -1;
+	ff8_card_background_sprite = -1;
+	ff8_card_background_packets.clear();
+	ff8_card_background_objects.clear();
+}
+
+static uint32_t ff8_load_wide_card_background(ff8_card_background &background, const char *name)
+{
+	if (background.attempted) return background.texture;
+	background.attempted = true;
+
+	char language[16] = {};
+	ff8_fs_lang_string(language);
+	const char *aspect = aspect_ratio == AR_WIDESCREEN_16X10 ? "16x10" : "16x9";
+	const float expected_ratio = aspect_ratio == AR_WIDESCREEN_16X10 ? 1.6f : 16.0f / 9.0f;
+
+	for (const auto &path : {override_mod_path, mod_path})
+	{
+		if (path.empty()) continue;
+		for (const auto &extension : mod_ext)
+		{
+			for (const char *locale : std::initializer_list<const char *>{language, ""})
+			{
+				char filename[sizeof(basedir) + 1024] = {};
+				const int length = snprintf(filename, sizeof(filename), "%s\\%s\\%s%s%s_%s_00.%s",
+					basedir, path.c_str(), locale, *locale ? "\\" : "", name, aspect, extension.c_str());
+				if (length < 0 || length >= sizeof(filename))
+				{
+					ffnx_warning("Card widescreen background path is too long: %s\n", name);
+					continue;
+				}
+				if (!fileExists(filename)) continue;
+
+				uint32_t width = 0, height = 0;
+				const uint32_t texture = load_texture_helper(filename, &width, &height, extension == "png", true);
+				if (!texture)
+				{
+					ffnx_warning("Could not load Card widescreen background: %s\n", filename);
+					continue;
+				}
+				if (!width || !height || width > max_texture_size || height > max_texture_size
+					|| std::abs(float(width) / height - expected_ratio) > 0.01f)
+				{
+					ffnx_warning("Card widescreen background must have aspect ratio %s and supported dimensions: %s (%ux%u)\n",
+						aspect, filename, width, height);
+					newRenderer.deleteTexture(texture);
+					continue;
+				}
+				background.texture = texture;
+				return texture;
+			}
+		}
+	}
+	if (trace_all || trace_loaders)
+		ffnx_trace("No usable Card widescreen background for %s (%s); keeping native background\n", name, aspect);
+	return 0;
+}
+
+void ff8_widescreen_set_card_background_source(const uint8_t *image)
+{
+	ff8_card_background_source = image == ff8_externals.cardgame_tim_texture_intro ? 0
+		: image == ff8_externals.cardgame_tim_texture_game ? 1 : -1;
+}
+
+static uint32_t ff8_card_submit_background_page(int *ordering_table, uint32_t *packet, int z0, int z1, int z2, int z3, bool first_page)
+{
+	const uint32_t result = ff8_card_submit_background(ordering_table, packet, z0, z1, z2, z3);
+	if (getmode_cached()->driver_mode == MODE_CARDGAME && ff8_card_background_source >= 0)
+		ff8_card_background_packets[packet] = {ff8_card_background_source, first_page};
+	else
+		ff8_card_background_packets.erase(packet);
+	return result;
+}
+
+static uint32_t ff8_card_submit_first_background_page(int *ordering_table, uint32_t *packet, int z0, int z1, int z2, int z3)
+{
+	return ff8_card_submit_background_page(ordering_table, packet, z0, z1, z2, z3, true);
+}
+
+static uint32_t ff8_card_submit_second_background_page(int *ordering_table, uint32_t *packet, int z0, int z1, int z2, int z3)
+{
+	return ff8_card_submit_background_page(ordering_table, packet, z0, z1, z2, z3, false);
+}
+
+static void ff8_card_draw_background_sprite(uint32_t *packet)
+{
+	const auto it = ff8_card_background_packets.find(packet);
+	if (it == ff8_card_background_packets.end())
+	{
+		ff8_card_draw_sprite(packet);
+		return;
+	}
+	const ff8_card_background_packet background_packet = it->second;
+	ff8_card_background_packets.erase(it);
+	const int index = background_packet.background;
+	const char *name = index == 0 ? "cardgame\\intro" : "cardgame\\game";
+	if (!ff8_load_wide_card_background(ff8_card_backgrounds[index], name))
+	{
+		ff8_card_draw_sprite(packet);
+		return;
+	}
+	if (!background_packet.first_page) return;
+
+	// The callback appends to native batches; retain the background's identity until those batches draw.
+	const int previous_sprite = ff8_card_background_sprite;
+	ff8_card_background_sprite = index;
+	ff8_card_draw_sprite(packet);
+	ff8_card_background_sprite = previous_sprite;
+}
+
+static int ff8_card_append_background_sprite(int count, ff8_graphics_object *graphics_object)
+{
+	const int result = ff8_card_append_sprite(count, graphics_object);
+	if (ff8_card_background_sprite >= 0 && result)
+		ff8_card_background_objects[graphics_object] = ff8_card_background_sprite;
+	else
+		ff8_card_background_objects.erase(graphics_object);
+	return result;
+}
+
+bool ff8_widescreen_draw_card_background(uint32_t primitivetype, uint32_t vertextype, const nvertex *vertices, const graphics_object *graphics_object, uint32_t clip)
+{
+	if (!widescreen_enabled || getmode_cached()->driver_mode != MODE_CARDGAME) return false;
+	const auto it = ff8_card_background_objects.find(graphics_object);
+	if (it == ff8_card_background_objects.end()) return false;
+	auto &background = ff8_card_backgrounds[it->second];
+	const uint32_t texture = background.texture;
+	if (!texture) return false;
+	if (!background.traced_draw && (trace_all || trace_loaders))
+	{
+		ffnx_trace("Card background draw: %s (native background graphics object %p)\n",
+			it->second == 0 ? "cardgame\\intro" : "cardgame\\game", graphics_object);
+		background.traced_draw = true;
+	}
+
+	// Native clipping can split the first page into multiple graphics objects.
+	if (background.drawn && background.frame == frame_counter) return true;
+	background.frame = frame_counter;
+	background.drawn = true;
+	nvertex quad[4] = {vertices[0], vertices[0], vertices[0], vertices[0]};
+	for (uint32_t i = 0; i < 4; ++i)
+	{
+		quad[i]._.x = wide_viewport_x + (i >= 2 ? wide_viewport_width : 0);
+		quad[i]._.y = wide_viewport_y + (i % 2 ? wide_viewport_height : 0);
+		quad[i].u = i >= 2 ? 1.0f : 0.0f;
+		quad[i].v = i % 2 ? 1.0f : 0.0f;
+	}
+	uint16_t quad_indices[] = {0, 1, 2, 1, 3, 2};
+	driver_state saved_state;
+	gl_save_state(&saved_state);
+	VOBJ(texture_set, texture_set, saved_state.texture_set);
+	gl_set_texture(texture, nullptr);
+	current_state.texture_filter = true;
+	newRenderer.isExternalTexture(true);
+	gl_draw_indexed_primitive(primitivetype, TLVERTEX, quad, nullptr, 4, quad_indices, 6, nullptr, nullptr, nullptr, 0, 0);
+	gl_load_state(&saved_state);
+	newRenderer.isExternalTexture(saved_state.texture_set && VREF(texture_set, ogl.external) != 0);
+	newRenderer.doScissorTest(clip != 0);
+	return true;
+}
 
 static bool ff8_is_widescreen_mode(uint32_t mode)
 {
@@ -499,6 +699,18 @@ static void ff8_battle_effects_widescreen_init()
 }
 
 void ff8_widescreen_hook_init() {
+	ff8_card_submit_background = reinterpret_cast<decltype(ff8_card_submit_background)>(
+		get_relative_call(ff8_externals.sub_5391B0, 0xC7));
+	replace_call(ff8_externals.sub_5391B0 + 0xC7, ff8_card_submit_first_background_page);
+	replace_call(ff8_externals.sub_5391B0 + 0x177, ff8_card_submit_second_background_page);
+	ff8_card_draw_sprite = reinterpret_cast<decltype(ff8_card_draw_sprite)>(ff8_externals.ssigpu_callbacks_1[100]);
+	patch_code_dword(reinterpret_cast<uint32_t>(&ff8_externals.ssigpu_callbacks_1[100]),
+		reinterpret_cast<uint32_t>(ff8_card_draw_background_sprite));
+	ff8_card_append_sprite = reinterpret_cast<decltype(ff8_card_append_sprite)>(
+		get_relative_call(ff8_externals.sub_462AD0, 0x9E));
+	replace_call(ff8_externals.sub_462AD0 + 0x9E, ff8_card_append_background_sprite);
+	replace_call(ff8_externals.sub_462AD0 + 0x25E, ff8_card_append_background_sprite);
+
 	if (FF8_US_VERSION)
 	{
 		ff8_the_end_widescreen_init();
@@ -615,6 +827,19 @@ static void ff8_expand_screen_overlay(struct nvertex *vertices, uint32_t vertexc
 void ff8_widescreen_adjust_vertices(uint32_t mode, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, uint16_t *indices, uint32_t count)
 {
 	if(!widescreen_enabled) return;
+
+	if (mode == MODE_CARDGAME && vertextype == TLVERTEX && !current_state.texture_handle
+		&& vertexcount == 4 && count == 6)
+	{
+		for (const auto &background : ff8_card_backgrounds)
+		{
+			if (background.drawn && background.frame == frame_counter)
+			{
+				ff8_expand_screen_overlay(vertices, vertexcount, game_height - 48.0f);
+				break;
+			}
+		}
+	}
 
 	if(mode == MODE_SWIRL && vertextype == TLVERTEX)
 	{

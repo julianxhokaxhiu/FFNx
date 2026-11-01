@@ -29,6 +29,7 @@
 #include "log.h"
 #include "mod.h"
 #include "gl.h"
+#include "widescreen.h"
 
 // Scale 32-bit BGRA image
 void scale_up_image_data(const uint32_t *source, uint32_t *target, uint32_t w, uint32_t h, uint8_t scale)
@@ -410,6 +411,8 @@ void TexturePacker::clearTiledTexs()
 void TexturePacker::clearTextures()
 {
 	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s\n", __func__);
+
+	ff8_widescreen_reset_card_backgrounds();
 
 	std::fill_n(_vramTextureIds.begin(), _vramTextureIds.size(), INVALID_TEXTURE);
 

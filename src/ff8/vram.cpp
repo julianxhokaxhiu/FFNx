@@ -36,6 +36,7 @@
 #include "battle/stage.h"
 #include "battle/effects.h"
 #include "remaster.h"
+#include "widescreen.h"
 #include "remastered_battle_texture.h"
 #include "./file.h"
 
@@ -917,6 +918,8 @@ void ff8_cdcheck_error_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffe
 void ff8_upload_vram_triple_triad_1(int16_t *pos_and_size, uint8_t *texture_buffer)
 {
 	if (trace_all || trace_vram) ffnx_trace("%s %p\n", __func__, texture_buffer);
+
+	ff8_widescreen_set_card_background_source(texture_buffer);
 
 	if (texture_buffer == ff8_externals.cardgame_tim_texture_intro)
 	{

@@ -396,6 +396,26 @@ struct game_mode *getmode()
 	VOBJ(game_obj, game_object, common_externals.get_game_object());
 	uint32_t i;
 
+	// Card setup, play and teardown share the battle main loop; states 1 and 2 are still Card mode.
+	if (ff8 && *ff8_externals.is_card_game != 0
+		&& (*common_externals._mode == FF8_MODE_CARDGAME
+			|| (uint32_t)VREF(game_object, game_loop_obj).main_loop == ff8_externals.battle_main_loop))
+	{
+		for (i = 0; i < num_modes; ++i)
+		{
+			struct game_mode *m = &modes[i];
+			if (m->driver_mode != MODE_CARDGAME) continue;
+			if (last_mode != m->mode)
+			{
+				if (m->trace) ffnx_trace("%s\n", m->name);
+				last_mode = m->mode;
+			}
+			if (trace_all) ffnx_trace("getmode: active card module - state: %u - mode: %u\n",
+				*ff8_externals.is_card_game, *common_externals._mode);
+			return m;
+		}
+	}
+
 	// find exact match, mode and main loop both match
 	for(i = 0; i < num_modes; i++)
 	{
@@ -412,23 +432,6 @@ struct game_mode *getmode()
 			if (trace_all) ffnx_trace("getmode: exact match - driver_mode: %u - mode: %u - name: %s\n", m->driver_mode, m->mode, m->name);
 
 			return m;
-		}
-	}
-
-	// FF8 has BATTLE and CARDGAME baked inside the same module
-	// Only for this case use a custom match logic
-	if (ff8)
-	{
-		for(i = 0; i < num_modes; i++)
-		{
-			struct game_mode *m = &modes[i];
-
-			if (*ff8_externals.is_card_game == 1 && *common_externals._mode == m->mode)
-			{
-				if (trace_all) ffnx_trace("getmode: exact match - driver_mode: %u - mode: %u - name: %s\n", m->driver_mode, m->mode, m->name);
-
-				return m;
-			}
 		}
 	}
 
@@ -494,18 +497,19 @@ struct game_mode *getmode()
 	else return &modes[11];
 }
 
-// game mode usually doesn't change in the middle of a frame and even if it
-// does we usually don't care until the next frame so we can safely cache it to
-// avoid constant lookups
+// Card module transitions can happen within a frame while retaining the battle main loop.
 struct game_mode *getmode_cached()
 {
 	static uint32_t last_frame = -1;
+	static uint32_t last_card_state = 0;
 	static struct game_mode *last_mode;
+	const uint32_t card_state = ff8 ? *ff8_externals.is_card_game : 0;
 
-	if(frame_counter != last_frame)
+	if(frame_counter != last_frame || card_state != last_card_state)
 	{
 		last_mode = getmode();
 		last_frame = frame_counter;
+		last_card_state = card_state;
 	}
 
 	return last_mode;
