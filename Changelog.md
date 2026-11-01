@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.25.1...master
 
+## FF8
+
+- Core: Fix learned abilities past ID 127 being lost when loading a save ( https://github.com/julianxhokaxhiu/FFNx/pull/1058 )
+
 # 1.25.1
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.25.0...1.25.1
