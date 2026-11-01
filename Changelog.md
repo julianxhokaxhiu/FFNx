@@ -1,6 +1,14 @@
 # Next
 
-- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.25.0...master
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.25.1...master
+
+# 1.25.1
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.25.0...1.25.1
+
+## FF8
+
+- External textures: Fix lookup order between FF8R and FF8 Classic, see [External Textures](docs/mods/external_textures.md)
 
 # 1.25.0
 
