@@ -115,6 +115,7 @@ struct ability_layout_offsets
 	int32_t demo_restore_save;
 	uint32_t popup_name_call;
 	uint32_t popup_icon_call;
+	uint32_t load_read_size;
 	uint32_t load_save_call;
 	uint32_t new_game_call;
 	int32_t learned_operands[LEARNED_OPERAND_COUNT];
@@ -143,6 +144,7 @@ static const ability_layout_offsets ability_layouts[] = {
 		.demo_restore_save = 0x1E230,
 		.popup_name_call = 0x028,
 		.popup_icon_call = 0x197,
+		.load_read_size = 0x1D53,
 		.load_save_call = 0x1E8E,
 		.new_game_call = 0x1371,
 		.learned_operands = { -0x6122, 0x63, 0x634D, 0x27AE6, 0x2D811, 0x2D87D, 0x31222, 0x31ADD, 0x32838, 0x32F4E, 0x33558,
@@ -170,6 +172,7 @@ static const ability_layout_offsets ability_layouts[] = {
 		.demo_restore_save = 0x1E230,
 		.popup_name_call = 0x028,
 		.popup_icon_call = 0x197,
+		.load_read_size = 0x1D97,
 		.load_save_call = 0x1ED2,
 		.new_game_call = 0x1371,
 		.learned_operands = { -0x6122, 0x63, 0x634D, 0x27AE6, 0x2D811, 0x2D87D, 0x31222, 0x31ADD, 0x32838, 0x32F4E, 0x33558,
@@ -197,6 +200,7 @@ static const ability_layout_offsets ability_layouts[] = {
 		.demo_restore_save = 0x1E180,
 		.popup_name_call = 0x01B,
 		.popup_icon_call = 0x186,
+		.load_read_size = 0x1E60,
 		.load_save_call = 0x1F8C,
 		.new_game_call = 0x13E9,
 		.learned_operands = { -0x61D2, 0x63, 0x635D, 0x27966, 0x2D5B1, 0x2D61D, 0x30FC2, 0x3187D, 0x325D8, 0x32CEE, 0x332F8,
@@ -286,6 +290,7 @@ static struct
 	uint32_t popup_name_call;
 	uint32_t popup_icon_call;
 	uint32_t save_image_calls[2];
+	uint32_t load_read_size;
 	uint32_t load_save_call;
 	uint32_t new_game_call;
 } ability_ext;
@@ -340,6 +345,9 @@ static int ff8_popup_ability = 0;
 #define ABILITY_SAVE_OFFSET        0x1810
 // The loaded savemap starts after the save image header.
 #define SAVE_IMAGE_HEADER_SIZE     0x180
+// The load reads only the savemap part of the image; the block needs the rest.
+#define SAVE_LOAD_READ_SIZE        0x1400
+#define SAVE_LOAD_FULL_SIZE        (FF8_ITEM_SAVE_IMAGE_SIZE - SAVE_IMAGE_HEADER_SIZE)
 #define ABILITY_SAVE_MAGIC         0x42415846u // "FXAB"
 
 #pragma pack(push, 1)
@@ -658,6 +666,7 @@ static void ff8_kernel_ability_find_wide_externals()
 	// The same save calls AddMoreItems redirects.
 	ability_ext.save_image_calls[0] = ff8_externals.main_menu_controller + 0xB20;
 	ability_ext.save_image_calls[1] = ff8_externals.main_menu_controller + 0xB81;
+	ability_ext.load_read_size = ff8_externals.main_menu_controller + layout.load_read_size;
 	ability_ext.load_save_call = ff8_externals.main_menu_controller + layout.load_save_call;
 	ability_ext.new_game_call = ff8_externals.main_menu_controller + layout.new_game_call;
 }
@@ -898,6 +907,14 @@ static bool ff8_kernel_ability_validate_wide()
 		|| !ff8_is_call(ability_ext.load_save_call) || !ff8_is_call(ability_ext.new_game_call))
 	{
 		if (trace_all) ffnx_trace("AddMoreAbility: save, load or new game call in 0x%X is not the vanilla one.\n", ff8_externals.main_menu_controller);
+		ok = false;
+	}
+
+	// AddMoreItems widens the same read when its extension is on.
+	uint32_t read_size = *(const uint32_t *)ability_ext.load_read_size;
+	if (read_size != SAVE_LOAD_READ_SIZE && read_size != SAVE_LOAD_FULL_SIZE)
+	{
+		if (trace_all) ffnx_trace("AddMoreAbility: save load size at 0x%X is 0x%X, expected 0x%X.\n", ability_ext.load_read_size, read_size, SAVE_LOAD_READ_SIZE);
 		ok = false;
 	}
 
@@ -1390,6 +1407,7 @@ static void ff8_kernel_ability_arm_wide()
 	// Forward to whatever these calls reach now, AddMoreItems' hooks included.
 	ff8_save_image_original = get_relative_call(ability_ext.save_image_calls[0], 0);
 	for (uint32_t call : ability_ext.save_image_calls) replace_call(call, (void *)ff8_ability_save_image);
+	patch_code_dword(ability_ext.load_read_size, SAVE_LOAD_FULL_SIZE);
 	ff8_load_save_original = get_relative_call(ability_ext.load_save_call, 0);
 	replace_call(ability_ext.load_save_call, (void *)ff8_ability_load_save);
 	ff8_new_game_original = get_relative_call(ability_ext.new_game_call, 0);
