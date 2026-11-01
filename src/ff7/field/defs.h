@@ -24,6 +24,7 @@
 #pragma once
 
 #include "ff7.h"
+#include "kawai_eyetx.h"
 
 namespace ff7::field
 {
@@ -40,7 +41,5 @@ namespace ff7::field
     void field_update_scripted_bg_movement();
     bool ff7_field_do_draw_3d_model(short x, short y);
     void ff7_field_set_fade_quad_size(int x, int y, int width, int height);
-    int ff7_field_models_eye_to_model(char* model_name);
-    int ff7_field_blink_eye_sub_649B50(field_animation_data *field_anim_data, field_model_blink_data *blink_data);
     void ff7_field_handle_blink_reset();
 }

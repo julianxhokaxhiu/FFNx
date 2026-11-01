@@ -24,6 +24,7 @@
 #pragma once
 
 #include "model.h"
+#include "kawai_eyetx.h"
 #include "background.h"
 #include "../widescreen.h"
 
@@ -31,6 +32,7 @@ namespace ff7::field
 {
     inline void ff7_field_initialize_variables()
     {
+        ff7_handle_KAWAI_reset();
         ((void(*)())ff7_externals.field_initialize_variables)();
 
         field_3d_world_pos = {INVALID_VALUE, INVALID_VALUE};
@@ -46,8 +48,8 @@ namespace ff7::field
             external_data.rotationMoveFrameIndex = 0;
             external_data.prevCollisionRadius = 0;
 
-            external_data.blinkFrameIndex = BLINKING_FRAMES;
         }
+        ff7_field_reset_blink_frames();
 
         // Fix woa_* animation after battle by resetting bg position at field enter
         if (*common_externals.current_field_id == 710 || *common_externals.current_field_id == 711) {

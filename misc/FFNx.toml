@@ -761,6 +761,7 @@ save_path = "save"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This flag will enable advanced blinking for Field models.
 # NOTE: Models have to be patched to support this feature. Vanilla models work out of the box.
+# Custom expression textures and missing-file lookups are cached until the field changes.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff7_advanced_blinking = false
 

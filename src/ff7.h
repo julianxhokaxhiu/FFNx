@@ -2829,18 +2829,6 @@ struct ff7_model_eye_texture_data
 
 // --------------- end of FF7 imports ---------------
 
-struct ff7_model_custom_data
-{
-	int has_mouth;
-	int current_mouth_idx;
-	char* mouth_tex_filename;
-	p_hundred* mouth_tex;
-	char *left_eye_tex_filename;
-	char *right_eye_tex_filename;
-	p_hundred* left_eye_tex;
-	p_hundred* right_eye_tex;
-};
-
 struct ff7_channel_6_state
 {
 	float volume;

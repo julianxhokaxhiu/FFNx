@@ -32,7 +32,7 @@
 #include "field.h"
 
 #include "ff7/defs.h"
-#include "ff7/field/model.h"
+#include "ff7/field/kawai_eyetx.h"
 #include "ff7/field/kawai.h"
 #include "ff8/field_moments.h"
 
@@ -96,7 +96,7 @@ int opcode_kawai() {
 
 	if (subcode == 0) // The native EYETX handler immediately invokes advanced blinking.
 	{
-		ff7::field::ff7_model_data[model_id].current_mouth_idx = get_field_parameter<byte>(4);
+		ff7::field::ff7_field_set_mouth_index(model_id, get_field_parameter<byte>(4));
 	}
 
 	const int ret = opcode_old_kawai();
@@ -174,15 +174,7 @@ void field_init()
 		memset_code(ff7_externals.field_calc_fade_color_sub_63AE66 + 0x244 + sizeof(opcode_fade_patch), 0x90, 0xE1 - sizeof(opcode_fade_patch));
 		replace_call_function(ff7_externals.field_calc_fade_color_sub_63AE66 + 0x244 + 0xF, ff7_calc_opcode_type_2_fade_color);
 
-		// Init custom eyes and mouths structs
-		for(int i = 0; i < FF7_MAX_NUM_MODEL_ENTITIES; i++)
-		{
-			ff7::field::ff7_model_data[i].left_eye_tex_filename = (char*)external_calloc(sizeof(char), sizeof(basedir) + 1024);
-			ff7::field::ff7_model_data[i].right_eye_tex_filename = (char*)external_calloc(sizeof(char), sizeof(basedir) + 1024);
-			ff7::field::ff7_model_data[i].current_mouth_idx = 0;
-			ff7::field::ff7_model_data[i].mouth_tex_filename = (char*)external_calloc(sizeof(char), sizeof(basedir) + 1024);
-			ff7::field::ff7_model_data[i].mouth_tex = NULL;
-		}
+		ff7::field::ff7_field_initialize_eyetx();
 	}
 	else
 	{
