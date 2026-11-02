@@ -165,6 +165,7 @@ inline constexpr Mapping mappings[] = {
 	familyVariant(290, 0, "mag290"), familyVariant(290, 1, "mag290"),
 	familyVariant(1066, -1, "mag324"), familyVariant(324, -1, "mag324"),
 	familyVariant(1070, -1, "mag325"), familyVariant(186, 0, "mag325"),
+	familyVariant(1071, -1, "c0m073"), familyVariant(1072, -1, "c0m074"),
 	familyVariant(186, 1, "mag325"), familyVariant(186, 2, "mag325"), familyVariant(186, 3, "mag325"),
 	familyVariant(325, 0, "mag325"), familyVariant(325, 1, "mag325"), familyVariant(990, 2, "mag325"),
 	familyVariant(326, 0, "mag326"), familyVariant(326, 1, "mag326"),
