@@ -109,6 +109,7 @@ struct ability_layout_offsets
 	int32_t ability_entry_ptr;
 	int32_t call_shop_list;
 	int32_t draw_list_row;
+	int32_t world_draw_check;
 	uint32_t popup_chain[ABILITY_GROUP_COUNT - 1];
 	// Abilities past ID 127.
 	int32_t demo_apply_save;
@@ -139,6 +140,7 @@ static const ability_layout_offsets ability_layouts[] = {
 		.ability_entry_ptr = 0x3AAB0,
 		.call_shop_list = 0x3AC30,
 		.draw_list_row = 0x3BCF0,
+		.world_draw_check = 0x275,
 		.popup_chain = { 0x059, 0x068, 0x077, 0x086, 0x095, 0x0A6 },
 		.demo_apply_save = 0x1CE70,
 		.demo_restore_save = 0x1E230,
@@ -167,6 +169,7 @@ static const ability_layout_offsets ability_layouts[] = {
 		.ability_entry_ptr = 0x3AAF0,
 		.call_shop_list = 0x3AC70,
 		.draw_list_row = 0x3BD30,
+		.world_draw_check = 0x280,
 		.popup_chain = { 0x059, 0x068, 0x077, 0x086, 0x095, 0x0A6 },
 		.demo_apply_save = 0x1CE70,
 		.demo_restore_save = 0x1E230,
@@ -195,6 +198,7 @@ static const ability_layout_offsets ability_layouts[] = {
 		.ability_entry_ptr = 0x3A6F0,
 		.call_shop_list = 0x3A870,
 		.draw_list_row = 0x3B900,
+		.world_draw_check = 0x280,
 		.popup_chain = { 0x041, 0x04E, 0x05D, 0x06C, 0x07B, 0x08C },
 		.demo_apply_save = 0x1CDC0,
 		.demo_restore_save = 0x1E180,
@@ -269,6 +273,7 @@ static struct
 	uint32_t fn_validate_commands;  // drops equipped command abilities outside the command group
 	uint32_t fn_draw_seal_row;      // junction menu ability row, greyed out by map seals
 	uint32_t fn_draw_seal_list;     // junction window command list, greyed out by map seals
+	uint32_t world_draw_check;      // world map draw point: who has the Draw command
 
 	uint8_t *chara_ability_mask;    // learned abilities from the junction menu's selected GFs
 	uint8_t *chara_gf_masks;        // preview GF masks, one per 28-byte menu character record
@@ -485,11 +490,22 @@ static const command_role_site command_role_sites[] = {
 	{ &ability_ext.fn_draw_seal_list, 0x107, 2, "seal list not draw" },
 	{ &ability_ext.fn_draw_seal_list, 0x10C, 4, "seal list not item" },
 	{ &ability_ext.fn_draw_seal_list, 0x111, 3, "seal list not item" },
+	{ &ability_ext.world_draw_check, 0x000, 2, "world map draw point" },
 };
 
 // Optional sites whose function did not hold the expected constants.
 static bool ff8_seal_row_ok = true;
 static bool ff8_seal_list_ok = true;
+static bool ff8_world_draw_ok = true;
+
+// The flag of the function an optional site belongs to, or null for a required site.
+static bool *ff8_optional_owner_ok(const uint32_t *owner)
+{
+	if (owner == &ability_ext.fn_draw_seal_row) return &ff8_seal_row_ok;
+	if (owner == &ability_ext.fn_draw_seal_list) return &ff8_seal_list_ok;
+	if (owner == &ability_ext.world_draw_check) return &ff8_world_draw_ok;
+	return nullptr;
+}
 
 // Vanilla mask routine signature.
 #define SITE_MENU_FIRST_CMP     0x040
@@ -639,6 +655,7 @@ static void ff8_kernel_ability_find_externals()
 	}
 
 	ability_ext.fn_validate_commands = ability_ext.fn_junction_menu ? get_relative_call(ability_ext.fn_junction_menu, 0x17C) : 0;
+	ability_ext.world_draw_check = ff8_externals.sub_54E9B0 ? ff8_externals.sub_54E9B0 + layout.world_draw_check : 0;
 
 	// Deltas from the character stat computation.
 	ability_ext.fn_gf_battle_stats = ff8_externals.compute_char_stats_sub_495960 + 0x420;
@@ -725,7 +742,8 @@ static bool ff8_kernel_ability_validate()
 	for (const command_role_site &site : command_role_sites)
 	{
 		if (*site.owner && *(uint8_t *)(*site.owner + site.offset + 2) == vanilla_group_first[GROUP_COMMAND] + site.role) continue;
-		bool &owner_ok = site.owner == &ability_ext.fn_draw_seal_row ? ff8_seal_row_ok : ff8_seal_list_ok;
+		bool &owner_ok = *ff8_optional_owner_ok(site.owner);
+		if (owner_ok && trace_all) ffnx_trace("AddMoreAbility: %s at 0x%X is not %d, left as it is.\n", site.what, *site.owner + site.offset, vanilla_group_first[GROUP_COMMAND] + site.role);
 		owner_ok = false;
 	}
 
@@ -752,7 +770,7 @@ static bool ff8_kernel_ability_validate()
 
 		if (site.optional)
 		{
-			bool &owner_ok = site.owner == &ability_ext.fn_draw_seal_row ? ff8_seal_row_ok : ff8_seal_list_ok;
+			bool &owner_ok = *ff8_optional_owner_ok(site.owner);
 
 			if (owner_ok && trace_all) ffnx_trace("AddMoreAbility: %s at 0x%X is not %d - map seals may grey out the wrong command there.\n", site.what, *site.owner + site.offset, expected);
 			owner_ok = false;
@@ -1305,8 +1323,8 @@ static void ff8_patch_ability_groups()
 
 	for (const group_bound_site &site : group_bound_sites)
 	{
-		if (site.owner == &ability_ext.fn_draw_seal_row && !ff8_seal_row_ok) continue;
-		if (site.owner == &ability_ext.fn_draw_seal_list && !ff8_seal_list_ok) continue;
+		const bool *owner_ok = ff8_optional_owner_ok(site.owner);
+		if (owner_ok && !*owner_ok) continue;
 
 		patch_code_byte(*site.owner + site.offset + 2, ff8_group_first[site.group] + site.delta);
 	}
@@ -1358,8 +1376,7 @@ static void ff8_patch_command_ability_roles()
 			if (ids[role] == 0xFF && ff8_ability_table[id].command.battle_command_id == command_roles[role]) ids[role] = id;
 	for (const command_role_site &site : command_role_sites)
 	{
-		if (site.owner == &ability_ext.fn_draw_seal_row && !ff8_seal_row_ok) continue;
-		if (site.owner == &ability_ext.fn_draw_seal_list && !ff8_seal_list_ok) continue;
+		if (!*ff8_optional_owner_ok(site.owner)) continue;
 		patch_code_byte(*site.owner + site.offset + 2, ids[site.role]);
 	}
 }
