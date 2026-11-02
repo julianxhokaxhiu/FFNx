@@ -169,7 +169,7 @@ static void ff8_kernel_command_find_externals()
 	command_parse_calls[0] = ff8_externals.sub_48B7E0 + 0x94;
 	command_parse_calls[1] = ff8_externals.compute_char_stats_sub_495960 + 0x5A5;
 	command_parse_calls[2] = ff8_externals.compute_char_stats_sub_495960 + 0x18AC;
-	command_ext.parse = get_relative_call(ff8_externals.sub_48B7E0, 0x94);
+	command_ext.parse = ff8_externals.reset_parse_chara_sub_495530;
 
 	int count = 0;
 	for (const command_site &site : common_sites)
@@ -185,12 +185,12 @@ static void ff8_kernel_command_find_externals()
 static bool ff8_kernel_command_validate()
 {
 	for (uint32_t call : command_parse_calls)
-		if (get_relative_call(call, 0) != command_ext.parse) return false;
+		if (peek_relative_call(call, 0) != command_ext.parse) return false;
 
 	for (const command_site &site : command_sites)
 	{
 		if (!*site.owner) return false;
-		uint32_t value = get_absolute_value(*site.owner, site.offset);
+		uint32_t value = peek_absolute_value(*site.owner, site.offset);
 		uint32_t lo = site.data ? k_command_data : k_command;
 		uint32_t hi = site.data ? k_command_data_end : k_command_end;
 		if (value < lo || value >= hi)
@@ -222,7 +222,7 @@ static void ff8_kernel_command_arm()
 		{
 			uint32_t old_base = site.data ? k_command_data : k_command;
 			uint32_t new_base = site.data ? (uint32_t)ff8_command_data_table : (uint32_t)ff8_command_table;
-			patch_code_dword(*site.owner + site.offset, new_base + get_absolute_value(*site.owner, site.offset) - old_base);
+			patch_code_dword(*site.owner + site.offset, new_base + peek_absolute_value(*site.owner, site.offset) - old_base);
 		}
 		ff8_command_armed = true;
 	}

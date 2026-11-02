@@ -194,9 +194,9 @@ static void ff8_extend_battle_actor_sounds()
 	if (ff8_externals.battle_actor_sounds == nullptr || ff8_externals.battle_actor_sounds == extended_actor_sounds)
 		return;
 
-	if ((uint8_t)get_absolute_value(ff8_externals.battle_actor_sound, 0x13) != FF8_FIRST_NEW_COM_ID
-		|| get_absolute_value(ff8_externals.battle_actor_sound_3d, 0x9E) != (uint32_t)ff8_externals.battle_actor_sounds
-		|| get_absolute_value(ff8_externals.battle_actor_sound_3d, 0xDC) != (uint32_t)ff8_externals.battle_actor_sounds)
+	if (*(uint8_t *)(ff8_externals.battle_actor_sound + 0x13) != FF8_FIRST_NEW_COM_ID
+		|| *(uint32_t *)(ff8_externals.battle_actor_sound_3d + 0x9E) != (uint32_t)ff8_externals.battle_actor_sounds
+		|| *(uint32_t *)(ff8_externals.battle_actor_sound_3d + 0xDC) != (uint32_t)ff8_externals.battle_actor_sounds)
 	{
 		if (trace_all) ffnx_warning("Extra battle monster sounds: unsupported sound table layout.\n");
 		ff8_externals.battle_actor_sounds = nullptr;

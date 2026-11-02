@@ -160,7 +160,7 @@ bool calls_agree(const item_call *calls, size_t count, uint32_t &target)
 		const uint32_t address = call_address(calls[i]);
 		if (!address) continue;
 		const uint8_t opcode = *reinterpret_cast<const uint8_t *>(address);
-		const uint32_t called = opcode == 0xE8 ? get_relative_call(address, 0) : 0;
+		const uint32_t called = opcode == 0xE8 ? peek_relative_call(address, 0) : 0;
 		if (!called) return unsupported("call site", address, opcode, 0xE8);
 		if (target && called != target) return unsupported("call site", address, called, target);
 		target = called;
@@ -180,6 +180,18 @@ bool supported()
 			ffnx_error("AddMoreItems: native item function %d not found; items stay vanilla.\n", i);
 			return false;
 		}
+
+	// A function patched or replaced here must not start with another mod's jump:
+	// its patched code would never run, or that mod's replacement would be lost.
+	auto hooked = [](uint32_t entry) {
+		if (!entry || *reinterpret_cast<const uint8_t *>(entry) != 0xE9) return false;
+		ffnx_error("AddMoreItems: native item function 0x%X jumps to 0x%X (another mod replacing it?); items stay vanilla.\n", entry, peek_relative_call(entry, 0));
+		return true;
+	};
+	for (const auto &site : item_sites)
+		if (hooked(fn[site.fn])) return false;
+	for (item_fn replaced : { fn_item_name, fn_item_description, fn_item_menu, fn_build_battle_items, fn_update_battle_items, fn_random_battle_item, fn_reserve_battle_order })
+		if (hooked(fn[replaced])) return false;
 
 	// Native arrays: the ones FFNx knows, then the others from their first operand.
 	std::fill(std::begin(native_base), std::end(native_base), 0u);
@@ -545,11 +557,14 @@ bool ff8_kernel_item_read(const ff8_kernel_file &file, bool &changed)
 		ffnx_error("AddMoreItems: invalid item section counts; items 199-255 are ignored.\n");
 		return false;
 	}
-	if (!active && !supported())
+	// The checked code is the same at every kernel load: check it and report once.
+	static int is_supported = -1;
+	if (!active && is_supported < 0)
 	{
-		ffnx_warning("AddMoreItems: the item extension cannot start (see above); items 199-255 are ignored.\n");
-		return false;
+		is_supported = supported();
+		if (!is_supported) ffnx_warning("AddMoreItems: the item extension cannot start (see above); items 199-255 are ignored.\n");
 	}
+	if (!active && !is_supported) return false;
 	// Check text offsets against the file's real section boundaries, including
 	// terminators, before native callers can obtain a pointer to a string.
 	auto valid_text = [&](ff8_kernel_section section, uint16_t offset) {

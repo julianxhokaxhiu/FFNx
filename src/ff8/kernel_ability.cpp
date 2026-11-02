@@ -597,7 +597,7 @@ static void ff8_kernel_ability_find_externals()
 	ability_ext.fn_menu_mask = get_relative_call(uint32_t(ff8_externals.menu_use_items_sub_4F81F0), layout_of(version).menu_mask_call);
 	ability_ext.learned_menu_mask = ability_ext.fn_menu_mask ? (uint32_t *)get_absolute_value(ability_ext.fn_menu_mask, 0x00E) : nullptr;
 	ability_ext.fn_build_list = ability_ext.fn_menu_mask ? get_relative_call(ability_ext.fn_menu_mask, 0x24) : 0;
-	ability_ext.fn_reset_parse_chara = get_relative_call(ff8_externals.sub_48B7E0, 0x94);
+	ability_ext.fn_reset_parse_chara = ff8_externals.reset_parse_chara_sub_495530;
 	ability_ext.fn_stat_percent_bonus = ability_ext.fn_reset_parse_chara ? get_relative_call(ability_ext.fn_reset_parse_chara, 0x34C) : 0;
 
 	// The ability text getters sit just before the magic one, in the same
@@ -719,7 +719,7 @@ static bool ff8_kernel_ability_validate()
 
 	for (const ability_site &site : array_sites)
 	{
-		uint32_t value = get_absolute_value(*site.owner, site.offset);
+		uint32_t value = peek_absolute_value(*site.owner, site.offset);
 		if (value < lo || value >= hi)
 		{
 			if (trace_all) ffnx_trace("AddMoreAbility: %s at 0x%X does not read the ability array.\n", site.what, *site.owner + site.offset);
@@ -729,7 +729,7 @@ static bool ff8_kernel_ability_validate()
 
 	for (uint32_t offset : { (uint32_t)SITE_GF_RANGE_LOW, (uint32_t)SITE_GF_RANGE_HIGH })
 	{
-		uint32_t value = get_absolute_value(ability_ext.fn_gf_battle_stats, offset);
+		uint32_t value = peek_absolute_value(ability_ext.fn_gf_battle_stats, offset);
 		if (value < lo || value >= hi)
 		{
 			if (trace_all) ffnx_trace("AddMoreAbility: GF ability range bound at 0x%X is not an ability pointer.\n", ability_ext.fn_gf_battle_stats + offset);
@@ -737,7 +737,7 @@ static bool ff8_kernel_ability_validate()
 		}
 	}
 
-	if (*(uint8_t *)(ability_ext.fn_gf_battle_stats + 0x4C) != 0x1C || get_absolute_value(ability_ext.fn_gf_battle_stats, 0x5D) != 2)
+	if (*(uint8_t *)(ability_ext.fn_gf_battle_stats + 0x4C) != 0x1C || peek_absolute_value(ability_ext.fn_gf_battle_stats, 0x5D) != 2)
 		return false;
 	for (const command_role_site &site : command_role_sites)
 	{
@@ -795,7 +795,7 @@ static bool ff8_kernel_ability_validate()
 
 	for (const ability_site &site : menu_candidate_sites)
 	{
-		uint32_t value = get_absolute_value(*site.owner, site.offset);
+		uint32_t value = peek_absolute_value(*site.owner, site.offset);
 		if (value < ability_ext.menu_candidates || value >= ability_ext.menu_candidates + VANILLA_MENU_ABILITIES)
 		{
 			if (trace_all) ffnx_trace("AddMoreAbility: %s at 0x%X does not point into the menu ability list.\n", site.what, *site.owner + site.offset);
@@ -817,7 +817,7 @@ static bool ff8_kernel_ability_validate()
 
 	for (const ability_site &site : ap_base_sites)
 	{
-		if (get_absolute_value(*site.owner, site.offset) != ability_ext.kernel_buffer + 4)
+		if (peek_absolute_value(*site.owner, site.offset) != ability_ext.kernel_buffer + 4)
 		{
 			if (trace_all) ffnx_trace("AddMoreAbility: %s base at 0x%X is not the kernel buffer.\n", site.what, *site.owner + site.offset);
 			ok = false;
@@ -826,12 +826,12 @@ static bool ff8_kernel_ability_validate()
 
 	uint32_t builder = ability_ext.fn_chara_ability_lists;
 	if (!ability_ext.chara_ability_mask || !ability_ext.chara_gf_masks || !ability_ext.candidate_counts || !ability_ext.fn_equipped_ability_mask
-		|| get_absolute_value(builder, 0x048) != (uint32_t)ability_ext.chara_ability_mask
-		|| get_absolute_value(builder, 0x059) != (uint32_t)ability_ext.chara_ability_mask + 16
-		|| get_absolute_value(builder, 0x124) != (uint32_t)ability_ext.candidate_counts + 1
-		|| get_absolute_value(builder, 0x074) != vanilla_group_first[GROUP_COMMAND]
-		|| get_absolute_value(builder, 0x0D0) != vanilla_group_first[GROUP_STAT_PERCENT]
-		|| get_relative_call(ability_ext.fn_junction_menu, SITE_JUNCTION_LIST_REFRESH) != ability_ext.fn_equipped_ability_mask)
+		|| peek_absolute_value(builder, 0x048) != (uint32_t)ability_ext.chara_ability_mask
+		|| peek_absolute_value(builder, 0x059) != (uint32_t)ability_ext.chara_ability_mask + 16
+		|| peek_absolute_value(builder, 0x124) != (uint32_t)ability_ext.candidate_counts + 1
+		|| peek_absolute_value(builder, 0x074) != vanilla_group_first[GROUP_COMMAND]
+		|| peek_absolute_value(builder, 0x0D0) != vanilla_group_first[GROUP_STAT_PERCENT]
+		|| peek_relative_call(ability_ext.fn_junction_menu, SITE_JUNCTION_LIST_REFRESH) != ability_ext.fn_equipped_ability_mask)
 	{
 		if (trace_all) ffnx_trace("AddMoreAbility: junction ability list builder is not the vanilla layout.\n");
 		ok = false;
@@ -851,7 +851,7 @@ static bool ff8_kernel_ability_validate()
 
 		candidate_range(site.passive, &from, &to);
 
-		uint32_t value = get_absolute_value(*site.owner, site.offset);
+		uint32_t value = peek_absolute_value(*site.owner, site.offset);
 		if (value < from || value >= candidate_end(site.passive))
 		{
 			if (trace_all) ffnx_trace("AddMoreAbility: %s at 0x%X does not point into that list.\n", site.what, *site.owner + site.offset);
@@ -887,18 +887,18 @@ static bool ff8_kernel_ability_validate_wide()
 
 	for (int32_t offset : layout.learned_operands)
 	{
-		if (get_absolute_value(list, offset) == learned) continue;
+		if (peek_absolute_value(list, offset) == learned) continue;
 		if (trace_all) ffnx_trace("AddMoreAbility: learned ability operand at 0x%X is not the savemap bitfield.\n", list + offset);
 		ok = false;
 	}
 	for (int32_t offset : layout.learned_ends)
 	{
-		if (get_absolute_value(list, offset) == learned + sizeof(ff8_externals.savemap->gfs)) continue;
+		if (peek_absolute_value(list, offset) == learned + sizeof(ff8_externals.savemap->gfs)) continue;
 		if (trace_all) ffnx_trace("AddMoreAbility: learned ability loop end at 0x%X is not past the last GF.\n", list + offset);
 		ok = false;
 	}
 
-	ability_ext.fn_battle_result = ff8_is_call(ability_ext.battle_result_call) ? get_relative_call(ability_ext.battle_result_call, 0) : 0;
+	ability_ext.fn_battle_result = ff8_is_call(ability_ext.battle_result_call) ? peek_relative_call(ability_ext.battle_result_call, 0) : 0;
 	if (!ability_ext.fn_battle_result || ability_ext.fn_battle_result + 0x3CE != list + layout.learned_operands[0])
 	{
 		if (trace_all) ffnx_trace("AddMoreAbility: BattleResult_Init call at 0x%X is not the vanilla one.\n", ability_ext.battle_result_call);
@@ -906,22 +906,22 @@ static bool ff8_kernel_ability_validate_wide()
 	}
 
 	// Both demo functions copy whole GF records and end with the same call.
-	if (get_absolute_value(ability_ext.fn_demo_apply_save, 0x55) != gf_records || get_absolute_value(ability_ext.fn_demo_restore_save, 0x25) != gf_records
+	if (peek_absolute_value(ability_ext.fn_demo_apply_save, 0x55) != gf_records || peek_absolute_value(ability_ext.fn_demo_restore_save, 0x25) != gf_records
 		|| !ff8_is_call(ability_ext.demo_apply_call) || !ff8_is_call(ability_ext.demo_restore_call)
-		|| get_relative_call(ability_ext.demo_apply_call, 0) != get_relative_call(ability_ext.demo_restore_call, 0))
+		|| peek_relative_call(ability_ext.demo_apply_call, 0) != peek_relative_call(ability_ext.demo_restore_call, 0))
 	{
 		if (trace_all) ffnx_trace("AddMoreAbility: tutorial demo save functions are not the vanilla ones.\n");
 		ok = false;
 	}
 
-	if (!ff8_is_call(ability_ext.popup_name_call) || get_relative_call(ability_ext.popup_name_call, 0) != ability_ext.fn_get_name || !ff8_is_call(ability_ext.popup_icon_call))
+	if (!ff8_is_call(ability_ext.popup_name_call) || peek_relative_call(ability_ext.popup_name_call, 0) != ability_ext.fn_get_name || !ff8_is_call(ability_ext.popup_icon_call))
 	{
 		if (trace_all) ffnx_trace("AddMoreAbility: learned popup calls at 0x%X are not the vanilla ones.\n", ability_ext.fn_learned_popup);
 		ok = false;
 	}
 
 	if (!ff8_is_call(ability_ext.save_image_calls[0]) || !ff8_is_call(ability_ext.save_image_calls[1])
-		|| get_relative_call(ability_ext.save_image_calls[0], 0) != get_relative_call(ability_ext.save_image_calls[1], 0)
+		|| peek_relative_call(ability_ext.save_image_calls[0], 0) != peek_relative_call(ability_ext.save_image_calls[1], 0)
 		|| !ff8_is_call(ability_ext.load_save_call) || !ff8_is_call(ability_ext.new_game_call))
 	{
 		if (trace_all) ffnx_trace("AddMoreAbility: save, load or new game call in 0x%X is not the vanilla one.\n", ff8_externals.main_menu_controller);
@@ -1412,22 +1412,22 @@ static void ff8_kernel_ability_arm_wide()
 	replace_function(ability_ext.fn_group_from_id, (void *)ff8_ability_group_from_id);
 	replace_function(ability_ext.fn_gf_battle_stats, (void *)ff8_compute_gf_battle_stats);
 
-	ff8_popup_icon_original = get_relative_call(ability_ext.popup_icon_call, 0);
+	ff8_popup_icon_original = peek_relative_call(ability_ext.popup_icon_call, 0);
 	replace_call(ability_ext.popup_name_call, (void *)ff8_popup_ability_name);
 	replace_call(ability_ext.popup_icon_call, (void *)ff8_popup_draw_icon);
 	replace_call(ability_ext.battle_result_call, (void *)ff8_battle_result_init);
 
-	ff8_engine_restore_original = get_relative_call(ability_ext.demo_apply_call, 0);
+	ff8_engine_restore_original = peek_relative_call(ability_ext.demo_apply_call, 0);
 	replace_call(ability_ext.demo_apply_call, (void *)ff8_demo_apply_save_done);
 	replace_call(ability_ext.demo_restore_call, (void *)ff8_demo_restore_save_done);
 
 	// Forward to whatever these calls reach now, AddMoreItems' hooks included.
-	ff8_save_image_original = get_relative_call(ability_ext.save_image_calls[0], 0);
+	ff8_save_image_original = peek_relative_call(ability_ext.save_image_calls[0], 0);
 	for (uint32_t call : ability_ext.save_image_calls) replace_call(call, (void *)ff8_ability_save_image);
 	patch_code_dword(ability_ext.load_read_size, SAVE_LOAD_FULL_SIZE);
-	ff8_load_save_original = get_relative_call(ability_ext.load_save_call, 0);
+	ff8_load_save_original = peek_relative_call(ability_ext.load_save_call, 0);
 	replace_call(ability_ext.load_save_call, (void *)ff8_ability_load_save);
-	ff8_new_game_original = get_relative_call(ability_ext.new_game_call, 0);
+	ff8_new_game_original = peek_relative_call(ability_ext.new_game_call, 0);
 	replace_call(ability_ext.new_game_call, (void *)ff8_ability_new_game);
 }
 
