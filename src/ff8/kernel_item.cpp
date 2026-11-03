@@ -199,6 +199,8 @@ bool supported()
 		if (!address) continue;
 		const uint32_t expected = site.target == item_target::constant ? site.native : native_base[size_t(site.target)] + site.native;
 		const uint32_t found = read_operand(address, site.width);
+		// AddMoreAbility, armed first, already widens the save load size.
+		if (site.target == item_target::constant && found == site.value) continue;
 		if (found != expected) return unsupported("operand", address, found, expected);
 	}
 
