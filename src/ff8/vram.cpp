@@ -641,6 +641,9 @@ void set_tex_name(const TexturePacker::TiledTex &tiledTex, ff8_tex_header *tex_h
 
 	std::string filename, remasteredFilename;
 	const bool hasSingleTexture = textures.size() == 1;
+	const bool isWorldVehiclePage = ff8_remastered_edition && tiledTex.bpp() == Tim::Bpp4
+		&& tiledTex.x() == 15 * TEXTURE_WIDTH_BPP16 && tiledTex.y() == 0
+		&& tiledTex.w() == TEXTURE_WIDTH_BPP16 && tiledTex.h() == TEXTURE_HEIGHT;
 	int file_count = 0;
 	int start_vram_id = 0;
 
@@ -648,7 +651,11 @@ void set_tex_name(const TexturePacker::TiledTex &tiledTex, ff8_tex_header *tex_h
 	{
 		if (tex.isValid())
 		{
-			if (hasSingleTexture && remasteredFilename.empty() && !tex.remasteredName().empty()) {
+			// The Remastered Dollet boat atlas replaces the whole page, including other TIMs.
+			const bool hasWorldVehicleAtlas = isWorldVehiclePage
+				&& tex.name() == "world/dat/wmset/section42/texture14"
+				&& tex.remasteredName() == "field.fs\\field_hd_new\\wmset_014";
+			if ((hasSingleTexture || hasWorldVehicleAtlas) && remasteredFilename.empty() && !tex.remasteredName().empty()) {
 				remasteredFilename.append(tex.remasteredName());
 			}
 			if (file_count == 0)
@@ -717,7 +724,7 @@ void set_tex_name(const TexturePacker::TiledTex &tiledTex, ff8_tex_header *tex_h
 		{
 			strncpy(tex_header->file.pc_name, filename.c_str(), 511);
 
-			if (hasSingleTexture && !remasteredFilename.empty()) {
+			if (!remasteredFilename.empty()) {
 				full_filename = remasteredFilename;
 				remasteredFilename.append("_");
 				remasteredFilename.append(std::to_string(vramId));

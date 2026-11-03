@@ -176,7 +176,7 @@ Some mobile models.
 | texture11_00 | Galbadia military car   |
 | texture12_00 | Unknown                 |
 | texture13_00 | Unknown                 |
-| texture14_00 | Unknown                 |
+| texture14_00 | Dollet assault boat     |
 | texture15_00 | Unknown                 |
 | texture16_00 | Unknown                 |
 | texture17_00 | Green car               |
@@ -195,6 +195,10 @@ Some mobile models.
 | texture30_00 | Jumbo Cactuar           |
 | texture31_00 | Rocks                   |
 | texture32_00 | City barrier disk 4     |
+
+In Remastered, the Dollet assault boat uses `textures\field.fs\field_hd_new\wmset_014_0.png`
+as a replacement for the entire 256x256 VRAM page 15, not just the original `texture14`
+TIM rectangle. Its updated model uses UV coordinates outside that original rectangle.
 
 ### texl.obj
 
