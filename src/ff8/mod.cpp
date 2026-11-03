@@ -32,14 +32,14 @@
 
 #include <array>
 #include <list>
-#include <sys/stat.h>
+#include <string_view>
 #include <tuple>
 
 bx::DefaultAllocator TextureImage::defaultAllocator;
 
 namespace {
 constexpr size_t DECODED_IMAGE_CACHE_LIMIT = 128 * 1024 * 1024;
-using DecodedImageCacheKey = std::tuple<std::string, int, int, int, int, bool, std::array<int8_t, 4>, int64_t, int64_t, int64_t>;
+using DecodedImageCacheKey = std::tuple<std::string, int, int, int, int, bool, std::array<int8_t, 4>>;
 
 struct DecodedImageCacheEntry {
 	TextureImage image;
@@ -50,6 +50,19 @@ struct DecodedImageCacheEntry {
 std::map<DecodedImageCacheKey, DecodedImageCacheEntry> decodedImageCache;
 std::list<DecodedImageCacheKey> decodedImageCacheRecent;
 size_t decodedImageCacheSize = 0;
+constexpr size_t TEXTURE_FILE_CACHE_LIMIT = 4096;
+std::unordered_map<std::string, bool> textureFileCache;
+
+bool battleTextureFileExists(const char *filename)
+{
+	const auto it = textureFileCache.find(filename);
+	if (it != textureFileCache.end()) return it->second;
+
+	const bool exists = fileExists(filename);
+	if (textureFileCache.size() >= TEXTURE_FILE_CACHE_LIMIT) textureFileCache.clear();
+	textureFileCache.emplace(filename, exists);
+	return exists;
+}
 
 void trimDecodedImageCache(size_t incomingSize)
 {
@@ -73,30 +86,22 @@ bool TextureImage::createImage(const char *filename, int originalTexturePixelWid
 	destroyImage();
 
 	DecodedImageCacheKey cacheKey;
-	// Archive images have no filesystem timestamp; keep their existing loading path.
+	// Remastered archive images retain their existing loading path.
 	useCache = useCache && strncmp(filename, "zzz://", 6) != 0;
 	if (useCache)
 	{
-		struct stat fileInfo;
-		if (stat(filename, &fileInfo) == 0)
+		// stat can extract virtual archive entries; cache identity must not probe the filesystem.
+		std::array<int8_t, 4> modifier{};
+		if (rgbaModifier != nullptr) std::copy_n(rgbaModifier, modifier.size(), modifier.begin());
+		cacheKey = {filename, originalTexturePixelWidth, originalTextureHeight, internalLodScale, computeMaxScale(),
+			ff8_remastered_edition, modifier};
+		auto it = decodedImageCache.find(cacheKey);
+		if (it != decodedImageCache.end())
 		{
-			std::array<int8_t, 4> modifier{};
-			if (rgbaModifier != nullptr) std::copy_n(rgbaModifier, modifier.size(), modifier.begin());
-			cacheKey = {filename, originalTexturePixelWidth, originalTextureHeight, internalLodScale, computeMaxScale(),
-				ff8_remastered_edition, modifier, fileInfo.st_size, fileInfo.st_mtime, fileInfo.st_ctime};
-			auto it = decodedImageCache.find(cacheKey);
-			if (it != decodedImageCache.end())
-			{
-				*this = it->second.image;
-				decodedImageCacheRecent.splice(decodedImageCacheRecent.begin(), decodedImageCacheRecent, it->second.recent);
-				if (trace_all || trace_loaders) ffnx_trace("TextureImage::%s: decoded cache hit %s\n", __func__, filename);
-				return true;
-			}
-		}
-		else
-		{
-			ffnx_warning("TextureImage::%s: cannot stat %s for decoded cache\n", __func__, filename);
-			useCache = false;
+			*this = it->second.image;
+			decodedImageCacheRecent.splice(decodedImageCacheRecent.begin(), decodedImageCacheRecent, it->second.recent);
+			if (trace_all || trace_loaders) ffnx_trace("TextureImage::%s: decoded cache hit %s\n", __func__, filename);
+			return true;
 		}
 	}
 
@@ -203,6 +208,7 @@ void TextureImage::clearCache()
 	decodedImageCache.clear();
 	decodedImageCacheRecent.clear();
 	decodedImageCacheSize = 0;
+	textureFileCache.clear();
 }
 
 uint32_t *TextureImage::writableData()
@@ -502,6 +508,8 @@ bool ModdedTexture::findExternalTextureRemastered(const char *name, char *filena
 bool ModdedTexture::findExternalTexture(const char *name, char *filename, uint8_t palette_index, bool hasPal, const char *extension, char *found_extension)
 {
 	char langPath[16] = "/";
+	const std::string_view textureName(name);
+	const bool cacheLookup = textureName.starts_with("battle/") || textureName.starts_with("magic/");
 
 	if(trace_all || trace_loaders) ffnx_trace("Texture file name (VRAM): %s palette_index=%d hasPal=%d\n", name, palette_index, hasPal);
 
@@ -528,7 +536,7 @@ bool ModdedTexture::findExternalTexture(const char *name, char *filename, uint8_
 				_snprintf(filename, MAX_PATH, "%s/%s%s/%s.%s", basedir, mod_path.c_str(), langPath, name, mod_ext[idx].c_str());
 			}
 
-			if (fileExists(filename))
+			if (cacheLookup ? battleTextureFileExists(filename) : fileExists(filename))
 			{
 				if (trace_all || trace_loaders) ffnx_trace("Using texture: %s\n", filename);
 
@@ -733,6 +741,7 @@ bool TextureModStandard::createImages(int paletteCount, int internalLodScale, in
 		layout = nullptr;
 	}
 	_layout = layout;
+	const bool lazyPalettes = useCache && !_usesRemasteredImages;
 
 	if (trace_all || trace_vram) ffnx_trace("TextureModStandard::%s: %s uses %s textures\n", __func__, name.c_str(), _usesRemasteredImages ? "remastered" : "classic");
 
@@ -758,6 +767,12 @@ bool TextureModStandard::createImages(int paletteCount, int internalLodScale, in
 	}
 
 	for (int paletteId = 0; paletteId < modCount && (layout == nullptr || layout->paletteLayers.empty()); ++paletteId) {
+		if (lazyPalettes && !_textures.empty())
+		{
+			_pendingPalettes.insert(uint8_t(paletteId));
+			continue;
+		}
+
 		bool foundTexture = false;
 		if (layout != nullptr && layout->palettePageImages)
 		{
@@ -792,6 +807,14 @@ bool TextureModStandard::createImages(int paletteCount, int internalLodScale, in
 		}
 
 		_textures[paletteId] = externalTexture;
+		if (lazyPalettes)
+		{
+			_imageSource.pixelWidth = sourcePixelWidth;
+			_imageSource.height = sourceHeight;
+			_imageSource.internalLodScale = internalLodScale;
+			_imageSource.extension = found_extension;
+			if (rgbaModifier != nullptr) std::copy_n(rgbaModifier, _imageSource.rgbaModifier.size(), _imageSource.rgbaModifier.begin());
+		}
 	}
 
 	if (layout != nullptr && layout->companionPosition != remastered_battle_texture::CompanionPosition::None)
@@ -814,6 +837,33 @@ bool TextureModStandard::createImages(int paletteCount, int internalLodScale, in
 	}
 
 	return !_textures.empty();
+}
+
+void TextureModStandard::loadImage(uint8_t paletteId) const
+{
+	if (_pendingPalettes.erase(paletteId) == 0) return;
+
+	char filename[MAX_PATH] = {};
+	if (!findExternalTexture(originalTexture().name().c_str(), filename, paletteId, true, _imageSource.extension.c_str()))
+	{
+		return;
+	}
+
+	TextureImage image;
+	auto modifier = _imageSource.rgbaModifier;
+	if (image.createImage(filename, _imageSource.pixelWidth, _imageSource.height, _imageSource.internalLodScale, modifier.data(), true))
+	{
+		_textures.emplace(paletteId, image);
+	}
+	else
+	{
+		ffnx_warning("TextureModStandard::%s: cannot load palette %d from %s; using the first image\n", __func__, paletteId, filename);
+	}
+}
+
+void TextureModStandard::loadAllImages() const
+{
+	while (!_pendingPalettes.empty()) loadImage(*_pendingPalettes.begin());
 }
 
 uint8_t TextureModStandard::computePaletteId(int vramPalXBpp2, int vramPalY) const
@@ -860,6 +910,7 @@ const TextureImage &TextureModStandard::textureImage(uint8_t paletteId) const
 {
 	if (trace_all || trace_vram) ffnx_trace("TextureModStandard::%s paletteId=%d\n", __func__, paletteId);
 
+	loadImage(paletteId);
 	auto it = _textures.find(paletteId);
 
 	if (it == _textures.end())
@@ -1071,6 +1122,7 @@ void TextureModStandard::copyRect(int sourceXBpp2, int sourceY, int sourceWBpp2,
 {
 	const TexturePacker::TextureInfos &texture = originalTexture().texture();
 
+	loadAllImages();
 	for (auto &image: _textures)
 	{
 		if (image.second.writableData() == nullptr) return;
@@ -1099,6 +1151,8 @@ void TextureModStandard::copyRect(
 		return;
 	}
 
+	loadAllImages();
+	targetTexture.loadAllImages();
 	std::array<const TextureImage *, MAX_SCALE + 1> lastSource{};
 	for (const auto &image: _textures)
 	{
@@ -1142,6 +1196,13 @@ void TextureModStandard::copyRect(
 
 void TextureModStandard::forceCurrentPalette(int8_t currentPalette)
 {
+	if (currentPalette < 0)
+	{
+		_currentPalette = -1;
+		return;
+	}
+
+	loadImage(uint8_t(currentPalette));
 	if (_textures.contains(currentPalette)) {
 		_currentPalette = currentPalette;
 	}

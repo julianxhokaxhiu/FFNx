@@ -86,12 +86,21 @@ Path: `{mod_path}\battle\{filename with extension in FS archive}-0_00`
 
 Example: `.\mods\Textures\battle\A0STG101.X-0_00.dds`
 
-Decoded filesystem images used by battle and magic texture replacements are
-cached with a 128 MiB least-recently-used limit. Cache eviction does not unload
-active textures, and VRAM animation copies do not modify cached originals.
-The cache distinguishes source dimensions, resolution/LOD settings, color
-modifiers, and file size/timestamps. Remastered archive images retain their
-existing loading path.
+Battle and magic texture replacements using the classic palette layout load
+the first usable palette as a fallback, then resolve and decode other palettes
+only when used. VRAM animation copies still load all palettes they modify.
+Remastered atlas images retain their existing loading path.
+
+Decoded filesystem images are cached with a 128 MiB least-recently-used limit.
+Cache eviction does not unload active textures, and VRAM animation copies do not
+modify cached originals. The cache distinguishes paths, source dimensions,
+resolution/LOD settings, edition, and color modifiers.
+
+Battle and magic file lookup results are also cached, with a 4096-path limit.
+Cache hits do not check file timestamps: metadata probes can extract entire
+files through virtual mod archives. Restart the game after adding, removing,
+or replacing mod textures. A first use or an evicted image can still require
+synchronous decoding; this does not preload every spell.
 
 ## Worldmap
 

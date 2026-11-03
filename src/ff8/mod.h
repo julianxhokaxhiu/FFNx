@@ -22,8 +22,10 @@
 
 #pragma once
 
+#include <array>
 #include <map>
 #include <memory>
+#include <set>
 #include <vector>
 #include <unordered_map>
 #include <windows.h>
@@ -148,9 +150,18 @@ public:
 	void setCurrentAnimationFrame(int frameId);
 private:
 	bool createImage(const char *name, int paletteId = -1, const char *extension = nullptr, char *foundExtension = nullptr);
+	void loadImage(uint8_t paletteId) const;
+	void loadAllImages() const;
 	uint8_t computePaletteId(int vramPalXBpp2, int vramPalY) const;
 	const TextureImage &textureImage(uint8_t paletteId) const;
-	std::map<uint8_t, TextureImage> _textures; // Index: paletteId or current texture
+	struct ImageSource {
+		int pixelWidth = 0, height = 0, internalLodScale = 1;
+		std::array<int8_t, 4> rgbaModifier{};
+		std::string extension;
+	};
+	ImageSource _imageSource;
+	mutable std::set<uint8_t> _pendingPalettes;
+	mutable std::map<uint8_t, TextureImage> _textures; // Index: paletteId or current texture
 	TextureImage _remasteredUpperImage;
 	TextureImage _remasteredLowerImage;
 	const remastered_battle_texture::ImageLayout *_layout;

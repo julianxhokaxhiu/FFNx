@@ -220,21 +220,6 @@ To build from the terminal (example with *RelWithDebInfo*):
 **NOTE**: Make sure to use the `cmake` executable that comes from Visual Studio
 (e.g. `C:\Program Files\Microsoft Visual Studio\2026\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe`)
 
-### FF8 texture regression tests
-
-After building FFNx, run the focused texture tests using its existing dependencies:
-
-```powershell
-cmake -S tests\ff8-textures -B .build\ff8-texture-tests -G "Visual Studio 18 2026" -A Win32
-cmake --build .build\ff8-texture-tests --config Release
-ctest --test-dir .build\ff8-texture-tests -C Release --output-on-failure
-```
-
-The tests cover decoded-image caching and eviction, copy-on-write animation,
-pixel/alpha equivalence, mixed-palette VRAM copies, composition coverage, and
-palette invalidation. The test executable also accepts a HIT-J mod directory
-to check its 512 and 1024 DDS variants against uncached decoding.
-
 ## Auto-Formatting
 
 ### CMake Files
