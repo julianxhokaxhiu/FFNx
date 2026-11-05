@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.25.1...master
 
+## FF7
+
+- Core: Fix FMV model culling with `enable_uncrop` disabled in 4:3 mode ( https://github.com/julianxhokaxhiu/FFNx/issues/830 )
+
 ## FF8
 
 - External textures: Reduce battle and magic loading hitches by loading classic palettes on demand and avoiding repeated virtual archive metadata checks ( https://github.com/julianxhokaxhiu/FFNx/issues/778 )

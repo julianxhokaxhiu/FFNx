@@ -270,6 +270,7 @@ namespace ff7::field
         replace_call_function(ff7_externals.field_draw_everything + 0x348, field_draw_effect_pages);
 
         // Fix camera model clipping in various fields
+        replace_function(ff7_externals.field_culling_model_639252, ff7_field_do_draw_3d_model);
         replace_call_function(ff7_externals.open_field_file + 0x9E, field_load_tut_file);
         replace_call_function(ff7_externals.enter_field + 0xB5, field_load_tut_file);
         replace_call_function(ff7_externals.enter_field + 0x2CA, field_load_tut_file);
