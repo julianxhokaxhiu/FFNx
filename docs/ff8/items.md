@@ -4,10 +4,6 @@ A `kernel.bin` that appends rows to the item sections adds item IDs **199-255** 
 inventory to **255 slots on 24 pages**, instead of 198 slots on 18 pages. With a vanilla kernel,
 nothing changes.
 
-It works on the 2013 releases (English, French, German, Spanish, Italian, Japanese) and the 1.2
-releases. It starts whenever `kernel.bin` has more items than vanilla. FFNx does not check the
-game code it patches, so a mod that changes the same code has to handle the extra items itself.
-
 ## Adding items
 
 Section numbers are the one-based ones from [Kernel mapping](kernel.md).

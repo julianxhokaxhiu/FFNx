@@ -7,9 +7,7 @@
 - External textures: Reduce battle and magic loading hitches by loading classic palettes on demand and avoiding repeated virtual archive metadata checks ( https://github.com/julianxhokaxhiu/FFNx/issues/778 )
 - Core: Fix learned abilities past ID 127 being lost when loading a save ( https://github.com/julianxhokaxhiu/FFNx/pull/1058 )
 - Core: Fix world map draw points saying no one can draw when kernel.bin moves the Draw command ability ( https://github.com/julianxhokaxhiu/FFNx/pull/1058 )
-- Core: Fix AddMoreItems never starting since BattleAnimSetFiles. Extra items, abilities and battle commands now start whenever kernel.bin adds them, without checking the game code ( https://github.com/julianxhokaxhiu/FFNx/pull/1064 )
-- Core: Extra magic and extra battle monsters (sounds and Scan) no longer check the game code before starting ( https://github.com/julianxhokaxhiu/FFNx/pull/1064 )
-- Core: Reuse already resolved game addresses instead of resolving them twice ( https://github.com/julianxhokaxhiu/FFNx/pull/1064 )
+- Core: Fix AddMoreItems never starting since BattleAnimSetFiles, kernel.bin extensions now start without checking the game code ( https://github.com/julianxhokaxhiu/FFNx/pull/1064 )
 
 # 1.25.1
 
