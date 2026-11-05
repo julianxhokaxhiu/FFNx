@@ -193,18 +193,6 @@ uint32_t get_absolute_value(uint32_t base, uint32_t offset)
 	return *((uint32_t *)(base + offset));
 }
 
-uint32_t peek_relative_call(uint32_t base, uint32_t offset)
-{
-	uint8_t size = check_is_call(__func__, base, offset, *((uint16_t *)(base + offset)));
-
-	return base + *((uint32_t *)(base + offset + size)) + offset + 4 + size;
-}
-
-uint32_t peek_absolute_value(uint32_t base, uint32_t offset)
-{
-	return *((uint32_t *)(base + offset));
-}
-
 void patch_code_byte(uint32_t offset, unsigned char r)
 {
 	DWORD dummy;

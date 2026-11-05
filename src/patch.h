@@ -36,9 +36,6 @@ uint32_t replace_call_function(uint32_t offset, void* func);
 
 uint32_t get_relative_call(uint32_t base, uint32_t offset);
 uint32_t get_absolute_value(uint32_t base, uint32_t offset);
-// Same reads, for checking what a code site holds now: not counted as resolved addresses
-uint32_t peek_relative_call(uint32_t base, uint32_t offset);
-uint32_t peek_absolute_value(uint32_t base, uint32_t offset);
 void patch_code_char(uint32_t offset, char r);
 void patch_code_byte(uint32_t offset, unsigned char r);
 void patch_code_word(uint32_t offset, WORD r);

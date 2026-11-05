@@ -2094,7 +2094,7 @@ struct ff8_externals
 	void **dword_1D2A284;
 	uint32_t *dword_1D2A288;
 	uint32_t engine_draw_2D_texture_sub_4980C0;
-	uint32_t graphics_setrendererstate_draw_sub_4178D7;
+	void (*graphics_setrendererstate_draw_sub_4178D7)(ff8_graphics_object *, ff8_game_obj *);
 	uint32_t sub_4B3690;
 	uint32_t sub_4B3710;
 	uint32_t sub_49C910;

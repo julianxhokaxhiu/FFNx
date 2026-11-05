@@ -5,8 +5,8 @@ inventory to **255 slots on 24 pages**, instead of 198 slots on 18 pages. With a
 nothing changes.
 
 It works on the 2013 releases (English, French, German, Spanish, Italian, Japanese) and the 1.2
-releases. If the game code FFNx needs to change has already been patched by another mod, the log
-says so and items 199-255 are ignored. Items 1-198 keep working as usual.
+releases. It starts whenever `kernel.bin` has more items than vanilla. FFNx does not check the
+game code it patches, so a mod that changes the same code has to handle the extra items itself.
 
 ## Adding items
 

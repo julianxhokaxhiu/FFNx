@@ -136,7 +136,7 @@ template<size_t N>
 uint32_t called_by(const item_call (&calls)[N])
 {
 	for (const auto &call : calls)
-		if (uint32_t address = call_address(call)) return peek_relative_call(address, 0);
+		if (uint32_t address = call_address(call)) return get_relative_call(address, 0);
 	return 0;
 }
 

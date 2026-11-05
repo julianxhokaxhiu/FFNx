@@ -963,23 +963,6 @@ void ff8_kernel_magic_init()
 		return;
 	}
 
-	// Sanity: the call we replace must be the kernel.bin read through sm_pc_read.
-	// The rel32 is read here rather than with get_relative_call, which would count
-	// sm_pc_read as resolved a second time - ff8_data.cpp already has it.
-	uint32_t call_target = magic_ext.kernel_read_call + 5 + *(int32_t *)(magic_ext.kernel_read_call + 1);
-	if (call_target != uint32_t(ff8_externals.sm_pc_read))
-	{
-		ffnx_warning("AddMoreMagic: kernel load call site mismatch (0x%X), extension disabled.\n", call_target);
-		return;
-	}
-
-	uint32_t command_target = magic_ext.command_action_call + 5 + *(int32_t *)(magic_ext.command_action_call + 1);
-	if (*(uint8_t *)magic_ext.command_action_call != 0xE8 || command_target != ff8_externals.battle_sub_48D200)
-	{
-		if (trace_all) ffnx_trace("AddMoreMagic: battle dispatcher call site mismatch (0x%X), extension disabled.\n", command_target);
-		return;
-	}
-
 	// Shared by magic and command extensions; inactive features pass through.
 	replace_call(magic_ext.command_action_call, (void *)ff8_compute_command_action);
 	replace_call(magic_ext.kernel_read_call, (void *)ff8_kernel_load_hook);

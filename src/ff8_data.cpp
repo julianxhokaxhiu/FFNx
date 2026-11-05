@@ -322,7 +322,7 @@ void ff8_find_externals()
 	ff8_externals.dword_1D2A284 = (void **)get_absolute_value(ff8_externals.sub_497F20, 0x48);
 	ff8_externals.dword_1D2A288 = (uint32_t *)get_absolute_value(ff8_externals.sub_497F20, 0x5B);
 	ff8_externals.engine_draw_2D_texture_sub_4980C0 = get_relative_call(ff8_externals.cdcheck_main_loop, 0xE6);
-	ff8_externals.graphics_setrendererstate_draw_sub_4178D7 = get_relative_call(ff8_externals.engine_draw_2D_texture_sub_4980C0, 0x19);
+	ff8_externals.graphics_setrendererstate_draw_sub_4178D7 = (void (*)(ff8_graphics_object *, ff8_game_obj *))get_relative_call(ff8_externals.engine_draw_2D_texture_sub_4980C0, 0x19);
 	ff8_externals.sub_4B3690 = get_relative_call(ff8_externals.engine_draw_2D_texture_sub_4980C0, JP_VERSION ? 0x230 : 0xCD);
 	ff8_externals.sub_4B3710 = get_relative_call(ff8_externals.engine_draw_2D_texture_sub_4980C0 + (JP_VERSION ? 0x250 : 0xF0), 0x7);
 
