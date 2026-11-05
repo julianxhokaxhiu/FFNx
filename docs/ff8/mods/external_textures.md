@@ -228,6 +228,12 @@ Path: `{mod_path}\data\{lang}\menu`
 
 **Note:** this can change in the future for more consistency with other modules.
 
+With `ff8_use_gamepad_icons = true`, high-resolution controller replacements use
+`hires\iconfl01_04.dds` and `hires\iconfl03_04.dds` under this path.
+All four original high-resolution icon pages must load successfully; otherwise
+FFNx logs a warning and falls back to low-resolution icons, which do not use
+these replacements.
+
 ## Field
 
 Path: `{mod_path}\field`

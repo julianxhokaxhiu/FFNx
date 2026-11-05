@@ -1846,10 +1846,14 @@ ff8_graphics_object *ff8_load_icons_fallback_to_low_res(int a1, int a2, ff8_crea
     ff8_graphics_object *ret = ((ff8_graphics_object*(*)(int,int,ff8_create_graphic_object*,char*,void*))(ff8_externals._load_texture))(a1, a2, a3, a4, a5);
     ff8_font *icons = *ff8_externals.icons;
 
+    // The hooked call returns iconfl03 before the native caller stores it.
+    icons->graphics_object54 = ret;
+
     // Error on loading highres/iconfl00.tex
     if (icons->graphics_object48 == nullptr || icons->graphics_object4C == nullptr || icons->graphics_object50 == nullptr || icons->graphics_object54 == nullptr) {
         // Disable highres icons
         fallback_to_low_res = true;
+        ffnx_warning("High-resolution menu icons are incomplete; falling back to low-resolution icons\n");
 
         free_font_graphics_object(icons);
         // Retry with icon.tex and sysfnt.tex
@@ -1864,7 +1868,7 @@ ff8_graphics_object *ff8_load_icons_fallback_to_low_res(int a1, int a2, ff8_crea
         fallback_to_low_res = false;
     }
 
-    return ret;
+    return icons->graphics_object54;
 }
 
 void ff8_load_icons_low_res_if_fallback()
