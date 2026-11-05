@@ -59,6 +59,10 @@ static void autosize_text_box_window(short WINDOW_ID, byte* buffer_text,
 	std::unordered_map<short, autosize_window_state>& autosize_state)
 {
 	auto& window = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID];
+	// WSPCL timer and numeric displays use fixed-size sprites, not dialog glyphs.
+	if (window.do_draw_menu_win_b_blend_4)
+		return;
+
 	const bool firstOpeningFrame =
 		window.current_window_width == std::max<int16_t>(window.window_width / 4, 8)
 		&& window.current_window_height == std::max<int16_t>(window.window_height / 4, 8);

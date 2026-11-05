@@ -4,6 +4,7 @@
 
 ## FF7
 
+- Core: Preserve timer and numeric-display window geometry when `ff7_field_autosize_text_box` is enabled
 - Core: Fix FMV model culling with `enable_uncrop` disabled in 4:3 mode ( https://github.com/julianxhokaxhiu/FFNx/issues/830 )
 
 ## FF8
