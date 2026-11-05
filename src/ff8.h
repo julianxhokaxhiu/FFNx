@@ -1470,7 +1470,6 @@ struct ff8_externals
 	uint32_t main_menu_enter;
 	uint32_t main_menu_main_loop;
 	uint32_t menu_enter;
-	uint32_t menu_enter2;
 	DWORD* credits_loop_state;
 	DWORD* credits_counter;
 	DWORD* credits_current_image_global_counter_start;
@@ -1487,7 +1486,6 @@ struct ff8_externals
 	uint32_t swirl_wipe_init;
 	uint32_t swirl_wipe_draw;
 	uint32_t swirl_allocate_quads;
-	void (*swirl_submit_graphics_object)(ff8_graphics_object *, ff8_game_obj *);
 	uint32_t swirl_sub_56D1D0;
 	uint32_t load_credits_image;
 	void (*input_fill_keystate)();
@@ -1541,7 +1539,6 @@ struct ff8_externals
 	uint32_t get_text_data;
 	uint32_t sub_4BE4D0;
 	uint32_t sub_4BECC0;
-	uint32_t menu_draw_text;
 	uint32_t (*get_character_width)(uint32_t);
 	struct ff8_graphics_object **swirl_texture1;
 	uint32_t sub_48D0A0;
@@ -1930,6 +1927,7 @@ struct ff8_externals
 	uint32_t battle_upload_texture_to_vram;
 	uint32_t sub_485460;
 	uint32_t sub_485610;
+	uint32_t battle_pick_random_action_sub_483940;
 	uint32_t sub_48D1A0;
 	uint32_t sub_4AD7D0;
 	uint32_t sub_4AD8D0;
@@ -1946,6 +1944,7 @@ struct ff8_externals
 	int (*battle_get_draw_magic_amount_48FD20)(int, int, int);
 	void(*update_tutorial_info_4AD170)(int);
 	uint32_t sub_48B7E0;
+	uint32_t reset_parse_chara_sub_495530;
 	void(*sub_4954B0)(int);
 	uint32_t compute_char_stats_sub_495960;
 	int(*compute_char_max_hp_496310)(int, int);
@@ -2095,7 +2094,7 @@ struct ff8_externals
 	void **dword_1D2A284;
 	uint32_t *dword_1D2A288;
 	uint32_t engine_draw_2D_texture_sub_4980C0;
-	uint32_t graphics_setrendererstate_draw_sub_4178D7;
+	void (*graphics_setrendererstate_draw_sub_4178D7)(ff8_graphics_object *, ff8_game_obj *);
 	uint32_t sub_4B3690;
 	uint32_t sub_4B3710;
 	uint32_t sub_49C910;
@@ -2120,7 +2119,6 @@ struct ff8_externals
 	uint32_t load_file_in_memory_sub_4B96C0;
 	int(*open_file_menu_sub_4B9530)(void*,char*);
 	size_t(*write_tdw_tmp_sub_4B9640)(void*,LPCSTR,size_t);
-	uint32_t sub_4A1020;
 	uint32_t sub_4A0EC0;
 	uint32_t font_text_size_calculation_sub_4A0D10;
 	uint16_t *word_B86D84;
@@ -2151,7 +2149,6 @@ struct ff8_externals
 	uint32_t render_save_entry_sub_4E6020;
 	uint32_t draw_icons_sub_49F850;
 	uint32_t sub_4BE100;
-	uint32_t play_sfx_menu_sub_4B92A0;
 	uint32_t menu_draw_text_sub_4BDE30;
 	uint32_t word_1D77148;
 	uint32_t word_1D76AC6;
@@ -2173,7 +2170,6 @@ struct ff8_externals
 	uint32_t dword_209D058;
 	uint32_t byte_209CFD8;
 	uint32_t sub_534950;
-	uint32_t sub_5348E0;
 	uint32_t sub_417E52;
 	uint32_t sub_499C20;
 	uint32_t sub_49AB80;

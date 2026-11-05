@@ -84,7 +84,6 @@ int battle_record_count = vanilla_battle_count;
 
 uint32_t fn[fn_count];
 item_layout layout = layout_en;
-uint32_t native_base[size_t(item_target::count)];
 uint32_t menu_hook;
 uint8_t *current_menu = nullptr;
 
@@ -102,16 +101,6 @@ uint32_t call_address(const item_call &call)
 {
 	const uint16_t offset = call.offset.at[layout];
 	return offset && fn[call.fn] ? fn[call.fn] + offset : 0;
-}
-
-uint32_t read_operand(uint32_t address, uint8_t width)
-{
-	switch (width)
-	{
-	case 1: return *reinterpret_cast<const uint8_t *>(address);
-	case 2: return *reinterpret_cast<const uint16_t *>(address);
-	default: return *reinterpret_cast<const uint32_t *>(address);
-	}
 }
 
 uint32_t expanded_base(item_target target)
@@ -142,73 +131,13 @@ void find_item_functions()
 	}
 }
 
-// Every check names what it found: another mod (a hext, a DLL) patching the same code is the
-// usual reason, and the log has to say where to look.
-bool unsupported(const char *what, uint32_t address, uint32_t found, uint32_t expected)
-{
-	ffnx_error("AddMoreItems: %s at 0x%X is 0x%X, expected 0x%X (another mod patching this code?); items stay vanilla.\n", what, address, found, expected);
-	return false;
-}
-
-// All calls of a group must still call one same function: that function is what the
-// redirection forwards to.
-bool calls_agree(const item_call *calls, size_t count, uint32_t &target)
-{
-	target = 0;
-	for (size_t i = 0; i < count; ++i)
-	{
-		const uint32_t address = call_address(calls[i]);
-		if (!address) continue;
-		const uint8_t opcode = *reinterpret_cast<const uint8_t *>(address);
-		const uint32_t called = opcode == 0xE8 ? get_relative_call(address, 0) : 0;
-		if (!called) return unsupported("call site", address, opcode, 0xE8);
-		if (target && called != target) return unsupported("call site", address, called, target);
-		target = called;
-	}
-	return target != 0;
-}
-
+// What a redirected call group forwards to: the function its first call calls.
 template<size_t N>
-bool calls_agree(const item_call (&calls)[N], uint32_t &target) { return calls_agree(calls, N, target); }
-
-bool supported()
+uint32_t called_by(const item_call (&calls)[N])
 {
-	find_item_functions();
-	for (int i = 0; i < fn_count; ++i)
-		if (!fn[i] && (i != fn_jp_shop_row_item || layout == layout_jp))
-		{
-			ffnx_error("AddMoreItems: native item function %d not found; items stay vanilla.\n", i);
-			return false;
-		}
-
-	// Native arrays: the ones FFNx knows, then the others from their first operand.
-	std::fill(std::begin(native_base), std::end(native_base), 0u);
-	native_base[size_t(item_target::inventory)] = reinterpret_cast<uint32_t>(ff8_externals.savemap->items.items);
-	native_base[size_t(item_target::battle_items)] = reinterpret_cast<uint32_t>(ff8_externals.kernel->battle_items);
-	native_base[size_t(item_target::shop_quantities)] = reinterpret_cast<uint32_t>(ff8_externals.menu_shop_staged_items_1D8D058.data());
-	for (const auto &site : item_sites)
-	{
-		const uint32_t address = site_address(site);
-		if (!address || site.target == item_target::constant) continue;
-		uint32_t &base = native_base[size_t(site.target)];
-		if (!base) base = read_operand(address, site.width) - site.native;
-	}
-	for (const auto &site : item_sites)
-	{
-		const uint32_t address = site_address(site);
-		if (!address) continue;
-		const uint32_t expected = site.target == item_target::constant ? site.native : native_base[size_t(site.target)] + site.native;
-		const uint32_t found = read_operand(address, site.width);
-		// AddMoreAbility, armed first, already widens the save load size.
-		if (site.target == item_target::constant && found == site.value) continue;
-		if (found != expected) return unsupported("operand", address, found, expected);
-	}
-
-	return calls_agree(save_image_calls, save_image_original) && calls_agree(load_inventory_calls, load_inventory_original) &&
-		calls_agree(new_game_calls, new_game_original) && calls_agree(reload_direct_calls, read_file_original) &&
-		calls_agree(item_navigation_source_calls, navigation_original) && calls_agree(load_asset_calls, load_file_original) &&
-		calls_agree(random_calls, random_original) && calls_agree(item_navigation_target_calls, navigation_target_original) &&
-		(navigation_target_original == navigation_original || unsupported("call site", 0, navigation_target_original, navigation_original));
+	for (const auto &call : calls)
+		if (uint32_t address = call_address(call)) return get_relative_call(address, 0);
+	return 0;
 }
 
 // An added battle record whose data (everything after the two text offsets) is all zero is
@@ -485,6 +414,15 @@ void redirect(const item_call (&calls)[N], void *function)
 void arm()
 {
 	if (active) return;
+	find_item_functions();
+	save_image_original = called_by(save_image_calls);
+	load_inventory_original = called_by(load_inventory_calls);
+	new_game_original = called_by(new_game_calls);
+	read_file_original = called_by(reload_direct_calls);
+	navigation_original = called_by(item_navigation_source_calls);
+	navigation_target_original = called_by(item_navigation_target_calls);
+	load_file_original = called_by(load_asset_calls);
+	random_original = called_by(random_calls);
 	inventory_from_savemap();
 	ff8_item_normalize(inventory);
 	for (const auto &site : item_sites)
@@ -543,11 +481,6 @@ bool ff8_kernel_item_read(const ff8_kernel_file &file, bool &changed)
 		(battle.size() > vanilla_battle_count && first_added_item + battle.size() - vanilla_battle_count > vanilla_battle_count + other.size()))
 	{
 		ffnx_error("AddMoreItems: invalid item section counts; items 199-255 are ignored.\n");
-		return false;
-	}
-	if (!active && !supported())
-	{
-		ffnx_warning("AddMoreItems: the item extension cannot start (see above); items 199-255 are ignored.\n");
 		return false;
 	}
 	// Check text offsets against the file's real section boundaries, including

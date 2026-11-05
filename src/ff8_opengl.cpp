@@ -733,7 +733,7 @@ static void ff8_swirl_draw_wipe(ff8_graphics_object *graphics_object, ff8_game_o
 		vertices[base + 3]._.y += 1.0f;
 	}
 
-	ff8_externals.swirl_submit_graphics_object(graphics_object, game_object);
+	ff8_externals.graphics_setrendererstate_draw_sub_4178D7(graphics_object, game_object);
 }
 
 void ff8_set_render_to_vram_current_screen_flag_before_battle()

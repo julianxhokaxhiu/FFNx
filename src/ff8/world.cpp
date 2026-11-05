@@ -49,10 +49,9 @@ void ff8_worldmap_model_depth_init()
 	const uint32_t draw_models = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, FF8_US_VERSION ? 0x267 : 0x268);
 	const uint32_t draw_model = get_relative_call(draw_models, FF8_US_VERSION ? 0x5E5 : 0x63A);
 	const uint32_t draw_quads = get_relative_call(draw_model, FF8_US_VERSION ? 0x313 : 0x345);
-	const uint32_t set_quad_depths = get_relative_call(draw_quads, FF8_US_VERSION ? 0x100 : 0x102);
 	const uint32_t average_triangle_depth = get_relative_call(draw_model, FF8_US_VERSION ? 0x274 : 0x29B);
 	const uint32_t average_quad_depth = get_relative_call(draw_quads, FF8_US_VERSION ? 0x105 : 0x107);
-	ff8_worldmap_model_depths = reinterpret_cast<uint32_t *>(get_absolute_value(set_quad_depths, 0xD));
+	ff8_worldmap_model_depths = reinterpret_cast<uint32_t *>(ff8_externals.dword_1CA8A50);
 	ff8_worldmap_model_triangle_depth_scale = reinterpret_cast<int16_t *>(get_absolute_value(average_triangle_depth, 0x31));
 	ff8_worldmap_model_quad_depth_scale = reinterpret_cast<int16_t *>(get_absolute_value(average_quad_depth, 0x35));
 	ff8_worldmap_model_submit = reinterpret_cast<decltype(ff8_worldmap_model_submit)>(get_relative_call(draw_model, FF8_US_VERSION ? 0x2E0 : 0x30A));

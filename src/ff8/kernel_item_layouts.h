@@ -31,14 +31,12 @@ enum item_fn : uint8_t
 	fn_add_item,
 	fn_execute_command,
 	fn_monster_ai_section,
-	fn_battle_loop,
 	fn_gf_cinematic_tick,
 	fn_monster_ai,
 	fn_compute_command,
 	fn_command_window_init,
 	fn_apply_damage,
 	fn_shop_commit,
-	fn_menu_load_vibrate,
 	fn_item_menu_init,
 	fn_menu_hosted_async,
 	fn_main_menu_init,
@@ -113,14 +111,12 @@ static void item_find_roots(uint32_t *fn)
 	fn[fn_add_item] = uint32_t(ff8_externals.add_item_to_player_sub_47ED00);
 	fn[fn_execute_command] = uint32_t(ff8_externals.sub_485610);
 	fn[fn_monster_ai_section] = uint32_t(ff8_externals.battle_sub_4877F0);
-	fn[fn_battle_loop] = uint32_t(ff8_externals.loc_47D490);
 	fn[fn_gf_cinematic_tick] = uint32_t(ff8_externals.sub_50B2A0);
 	fn[fn_monster_ai] = uint32_t(ff8_externals.battle_ai_opcode_sub_487DF0);
 	fn[fn_compute_command] = uint32_t(ff8_externals.battle_sub_48D200);
 	fn[fn_command_window_init] = uint32_t(ff8_externals.sub_4BCBE0);
 	fn[fn_apply_damage] = uint32_t(ff8_externals.battle_sub_48FE20);
 	fn[fn_shop_commit] = uint32_t(ff8_externals.menu_shop_update_gil_and_items_4EB9F0);
-	fn[fn_menu_load_vibrate] = uint32_t(ff8_externals.open_battle_vibrate_vib);
 	fn[fn_item_menu_init] = uint32_t(ff8_externals.menu_callbacks[2].func);
 	fn[fn_menu_hosted_async] = uint32_t(ff8_externals.sub_4B3310);
 	fn[fn_main_menu_init] = uint32_t(ff8_externals.menu_callbacks[1].func);
@@ -134,6 +130,10 @@ static void item_find_roots(uint32_t *fn)
 	fn[fn_shop_init] = uint32_t(ff8_externals.menu_callbacks[11].func);
 	fn[fn_world_director] = uint32_t(ff8_externals.worldmap_with_fog_sub_53FAC0);
 	fn[fn_script_has_item] = common_externals.execute_opcode_table[0x16A];
+	fn[fn_pick_confused_action] = ff8_externals.battle_pick_random_action_sub_483940;
+	fn[fn_menu_get_file] = ff8_externals.load_file_in_memory_sub_4B96C0;
+	// Not through its call site: BattleAnimSetFiles redirects that call
+	fn[fn_battle_exit_writeback] = ff8_externals.battle_exit_sub_4868C0;
 }
 
 // fn is the target of the call (or the absolute value) at the offset inside from.
@@ -143,11 +143,9 @@ static const item_fn_ref item_fn_refs[] = {
 	{ fn_item_description, fn_item_menu, true, same(0x17F) },
 	{ fn_shot_result, fn_shot_window_update, true, same(0x1CC) },
 	{ fn_remove_one_item, fn_shot_result, true, same(0x3B) },
-	{ fn_pick_confused_action, fn_execute_command, true, same(0x2E7) },
 	{ fn_random_battle_item, fn_pick_confused_action, true, same(0x1C6) },
 	{ fn_battle_item_amount, fn_monster_ai_section, true, same(0x27F) },
 	{ fn_remove_saved_item, fn_monster_ai_section, true, same(0x291) },
-	{ fn_battle_exit_writeback, fn_battle_loop, true, same(0x1F) },
 	{ fn_change_battle_item_amount, fn_execute_command, true, same(0x54D) },
 	{ fn_anim_seq_apply_all, fn_gf_cinematic_tick, true, same(0x51E) },
 	{ fn_apply_result_to_targets, fn_anim_seq_apply_all, true, same(0xF) },
@@ -162,7 +160,6 @@ static const item_fn_ref item_fn_refs[] = {
 	{ fn_command_window_width, fn_command_window_update, true, same(0x264) },
 	{ fn_build_limit_menu, fn_command_window_width, true, same(0x10) },
 	{ fn_reserve_battle_order, fn_shop_commit, true, same(0x76) },
-	{ fn_menu_get_file, fn_menu_load_vibrate, true, same(0xA) },
 	{ fn_execute_menu_command, fn_command_window_update, true, same(0x462) },
 	{ fn_menu_read_into_buffer, fn_item_menu_init, true, same(0x23) },
 	{ fn_shot_ammo_mask, fn_menu_hosted_async, true, same(0x40) },

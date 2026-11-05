@@ -968,7 +968,7 @@ ff8_draw_menu_sprite_texture_infos *ff8_jp_display_text(int *a1, ff8_draw_menu_s
     int v10 = 13 * a4 + (int16_t)(dword_209D048 >> 16) + 8;
     a2 = ff8_draw_icon_or_key1(int(a1), a2, 215, v9 + 7, v10, dword_209D058);
     int v12 = v8 <= 0 ? 1 : 7;
-    a2 = ff8_fonts_parse_and_render_menu_texts_1(a1, a2, v9 + 21, v10, ((uint8_t*(*)(int))ff8_externals.sub_5348E0)(v7), v12);
+    a2 = ff8_fonts_parse_and_render_menu_texts_1(a1, a2, v9 + 21, v10, ((uint8_t*(*)(int))ff8_externals.get_card_name)(v7), v12);
 
     return ((ff8_draw_menu_sprite_texture_infos*(*)(int*,ff8_draw_menu_sprite_texture_infos*,int,int,int,int16_t))ff8_externals.sub_4A3400)(
             a1,
@@ -1359,14 +1359,14 @@ void ff8_jp_menu_name_controller(int a1)
         int row = *(uint8_t *)(a1 + 45) / 15; // 14 -> 15
         if ((dword_1D76A9A & 0x1000) != 0) { // up
             if (--row >= 0) {
-                ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(1);
+                ff8_externals.menu_play_sound_sub_4B92A0(1);
             } else {
                 row = 0;
             }
         }
         if ((dword_1D76A9A & 0x4000) != 0) { // down
             if (row < last_row) {
-                ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(1);
+                ff8_externals.menu_play_sound_sub_4B92A0(1);
             }
             ++row;
         }
@@ -1375,13 +1375,13 @@ void ff8_jp_menu_name_controller(int a1)
         }
         if ((dword_1D76A9A & 0x2000) != 0) { // right
             if (++col < 15) { // 14 -> 15
-                ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(1);
+                ff8_externals.menu_play_sound_sub_4B92A0(1);
             } else {
                 col = 14; // 13 -> 14
             }
         }
         if ((dword_1D76A9A & 0x8000) != 0) { // left
-            ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(1);
+            ff8_externals.menu_play_sound_sub_4B92A0(1);
             if (--col < 0) {
                 col = 0;
                 *(WORD *)(a1 + 16) = 4;
@@ -1390,13 +1390,13 @@ void ff8_jp_menu_name_controller(int a1)
         *(BYTE *)(a1 + 45) = col + 15 * row; // 14 -> 15
         ff8_jp_menu_name_controller_alter_structure((uint8_t *)a1);
         if ((dword_1D76A9C & 0x10) != 0) {
-            ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(3);
+            ff8_externals.menu_play_sound_sub_4B92A0(3);
             int v10 = *(DWORD *)(a1 + 36);
             if (*(BYTE *)v10) {
                 *(BYTE *)(v10 + strlen((const char *)(v10 + 1))) = 0;
             }
         } else if ((dword_1D76A9A & 0x40) != 0) {
-            ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(2);
+            ff8_externals.menu_play_sound_sub_4B92A0(2);
             BYTE *v11 = *(BYTE **)(a1 + 36);
             int v12 = **(uint8_t **)(a1 + 32);
             int v13 = 0;
@@ -1423,15 +1423,15 @@ void ff8_jp_menu_name_controller(int a1)
             v11[v13 + 1] = 0;
         } else {
             if ((dword_1D76A9C & 8) != 0) {
-                ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(1);
+                ff8_externals.menu_play_sound_sub_4B92A0(1);
                 *(BYTE *)(a1 + 44) = (*(BYTE *)(a1 + 44) + 1) % 3; // Instead of % 2
             }
             if ((dword_1D76A9C & 4) != 0) {
-                ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(1);
+                ff8_externals.menu_play_sound_sub_4B92A0(1);
                 *(BYTE *)(a1 + 44) = (*(uint8_t *)(a1 + 44) - 1 + (*(uint8_t *)(a1 + 44) - 1 < 0 ? 3 : 0)) % 3; // Instead of % 2
             }
             if ((dword_1D76A9C & 0x800) != 0) { // Start
-                ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(1);
+                ff8_externals.menu_play_sound_sub_4B92A0(1);
                 *(BYTE *)(a1 + 46) = 3;
                 *(WORD *)(a1 + 16) = 4;
             }
@@ -1445,21 +1445,21 @@ void ff8_jp_menu_name_controller(int a1)
     case 5: {
         int v17 = *(uint8_t *)(a1 + 46);
         if ((dword_1D76A9C & 8) != 0) {
-            ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(1);
+            ff8_externals.menu_play_sound_sub_4B92A0(1);
             *(BYTE *)(a1 + 44) = (*(BYTE *)(a1 + 44) + 1) % 3; // Instead of % 2
         }
         if ((dword_1D76A9C & 4) != 0) {
-            ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(1);
+            ff8_externals.menu_play_sound_sub_4B92A0(1);
             *(BYTE *)(a1 + 44) = (*(uint8_t *)(a1 + 44) - 1 + (*(uint8_t *)(a1 + 44) - 1 < 0 ? 3 : 0)) % 3; // Instead of % 2
         }
         if ((dword_1D76A9A & 0x4000) != 0) {
-            ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(1);
+            ff8_externals.menu_play_sound_sub_4B92A0(1);
             if (++v17 >= 6) {
                 v17 = 0;
             }
         }
         if ((dword_1D76A9A & 0x1000) != 0) {
-            ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(1);
+            ff8_externals.menu_play_sound_sub_4B92A0(1);
             if (--v17 < 0) {
                 v17 = 5;
             }
@@ -1467,15 +1467,15 @@ void ff8_jp_menu_name_controller(int a1)
         if ((dword_1D76A9C & 0x40) != 0) {
             switch (v17) {
             case 0:
-                ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(2);
+                ff8_externals.menu_play_sound_sub_4B92A0(2);
                 *(BYTE *)(a1 + 44) = 0;
                 break;
             case 1:
-                ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(2);
+                ff8_externals.menu_play_sound_sub_4B92A0(2);
                 *(BYTE *)(a1 + 44) = 1;
                 break;
             case 2:
-                ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(2);
+                ff8_externals.menu_play_sound_sub_4B92A0(2);
                 *(BYTE *)(a1 + 44) = 2;
                 break;
             case 3: {
@@ -1493,11 +1493,11 @@ void ff8_jp_menu_name_controller(int a1)
                     }
                 }
 
-                ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(sfx);
+                ff8_externals.menu_play_sound_sub_4B92A0(sfx);
                 break;
             }
             case 4: {
-                ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(3);
+                ff8_externals.menu_play_sound_sub_4B92A0(3);
                 int v24 = *(DWORD *)(a1 + 36);
                 if (*(BYTE *)v24) {
                     *(BYTE *)(v24 + strlen((const char *)(v24 + 1))) = 0;
@@ -1505,7 +1505,7 @@ void ff8_jp_menu_name_controller(int a1)
                 break;
             }
             case 5: {
-                ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(2);
+                ff8_externals.menu_play_sound_sub_4B92A0(2);
                 char *text = ((char *(*)(int, int, int, int))ff8_externals.get_text_data)(1, 5, *(uint16_t *)(*(DWORD *)(a1 + 32) + 2), 0);
                 strcpy(*(char **)(a1 + 36), text);
                 break;
@@ -1513,13 +1513,13 @@ void ff8_jp_menu_name_controller(int a1)
             }
         }
         if ((dword_1D76A9C & 0x800) != 0) { // Start
-            ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(1);
+            ff8_externals.menu_play_sound_sub_4B92A0(1);
             v17 = 3;
         }
         *(BYTE *)(a1 + 46) = v17;
         ff8_jp_menu_name_controller_alter_structure((uint8_t *)a1);
         if ((dword_1D76A9A & 0x2000) != 0) {
-            ((void(*)(int))ff8_externals.play_sfx_menu_sub_4B92A0)(2);
+            ff8_externals.menu_play_sound_sub_4B92A0(2);
             *(WORD *)(a1 + 16) = 1;
         }
         break;
@@ -1672,7 +1672,7 @@ void fonts_init_jp()
 
     // Complex text parsing
     replace_function(ff8_externals.font_text_size_calculation_sub_4A0D10, ff8_fonts_get_text_dimensions); // For text size calculation
-    replace_function(ff8_externals.sub_4A1020, ff8_fonts_parse_and_render_menu_texts_1); // Menu texts and icons
+    replace_function(uint32_t(ff8_externals.draw_text_sub_4A1020), ff8_fonts_parse_and_render_menu_texts_1); // Menu texts and icons
     replace_function(ff8_externals.font_parse_and_render_menu_2_sub_4A1200, ff8_fonts_parse_and_render_menu_texts_2); // Menu texts
     replace_function(ff8_externals.menu_draw_text_sub_4BDE30, ff8_fonts_parse_and_render_menu_texts_3); // Menu texts
     replace_function(ff8_externals.render_text_field_sub_4A1570, ff8_fonts_parse_and_render_field_texts); // Field

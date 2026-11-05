@@ -703,7 +703,7 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 // not hardcoded per address.
 static void ff8_kernel_magic_find_externals()
 {
-	magic_ext.read_kernel_files_sub_47D2A0 = get_relative_call(get_relative_call(ff8_externals.sub_470440, 0x22), 0);
+	magic_ext.read_kernel_files_sub_47D2A0 = ff8_externals.sub_47D2A0;
 	magic_ext.kernel_read_call = magic_ext.read_kernel_files_sub_47D2A0 + 0x96; // call sm_pc_read(name, KERNEL_HEADER)
 
 	magic_ext.set_all_monster_info_sub_48BA10 = get_relative_call(ff8_externals.sub_47CCB0, 0x996);
@@ -759,7 +759,7 @@ static void ff8_kernel_magic_find_externals()
 	uint32_t battle_tick_atb = get_relative_call(ff8_externals.sub_4A84E0, 0x2F6);
 	uint32_t player_random_attack = get_relative_call(battle_tick_atb, 0x18D);
 	magic_ext.fn_queue_command = get_relative_call(player_random_attack, 0x35);
-	magic_ext.fn_pick_random_action = get_relative_call(ff8_externals.sub_485610, 0x2E7);
+	magic_ext.fn_pick_random_action = ff8_externals.battle_pick_random_action_sub_483940;
 	magic_ext.fn_confused_action = get_relative_call(ff8_externals.sub_485610, 0x20B);
 	// getMagicTargetMask is only reached from MonsterAI, whose call sits at a
 	// different offset on every build; it always precedes the action roll.
@@ -776,8 +776,7 @@ static void ff8_kernel_magic_find_externals()
 	magic_ext.fn_status_attack_value = get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0x355);
 	magic_ext.fn_mental_defense = get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0x368);
 
-	uint32_t junction_menu_init = get_relative_call(uint32_t(ff8_externals.menu_callbacks[18].func), 0x31);
-	uint32_t junction_menu = get_absolute_value(junction_menu_init, 0xB);
+	uint32_t junction_menu = ff8_externals.menu_junction_controller;
 	magic_ext.fn_junction_swap = get_relative_call(junction_menu, 0xB78);
 	magic_ext.fn_auto_junction_spell = get_relative_call(get_relative_call(junction_menu, 0x1B6C), 0x35);
 	magic_ext.fn_junction_value = get_relative_call(get_relative_call(magic_ext.linked_menu_magic_sub_4F02F0, 0xA37), 0x27F);
@@ -961,23 +960,6 @@ void ff8_kernel_magic_init()
 	if (!magic_ext.kernel_read_call)
 	{
 		if (trace_all) ffnx_trace("AddMoreMagic: unsupported game version, extension disabled.\n");
-		return;
-	}
-
-	// Sanity: the call we replace must be the kernel.bin read through sm_pc_read.
-	// The rel32 is read here rather than with get_relative_call, which would count
-	// sm_pc_read as resolved a second time - ff8_data.cpp already has it.
-	uint32_t call_target = magic_ext.kernel_read_call + 5 + *(int32_t *)(magic_ext.kernel_read_call + 1);
-	if (call_target != uint32_t(ff8_externals.sm_pc_read))
-	{
-		ffnx_warning("AddMoreMagic: kernel load call site mismatch (0x%X), extension disabled.\n", call_target);
-		return;
-	}
-
-	uint32_t command_target = magic_ext.command_action_call + 5 + *(int32_t *)(magic_ext.command_action_call + 1);
-	if (*(uint8_t *)magic_ext.command_action_call != 0xE8 || command_target != ff8_externals.battle_sub_48D200)
-	{
-		if (trace_all) ffnx_trace("AddMoreMagic: battle dispatcher call site mismatch (0x%X), extension disabled.\n", command_target);
 		return;
 	}
 

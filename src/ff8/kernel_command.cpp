@@ -58,8 +58,7 @@ static bool ff8_command_filter_hooked = false;
 static bool ff8_command_disabled[MAX_COMMAND_COUNT];
 static bool ff8_command_has_disabled = false;
 static uint32_t command_parse_calls[3];
-static bool ff8_command_checked = false;
-static bool ff8_command_supported = false;
+static bool ff8_command_resolved = false;
 
 struct command_externals
 {
@@ -150,14 +149,12 @@ static const command_layout &command_layout_of(int game_version)
 }
 
 static command_site command_sites[31];
-static uint32_t k_command, k_command_end, k_command_data, k_command_data_end;
+static uint32_t k_command, k_command_data;
 
 static void ff8_kernel_command_find_externals()
 {
 	k_command = (uint32_t)ff8_externals.kernel->battle_commands;
-	k_command_end = k_command + VANILLA_COMMAND_COUNT * COMMAND_ENTRY_SIZE;
 	k_command_data = (uint32_t)ff8_externals.kernel->command_ability_data;
-	k_command_data_end = k_command_data + VANILLA_COMMAND_DATA_COUNT * COMMAND_DATA_ENTRY_SIZE;
 
 	uint32_t magic_name = ff8_kernel_magic_name_getter();
 	uint32_t visibility = ff8_kernel_magic_spell_visibility_fn();
@@ -169,7 +166,7 @@ static void ff8_kernel_command_find_externals()
 	command_parse_calls[0] = ff8_externals.sub_48B7E0 + 0x94;
 	command_parse_calls[1] = ff8_externals.compute_char_stats_sub_495960 + 0x5A5;
 	command_parse_calls[2] = ff8_externals.compute_char_stats_sub_495960 + 0x18AC;
-	command_ext.parse = get_relative_call(ff8_externals.sub_48B7E0, 0x94);
+	command_ext.parse = ff8_externals.reset_parse_chara_sub_495530;
 
 	int count = 0;
 	for (const command_site &site : common_sites)
@@ -180,26 +177,6 @@ static void ff8_kernel_command_find_externals()
 		command_sites[count++] = { &ff8_externals.battle_sub_48D200, layout.dispatcher[i], i % 3 != 0 };
 	for (uint32_t offset : layout.damage)
 		command_sites[count++] = { &ff8_externals.battle_sub_48FE20, offset, true };
-}
-
-static bool ff8_kernel_command_validate()
-{
-	for (uint32_t call : command_parse_calls)
-		if (get_relative_call(call, 0) != command_ext.parse) return false;
-
-	for (const command_site &site : command_sites)
-	{
-		if (!*site.owner) return false;
-		uint32_t value = get_absolute_value(*site.owner, site.offset);
-		uint32_t lo = site.data ? k_command_data : k_command;
-		uint32_t hi = site.data ? k_command_data_end : k_command_end;
-		if (value < lo || value >= hi)
-		{
-			if (trace_all) ffnx_trace("AddMoreCommand: table operand at 0x%X is unsupported.\n", *site.owner + site.offset);
-			return false;
-		}
-	}
-	return true;
 }
 
 static int ff8_kernel_command_parse_character(int character, int slot)
@@ -215,7 +192,6 @@ static int ff8_kernel_command_parse_character(int character, int slot)
 
 static void ff8_kernel_command_arm()
 {
-	if (!ff8_command_supported) return;
 	if (!ff8_command_armed)
 	{
 		for (const command_site &site : command_sites)
@@ -309,18 +285,12 @@ bool ff8_kernel_command_read(const ff8_kernel_file &file)
 		behaves_like[id] = family;
 	}
 
-	// First extended file seen: only now is it worth resolving and checking.
-	if (!ff8_command_checked)
+	// First extended file seen: only now is it worth resolving.
+	if (!ff8_command_resolved)
 	{
-		ff8_command_checked = true;
+		ff8_command_resolved = true;
 		ff8_kernel_command_find_externals();
-		ff8_command_supported = ff8_kernel_command_validate();
-
-		if (!ff8_command_supported)
-			if (trace_all) ffnx_trace("AddMoreCommand: this build is not supported, extension disabled.\n");
 	}
-
-	if (!ff8_command_supported) return false;
 
 	if (ff8_command_armed && (commands != ff8_command_count || data != ff8_command_data_count))
 	{
