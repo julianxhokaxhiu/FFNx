@@ -453,7 +453,8 @@ namespace ff7::field
     bool bind_kawai_effect(polygon_data* polygon);
     bool has_kawai_splash_color();
     bool draw_kawai_model(polygon_data* polygon, indexed_primitive* primitive,
-        std::span<const vector3<float>> normals, light_data* light, uint32_t clip);
+        std::span<const vector3<float>> normals, light_data* light, uint32_t clip,
+        std::span<const uint32_t> source_colors = {});
 
     struct KawaiGeometry
     {

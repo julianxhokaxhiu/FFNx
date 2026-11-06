@@ -22,6 +22,7 @@ namespace ff7::field
     void ff7_field_initialize_eyetx();
     void ff7_field_reset_blink_frames();
     void ff7_field_set_mouth_index(byte model_id, byte mouth_index);
+    bool ff7_field_is_facial_primitive(const polygon_data *polygon, const indexed_primitive *primitive);
     void ff7_handle_KAWAI_reset();
     int ff7_field_models_eye_to_model(char* model_name);
     int ff7_field_blink_eye_sub_649B50(field_animation_data *field_anim_data, field_model_blink_data *blink_data);

@@ -32,6 +32,7 @@
 #include "../matrix.h"
 
 #include "../ff7/widescreen.h"
+#include "../ff7/field/kawai_eyetx.h"
 #include "external_mesh.h"
 
 struct matrix d3dviewport_matrix = {
@@ -273,6 +274,31 @@ namespace
 			current_state.kawai_camera_matrix = camera;
 		}
 	};
+
+	bool draw_field_facial_texture(indexed_primitive* ip, polygon_data* polygon, uint32_t clip)
+	{
+		if (ff8 || !ff7::field::ff7_field_is_facial_primitive(polygon, ip)) return false;
+
+		std::vector<nvertex> vertices(ip->vertices, ip->vertices + ip->vertexcount);
+		std::vector<uint32_t> colors;
+		colors.reserve(vertices.size());
+		for (auto& vertex : vertices)
+		{
+			vertex.color.r = vertex.color.g = vertex.color.b = 255;
+			colors.push_back(vertex.color.color);
+		}
+		auto facial = *ip;
+		facial.vertices = vertices.data();
+
+		// The enclosing KawaiDrawScope restores this; retain non-lighting script effects.
+		auto& kind = current_state.kawai_effect.kind;
+		if (kind == ff7::field::kawai::Kind::lighting || kind == ff7::field::kawai::Kind::positional_lighting)
+			kind = ff7::field::kawai::Kind::none;
+		if (!ff7::field::draw_kawai_model(polygon, &facial, {}, nullptr, clip, colors))
+			gl_draw_indexed_primitive(facial.primitivetype, facial.vertextype, facial.vertices, nullptr,
+				facial.vertexcount, facial.indices, facial.indexcount, nullptr, nullptr, nullptr, clip, true);
+		return true;
+	}
 }
 
 void gl_draw_without_lighting(struct indexed_primitive* ip, struct polygon_data *polydata, struct light_data* lightdata, uint32_t clip)
@@ -284,6 +310,7 @@ void gl_draw_without_lighting(struct indexed_primitive* ip, struct polygon_data 
 		gl_draw_external_mesh(externalMesh, lightdata);
 		return;
 	}
+	if (draw_field_facial_texture(ip, polydata, clip)) return;
 	
 	static std::vector<vector3<float>> normals;
 	if (!ff8 && current_state.kawai_effect.kind != ff7::field::kawai::Kind::none)
@@ -309,6 +336,7 @@ void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *po
 		gl_draw_external_mesh(externalMesh, lightdata);
 		return;
 	}
+	if (draw_field_facial_texture(ip, polydata, clip)) return;
 
 	static std::vector<vector3<float>> normals;
 	if (!ff8)

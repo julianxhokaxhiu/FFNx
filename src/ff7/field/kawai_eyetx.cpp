@@ -94,6 +94,8 @@ namespace ff7::field
             const ff7_hrc_polygon_data *frame_object = nullptr;
             p_hundred *native_left_eye = nullptr;
             p_hundred *native_right_eye = nullptr;
+            const polygon_data *facial_polygon = nullptr;
+            std::array<const indexed_primitive *, 3> facial_primitives{};
             std::string directory;
             std::string model_filename;
             std::string model_name;
@@ -322,6 +324,16 @@ namespace ff7::field
         }
     }
 
+    bool ff7_field_is_facial_primitive(const polygon_data *polygon, const indexed_primitive *primitive)
+    {
+        if (getmode_cached()->driver_mode != MODE_FIELD || !polygon || !primitive) return false;
+        for (const auto &cache : facial_textures)
+            if (cache.facial_polygon == polygon)
+                for (const auto *facial_primitive : cache.facial_primitives)
+                    if (facial_primitive == primitive) return true;
+        return false;
+    }
+
     int ff7_internal_blink_eye(field_animation_data *field_anim_data, field_model_blink_data *blink_data)
     {
         int i;
@@ -333,6 +345,9 @@ namespace ff7::field
         const bool cached_eyes = ff7_advanced_blinking && facial_textures[blink_data->model_id].eyes_selected;
         p_hundred *left_eye = cached_eyes ? ff7_model_data[blink_data->model_id].left_eye_tex : field_anim_data->static_left_eye_tex;
         p_hundred *right_eye = cached_eyes ? ff7_model_data[blink_data->model_id].right_eye_tex : field_anim_data->static_right_eye_tex;
+        auto &cache = facial_textures[blink_data->model_id];
+        cache.facial_polygon = nullptr;
+        cache.facial_primitives = {};
 
         if ( field_anim_data->anim_frame_object )
         {
@@ -363,6 +378,17 @@ namespace ff7::field
                 blink_left_eye_mode = blink_data->blink_left_eye_mode;
                 for ( i = 0; i < (signed int)polygon_set->numgroups && !polygon_set->hundred_data[i].texture_set; ++i );
                 if ( i == polygon_set->numgroups )return 0;
+                if (polygon_set->indexed_primitives)
+                {
+                    // Use the blink and mouth replacement groups, not all textured head polygons.
+                    cache.facial_polygon = polygon_set->polygon_data;
+                    cache.facial_primitives[0] = polygon_set->indexed_primitives[i];
+                    if (i + 1 < polygon_set->numgroups)
+                        cache.facial_primitives[1] = polygon_set->indexed_primitives[i + 1];
+                    if (polygon_set->numgroups > 3 && (polygon_set->hundred_data[3].texture_set ||
+                        (ff7_advanced_blinking && ff7_model_data[blink_data->model_id].mouth_tex)))
+                        cache.facial_primitives[2] = polygon_set->indexed_primitives[3];
+                }
                 if ( blink_left_eye_mode == 1 )
                 {
                     if (ff7_advanced_blinking && polygon_set->numgroups > 1 && ff7_model_data[blink_data->model_id].left_eye_tex) polygon_set->hundred_data_group_array[1] = ff7_model_data[blink_data->model_id].left_eye_tex;

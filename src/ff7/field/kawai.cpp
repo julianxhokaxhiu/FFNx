@@ -513,12 +513,12 @@ namespace ff7::field
     }
 
     bool draw_kawai_model(polygon_data* polygon, indexed_primitive* primitive,
-        std::span<const vector3<float>> normals, light_data* light, uint32_t clip)
+        std::span<const vector3<float>> normals, light_data* light, uint32_t clip,
+        std::span<const uint32_t> source_colors)
     {
         if (current_state.kawai_effect.kind == kawai::Kind::none) return false;
         const auto found = bindings.find(polygon);
-        std::span<const uint32_t> source_colors;
-        if (found != bindings.end() && polygon->vertexcolordata)
+        if (source_colors.empty() && found != bindings.end() && polygon->vertexcolordata)
         {
             auto* polygon_set = found->second.polygon_set;
             for (uint32_t i = 0; i < polygon_set->numgroups; ++i)
