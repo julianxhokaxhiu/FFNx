@@ -10,11 +10,11 @@
 
 ## FF8
 
-- External textures: Reduce battle and magic loading hitches by loading classic palettes on demand and avoiding repeated virtual archive metadata checks ( https://github.com/julianxhokaxhiu/FFNx/issues/778 )
-- External textures: Fix custom controller icons not loading with `ff8_use_gamepad_icons` enabled due to an incorrect fallback to low-resolution icons
 - Core: Fix learned abilities past ID 127 being lost when loading a save ( https://github.com/julianxhokaxhiu/FFNx/pull/1058 )
 - Core: Fix world map draw points saying no one can draw when kernel.bin moves the Draw command ability ( https://github.com/julianxhokaxhiu/FFNx/pull/1058 )
 - Core: Fix AddMoreItems never starting since BattleAnimSetFiles, kernel.bin extensions now start without checking the game code ( https://github.com/julianxhokaxhiu/FFNx/pull/1064 )
+- External textures: Reduce battle and magic loading hitches by loading classic palettes on demand and avoiding repeated virtual archive metadata checks ( https://github.com/julianxhokaxhiu/FFNx/issues/778 )
+- External textures: Fix custom controller icons not loading with `ff8_use_gamepad_icons` enabled due to an incorrect fallback to low-resolution icons
 
 # 1.25.1
 
@@ -76,8 +76,8 @@
 ## FF8
 
 - Achievements: Add support for remastered achievements
-- Core: Preserve per-vertex depth in the world-map vehicle renderer while retaining native polygon sorting ( https://github.com/julianxhokaxhiu/FFNx/issues/879 )
 - Audio: Add a Sound screen to the Config menu, to set the sound effects, music, voice, ambient and movie volumes in game ( https://github.com/julianxhokaxhiu/FFNx/pull/1015 )
+- Core: Preserve per-vertex depth in the world-map vehicle renderer while retaining native polygon sorting ( https://github.com/julianxhokaxhiu/FFNx/issues/879 )
 - Core: Add extended item definitions and 24 inventory pages, with persistent save-tail inventory storage (see [item documentation](docs/ff8/items.md)) ( https://github.com/julianxhokaxhiu/FFNx/pull/1051 )
 - Core: Extend the battle actor sound table through c0m199 ( https://github.com/julianxhokaxhiu/FFNx/pull/999 )
 - Core: Give monsters c0m144-c0m199 their own Scan camera framing, editable through the `battle_scan_cameras.bin` exe data file ( https://github.com/julianxhokaxhiu/FFNx/pull/1045 )
