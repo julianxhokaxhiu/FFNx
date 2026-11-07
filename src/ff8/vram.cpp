@@ -2360,6 +2360,19 @@ void ff8_battle_upload_texture_palette(int16_t *pos_and_size, uint8_t *texture_b
 				}
 			}
 		}
+		else if (ff8_remastered_edition && !is_remastered_hd_textures_disabled("battle")
+			&& strncmp(battle_texture_name, "magic/", sizeof("magic/") - 1) == 0)
+		{
+			const char *fileName = battle_texture_name + sizeof("magic/") - 1;
+			const char *extension = strrchr(fileName, '.');
+			if (extension != nullptr && stricmp(extension, ".tim") == 0)
+			{
+				char classicName[MAX_PATH] = {};
+				snprintf(classicName, sizeof(classicName), "%.*s", int(extension - fileName), fileName);
+				set_remastered_battle_texture_name(next_remastered_texture_name, sizeof(next_remastered_texture_name),
+					classicName, battle_texture_name, battle_texture_id);
+			}
+		}
 		snprintf(next_texture_name, sizeof(next_texture_name), "%s-%d", battle_texture_name, battle_texture_id);
 		++battle_texture_id;
 	}

@@ -16,6 +16,11 @@
 - External textures: Reduce battle and magic loading hitches by loading classic palettes on demand and avoiding repeated virtual archive metadata checks ( https://github.com/julianxhokaxhiu/FFNx/issues/778 )
 - External textures: Fix custom controller icons not loading with `ff8_use_gamepad_icons` enabled due to an incorrect fallback to low-resolution icons
 
+## FF8 Remastered
+
+- Core: Fix Carbuncle summon textures
+- Core: Fìx `magic/` textue replacement with upscaled ones from main.zzz
+
 # 1.25.1
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.25.0...1.25.1
