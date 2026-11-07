@@ -514,15 +514,15 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_call_function(ff7_externals.world_opcode_message + 0x5A, world_text_box_window_opening_autosize);
 	replace_call_function(ff7_externals.world_opcode_ask + 0x5A, world_text_box_window_opening_autosize);
 	replace_call_function(ff7_externals.chocobo_betting_ui_quad_call, universal_buttons_submit_chocobo_quad);
+	for (uint32_t address : ff7_externals.chocobo_gift_text_call_addresses)
+		replace_call_function(address, chocobo_draw_text_up);
 	if (!ff7_japanese_edition)
 		replace_call_function(ff7_externals.chocobo_end_scene_call_77B79E, universal_buttons_flush_chocobo);
 	if (ff7_japanese_edition)
 	{
 		replace_call_function(ff7_externals.chocobo_end_scene_call_77B79E, chocobo_end_scene_with_jafonts);
 		replace_call_function(ff7_externals.chocobo_populate_race_data_call_77C448, chocobo_populate_race_data_jp);
-		replace_call_function(ff7_externals.chocobo_name_text_call_776B76, chocobo_draw_text_up_jp);
-		for (uint32_t address : ff7_externals.chocobo_gift_text_call_addresses)
-			replace_call_function(address, chocobo_draw_text_up_jp);
+		replace_call_function(ff7_externals.chocobo_name_text_call_776B76, chocobo_draw_text_up);
 		replace_function(ff7_externals.menu_draw_with_viewport_6FA12F, menu_draw_with_viewport_6FA12F_jp);
 		replace_function(ff7_externals.menu_draw_640x480_6FA347, menu_draw_640x480_6FA347_jp);
 		replace_call_function(ff7_externals.flush_battle_text_640x480_6DC1EB + 0x5A, battle_draw_graphics_object_and_jafonts);

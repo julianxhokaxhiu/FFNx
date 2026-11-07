@@ -5,6 +5,7 @@
 ## FF7
 
 - Core: Match the 2026 universal L1/R1 button prompts on the Chocobo betting screen ( https://github.com/julianxhokaxhiu/FFNx/issues/1067 )
+- Core: Apply the Chocobo gift-text vertical alignment correction to every game language
 - Core: Preserve timer and numeric-display window geometry when `ff7_field_autosize_text_box` is enabled
 - Core: Fix FMV model culling with `enable_uncrop` disabled in 4:3 mode ( https://github.com/julianxhokaxhiu/FFNx/issues/830 )
 - Renderer: Render field model eyes and mouths without lighting or shadows, preserving their texture colors

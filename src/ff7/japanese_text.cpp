@@ -1240,7 +1240,7 @@ void chocobo_populate_race_data_jp()
   }
 }
 
-int chocobo_draw_text_up_jp(byte* buffer, int color, int x, int y)
+int chocobo_draw_text_up(byte* buffer, int color, int x, int y)
 {
   return ff7_externals.chocobo_draw_text_77941B(buffer, color, x, y - 4);
 }
