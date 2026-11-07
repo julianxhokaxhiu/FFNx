@@ -5,6 +5,7 @@
 ## FF7
 
 - Core: Add support for the PSX Star Field loop in post-credits, instead of closing the game. Thanks to the https://github.com/Xeeynamo/ff7-decomp project for the PSX source.
+- Cheats: Add support to skip credits using the Skip FMV cheat shortcut
 
 # 1.25.2
 

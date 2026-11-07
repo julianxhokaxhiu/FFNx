@@ -1453,6 +1453,13 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.credits_submit_draw_fade_quad_7AA89B = get_relative_call(credits_main_loop, 0xD9);
 	ff7_externals.get_button_pressed = (int(*)(int))get_relative_call(credits_main_loop, 0x14C);
 	ff7_externals.credits_main_loop = credits_main_loop;
+	ff7_externals.credits_scroll_active = (int *)get_absolute_value(credits_main_loop, 0x1BB);
+	ff7_externals.credits_scroll_row = (int *)get_absolute_value(credits_main_loop, 0x1F8);
+	ff7_externals.credits_scroll_position = (int *)get_absolute_value(credits_main_loop, 0x1C8);
+	uint32_t credits_movie_wrapper = get_relative_call(credits_main_loop, 0xB8);
+	uint32_t credits_ending_loop = get_relative_call(credits_movie_wrapper, 0x21);
+	uint32_t credits_draw_entries = get_relative_call(credits_ending_loop, 0x20);
+	ff7_externals.credits_entries = (int **)get_absolute_value(credits_draw_entries, 0x49);
 	ff7_externals.menu_submit_draw_fade_quad_6CD64E = get_relative_call(ff7_externals.menu_battle_end_sub_6C9543, 0x104);
 	ff7_externals.highway_submit_fade_quad_659532 = get_relative_call(ff7_externals.highway_loop_sub_650F36, 0x126);
 	ff7_externals.chocobo_init_viewport_values_76D320 = get_relative_call(main_init_loop, 0x38B);

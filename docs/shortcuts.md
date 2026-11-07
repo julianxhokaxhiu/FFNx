@@ -22,6 +22,7 @@ Shortcuts:
 ### FMV Skip
 
 This cheat will allow you to skip movies in-game.
+In FF7, it also skips the rolling ending credits when pressed.
 
 Shortcuts:
 

@@ -732,6 +732,18 @@ bool ff7_skip_movies()
 {
 	uint32_t mode = getmode_cached()->driver_mode;
 
+	constexpr int last_credits_row = 528;
+	constexpr int credits_row_words = 16;
+	if (mode == MODE_CREDITS && *common_externals._mode == FF7_MODE_UNKNOWN28
+		&& !ff7::starfield::is_active() && !ff7_externals.movie_object->is_playing
+		&& *ff7_externals.credits_scroll_active && *ff7_externals.credits_scroll_row < last_credits_row)
+	{
+		// Let native code finish the roll, fade the music, and continue to ending3.
+		*ff7_externals.credits_scroll_row = last_credits_row;
+		*ff7_externals.credits_scroll_position = -(*ff7_externals.credits_entries)[last_credits_row * credits_row_words + 15];
+		return true;
+	}
+
 	// Prevent game acting weird or wrong if movie is skipped
 	if (
 		*ff7_externals.field_id == 399 ||

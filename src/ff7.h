@@ -3812,6 +3812,10 @@ struct ff7_externals
 	uint32_t menu_submit_draw_fade_quad_6CD64E;
 	int (*get_button_pressed)(int);
 	uint32_t credits_main_loop;
+	int *credits_scroll_active;
+	int *credits_scroll_row;
+	int *credits_scroll_position;
+	int **credits_entries;
 	uint32_t highway_submit_fade_quad_659532;
 
 	// chocobo mode
