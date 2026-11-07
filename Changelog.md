@@ -1,6 +1,10 @@
 # Next
 
-- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.25.1...master
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.25.2...master
+
+# 1.25.2
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.25.1...1.25.2
 
 ## FF7
 
@@ -22,7 +26,6 @@
 
 - Core: Fix Dollet boat texture
 - Core: Fix Carbuncle summon textures
-- Core: Fìx `magic/` textue replacement with upscaled ones from main.zzz
 
 # 1.25.1
 
