@@ -1475,6 +1475,14 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.chocobo_gift_text_call_addresses[1] = chocobo_sub_7792CD + 0x3C;
 	ff7_externals.chocobo_gift_text_call_addresses[2] = chocobo_sub_7792CD + 0x5D;
 	ff7_externals.chocobo_draw_text_77941B = (int (*)(byte*, int, int, int))get_relative_call(chocobo_sub_7792CD, 0x1B);
+	ff7_externals.chocobo_betting_ui_quad_call = chocobo_sub_776452 + 0x5EC;
+	ff7_externals.chocobo_submit_ui_quad = (int (*)(chocobo_ui_quad*))get_relative_call(chocobo_sub_776452, 0x5EC);
+	ff7_externals.chocobo_betting_ui_quads = (chocobo_ui_quad**)get_absolute_value(chocobo_sub_776452, 0x5E5);
+	uint32_t chocobo_submit_ui_quad = (uint32_t)ff7_externals.chocobo_submit_ui_quad;
+	ff7_externals.chocobo_ui_scale = (int*)get_absolute_value(chocobo_submit_ui_quad, 0x77);
+	ff7_externals.chocobo_ui_x_offset = (int*)get_absolute_value(chocobo_submit_ui_quad, 0x7D);
+	ff7_externals.chocobo_ui_y_offset = (int*)get_absolute_value(chocobo_submit_ui_quad, 0x9F);
+	ff7_externals.chocobo_ui_y_adjustment = (int*)get_absolute_value(chocobo_submit_ui_quad, 0xA7);
 	ff7_externals.generic_submit_quad_graphics_object_671D2A = (void(*)(int, int, int, int, int, int, float, DWORD*))get_relative_call(ff7_externals.chocobo_submit_draw_water_quad_77A7D0, 0x9F);
 	ff7_externals.chocobo_fade_quad_data_97A498 = (byte*)get_absolute_value(chocobo_sub_77946A, 0x2F);
 	ff7_externals.snowboard_draw_sky_and_mountains_72DAF0 = get_relative_call(ff7_externals.snowboard_loop_sub_72381C, 0x27);

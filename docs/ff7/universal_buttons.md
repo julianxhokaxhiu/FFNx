@@ -45,7 +45,7 @@ Restart the game after replacing an atlas. The selected path is reported in `FFN
 - At the reference dimensions, every sprite occupies a 100 x 100 pixel cell. Scale the cells with the canvas.
 - Do not move a sprite into another cell; the cell position defines its key or button.
 - Keep artwork inside its cell to prevent neighboring prompts from bleeding into it.
-- Prompts are rendered at 40 x 40 game-space units, so use bold shapes and avoid very small details.
+- Field prompts are rendered at 40 x 40 game-space units; Chocobo prompts retain the original label rectangles. Use bold shapes and avoid very small details.
 - Unused cells should remain transparent.
 - Filtering is enabled, so a small transparent margin around each symbol helps avoid edge artifacts.
 

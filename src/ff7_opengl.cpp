@@ -513,6 +513,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_function((uint32_t)ff7_externals.field_text_box_window_opening_6317A9, field_text_box_window_opening_6317A9_autosize);
 	replace_call_function(ff7_externals.world_opcode_message + 0x5A, world_text_box_window_opening_autosize);
 	replace_call_function(ff7_externals.world_opcode_ask + 0x5A, world_text_box_window_opening_autosize);
+	replace_call_function(ff7_externals.chocobo_betting_ui_quad_call, universal_buttons_submit_chocobo_quad);
+	if (!ff7_japanese_edition)
+		replace_call_function(ff7_externals.chocobo_end_scene_call_77B79E, universal_buttons_flush_chocobo);
 	if (ff7_japanese_edition)
 	{
 		replace_call_function(ff7_externals.chocobo_end_scene_call_77B79E, chocobo_end_scene_with_jafonts);

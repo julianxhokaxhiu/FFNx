@@ -9,6 +9,8 @@ void universal_buttons_draw(ff7_game_obj* game_object);
 void universal_buttons_reset();
 void universal_buttons_flush_vanilla_field();
 void universal_buttons_flush_menu(ff7_graphics_object* graphics_object, ff7_game_obj* game_object);
+int universal_buttons_submit_chocobo_quad(chocobo_ui_quad* quad);
+void universal_buttons_flush_chocobo(ff7_game_obj* game_object);
 
 bool universal_buttons_parse_field_prompt(const byte* buffer, int* button, int* byte_count);
 int universal_buttons_draw_field_prompt(int button, int x, int y, float z);

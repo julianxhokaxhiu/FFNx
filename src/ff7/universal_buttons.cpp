@@ -603,7 +603,8 @@ static bool sprite_for_button(prompt_atlas atlas, int button, prompt_sprite* spr
   return true;
 }
 
-static bool submit_prompt_quad(const prompt_sprite& sprite, float x, float y, float z, int size)
+static bool submit_prompt_quad(const prompt_sprite& sprite, float x, float y, float z,
+  int width, int height)
 {
   if (!common_externals.draw_graphics_object(1, (struct graphics_object*)sprite.graphics_object))
     return false;
@@ -615,13 +616,13 @@ static bool submit_prompt_quad(const prompt_sprite& sprite, float x, float y, fl
   vertices[0].u = (float)sprite.u / sprite.texture_width;
   vertices[0].v = (float)sprite.v / sprite.texture_height;
   vertices[1] = vertices[0];
-  vertices[1].position.y = y + size;
+  vertices[1].position.y = y + height;
   vertices[1].v += (float)sprite.height / sprite.texture_height;
   vertices[2] = vertices[0];
-  vertices[2].position.x = x + size;
+  vertices[2].position.x = x + width;
   vertices[2].u += (float)sprite.width / sprite.texture_width;
   vertices[3] = vertices[2];
-  vertices[3].position.y = y + size;
+  vertices[3].position.y = y + height;
   vertices[3].v += (float)sprite.height / sprite.texture_height;
   *(byte*)sprite.graphics_object->curr_total_n_shape = 7;
   sprite.graphics_object->field_7C = 7;
@@ -645,13 +646,12 @@ static int controller_button_for_binding(int binding)
   }
 }
 
-int universal_buttons_draw_field_prompt(int button, int x, int y, float z)
+static int button_for_action(prompt_atlas atlas, int button)
 {
-  prompt_sprite sprite;
-  if (current_prompt_atlas == prompt_atlas::keyboard)
+  if (atlas == prompt_atlas::keyboard)
   {
     if (!ff7_externals.input_mapping || button < 0 || button >= 25)
-      return x;
+      return -1;
     button = ff7_externals.input_mapping[button];
   }
   else if (ff7_externals.config_input_mapping)
@@ -668,10 +668,18 @@ int universal_buttons_draw_field_prompt(int button, int x, int y, float z)
         button = configured_button;
     }
   }
+  return button;
+}
+
+int universal_buttons_draw_field_prompt(int button, int x, int y, float z)
+{
+  prompt_sprite sprite;
+  button = button_for_action(current_prompt_atlas, button);
   if (!sprite_for_button(current_prompt_atlas, button, &sprite))
     return x;
 
-  if (!submit_prompt_quad(sprite, (float)x, (float)y - prompt_size / 4.0f, z, prompt_size))
+  if (!submit_prompt_quad(sprite, (float)x, (float)y - prompt_size / 4.0f,
+      z, prompt_size, prompt_size))
   {
     static bool logged_submit_failure = false;
     if (!logged_submit_failure)
@@ -682,6 +690,45 @@ int universal_buttons_draw_field_prompt(int button, int x, int y, float z)
     return x;
   }
   return x + prompt_size;
+}
+
+int universal_buttons_submit_chocobo_quad(chocobo_ui_quad* quad)
+{
+  chocobo_ui_quad* quads = *ff7_externals.chocobo_betting_ui_quads;
+  const bool left = quad == quads + 6;
+  if (!left && quad != quads + 7)
+    return ff7_externals.chocobo_submit_ui_quad(quad);
+
+  prompt_atlas atlas = select_prompt_atlas();
+  if (!resource_available(atlas))
+    atlas = prompt_atlas::playstation;
+  prompt_sprite sprite;
+  if (!sprite_for_button(atlas, button_for_action(atlas, left ? 2 : 3), &sprite))
+    return ff7_externals.chocobo_submit_ui_quad(quad);
+
+  const int scale = *ff7_externals.chocobo_ui_scale;
+  // The 2026 renderer retains the label rectangle and moves R1 eight screen pixels left.
+  const float x = scale * quad->corners[0][0] + *ff7_externals.chocobo_ui_x_offset
+    - (left ? 0 : 8);
+  const float y = scale * quad->corners[0][1] + *ff7_externals.chocobo_ui_y_offset
+    + *ff7_externals.chocobo_ui_y_adjustment;
+  if (!submit_prompt_quad(sprite, x, y, quad->z, scale * quad->width, scale * quad->height))
+  {
+    ffnx_warning("Failed to submit Chocobo %s button prompt\n", left ? "L1" : "R1");
+    return ff7_externals.chocobo_submit_ui_quad(quad);
+  }
+  for (int i = 0; i < 4; ++i)
+    sprite.graphics_object->vertex_transform[i].color = { 255, 255, 255, 128 };
+  return 0;
+}
+
+void universal_buttons_flush_chocobo(ff7_game_obj* game_object)
+{
+  ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(0, game_object);
+  ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
+  universal_buttons_draw(game_object);
+  universal_buttons_reset();
+  ff7_externals.chocobo_end_scene_660EEB(game_object);
 }
 
 int universal_buttons_draw_menu_prompt(int button, int x, int y, float z)
@@ -697,7 +744,7 @@ int universal_buttons_draw_menu_prompt(int button, int x, int y, float z)
     return x;
 
   if (!submit_prompt_quad(sprite, (float)x, (float)y - config_prompt_size / 4.0f,
-      z, config_prompt_size))
+      z, config_prompt_size, config_prompt_size))
     return x;
   return x + config_prompt_size;
 }
@@ -752,7 +799,7 @@ int universal_buttons_draw_config_binding(int x, int y, byte* buffer, byte color
     return draw_text();
 
   const int size = config_prompt_size;
-  if (!submit_prompt_quad(sprite, (float)x, (float)y - size / 4.0f, z, size))
+  if (!submit_prompt_quad(sprite, (float)x, (float)y - size / 4.0f, z, size, size))
     return draw_text();
   return x + size;
 }

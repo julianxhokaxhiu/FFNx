@@ -143,6 +143,23 @@ enum class cmd_id
 	CMD_POISONTICK = 0x23
 };
 
+struct chocobo_ui_quad
+{
+	uint32_t texture;
+	bgra_byte color;
+	uint16_t u, v;
+	float normalized_u, normalized_v;
+	uint16_t corners[4][2];
+	float z;
+	int width, height;
+	int palette;
+	float normalized_width, normalized_height;
+	float texture_width, texture_height;
+	int unused;
+};
+
+static_assert(sizeof(chocobo_ui_quad) == 72);
+
 // internal structure for menu sprites (global values, may not be a structure at all)
 struct menu_objects
 {
@@ -3813,6 +3830,13 @@ struct ff7_externals
 	uint32_t chocobo_name_text_call_776B76;
 	uint32_t chocobo_gift_text_call_addresses[3];
 	int (*chocobo_draw_text_77941B)(byte*, int, int, int);
+	uint32_t chocobo_betting_ui_quad_call;
+	int (*chocobo_submit_ui_quad)(chocobo_ui_quad*);
+	chocobo_ui_quad** chocobo_betting_ui_quads;
+	int* chocobo_ui_scale;
+	int* chocobo_ui_x_offset;
+	int* chocobo_ui_y_offset;
+	int* chocobo_ui_y_adjustment;
 	void(*chocobo_switch_mode_76DB33)(void* ff7_game_obj);
 	void(*generic_submit_quad_graphics_object_671D2A)(int, int, int, int, int, int, float, DWORD*) ;
 	byte* chocobo_fade_quad_data_97A498;

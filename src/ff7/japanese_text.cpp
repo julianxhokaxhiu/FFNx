@@ -1585,6 +1585,8 @@ void chocobo_end_scene_with_jafonts(ff7_game_obj* game_object)
   ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
   draw_jafonts(game_object);
   reset_jafonts();
+  universal_buttons_draw(game_object);
+  universal_buttons_reset();
   ff7_externals.chocobo_end_scene_660EEB(game_object);
 }
 
