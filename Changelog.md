@@ -18,6 +18,7 @@
 
 ## FF8 Remastered
 
+- Core: Fix Dollet boat texture
 - Core: Fix Carbuncle summon textures
 - Core: Fìx `magic/` textue replacement with upscaled ones from main.zzz
 
