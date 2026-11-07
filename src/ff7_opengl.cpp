@@ -30,6 +30,7 @@
 #include "ff7_data.h"
 #include "ff7/widescreen.h"
 #include "ff7/time.h"
+#include "ff7/starfield.h"
 #include "ff7/battle/defs.h"
 #include "ff7/field/defs.h"
 #include "ff7/world/defs.h"
@@ -144,6 +145,8 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	common_externals.make_pixelformat = game_object->externals->make_pixelformat;
 
 	ff7_data(game_object);
+
+	ff7::starfield::init(game_object);
 
 	replace_function(ff7_externals.input_query_repeatable, ff7_query_repeatable_input);
 

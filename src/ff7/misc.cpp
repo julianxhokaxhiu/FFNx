@@ -25,6 +25,7 @@
 #include <unordered_map>
 
 #include "defs.h"
+#include "starfield.h"
 #include "battle/camera.h"
 #include "field/camera.h"
 #include "world/camera.h"
@@ -859,6 +860,9 @@ void ff7_limit_fps()
 			*ff7_externals.submarine_minigame_status = 1;
 		break;
 	}
+
+	if (ff7_fps_limiter >= FPS_LIMITER_60FPS && ff7::starfield::is_active())
+		framerate = 60.0f;
 
 	framerate *= gamehacks.getCurrentSpeedhack();
 	double frame_time = game_object->countspersecond / framerate;

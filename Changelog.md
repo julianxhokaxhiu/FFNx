@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.25.2...master
 
+## FF7
+
+- Core: Add support for the PSX Star Field loop in post-credits, instead of closing the game. Thanks to the https://github.com/Xeeynamo/ff7-decomp project for the PSX source.
+
 # 1.25.2
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.25.1...1.25.2

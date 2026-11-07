@@ -68,6 +68,7 @@ We are always open for contributions via PRs, and in case you want to join the c
 - SFX volume change applies in real-time, instead of requiring a game reload
 - Support for animated textures (like Aerith's waterfall, light fading, etc.)
 - Support for soft-reset while you're playing, just like the PSX
+- Post-credits starfield with The Prelude music ( thanks to the https://github.com/Xeeynamo/ff7-decomp project for the PSX source )
 - Support for battle toggle (enable/disable at your own pleasure)
 - **Voice acting**! [Echo-S](https://www.tsunamods.com/echo-s-7/) was the first mod to take advantage of this!
 - Support for external SFX audio effects
