@@ -9,6 +9,11 @@
 - Core: Fix KAWAI TRNSP behavior when using lighting on the GPU, instead of on the CPU, preventing a double lighting bug
 - Cheats: Add support to skip credits using the Skip FMV cheat shortcut
 
+## FF8
+
+- Renderer: Preserve PSX texture-page coordinates, fixing battle effects sampling past their image edges, including Tonberry's Doink bubble ( https://github.com/julianxhokaxhiu/FFNx/issues/1073 )
+- Renderer: Restore world-map UV precision automatically without affecting unrelated polygons. The `ff8_fix_uv_coords_precision` option is no longer needed and is ignored.
+
 # 1.25.2
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.25.1...1.25.2

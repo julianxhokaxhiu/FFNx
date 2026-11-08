@@ -934,7 +934,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				if (ff8)
 				{
 					vram_init();
-					if (ff8_fix_uv_coords_precision) uv_patch_init();
+					uv_patch_init();
 					vibration_init();
 					if (ff8_remastered_edition) {
 						ff8_remaster_init();

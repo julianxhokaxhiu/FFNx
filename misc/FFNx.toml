@@ -779,10 +779,6 @@ ff7_advanced_blinking = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff8_worldmap_internal_highres_textures = true
 
-# Attempt to fix texturing holes by restoring full precision from the game data
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ff8_fix_uv_coords_precision = true
-
 # Use icon textures for gamepad buttons instead of "B1", "B2", etc...
 # By default the PS1 icons are used from the game data.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
