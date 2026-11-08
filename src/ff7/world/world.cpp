@@ -110,31 +110,34 @@ namespace ff7::world
                 {
                     auto* rsd = bone->rsd_array[part].rsd_data;
                     auto* set = rsd ? rsd->polygon_set : nullptr;
-                    // Other world objects already have authored/baked colors and no native light.
-                    if (!set || !set->light || !set->polygon_data || !set->indexed_primitives) continue;
+                    if (!set || !set->polygon_data || !set->indexed_primitives) continue;
                     auto* polygon = set->polygon_data;
                     field::kawai::Effect effect;
                     auto* light = set->light;
-                    const auto ambient = light->global_light_color_abgr_norm;
-                    effect.color = {std::round(ambient.r * 255), std::round(ambient.g * 255), std::round(ambient.b * 255)};
-                    const std::array lights = {light->color_1, light->color_2, light->color_3};
-                    for (size_t i = 0; i < lights.size(); ++i)
+                    gte::Matrix directions{};
+                    if (light)
                     {
-                        const auto point = lights[i]->point;
-                        // Undo the native world-axis conversion before lighting the original model pose.
-                        effect.light_directions[i] = {-point.x, point.z, -point.y};
-                        const auto color = lights[i]->d3dcol;
-                        effect.light_colors[i] = {std::round(color.r * 255), std::round(color.g * 255), std::round(color.b * 255)};
+                        const auto ambient = light->global_light_color_abgr_norm;
+                        effect.color = {std::round(ambient.r * 255), std::round(ambient.g * 255), std::round(ambient.b * 255)};
+                        const std::array lights = {light->color_1, light->color_2, light->color_3};
+                        for (size_t i = 0; i < lights.size(); ++i)
+                        {
+                            const auto point = lights[i]->point;
+                            // Undo the native world-axis conversion before lighting the original model pose.
+                            effect.light_directions[i] = {-point.x, point.z, -point.y};
+                            const auto color = lights[i]->d3dcol;
+                            effect.light_colors[i] = {std::round(color.r * 255), std::round(color.g * 255), std::round(color.b * 255)};
+                        }
+                        gte::Affine bind_pose;
+                        for (size_t column = 0; column < 3; ++column)
+                        {
+                            vector3<float> axis = {posed.m[0][column], posed.m[1][column], posed.m[2][column]};
+                            normalize_vector(&axis);
+                            const auto fixed = field::kawai::fixed_normal({axis.x, axis.y, axis.z});
+                            for (size_t row = 0; row < 3; ++row) bind_pose.rotation[column][row] = fixed[row];
+                        }
+                        directions = gte::compose({field::kawai::light_directions(effect), {}}, bind_pose).rotation;
                     }
-                    gte::Affine bind_pose;
-                    for (size_t column = 0; column < 3; ++column)
-                    {
-                        vector3<float> axis = {posed.m[0][column], posed.m[1][column], posed.m[2][column]};
-                        normalize_vector(&axis);
-                        const auto fixed = field::kawai::fixed_normal({axis.x, axis.y, axis.z});
-                        for (size_t row = 0; row < 3; ++row) bind_pose.rotation[column][row] = fixed[row];
-                    }
-                    const auto directions = gte::compose({field::kawai::light_directions(effect), {}}, bind_pose).rotation;
                     for (uint32_t group = 0; group < set->numgroups; ++group)
                     {
                         auto* primitive = set->indexed_primitives[group];
@@ -150,11 +153,14 @@ namespace ff7::world
                             if (polygon->normaldata)
                                 lighting.normals[i] = polygon->normaldata[polygon->has_normindextable ?
                                     polygon->normindextabledata[index] : index];
-                            const auto& normal = lighting.normals[i];
-                            const auto source = polygon->vertexcolordata ? polygon->vertexcolordata[index] :
-                                primitive->vertices[i].color.color;
-                            lighting.colors.push_back(field::kawai::light_color(source, effect,
-                                field::kawai::fixed_normal({normal.x, normal.y, normal.z}), directions));
+                            if (light)
+                            {
+                                const auto& normal = lighting.normals[i];
+                                const auto source = polygon->vertexcolordata ? polygon->vertexcolordata[index] :
+                                    primitive->vertices[i].color.color;
+                                lighting.colors.push_back(field::kawai::light_color(source, effect,
+                                    field::kawai::fixed_normal({normal.x, normal.y, normal.z}), directions));
+                            }
                         }
                         model_lighting.emplace(primitive, std::move(lighting));
                     }
@@ -197,15 +203,19 @@ namespace ff7::world
         if (found == model_lighting.end()) return false;
         auto& lighting = found->second;
         std::vector<nvertex> vertices(primitive->vertices, primitive->vertices + primitive->vertexcount);
-        const auto tint = lighting.light->color;
-        for (size_t i = 0; i < vertices.size(); ++i)
+        // Static objects use their authored colors, including any native scripted changes.
+        if (lighting.light)
         {
-            vertices[i].color.color = lighting.colors[i];
-            if (lighting.light->flags & 4)
+            const auto tint = lighting.light->color;
+            for (size_t i = 0; i < vertices.size(); ++i)
             {
-                vertices[i].color.r = vertices[i].color.r * tint.r / 255;
-                vertices[i].color.g = vertices[i].color.g * tint.g / 255;
-                vertices[i].color.b = vertices[i].color.b * tint.b / 255;
+                vertices[i].color.color = lighting.colors[i];
+                if (lighting.light->flags & 4)
+                {
+                    vertices[i].color.r = vertices[i].color.r * tint.r / 255;
+                    vertices[i].color.g = vertices[i].color.g * tint.g / 255;
+                    vertices[i].color.b = vertices[i].color.b * tint.b / 255;
+                }
             }
         }
         const bool saved_world = current_state.psx_world;
