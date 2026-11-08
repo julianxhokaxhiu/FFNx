@@ -90,6 +90,11 @@ the built-in defaults remain active. The same overrides are available to the Jap
   needs its own solution (the Arabic project keeps default names / renames via save editing).
 - **Window auto-resize**: the shared field-window autosizer uses `FFNx.multibyte.toml` while this
   mode is active. Standard single-byte editions instead read the active game's `window.bin` metrics.
+  Set `ff7_field_autosize_text_box = 2` to fit both width and height to the text.
+  Mode `1` (also `true`) resizes width only and preserves the authored height in all editions.
+  Mode `0` (also `false`)
+  disables autosizing. Autosized dimensions are limited to the screen, and explicit page
+  breaks remain intact.
 - **Text conversion**: FFNx only draws bytes. Reshaping/bidi (Arabic), charmap design, and
   re-encoding game files remain the translation pipeline's job.
 

@@ -82,8 +82,8 @@ static void autosize_text_box_window(short WINDOW_ID, byte* buffer_text,
 
 	int16_t W = 0, H = 0;
 	auto_resize_text_box(WINDOW_ID, buffer_text, &W, &H);
-	if (!ff7_japanese_edition)
-		H = std::min(H, state.authored_height);
+	if (ff7_field_autosize_text_box == 1)
+		H = state.authored_height;
 	window.window_width = std::clamp<int16_t>(W, 0, 320);
 	window.window_height = std::clamp<int16_t>(H, 0, 224);
 	state.applied_width = window.window_width;

@@ -89,7 +89,7 @@ external_music_ext = "akb"
 5. Rename `ff7_jp` to `ff7_jp.exe`
 6. Update `FFNx.toml` flags with these values:
 ```toml
-ff7_field_autosize_text_box = true
+ff7_field_autosize_text_box = 2
 ```
 7. **ONLY FOR STEAM:** Create the file in `ff7/workingdir/steam_appid.txt` with this content `3837340` inside and save it
 8. Run `ff7_ja.exe` and enjoy!

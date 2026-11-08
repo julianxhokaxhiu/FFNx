@@ -129,7 +129,7 @@ std::vector<std::string> disable_animated_textures_on_field;
 long ff7_fps_limiter;
 bool ff7_footsteps;
 bool ff7_field_center;
-bool ff7_field_autosize_text_box;
+long ff7_field_autosize_text_box;
 bool use_sdl_gamepad;
 bool ff7_japanese_text;
 bool enable_analogue_controls;
@@ -300,7 +300,7 @@ void read_cfg()
 	ff7_fps_limiter = config["ff7_fps_limiter"].value_or(FPS_LIMITER_DEFAULT);
 	ff7_footsteps = config["ff7_footsteps"].value_or(false);
 	ff7_field_center = config["ff7_field_center"].value_or(true);
-	ff7_field_autosize_text_box = config["ff7_field_autosize_text_box"].value_or(false);
+	ff7_field_autosize_text_box = config["ff7_field_autosize_text_box"].value_or(0);
 	ff7_multibyte_font = config["ff7_multibyte_font"].value_or(false);
 	use_sdl_gamepad = config["use_sdl_gamepad"].value_or(false);
 	ff7_japanese_text = config["ff7_japanese_text"].value_or(false);

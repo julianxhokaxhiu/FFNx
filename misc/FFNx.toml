@@ -738,9 +738,13 @@ ff7_field_center = true
 
 # FIELD field autosize text box
 #~~~~~~~~~~~~~~~~~~~~~~~~
-# This flag will automatically size text boxes in FIELD mode.
+# Automatically size dialogue text boxes in FIELD and WORLDMAP modes.
+# 0: No autosize; use the authored window dimensions.
+# 1: Resize width only; preserve the authored height in all editions.
+# 2: Resize both width and height to fit the text, ignoring the authored dimensions.
+# Autosized windows remain limited to the screen dimensions.
 #~~~~~~~~~~~~~~~~~~~~~~~~
-ff7_field_autosize_text_box = false
+ff7_field_autosize_text_box = 0
 
 # Native Japanese edition
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
