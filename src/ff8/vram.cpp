@@ -41,6 +41,7 @@
 #include "./file.h"
 
 #include <shlwapi.h>
+#include <algorithm>
 #include <unordered_map>
 #include <vector>
 
@@ -1769,6 +1770,50 @@ static constexpr uint16_t GILGAMESH_FIRST_EFFECT_ID = FF8BattleEffect::Gilgamesh
 static constexpr uint16_t GILGAMESH_LAST_EFFECT_ID = FF8BattleEffect::GilgameshExcalipoor;
 static constexpr int GILGAMESH_G_FILE_ID = 751;
 
+// Battle model files rebuilt from Direct mode section chunks (<name>.chunk.N, N = section number)
+static constexpr int FF8_BATTLE_FIRST_C0M_FILE_ID = 166; // c0m000.dat
+static constexpr int FF8_BATTLE_LAST_C0M_FILE_ID = 309; // c0m143.dat
+static constexpr uint32_t FF8_BATTLE_C0M_SECTION_COUNT = 11;
+static constexpr uint32_t FF8_BATTLE_MAX_CHUNK_SECTION_COUNT = 0x10;
+
+// dXcNNN.dat (character body) or dXwNNN.dat (weapon)
+static bool ff8_battle_is_character_file(const char *file_name)
+{
+	return file_name != nullptr && strlen(file_name) == 10
+		&& toupper(file_name[0]) == 'D' && (toupper(file_name[2]) == 'C' || toupper(file_name[2]) == 'W')
+		&& stricmp(file_name + 6, ".DAT") == 0;
+}
+
+// Number of sections to rebuild from chunks, 0 when the file does not take chunks.
+// The header is [section count][section offsets][end offset], sections packed right after it.
+static uint32_t ff8_battle_chunk_section_count(int fileId, const void *data)
+{
+	const uint32_t *header = static_cast<const uint32_t *>(data);
+	const uint32_t section_count = header[0];
+
+	if (fileId >= FF8_BATTLE_FIRST_C0M_FILE_ID && fileId <= FF8_BATTLE_LAST_C0M_FILE_ID)
+	{
+		return section_count == FF8_BATTLE_C0M_SECTION_COUNT ? section_count : 0;
+	}
+
+	if (!ff8_battle_is_character_file(ff8_externals.battle_filenames[fileId])
+		|| section_count == 0 || section_count > FF8_BATTLE_MAX_CHUNK_SECTION_COUNT
+		|| header[1] != (section_count + 2) * sizeof(uint32_t))
+	{
+		return 0;
+	}
+
+	for (uint32_t sectionId = 0; sectionId < section_count; ++sectionId)
+	{
+		if (header[sectionId + 2] < header[sectionId + 1])
+		{
+			return 0;
+		}
+	}
+
+	return section_count;
+}
+
 int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callback)
 {
 	if (trace_all || trace_files) ffnx_trace("%s: %d => %s\n", __func__, fileId, ff8_externals.battle_filenames[fileId]);
@@ -1851,22 +1896,24 @@ int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callba
 		}
 	}
 
-	// c0mXXX.dat files (battle ennemies)
-	if (fileId >= 166 && fileId <= 309 && *(uint32_t *)data == 11)
+	// c0mXXX.dat (battle enemies), dXcNNN.dat (character bodies) and dXwNNN.dat (weapons):
+	// each section that has a chunk file replaces the loaded one
+	const uint32_t section_count = ff8_battle_chunk_section_count(fileId, data);
+	if (section_count > 0)
 	{
 		char chunk_file[1024]{0};
-		byte *chunks_data[11]{nullptr};
-		long chunks_size[11]{0};
+		std::vector<std::vector<uint8_t>> chunks_data(section_count);
+		std::vector<bool> chunks_found(section_count, false);
 		bool has_chunk = false;
 		char langPath[16] = "/";
 
 		ff8_fs_lang_string(langPath + 1);
 
-		for (int chunkId = 0; chunkId < 11; ++chunkId)
+		for (uint32_t chunkId = 0; chunkId < section_count; ++chunkId)
 		{
 			for (uint8_t lang = 0; lang < 2; lang++)
 			{
-				_snprintf(chunk_file, sizeof(chunk_file), "%s/%s%s/battle/%s.chunk.%i", basedir, direct_mode_path.c_str(), langPath, ff8_externals.battle_filenames[fileId], chunkId + 1);
+				_snprintf(chunk_file, sizeof(chunk_file), "%s/%s%s/battle/%s.chunk.%u", basedir, direct_mode_path.c_str(), langPath, ff8_externals.battle_filenames[fileId], chunkId + 1);
 
 				FILE *fd = fopen(chunk_file, "rb");
 
@@ -1878,13 +1925,12 @@ int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callba
 					long chunk_size = ftell(fd);
 					fseek(fd, 0L, SEEK_SET);
 
-					byte *chunk_data = new byte[chunk_size];
+					chunks_data[chunkId].resize(chunk_size > 0 ? chunk_size : 0);
 
-					fread(chunk_data, sizeof(byte), chunk_size, fd);
+					fread(chunks_data[chunkId].data(), sizeof(uint8_t), chunks_data[chunkId].size(), fd);
 					fclose(fd);
 
-					chunks_data[chunkId] = chunk_data;
-					chunks_size[chunkId] = chunk_size;
+					chunks_found[chunkId] = true;
 					has_chunk = true;
 					break;
 				}
@@ -1899,34 +1945,30 @@ int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callba
 		// Rebuild file content with chunks + original data
 		if (has_chunk)
 		{
+			uint8_t *file_data = static_cast<uint8_t *>(data);
 			uint32_t *toc = (uint32_t *)data + 1;
-			uint32_t cur_data_pos = (11 + 2) * sizeof(uint32_t);
-			byte *old_data = new byte[toc[11]];
-			memcpy(old_data, data, toc[11] * sizeof(byte));
-			uint32_t *old_toc = (uint32_t *)old_data + 1;
+			uint32_t cur_data_pos = (section_count + 2) * sizeof(uint32_t);
+			const std::vector<uint8_t> old_data(file_data, file_data + toc[section_count]);
+			const uint32_t *old_toc = (const uint32_t *)old_data.data() + 1;
 
-			for (int chunkId = 0; chunkId < 11; ++chunkId)
+			for (uint32_t chunkId = 0; chunkId < section_count; ++chunkId)
 			{
-				byte *chunk_data = chunks_data[chunkId];
-				long chunk_size;
 				toc[chunkId] = cur_data_pos;
-				if (chunk_data != nullptr)
+				if (chunks_found[chunkId])
 				{
-					chunk_size = chunks_size[chunkId];
-					memcpy((uint8_t *)data + toc[chunkId], chunk_data, chunks_size[chunkId]);
-					delete[] chunk_data;
+					std::copy(chunks_data[chunkId].begin(), chunks_data[chunkId].end(), file_data + cur_data_pos);
+					cur_data_pos += uint32_t(chunks_data[chunkId].size());
 				}
 				else
 				{
-					chunk_size = old_toc[chunkId + 1] - old_toc[chunkId];
-					memcpy((uint8_t *)data + toc[chunkId], old_data + old_toc[chunkId], chunk_size);
+					std::copy(old_data.begin() + old_toc[chunkId], old_data.begin() + old_toc[chunkId + 1], file_data + cur_data_pos);
+					cur_data_pos += old_toc[chunkId + 1] - old_toc[chunkId];
 				}
-				cur_data_pos += chunk_size;
 			}
 
-			toc[11] = cur_data_pos;
+			toc[section_count] = cur_data_pos;
 
-			delete[] old_data;
+			if (trace_all || trace_direct) ffnx_trace("%s: %s rebuilt from chunks, %u sections, 0x%X bytes (was 0x%X)\n", __func__, ff8_externals.battle_filenames[fileId], section_count, cur_data_pos, uint32_t(old_data.size()));
 		}
 	}
 
