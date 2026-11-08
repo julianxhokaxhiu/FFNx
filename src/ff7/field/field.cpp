@@ -29,6 +29,7 @@
 #include "../../log.h"
 #include "../../patch.h"
 #include "../../common.h"
+#include "../../cfg.h"
 #include "../../gl.h"
 #include "../widescreen.h"
 #include "../defs.h"
@@ -217,6 +218,14 @@ namespace ff7::field
     }
 
     static int (*native_below_level_color)(ff7_hrc_polygon_data*, int16_t*);
+    static void (*native_transparency_lighting)(ff7_light*, ff7_polygon_set*);
+
+    static void transparency_light_polygon_set(ff7_light* light, ff7_polygon_set* polygon_set)
+    {
+        // TRNSP bypasses the driver's lighting callback; GPU lighting must not inherit its CPU bake.
+        if (game_lighting == GAME_LIGHTING_ORIGINAL)
+            native_transparency_lighting(light, polygon_set);
+    }
 
     static void field_draw_kawai_model(uint32_t frame, anim_header* animation, struc_110* instance,
         hrc_data* model, ff7_game_obj* game)
@@ -386,6 +395,9 @@ namespace ff7::field
         const auto splash = get_relative_call((uint32_t)ff7_externals.field_apply_kawai_op_64A070, 0x594);
         native_below_level_color = (int (*)(ff7_hrc_polygon_data*, int16_t*))get_relative_call(splash, 0x27F);
         replace_call_function(splash + 0x27F, splash_below_level_color);
+        const auto transparency_lighting_callback = (uint32_t)ff7_externals.field_apply_kawai_op_64A070 + 0x85C;
+        native_transparency_lighting = (void (*)(ff7_light*, ff7_polygon_set*))get_absolute_value(transparency_lighting_callback, 0);
+        patch_code_dword(transparency_lighting_callback, (DWORD)&transparency_light_polygon_set);
 
         // Fix FF7 2026 rerelease crash after battle
         patch_code_dword((uint32_t)&common_externals.execute_opcode_table[VISI], (DWORD)&opcode_script_VISI);
