@@ -73,6 +73,7 @@
 #include "ff7/defs.h"
 #include "ff7/widescreen.h"
 #include "ff7/time.h"
+#include "ff7/world/world.h"
 #include "ff7/field/defs.h"
 #include "ff7/field/model.h"
 
@@ -1786,6 +1787,9 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 		for (short slot = RendererTextureSlot::TEX_NML; slot < RendererTextureSlot::COUNT; slot++)
 			VRASS(texture_set, ogl.gl_set->additional_textures[slot], 0);
 	}
+
+	if (!ff8 && ff7::world::is_loading_terrain_texture())
+		VRASS(texture_set, ogl.gl_set->world_terrain, true);
 
 	// texture handle array may not have been initialized
 	if(!VREF(texture_set, texturehandle))

@@ -34,6 +34,7 @@
 #include <vector>
 #include <array>
 #include <string>
+#include <unordered_set>
 #include <math.h>
 #include <bx/math.h>
 #include <bx/bx.h>
@@ -442,6 +443,7 @@ private:
     std::array<bgfx::UniformHandle, RendererTextureSlot::COUNT> bgfxTexUniformHandles;
 
     RendererState internalState;
+    std::unordered_set<uint16_t> worldTerrainTextures;
 
     uint16_t viewOffsetX = 0;
     uint16_t viewOffsetY = 0;
@@ -541,7 +543,7 @@ public:
     void setClearFlags(bool doClearColor = false, bool doClearDepth = false);
     void setBackgroundColor(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 0.0f);
 
-    uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool isSrgb = true, bool copyData = true, const char* debugName = nullptr);
+    uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool isSrgb = true, bool copyData = true, const char* debugName = nullptr, bool worldTerrainMipmaps = false);
     uint32_t createTexture(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = true);
     bimg::ImageContainer* createImageContainer(const char* filename, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::Count);
     bimg::ImageContainer* createImageContainer(cmrc::file* file, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::Count);

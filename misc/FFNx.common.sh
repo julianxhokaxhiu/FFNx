@@ -116,10 +116,12 @@ vec3 ApplyPSXWorldAverageDither(vec3 encodedColor)
 	return toLinear(color8 / (8.0 * 255.0));
 }
 
-vec3 ApplyPSXWorldModulation(vec3 lightingColor, vec3 textureColor, float dither, float ditherMode)
+vec3 ApplyPSXWorldModulation(vec3 lightingColor, vec3 textureColor, float dither, float ditherMode, bool fractionalTexture)
 {
 	// Recover the 5-bit texel before modulation; expanded 8-bit colors change the product.
-	vec3 texture5 = floor(floor(toGamma(textureColor) * 255.0 + 0.5) / 8.0);
+	// Generated terrain mips store linear texture5 * 8 and retain filtered fractional values.
+	vec3 texture5 = fractionalTexture ? textureColor * (255.0 / 8.0) :
+		floor(floor(toGamma(textureColor) * 255.0 + 0.5) / 8.0);
 	vec3 lighting8 = floor(saturate(lightingColor) * 255.0 + 0.0001);
 	if (ditherMode > 1.5)
 		return ApplyPSXWorldAverageDither(texture5 * lighting8 / (16.0 * 255.0));

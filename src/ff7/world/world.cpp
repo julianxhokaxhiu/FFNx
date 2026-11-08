@@ -50,6 +50,17 @@ namespace ff7::world
         gte::Matrix terrain_colors = {{{1774, 0, 0}, {1774, 0, 0}, {1774, 0, 0}}};
         bool sky_dither = false;
         bool inside_light_core = false;
+        bool loading_terrain_texture = false;
+
+        ff7_graphics_object* load_terrain_graphics_object(uint32_t type, uint32_t polytype,
+            struc_3* info, char* name, void* context)
+        {
+            const bool saved = loading_terrain_texture;
+            loading_terrain_texture = true;
+            auto* object = ff7_externals._load_texture(type, polytype, info, name, context);
+            loading_terrain_texture = saved;
+            return object;
+        }
 
         int get_distance_to_light_point(vector4<int>* position, world_light_point* point)
         {
@@ -392,10 +403,64 @@ namespace ff7::world
         return sky_dither;
     }
 
+    bool is_loading_terrain_texture()
+    {
+        return loading_terrain_texture;
+    }
+
+    void buildPSXWorldMipmaps(uint8_t* destination, const uint8_t* source, uint32_t width, uint32_t height)
+    {
+        // Linear UNORM stores texture5 * 8: mip interpolation retains fractional PSX texels.
+        for (size_t pixel = 0; pixel < size_t(width) * height; ++pixel)
+        {
+            for (uint32_t channel = 0; channel < 3; ++channel)
+                destination[pixel * 4 + channel] = source[pixel * 4 + channel] & 0xF8;
+            destination[pixel * 4 + 3] = source[pixel * 4 + 3];
+        }
+
+        while (width > 1 || height > 1)
+        {
+            const uint32_t nextWidth = std::max(1u, width / 2);
+            const uint32_t nextHeight = std::max(1u, height / 2);
+            uint8_t* next = destination + size_t(width) * height * 4;
+            if (width > 1 && height > 1 && width % 2 == 0 && height % 2 == 0)
+            {
+                bimg::imageRgba8Downsample2x2(next, width, height, 1, width * 4, nextWidth * 4, destination, false);
+            }
+            else
+            {
+                // bimg's 2x2 helper does not handle one-dimensional tails or odd-sized edges.
+                const uint64_t area = uint64_t(width) * height;
+                for (uint32_t y = 0; y < nextHeight; ++y)
+                    for (uint32_t x = 0; x < nextWidth; ++x)
+                    {
+                        uint64_t sums[4] = {};
+                        for (uint32_t sy = y * height / nextHeight; sy < ((y + 1) * height + nextHeight - 1) / nextHeight; ++sy)
+                            for (uint32_t sx = x * width / nextWidth; sx < ((x + 1) * width + nextWidth - 1) / nextWidth; ++sx)
+                            {
+                                const uint32_t weightX = std::min((x + 1) * width, (sx + 1) * nextWidth) - std::max(x * width, sx * nextWidth);
+                                const uint32_t weightY = std::min((y + 1) * height, (sy + 1) * nextHeight) - std::max(y * height, sy * nextHeight);
+                                const uint8_t* pixel = destination + (size_t(sy) * width + sx) * 4;
+                                for (uint32_t channel = 0; channel < 4; ++channel)
+                                    sums[channel] += uint64_t(pixel[channel]) * weightX * weightY;
+                            }
+                        for (uint32_t channel = 0; channel < 4; ++channel)
+                            next[(size_t(y) * nextWidth + x) * 4 + channel] = uint8_t((sums[channel] + area / 2) / area);
+                    }
+            }
+            destination = next;
+            width = nextWidth;
+            height = nextHeight;
+        }
+    }
+
     void world_hook_init()
     {
         if (!enable_worldmap_external_mesh)
         {
+            // Texture upload precedes graphics-object registration; exclude the snow-particle load.
+            replace_call_function(ff7_externals.world_init_load_map_meshes_graphics_objects_75A283 + 0x181, load_terrain_graphics_object);
+            replace_call_function(ff7_externals.world_init_load_map_meshes_graphics_objects_75A283 + 0x25B, load_terrain_graphics_object);
             replace_call_function(ff7_externals.world_mode_loop_sub_74DB8C + 0x3FA, update_terrain_lighting);
             replace_call_function((uint32_t)ff7_externals.world_update_terrain_lighting + 0x147, set_terrain_light_color);
             replace_call_function((uint32_t)ff7_externals.world_update_terrain_lighting + 0x67, get_distance_to_light_point);

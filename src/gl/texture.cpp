@@ -86,7 +86,10 @@ void gl_upload_texture(struct texture_set *texture_set, uint32_t palette_index, 
 		RendererTextureType(format),
 		true,
 		true,
-		debugName.empty() ? nullptr : debugName.c_str()
+		debugName.empty() ? nullptr : debugName.c_str(),
+		!ff8 && !VREF(texture_set, ogl.external) &&
+			VREF(tex_header, version) != FB_TEX_VERSION &&
+			VREF(texture_set, ogl.gl_set->world_terrain)
 	);
 
 	gl_replace_texture(

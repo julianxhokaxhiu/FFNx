@@ -176,7 +176,7 @@ void main()
 
             color.rgb = toLinear(toGamma(v_color0.rgb) * texture_color.rgb);
         }
-        else if (isPSXWorld) color.rgb = ApplyPSXWorldModulation(v_color0.rgb, texture_color.rgb, worldDither, PSXWorldDither.w);
+        else if (isPSXWorld) color.rgb = ApplyPSXWorldModulation(v_color0.rgb, texture_color.rgb, worldDither, PSXWorldDither.w, WMFlags.z > 1.5);
         else color.rgb *= texture_color.rgb;
 
         // multiply by v_color0

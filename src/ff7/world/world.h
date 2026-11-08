@@ -34,6 +34,8 @@ struct polygon_data;
 namespace ff7::world
 {
     bool is_terrain_graphics_object(const graphics_object* object);
+    bool is_loading_terrain_texture();
+    void buildPSXWorldMipmaps(uint8_t* destination, const uint8_t* source, uint32_t width, uint32_t height);
     bool is_sky_dithering_enabled();
     void forget_model_lighting(const indexed_primitive* primitive);
     bool draw_model_with_psx_lighting(indexed_primitive* primitive, polygon_data* polygon, uint32_t clip);
