@@ -219,11 +219,14 @@ namespace ff7::world
             }
         }
         const bool saved_world = current_state.psx_world;
+        const bool saved_radar = current_state.psx_world_radar;
         current_state.psx_world = true;
+        current_state.psx_world_radar = false;
         gl_draw_indexed_primitive(primitive->primitivetype, primitive->vertextype, vertices.data(),
             lighting.normals.data(), primitive->vertexcount, primitive->indices,
             primitive->indexcount, nullptr, polygon->boundingboxdata, nullptr, clip, true);
         current_state.psx_world = saved_world;
+        current_state.psx_world_radar = saved_radar;
         return true;
     }
 

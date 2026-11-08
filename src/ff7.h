@@ -3765,6 +3765,7 @@ struct ff7_externals
 	void (*world_wm3_snowstorm_draw_all_74C589)();
 	ff7_graphics_object** world_terrain_graphics_objects;
 	uint32_t* world_terrain_graphics_object_count;
+	ff7_graphics_object** world_radar_graphics_object;
 	int16_t (*world_update_terrain_lighting)(vector4<int>*);
 	int (*world_set_terrain_light_color)(const int16_t*);
 	uint32_t world_draw_all_3d_model_74C6B0;

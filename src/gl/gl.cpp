@@ -183,6 +183,7 @@ void gl_load_state(struct driver_state *src, bool bind_textures)
 	current_state.kawai_effect = src->kawai_effect;
 	current_state.kawai_camera_matrix = src->kawai_camera_matrix;
 	current_state.psx_world = src->psx_world;
+	current_state.psx_world_radar = src->psx_world_radar;
 	common_setviewport(src->viewport[0], src->viewport[1], src->viewport[2], src->viewport[3], 0);
 	gl_set_blend_func(src->blend_mode);
 	internal_set_renderstate(V_WIREFRAME, src->wireframe, 0);
@@ -263,21 +264,26 @@ namespace
 	struct PSXWorldDrawScope
 	{
 		bool saved = current_state.psx_world;
+		bool saved_radar = current_state.psx_world_radar;
 
 		explicit PSXWorldDrawScope(graphics_object* object)
 		{
 			// Native z-sorting outlives the world draw function; identify terrain at the actual draw.
-			// FFNx's own deferred draws have no object and already carry the saved terrain flag.
+			// FFNx's own deferred draws have no object and already carry the saved world flags.
 			if (object)
 			{
-				current_state.psx_world = !ff8 && !enable_worldmap_external_mesh &&
-					getmode_cached()->driver_mode == MODE_WORLDMAP && ff7::world::is_terrain_graphics_object(object);
+				const bool vanilla_world = !ff8 && !enable_worldmap_external_mesh &&
+					getmode_cached()->driver_mode == MODE_WORLDMAP;
+				current_state.psx_world = vanilla_world && ff7::world::is_terrain_graphics_object(object);
+				current_state.psx_world_radar = vanilla_world &&
+					static_cast<const void*>(object) == *ff7_externals.world_radar_graphics_object;
 			}
 		}
 
 		~PSXWorldDrawScope()
 		{
 			current_state.psx_world = saved;
+			current_state.psx_world_radar = saved_radar;
 		}
 	};
 

@@ -86,6 +86,7 @@ uniform vec4 kawaiColorOffset;
 
 #define isFogEnabled WMFlags.y > 0.0
 #define isPSXWorld WMFlags.z > 0.0
+#define isPSXWorldRadar WMFlags.w > 0.0
 
 void main()
 {
@@ -161,6 +162,9 @@ void main()
         // multiply by v_color0
         if (modulateAlpha) color.a *= texture_color.a;
         else color.a = texture_color.a;
+
+        // PSX radar texels all use one 50% blend, including semitransparent black.
+        if (isPSXWorldRadar) color.a = 0.5;
 
     } //end if (isTexture)
 
