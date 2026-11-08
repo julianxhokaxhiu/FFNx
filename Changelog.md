@@ -6,6 +6,7 @@
 
 - Core: Add support for the PSX Star Field loop in post-credits, instead of closing the game. Thanks to the https://github.com/Xeeynamo/ff7-decomp project for the PSX source.
 - Cheats: Add support to skip credits using the Skip FMV cheat shortcut
+- Renderer: Restore PSX-style ambient lighting and texture brightness on vanilla world terrain game mode
 
 # 1.25.2
 

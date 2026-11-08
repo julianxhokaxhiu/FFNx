@@ -1255,6 +1255,15 @@ struct hrc_data
 	uint32_t *field_A4;
 };
 
+struct world_model_animation
+{
+	struct anim_header **animations;
+	struct hrc_data *model;
+	uint8_t reserved[0xB0];
+};
+
+static_assert(sizeof(world_model_animation) == 0xB8);
+
 struct hrc_bone
 {
 	char *bone_name;
@@ -3754,7 +3763,13 @@ struct ff7_externals
 	void (*world_wm0_overworld_draw_all_74C179)();
 	void (*world_wm2_underwater_draw_all_74C3F0)();
 	void (*world_wm3_snowstorm_draw_all_74C589)();
+	ff7_graphics_object** world_terrain_graphics_objects;
+	uint32_t* world_terrain_graphics_object_count;
 	uint32_t world_draw_all_3d_model_74C6B0;
+	hrc_data** world_player_hrc;
+	anim_header*** world_player_animations;
+	world_model_animation* world_other_model_animations;
+	int (*world_get_model_count)();
 	uint32_t world_draw_fade_quad_75551A;
 	uint32_t world_sub_75079D;
 	uint32_t world_sub_751EFC;

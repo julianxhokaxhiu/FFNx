@@ -32,6 +32,7 @@
 #include "../matrix.h"
 
 #include "../ff7/widescreen.h"
+#include "../ff7/world/world.h"
 #include "../ff7/field/kawai_eyetx.h"
 #include "external_mesh.h"
 
@@ -181,6 +182,7 @@ void gl_load_state(struct driver_state *src, bool bind_textures)
 
 	current_state.kawai_effect = src->kawai_effect;
 	current_state.kawai_camera_matrix = src->kawai_camera_matrix;
+	current_state.psx_world = src->psx_world;
 	common_setviewport(src->viewport[0], src->viewport[1], src->viewport[2], src->viewport[3], 0);
 	gl_set_blend_func(src->blend_mode);
 	internal_set_renderstate(V_WIREFRAME, src->wireframe, 0);
@@ -258,6 +260,27 @@ void gl_calculate_normals(std::vector<vector3<float>>* pNormals, struct indexed_
 
 namespace
 {
+	struct PSXWorldDrawScope
+	{
+		bool saved = current_state.psx_world;
+
+		explicit PSXWorldDrawScope(graphics_object* object)
+		{
+			// Native z-sorting outlives the world draw function; identify terrain at the actual draw.
+			// FFNx's own deferred draws have no object and already carry the saved terrain flag.
+			if (object)
+			{
+				current_state.psx_world = !ff8 && !enable_worldmap_external_mesh &&
+					getmode_cached()->driver_mode == MODE_WORLDMAP && ff7::world::is_terrain_graphics_object(object);
+			}
+		}
+
+		~PSXWorldDrawScope()
+		{
+			current_state.psx_world = saved;
+		}
+	};
+
 	struct KawaiDrawScope
 	{
 		ff7::field::kawai::Effect effect = current_state.kawai_effect;
@@ -311,6 +334,7 @@ void gl_draw_without_lighting(struct indexed_primitive* ip, struct polygon_data 
 		return;
 	}
 	if (draw_field_facial_texture(ip, polydata, clip)) return;
+	if (!ff8 && ff7::world::draw_model_with_psx_lighting(ip, polydata, clip)) return;
 	
 	static std::vector<vector3<float>> normals;
 	if (!ff8 && current_state.kawai_effect.kind != ff7::field::kawai::Kind::none)
@@ -337,6 +361,7 @@ void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *po
 		return;
 	}
 	if (draw_field_facial_texture(ip, polydata, clip)) return;
+	if (!ff8 && ff7::world::draw_model_with_psx_lighting(ip, polydata, clip)) return;
 
 	static std::vector<vector3<float>> normals;
 	if (!ff8)
@@ -351,6 +376,7 @@ void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *po
 // main rendering routine, draws a set of primitives according to the current render state
 void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, struct vector3<float>* normals, uint32_t vertexcount, WORD *indices, uint32_t count, struct graphics_object *graphics_object, struct boundingbox* boundingbox, struct light_data* lightdata, uint32_t clip, uint32_t mipmap)
 {
+	PSXWorldDrawScope world_scope(graphics_object);
 	FILE *log;
 	uint32_t i;
 	uint32_t mode = getmode_cached()->driver_mode;

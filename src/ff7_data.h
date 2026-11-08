@@ -1359,7 +1359,13 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_wm0_overworld_draw_all_74C179 = (void(*)())get_absolute_value(ff7_externals.world_init_load_map_meshes_graphics_objects_75A283, 0xA7);
 	ff7_externals.world_wm2_underwater_draw_all_74C3F0 = (void(*)())get_absolute_value(ff7_externals.world_init_load_map_meshes_graphics_objects_75A283, 0xDF);
 	ff7_externals.world_wm3_snowstorm_draw_all_74C589 = (void(*)())get_absolute_value(ff7_externals.world_init_load_map_meshes_graphics_objects_75A283, 0x117);
+	ff7_externals.world_terrain_graphics_objects = (ff7_graphics_object**)get_absolute_value((uint32_t)ff7_externals.world_wm0_overworld_draw_all_74C179, 0x9A);
+	ff7_externals.world_terrain_graphics_object_count = (uint32_t*)get_absolute_value((uint32_t)ff7_externals.world_wm0_overworld_draw_all_74C179, 0x7A);
 	ff7_externals.world_draw_all_3d_model_74C6B0 =  get_relative_call((uint32_t)ff7_externals.world_wm0_overworld_draw_all_74C179, 0x155);
+	ff7_externals.world_player_hrc = (hrc_data**)get_absolute_value(ff7_externals.world_draw_all_3d_model_74C6B0, 0x23);
+	ff7_externals.world_player_animations = (anim_header***)get_absolute_value(ff7_externals.world_draw_all_3d_model_74C6B0, 0x37);
+	ff7_externals.world_other_model_animations = (world_model_animation*)get_absolute_value(ff7_externals.world_draw_all_3d_model_74C6B0, 0xEB);
+	ff7_externals.world_get_model_count = (int(*)())get_relative_call(ff7_externals.world_draw_all_3d_model_74C6B0, 0x4E);
 	ff7_externals.world_draw_fade_quad_75551A = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x554);
 	ff7_externals.world_sub_75079D = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x421);
 	ff7_externals.world_sub_751EFC = get_relative_call(ff7_externals.world_sub_75079D, 0x1FB);

@@ -25,18 +25,183 @@
 #include "../../globals.h"
 #include "../../patch.h"
 #include "../../sfx.h"
+#include "../../log.h"
+#include "../../macro.h"
 
 #include "cfg.h"
 #include "defs.h"
 #include "world.h"
 #include "utils.h"
 #include "renderer.h"
+#include "gl.h"
+#include "../field/kawai.h"
+#include "../defs.h"
 
 namespace ff7::world
 {
     World world;
 
     std::map<uint32_t, bool> do_decrease_wait_frames;
+
+    namespace
+    {
+        namespace gte = field::kawai::gte;
+
+        struct ModelLighting
+        {
+            std::vector<uint32_t> colors;
+            std::vector<vector3<float>> normals;
+            ff7_light* light;
+        };
+
+        std::map<const indexed_primitive*, ModelLighting> model_lighting;
+
+        void prepare_model_lighting(hrc_data* model, anim_header* animation)
+        {
+            if (!model || !animation || !animation->num_frames || !animation->anim_frames || !model->bone_list ||
+                (animation->use_matrix_array && !animation->matrix_array))
+            {
+                ffnx_unexpected_once("Cannot prepare world model lighting: missing initial animation, matrices or skeleton\n");
+                return;
+            }
+            auto* frame = &animation->anim_frames[0];
+            const bool alternate = model->field_A4 && *model->field_A4;
+            auto root_animation = alternate ? ff7_externals._root_animation : ff7_externals.root_animation;
+            auto frame_animation = alternate ? ff7_externals._frame_animation : ff7_externals.frame_animation;
+            std::vector<matrix> stack(1);
+            if (animation->use_matrix_array) stack.back() = animation->matrix_array[0];
+            else root_animation(&stack.back(), frame, animation, model);
+            list_node* node;
+            LIST_FOR_EACH(node, model->bone_list)
+            {
+                auto* entry = reinterpret_cast<bone_list_member*>(&node->object);
+                if (entry->bone_type == 2)
+                {
+                    stack.pop_back();
+                    continue;
+                }
+                if (entry->bone_type != 1) continue;
+                auto* bone = &model->bones[entry->bone_index];
+                vector3<float> zero{};
+                auto* rotation = entry->bone_index < animation->num_bones ? &frame->data[entry->bone_index] : &zero;
+                matrix local, posed;
+                if (animation->use_matrix_array)
+                    local = animation->matrix_array[entry->bone_index + 1];
+                else
+                    frame_animation(entry->bone_index, &local, rotation, frame, animation, bone, model);
+                multiply_matrix(&local, &stack.back(), &posed);
+                stack.push_back(posed);
+                if (!bone->rsd_array) continue;
+                for (uint32_t part = 0; part < bone->num_rsd; ++part)
+                {
+                    auto* rsd = bone->rsd_array[part].rsd_data;
+                    auto* set = rsd ? rsd->polygon_set : nullptr;
+                    // Other world objects already have authored/baked colors and no native light.
+                    if (!set || !set->light || !set->polygon_data || !set->indexed_primitives) continue;
+                    auto* polygon = set->polygon_data;
+                    field::kawai::Effect effect;
+                    auto* light = set->light;
+                    const auto ambient = light->global_light_color_abgr_norm;
+                    effect.color = {std::round(ambient.r * 255), std::round(ambient.g * 255), std::round(ambient.b * 255)};
+                    const std::array lights = {light->color_1, light->color_2, light->color_3};
+                    for (size_t i = 0; i < lights.size(); ++i)
+                    {
+                        const auto point = lights[i]->point;
+                        // Undo the native world-axis conversion before lighting the original model pose.
+                        effect.light_directions[i] = {-point.x, point.z, -point.y};
+                        const auto color = lights[i]->d3dcol;
+                        effect.light_colors[i] = {std::round(color.r * 255), std::round(color.g * 255), std::round(color.b * 255)};
+                    }
+                    gte::Affine bind_pose;
+                    for (size_t column = 0; column < 3; ++column)
+                    {
+                        vector3<float> axis = {posed.m[0][column], posed.m[1][column], posed.m[2][column]};
+                        normalize_vector(&axis);
+                        const auto fixed = field::kawai::fixed_normal({axis.x, axis.y, axis.z});
+                        for (size_t row = 0; row < 3; ++row) bind_pose.rotation[column][row] = fixed[row];
+                    }
+                    const auto directions = gte::compose({field::kawai::light_directions(effect), {}}, bind_pose).rotation;
+                    for (uint32_t group = 0; group < set->numgroups; ++group)
+                    {
+                        auto* primitive = set->indexed_primitives[group];
+                        if (!primitive || model_lighting.contains(primitive)) continue;
+                        ModelLighting lighting;
+                        lighting.light = light;
+                        lighting.normals.resize(primitive->vertexcount);
+                        if (!polygon->normaldata) gl_calculate_normals(&lighting.normals, primitive, polygon, nullptr);
+                        const auto offset = polygon->groupdata[group].offvert;
+                        for (uint32_t i = 0; i < primitive->vertexcount; ++i)
+                        {
+                            const auto index = offset + i;
+                            if (polygon->normaldata)
+                                lighting.normals[i] = polygon->normaldata[polygon->has_normindextable ?
+                                    polygon->normindextabledata[index] : index];
+                            const auto& normal = lighting.normals[i];
+                            const auto source = polygon->vertexcolordata ? polygon->vertexcolordata[index] :
+                                primitive->vertices[i].color.color;
+                            lighting.colors.push_back(field::kawai::light_color(source, effect,
+                                field::kawai::fixed_normal({normal.x, normal.y, normal.z}), directions));
+                        }
+                        model_lighting.emplace(primitive, std::move(lighting));
+                    }
+                }
+            }
+        }
+
+        void draw_world_model(uint32_t frame, anim_header* animation, struc_110* instance,
+            hrc_data* model, ff7_game_obj* game)
+        {
+            anim_header** animations = nullptr;
+            if (model == *ff7_externals.world_player_hrc)
+                animations = *ff7_externals.world_player_animations;
+            else
+                for (int i = 0; i < ff7_externals.world_get_model_count(); ++i)
+                {
+                    const auto& entry = ff7_externals.world_other_model_animations[i];
+                    if (entry.model == model)
+                    {
+                        animations = entry.animations;
+                        break;
+                    }
+                }
+            // PSX lights animation zero/frame zero once, not the moving character or camera.
+            prepare_model_lighting(model, animations ? animations[0] : nullptr);
+            reinterpret_cast<void(*)(uint32_t, anim_header*, struc_110*, hrc_data*, ff7_game_obj*)>(
+                ff7_externals.draw_3d_model)(frame, animation, instance, model, game);
+        }
+    }
+
+    void forget_model_lighting(const indexed_primitive* primitive)
+    {
+        model_lighting.erase(primitive);
+    }
+
+    bool draw_model_with_psx_lighting(indexed_primitive* primitive, polygon_data* polygon, uint32_t clip)
+    {
+        if (enable_worldmap_external_mesh || getmode_cached()->driver_mode != MODE_WORLDMAP) return false;
+        const auto found = model_lighting.find(primitive);
+        if (found == model_lighting.end()) return false;
+        auto& lighting = found->second;
+        std::vector<nvertex> vertices(primitive->vertices, primitive->vertices + primitive->vertexcount);
+        const auto tint = lighting.light->color;
+        for (size_t i = 0; i < vertices.size(); ++i)
+        {
+            vertices[i].color.color = lighting.colors[i];
+            if (lighting.light->flags & 4)
+            {
+                vertices[i].color.r = vertices[i].color.r * tint.r / 255;
+                vertices[i].color.g = vertices[i].color.g * tint.g / 255;
+                vertices[i].color.b = vertices[i].color.b * tint.b / 255;
+            }
+        }
+        const bool saved_world = current_state.psx_world;
+        current_state.psx_world = true;
+        gl_draw_indexed_primitive(primitive->primitivetype, primitive->vertextype, vertices.data(),
+            lighting.normals.data(), primitive->vertexcount, primitive->indices,
+            primitive->indexcount, nullptr, polygon->boundingboxdata, nullptr, clip, true);
+        current_state.psx_world = saved_world;
+        return true;
+    }
 
     bool world_has_old_highwind()
     {
@@ -143,8 +308,44 @@ namespace ff7::world
         return encounter_rate / common_frame_multiplier;
     }
 
+    bgra_color_ui8* calculate_terrain_lighting(matrix* light_matrix, vector3<float>* normal,
+        bgra_color* base_color, bgra_color_ui8* source_color, bgra_color_ui8* out_color)
+    {
+        // Vanilla terrain has one directional light. Clamp it before adding ambient, as PSX NCT does.
+        out_color->r = terrain_light_component(
+            light_matrix->_11 * normal->x + light_matrix->_12 * normal->y + light_matrix->_13 * normal->z,
+            light_matrix->_14, base_color->r);
+        out_color->g = terrain_light_component(
+            light_matrix->_21 * normal->x + light_matrix->_22 * normal->y + light_matrix->_23 * normal->z,
+            light_matrix->_24, base_color->g);
+        out_color->b = terrain_light_component(
+            light_matrix->_31 * normal->x + light_matrix->_32 * normal->y + light_matrix->_33 * normal->z,
+            light_matrix->_34, base_color->b);
+        out_color->a = source_color->a;
+        return out_color;
+    }
+
+    bool is_terrain_graphics_object(const graphics_object* object)
+    {
+        for (uint32_t i = 0; i < *ff7_externals.world_terrain_graphics_object_count; ++i)
+        {
+            if (static_cast<const void*>(object) == ff7_externals.world_terrain_graphics_objects[i])
+                return true;
+        }
+        return false;
+    }
+
     void world_hook_init()
     {
+        if (!enable_worldmap_external_mesh)
+        {
+            replace_call_function(ff7_externals.world_draw_all_3d_model_74C6B0 + 0x46, draw_world_model);
+            replace_call_function(ff7_externals.world_draw_all_3d_model_74C6B0 + 0x103, draw_world_model);
+            replace_call_function(ff7_externals.world_submit_draw_bg_meshes_75F68C + 0xEB3, calculate_terrain_lighting);
+            replace_call_function(ff7_externals.world_submit_draw_bg_meshes_75F68C + 0xEDE, calculate_terrain_lighting);
+            replace_call_function(ff7_externals.world_submit_draw_bg_meshes_75F68C + 0xF09, calculate_terrain_lighting);
+        }
+
         if(ff7_fps_limiter == FPS_LIMITER_60FPS)
         {
             // World init

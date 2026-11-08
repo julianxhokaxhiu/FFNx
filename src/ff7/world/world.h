@@ -24,9 +24,19 @@
 #pragma once
 
 #include "matrix.h"
+#include <algorithm>
+#include <cstdint>
+
+struct graphics_object;
+struct indexed_primitive;
+struct polygon_data;
 
 namespace ff7::world
 {
+    bool is_terrain_graphics_object(const graphics_object* object);
+    void forget_model_lighting(const indexed_primitive* primitive);
+    bool draw_model_with_psx_lighting(indexed_primitive* primitive, polygon_data* polygon, uint32_t clip);
+
     enum input_key
     {
         L2 = 1,
@@ -89,6 +99,11 @@ namespace ff7::world
     };
 
     constexpr int INVALID_DIRECTION = 9999;
+
+    inline uint8_t terrain_light_component(float directional, float ambient, float base_color)
+    {
+        return static_cast<uint8_t>(std::clamp(base_color * (ambient + std::max(directional, 0.0f)), 0.0f, 255.0f));
+    }
 
     class World
     {

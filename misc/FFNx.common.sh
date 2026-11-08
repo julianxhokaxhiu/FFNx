@@ -81,6 +81,25 @@ vec3 ApplyKawaiColorOffset(vec3 color, vec4 offset)
 	return color;
 }
 
+vec3 ExpandPSXWorldColor(vec3 color5)
+{
+	return toLinear((color5 * 8.0 + floor(color5 / 4.0)) / 255.0);
+}
+
+vec3 ApplyPSXWorldColorPrecision(vec3 encodedColor)
+{
+	return ExpandPSXWorldColor(floor(saturate(encodedColor) * (255.0 / 8.0) + 0.00001));
+}
+
+vec3 ApplyPSXWorldModulation(vec3 lightingColor, vec3 textureColor)
+{
+	// Recover the 5-bit texel before modulation; expanded 8-bit colors change the product.
+	vec3 texture5 = floor(floor(toGamma(textureColor) * 255.0 + 0.5) / 8.0);
+	vec3 lighting8 = floor(saturate(lightingColor) * 255.0 + 0.0001);
+	vec3 color5 = min(floor(texture5 * lighting8 / 128.0), vec3_splat(31.0));
+	return ExpandPSXWorldColor(color5);
+}
+
 // Fog ---------------------------------------------
 vec3 ApplyWorldFog(vec3 color, vec3 viewPosition)
 {

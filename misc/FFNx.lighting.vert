@@ -69,7 +69,8 @@ void main()
     vec4 color = a_color0;
     vec2 coords = a_texcoord0;
 
-    color.rgb = toLinear(color.bgr);
+    color.rgb = color.bgr;
+    if (WMFlags.z < 0.5) color.rgb = toLinear(color.rgb);
 
     if (isTLVertex)
     {

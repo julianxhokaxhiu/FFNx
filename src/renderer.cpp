@@ -139,10 +139,10 @@ void Renderer::setCommonUniforms()
     internalState.WMFlags = {
         (float)internalState.sphericalWorldRate,
         (float)internalState.bIsFogEnabled,
-        NULL,
+        (float)(!ff8 && !enable_worldmap_external_mesh && current_state.psx_world),
         NULL
     };
-    if (uniform_log) ffnx_trace("%s: WMFlags XYZW(sphericalWorldRate %f, bIsFogEnabled %f, NULL, NULL)\n", __func__, internalState.WMFlags[0], internalState.WMFlags[1]);
+    if (uniform_log) ffnx_trace("%s: WMFlags XYZW(sphericalWorldRate %f, bIsFogEnabled %f, psxWorld %f, NULL)\n", __func__, internalState.WMFlags[0], internalState.WMFlags[1], internalState.WMFlags[2]);
 
     internalState.FSMovieFlags = {
         (float)internalState.bIsMovieColorMatrix,

@@ -34,6 +34,7 @@
 #include "defs.h"
 #include "widescreen.h"
 #include "field/model.h"
+#include "world/world.h"
 
 #include "../external_mesh.h"
 
@@ -47,6 +48,7 @@ void destroy_d3d2_indexed_primitive(struct indexed_primitive *ip)
 {
 	if(!ip) return;
 
+	ff7::world::forget_model_lighting(ip);
 	if(ip->vertices) external_free(ip->vertices);
 	if(ip->indices) external_free(ip->indices);
 

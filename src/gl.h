@@ -70,6 +70,7 @@ struct driver_state
 	struct matrix d3dprojection_matrix;
 	ff7::field::kawai::Effect kawai_effect;
 	struct matrix kawai_camera_matrix;
+	bool psx_world;
 };
 
 static_assert(std::is_trivially_copyable_v<driver_state>);
