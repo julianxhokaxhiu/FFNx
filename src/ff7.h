@@ -3798,6 +3798,7 @@ struct ff7_externals
 	uint32_t world_culling_bg_meshes_75F263;
 	uint32_t world_submit_draw_bg_meshes_75F68C;
 	uint32_t world_compute_skybox_data_754100;
+	int* world_sky_horizon;
 	uint32_t world_submit_draw_clouds_and_meteor_7547A6;
 	int (*sub_74C9A5)();
 	int* is_meteor_flag_on_E2AAE4;

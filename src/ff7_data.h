@@ -1380,6 +1380,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_culling_bg_meshes_75F263 = get_relative_call(ff7_externals.world_sub_751EFC, 0x7C6);
 	ff7_externals.world_submit_draw_bg_meshes_75F68C = get_relative_call(ff7_externals.world_sub_751EFC, 0x7FD);
 	ff7_externals.world_compute_skybox_data_754100 = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x537);
+	ff7_externals.world_sky_horizon = (int*)get_absolute_value(ff7_externals.world_compute_skybox_data_754100, 0xDA);
 	ff7_externals.world_submit_draw_clouds_and_meteor_7547A6 = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x547);
 	ff7_externals.world_sub_75F0AD = get_relative_call(ff7_externals.world_sub_751EFC, 0x551);
 	ff7_externals.world_sub_75042B = get_relative_call(ff7_externals.world_compute_3d_model_data_76328F, 0x37D);

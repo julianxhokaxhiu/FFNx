@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <algorithm>
+#include <array>
 
 #include "../renderer.h"
 #include "../cfg.h"
@@ -407,6 +408,44 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 	{
 		ffnx_unexpected_once("vertextype > TLVERTEX\n");
 		return;
+	}
+
+	std::array<nvertex, 8> sky_vertices;
+	std::array<WORD, 18> sky_indices = {0, 1, 2, 1, 3, 2, 2, 3, 4, 3, 5, 4, 4, 5, 6, 5, 7, 6};
+	if (!ff8 && !enable_worldmap_external_mesh && (widescreen_enabled || enable_uncrop) &&
+		mode == MODE_WORLDMAP && graphics_object &&
+		static_cast<const void*>(graphics_object) == *ff7_externals.world_sky_graphics_object)
+	{
+		const int horizon = *ff7_externals.world_sky_horizon;
+		if (vertextype != TLVERTEX || vertexcount != 4 || count != 6 || normals || horizon <= -24)
+		{
+			ffnx_unexpected_once("Unexpected FF7 world sky gradient geometry\n");
+		}
+		else
+		{
+			// Widescreen extends [-24, horizon] to [-44, horizon + 20].
+			// Keep that coverage, but place the authored colors at the original edges.
+			const float inset = 20.0f / (horizon + 64.0f);
+			const auto inset_vertex = [inset](const nvertex& from, const nvertex& to)
+			{
+				nvertex vertex = from;
+				vertex._.x += (to._.x - from._.x) * inset;
+				vertex._.y += (to._.y - from._.y) * inset;
+				vertex._.z += (to._.z - from._.z) * inset;
+				return vertex;
+			};
+			for (size_t column = 0; column < 2; ++column)
+			{
+				sky_vertices[column] = vertices[column];
+				sky_vertices[2 + column] = inset_vertex(vertices[column], vertices[2 + column]);
+				sky_vertices[4 + column] = inset_vertex(vertices[2 + column], vertices[column]);
+				sky_vertices[6 + column] = vertices[2 + column];
+			}
+			vertices = sky_vertices.data();
+			indices = sky_indices.data();
+			vertexcount = static_cast<uint32_t>(sky_vertices.size());
+			count = static_cast<uint32_t>(sky_indices.size());
+		}
 	}
 
 	newRenderer.setInterpolationQualifier(current_state.shademode ? RendererInterpolationQualifier::SMOOTH : RendererInterpolationQualifier::FLAT);
