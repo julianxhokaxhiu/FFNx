@@ -140,15 +140,18 @@ void Renderer::setCommonUniforms()
         (float)internalState.sphericalWorldRate,
         (float)internalState.bIsFogEnabled,
         (float)(!ff8 && !enable_worldmap_external_mesh && current_state.psx_world),
-        (float)(!ff8 && !enable_worldmap_external_mesh && current_state.psx_world_radar)
+        !ff8 && !enable_worldmap_external_mesh ?
+            (current_state.psx_world_radar ? 1.0f :
+                (current_state.psx_world_meteor && !internalState.bIsExternalTexture ? 2.0f : 0.0f)) : 0.0f
     };
-    if (uniform_log) ffnx_trace("%s: WMFlags XYZW(sphericalWorldRate %f, bIsFogEnabled %f, psxWorld %f, psxWorldRadar %f)\n", __func__, internalState.WMFlags[0], internalState.WMFlags[1], internalState.WMFlags[2], internalState.WMFlags[3]);
+    if (uniform_log) ffnx_trace("%s: WMFlags XYZW(sphericalWorldRate %f, bIsFogEnabled %f, psxWorld %f, psxWorldOverlay %f)\n", __func__, internalState.WMFlags[0], internalState.WMFlags[1], internalState.WMFlags[2], internalState.WMFlags[3]);
 
     internalState.PSXWorldDither = {
         2.0f * scalingFactor,
         2.0f * scalingFactor,
         getCaps()->originBottomLeft ? static_cast<float>(framebufferHeight) : 0.0f,
-        static_cast<float>(!ff8 && !enable_worldmap_external_mesh && current_state.psx_world_dither)
+        static_cast<float>(!ff8 && !enable_worldmap_external_mesh ?
+            current_state.psx_world_dither : PSXWorldDitherMode::Off)
     };
 
     internalState.FSMovieFlags = {

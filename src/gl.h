@@ -36,6 +36,13 @@
 
 class ExternalMesh;
 
+enum class PSXWorldDitherMode : uint8_t
+{
+	Off,
+	Native,
+	Average
+};
+
 enum DrawCallType
 {
 	DCT_CLEAR = 0,
@@ -72,7 +79,8 @@ struct driver_state
 	struct matrix kawai_camera_matrix;
 	bool psx_world;
 	bool psx_world_radar;
-	bool psx_world_dither;
+	bool psx_world_meteor;
+	PSXWorldDitherMode psx_world_dither;
 };
 
 static_assert(std::is_trivially_copyable_v<driver_state>);

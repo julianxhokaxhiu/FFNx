@@ -3779,6 +3779,7 @@ struct ff7_externals
 	uint32_t* world_terrain_graphics_object_count;
 	ff7_graphics_object** world_radar_graphics_object;
 	ff7_graphics_object** world_sky_graphics_object;
+	ff7_graphics_object** world_meteor_graphics_object;
 	int16_t (*world_update_terrain_lighting)(vector4<int>*);
 	int (*world_set_terrain_light_color)(const int16_t*);
 	int (*world_get_distance_to_light_point)(vector4<int>*, world_light_point*);

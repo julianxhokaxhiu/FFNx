@@ -185,6 +185,7 @@ void gl_load_state(struct driver_state *src, bool bind_textures)
 	current_state.kawai_camera_matrix = src->kawai_camera_matrix;
 	current_state.psx_world = src->psx_world;
 	current_state.psx_world_radar = src->psx_world_radar;
+	current_state.psx_world_meteor = src->psx_world_meteor;
 	current_state.psx_world_dither = src->psx_world_dither;
 	common_setviewport(src->viewport[0], src->viewport[1], src->viewport[2], src->viewport[3], 0);
 	gl_set_blend_func(src->blend_mode);
@@ -267,7 +268,8 @@ namespace
 	{
 		bool saved = current_state.psx_world;
 		bool saved_radar = current_state.psx_world_radar;
-		bool saved_dither = current_state.psx_world_dither;
+		bool saved_meteor = current_state.psx_world_meteor;
+		PSXWorldDitherMode saved_dither = current_state.psx_world_dither;
 
 		explicit PSXWorldDrawScope(graphics_object* object)
 		{
@@ -280,9 +282,14 @@ namespace
 				current_state.psx_world = vanilla_world && ff7::world::is_terrain_graphics_object(object);
 				current_state.psx_world_radar = vanilla_world &&
 					static_cast<const void*>(object) == *ff7_externals.world_radar_graphics_object;
-				current_state.psx_world_dither = vanilla_world && ff7::world::is_world_dithering_enabled() &&
-					(current_state.psx_world ||
-						static_cast<const void*>(object) == *ff7_externals.world_sky_graphics_object);
+				current_state.psx_world_meteor = vanilla_world &&
+					static_cast<const void*>(object) == *ff7_externals.world_meteor_graphics_object;
+				current_state.psx_world_dither = PSXWorldDitherMode::Off;
+				if (current_state.psx_world)
+					current_state.psx_world_dither = PSXWorldDitherMode::Average;
+				else if (vanilla_world && ff7::world::is_sky_dithering_enabled() &&
+					static_cast<const void*>(object) == *ff7_externals.world_sky_graphics_object)
+					current_state.psx_world_dither = PSXWorldDitherMode::Average;
 			}
 		}
 
@@ -290,6 +297,7 @@ namespace
 		{
 			current_state.psx_world = saved;
 			current_state.psx_world_radar = saved_radar;
+			current_state.psx_world_meteor = saved_meteor;
 			current_state.psx_world_dither = saved_dither;
 		}
 	};

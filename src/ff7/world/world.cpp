@@ -48,7 +48,7 @@ namespace ff7::world
         namespace gte = field::kawai::gte;
 
         gte::Matrix terrain_colors = {{{1774, 0, 0}, {1774, 0, 0}, {1774, 0, 0}}};
-        bool terrain_dither = false;
+        bool sky_dither = false;
         bool inside_light_core = false;
 
         int get_distance_to_light_point(vector4<int>* position, world_light_point* point)
@@ -60,7 +60,7 @@ namespace ff7::world
 
         int set_terrain_light_color(const int16_t* colors)
         {
-            terrain_dither = true;
+            sky_dither = true;
             for (size_t i = 0; i < 3; ++i) terrain_colors[i][0] = colors[3 * i];
             return ff7_externals.world_set_terrain_light_color(colors);
         }
@@ -68,11 +68,11 @@ namespace ff7::world
         int16_t update_terrain_lighting(vector4<int>* position)
         {
             terrain_colors = {{{1774, 0, 0}, {1774, 0, 0}, {1774, 0, 0}}};
-            terrain_dither = false;
+            sky_dither = false;
             inside_light_core = false;
             const auto result = ff7_externals.world_update_terrain_lighting(position);
-            // PSX enables GPU dithering only in the outer fade, not inside any active point's core.
-            terrain_dither &= !inside_light_core;
+            // This regional draw mode controls the sky, not the terrain's always-dithered pass.
+            sky_dither &= !inside_light_core;
             return result;
         }
 
@@ -235,15 +235,19 @@ namespace ff7::world
         }
         const bool saved_world = current_state.psx_world;
         const bool saved_radar = current_state.psx_world_radar;
-        const bool saved_dither = current_state.psx_world_dither;
+        const bool saved_meteor = current_state.psx_world_meteor;
+        const auto saved_dither = current_state.psx_world_dither;
         current_state.psx_world = true;
         current_state.psx_world_radar = false;
-        current_state.psx_world_dither = is_world_dithering_enabled();
+        current_state.psx_world_meteor = false;
+        current_state.psx_world_dither = is_sky_dithering_enabled() ?
+            PSXWorldDitherMode::Native : PSXWorldDitherMode::Off;
         gl_draw_indexed_primitive(primitive->primitivetype, primitive->vertextype, vertices.data(),
             lighting.normals.data(), primitive->vertexcount, primitive->indices,
             primitive->indexcount, nullptr, polygon->boundingboxdata, nullptr, clip, true);
         current_state.psx_world = saved_world;
         current_state.psx_world_radar = saved_radar;
+        current_state.psx_world_meteor = saved_meteor;
         current_state.psx_world_dither = saved_dither;
         return true;
     }
@@ -383,9 +387,9 @@ namespace ff7::world
         return false;
     }
 
-    bool is_world_dithering_enabled()
+    bool is_sky_dithering_enabled()
     {
-        return terrain_dither;
+        return sky_dither;
     }
 
     void world_hook_init()

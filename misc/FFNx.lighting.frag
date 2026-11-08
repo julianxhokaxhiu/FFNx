@@ -109,7 +109,8 @@ void main()
     // (Not used for solid-color 2D elements b/c this shader isn't used for 2D elements.)
     vec4 color = v_color0; //previously linearized in vertex shader
     float worldDither = GetPSXWorldDither(gl_FragCoord.xy, PSXWorldDither);
-    if (isPSXWorld) color.rgb = ApplyPSXWorldColorPrecision(color.rgb, worldDither);
+    if (PSXWorldDither.w > 1.5) color.rgb = ApplyPSXWorldAverageDither(color.rgb);
+    else if (isPSXWorld) color.rgb = ApplyPSXWorldColorPrecision(color.rgb, worldDither);
     vec4 color_nml = vec4(0.0, 0.0, 0.0, 0.0);
     vec4 color_pbr = vec4(0.0, 0.0, 0.0, 0.0);
 
@@ -175,7 +176,7 @@ void main()
 
             color.rgb = toLinear(toGamma(v_color0.rgb) * texture_color.rgb);
         }
-        else if (isPSXWorld) color.rgb = ApplyPSXWorldModulation(v_color0.rgb, texture_color.rgb, worldDither);
+        else if (isPSXWorld) color.rgb = ApplyPSXWorldModulation(v_color0.rgb, texture_color.rgb, worldDither, PSXWorldDither.w);
         else color.rgb *= texture_color.rgb;
 
         // multiply by v_color0

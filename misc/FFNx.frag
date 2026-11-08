@@ -87,14 +87,37 @@ uniform vec4 kawaiColorOffset;
 
 #define isFogEnabled WMFlags.y > 0.0
 #define isPSXWorld WMFlags.z > 0.0
-#define isPSXWorldRadar WMFlags.w > 0.0
+#define isPSXWorldRadar (WMFlags.w > 0.5 && WMFlags.w < 1.5)
+#define isPSXWorldMeteor WMFlags.w > 1.5
+
+vec4 FilterPSXWorldMeteorEdge(vec4 originalColor, vec2 coordinates)
+{
+    ivec2 dimensions = textureSize(tex_0, 0);
+    vec2 position = coordinates * vec2(dimensions) - vec2_splat(0.5);
+    ivec2 base = ivec2(floor(position));
+    ivec2 maximum = dimensions - ivec2(1, 1);
+    vec4 c00 = texelFetch(tex_0, clamp(base, ivec2(0, 0), maximum), 0);
+    vec4 c10 = texelFetch(tex_0, clamp(base + ivec2(1, 0), ivec2(0, 0), maximum), 0);
+    vec4 c01 = texelFetch(tex_0, clamp(base + ivec2(0, 1), ivec2(0, 0), maximum), 0);
+    vec4 c11 = texelFetch(tex_0, clamp(base + ivec2(1, 1), ivec2(0, 0), maximum), 0);
+    if (min(min(c00.a, c10.a), min(c01.a, c11.a)) > 0.0 ||
+        max(max(c00.a, c10.a), max(c01.a, c11.a)) == 0.0) return originalColor;
+
+    // Blend encoded contributions into transparent black; ADD already ignores alpha.
+    vec2 weight = fract(position);
+    vec3 rgb = mix(mix(toGamma(c00.rgb), toGamma(c10.rgb), weight.x),
+        mix(toGamma(c01.rgb), toGamma(c11.rgb), weight.x), weight.y);
+    float alpha = mix(mix(c00.a, c10.a, weight.x), mix(c01.a, c11.a, weight.x), weight.y);
+    return vec4(toLinear(rgb), alpha);
+}
 
 void main()
 {
     // v_color0 is used for solid 2D colors (e.g., textbox backgrounds), solid-color polygon faces (e.g., all original FF7 models), and colorizing textures
     vec4 color = v_color0;
     float worldDither = GetPSXWorldDither(gl_FragCoord.xy, PSXWorldDither);
-    if (isPSXWorld || PSXWorldDither.w > 0.5) color.rgb = ApplyPSXWorldColorPrecision(color.rgb, worldDither);
+    if (PSXWorldDither.w > 1.5) color.rgb = ApplyPSXWorldAverageDither(color.rgb);
+    else if (isPSXWorld || PSXWorldDither.w > 0.5) color.rgb = ApplyPSXWorldColorPrecision(color.rgb, worldDither);
     else color.rgb = toLinear(color.rgb);
 
     if (isTexture)
@@ -103,6 +126,7 @@ void main()
 
         // This stanza pertains to 2D textures (aside from YUV movies) and textures on 3D objects if advanced lighting is disabled
         vec4 texture_color = texture2D(tex_0, v_texcoord0.xy);
+        if (isPSXWorldMeteor) texture_color = FilterPSXWorldMeteorEdge(texture_color, v_texcoord0.xy);
 
         // Captured RGB surfaces have no alpha, regardless of render-target alpha.
         if (isFBTexture) texture_color.a = 1.0;
@@ -158,7 +182,7 @@ void main()
             // The original framebuffer modulation operates on encoded RGB.
             color.rgb = toLinear(v_color0.rgb * texture_color.rgb);
         }
-        else if (isPSXWorld) color.rgb = ApplyPSXWorldModulation(v_color0.rgb, texture_color.rgb, worldDither);
+        else if (isPSXWorld) color.rgb = ApplyPSXWorldModulation(v_color0.rgb, texture_color.rgb, worldDither, PSXWorldDither.w);
         else color.rgb *= texture_color.rgb;
 
         // multiply by v_color0

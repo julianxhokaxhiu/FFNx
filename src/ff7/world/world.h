@@ -34,7 +34,7 @@ struct polygon_data;
 namespace ff7::world
 {
     bool is_terrain_graphics_object(const graphics_object* object);
-    bool is_world_dithering_enabled();
+    bool is_sky_dithering_enabled();
     void forget_model_lighting(const indexed_primitive* primitive);
     bool draw_model_with_psx_lighting(indexed_primitive* primitive, polygon_data* polygon, uint32_t clip);
 
