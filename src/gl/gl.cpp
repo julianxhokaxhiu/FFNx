@@ -267,11 +267,11 @@ void gl_calculate_normals(std::vector<vector3<float>>* pNormals, struct indexed_
 
 namespace
 {
-	FF8WorldMapStrip vanilla_ff8_strip_texture()
+	FF8WorldMapStrip ff8_strip_texture()
 	{
 		if (!current_state.texture_set || current_state.fb_texture) return FF8WorldMapStrip::None;
 		VOBJ(texture_set, texture_set, current_state.texture_set);
-		if (VREF(texture_set, ogl.external) || !VREF(texture_set, tex_header)) return FF8WorldMapStrip::None;
+		if (!VREF(texture_set, tex_header)) return FF8WorldMapStrip::None;
 		VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
 		const auto tiled = texturePacker.getTiledTex(VREF(tex_header, image_data));
 		if (!tiled.isValid() || tiled.bpp() != Tim::Bpp4 || tiled.x() != 13 * 64 || tiled.y() != 256)
@@ -488,7 +488,7 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 
 	std::vector<nvertex> strip_vertices;
 	if (ff8 && mode == MODE_WORLDMAP && vertextype == TLVERTEX && primitivetype == PT_TRIANGLES &&
-		ff8_worldmap_adjust_strip_uvs(vertices, vertexcount, indices, count, vanilla_ff8_strip_texture(), strip_vertices))
+		ff8_worldmap_adjust_strip_uvs(vertices, vertexcount, indices, count, ff8_strip_texture(), strip_vertices))
 		vertices = strip_vertices.data();
 
 	// handle some special cases, see special_case.c

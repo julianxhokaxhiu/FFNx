@@ -150,6 +150,32 @@ Worldmap texture animations, replace `section38/texture21` and `section38/textur
 
 Rails and roads.
 
+##### Road and rail UV alignment
+
+FFNx corrects road/rail UV joins and interior rail cuts for both original and
+external textures without moving the geometry. Keep replacement artwork aligned
+with the original atlas and tile proportions; do not compensate for older UV
+precision patches in the image.
+
+The original straight road/rail tiles are 32x16 texels. Their cross-track UV
+direction can reverse as `V -> 16 - V`. Border and steel-rail bands must therefore
+line up when the replacement tile is flipped vertically. Gravel, sleepers and
+other surface detail do not have to be mirrored.
+
+For a replacement tile `H` pixels high, pixel row `y` has its center at `y + 0.5`.
+Its mirrored row is `H - 1 - y`. Two one-pixel rail lines must have row indices
+adding up to `H - 1`; wider or antialiased bands should have matching mirrored
+positions and widths.
+
+For example, in a 64-pixel-high tile, rows 13 and 50 are a mirrored pair, but
+rows 12 and 50 are not. To preserve the original steel-rail centers exactly,
+scale their positions at 3.5 and 12.5 source texels with the image resolution,
+then rasterize both bands symmetrically.
+
+Check both repeating ends and reversed joins in-game. A remaining mismatch in
+the artwork should be corrected in the texture, not with a pack-specific UV
+offset in FFNx.
+
 #### Section 40
 
 | File name   | Description           | Animated | Multi palettes |
