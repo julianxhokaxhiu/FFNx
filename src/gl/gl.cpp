@@ -35,6 +35,9 @@
 #include "../ff7/widescreen.h"
 #include "../ff7/world/world.h"
 #include "../ff7/field/kawai_eyetx.h"
+#include "../ff8/texture_packer.h"
+#include "../ff8/uv_patch.h"
+#include "../ff8/vram.h"
 #include "external_mesh.h"
 
 struct matrix d3dviewport_matrix = {
@@ -264,6 +267,31 @@ void gl_calculate_normals(std::vector<vector3<float>>* pNormals, struct indexed_
 
 namespace
 {
+	FF8WorldMapStrip vanilla_ff8_strip_texture()
+	{
+		if (!current_state.texture_set || current_state.fb_texture) return FF8WorldMapStrip::None;
+		VOBJ(texture_set, texture_set, current_state.texture_set);
+		if (VREF(texture_set, ogl.external) || !VREF(texture_set, tex_header)) return FF8WorldMapStrip::None;
+		VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
+		const auto tiled = texturePacker.getTiledTex(VREF(tex_header, image_data));
+		if (!tiled.isValid() || tiled.bpp() != Tim::Bpp4 || tiled.x() != 13 * 64 || tiled.y() != 256)
+			return FF8WorldMapStrip::None;
+		const auto palette = tiled.palette(VREF(texture_set, palette_index));
+		if (!palette.isValid() || (palette.x() != 0 && palette.x() != 16) || palette.y() != 240)
+			return FF8WorldMapStrip::None;
+		const auto strip = palette.x() == 0 ? FF8WorldMapStrip::Rail : FF8WorldMapStrip::Road;
+		const int tile_x = tiled.x() + (strip == FF8WorldMapStrip::Road ? 8 : 0);
+		for (const auto &texture : texturePacker.matchTextures(tiled))
+		{
+			const auto &image = texture.texture();
+			if (texture.name().starts_with("world/dat/wmset/section39/") &&
+				image.x() <= tile_x && image.x() + image.w() >= tile_x + 8 &&
+				image.y() <= tiled.y() && image.y() + image.h() >= tiled.y() + 16)
+				return strip;
+		}
+		return FF8WorldMapStrip::None;
+	}
+
 	struct PSXWorldDrawScope
 	{
 		bool saved = current_state.psx_world;
@@ -457,6 +485,11 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 	}
 
 	newRenderer.setInterpolationQualifier(current_state.shademode ? RendererInterpolationQualifier::SMOOTH : RendererInterpolationQualifier::FLAT);
+
+	std::vector<nvertex> strip_vertices;
+	if (ff8 && mode == MODE_WORLDMAP && vertextype == TLVERTEX && primitivetype == PT_TRIANGLES &&
+		ff8_worldmap_adjust_strip_uvs(vertices, vertexcount, indices, count, vanilla_ff8_strip_texture(), strip_vertices))
+		vertices = strip_vertices.data();
 
 	// handle some special cases, see special_case.c
 	if(gl_special_case(primitivetype, vertextype, vertices, vertexcount, indices, count, graphics_object, clip, mipmap))

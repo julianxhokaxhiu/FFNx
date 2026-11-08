@@ -29,6 +29,177 @@
 
 #include "uv_patch.h"
 
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <map>
+
+bool ff8_worldmap_adjust_strip_uvs(const nvertex *vertices, uint32_t vertexcount,
+	const uint16_t *indices, uint32_t count, FF8WorldMapStrip strip, std::vector<nvertex> &adjusted)
+{
+	if (strip == FF8WorldMapStrip::None) return false;
+	if (!vertices || !indices || count % 3 != 0)
+	{
+		ffnx_unexpected_once("Invalid FF8 world-map strip triangle list\n");
+		return false;
+	}
+
+	const float min_u = strip == FF8WorldMapStrip::Road ? 32.0f : 0.0f;
+	std::vector<uint8_t> usage(vertexcount);
+	for (uint32_t triangle = 0; triangle < count; triangle += 3)
+	{
+		bool selected = true;
+		for (uint32_t corner = 0; corner < 3; ++corner)
+		{
+			const uint16_t index = indices[triangle + corner];
+			if (index >= vertexcount)
+			{
+				ffnx_unexpected_once("Invalid FF8 world-map strip vertex index\n");
+				return false;
+			}
+			const float u = vertices[index].u * 256.0f;
+			const float v = vertices[index].v * 256.0f;
+			// Roads and rails occupy separate tiles and use different palettes.
+			selected &= u >= min_u && u <= min_u + 31.0f && v >= 0.0f && v <= 15.0f &&
+				u == std::trunc(u) && v == std::trunc(v);
+		}
+		for (uint32_t corner = 0; corner < 3; ++corner)
+			usage[indices[triangle + corner]] |= selected ? 1 : 2;
+	}
+
+	using Position = std::array<float, 4>;
+	std::map<Position, std::array<float, 2>> joins;
+	for (uint32_t index = 0; index < vertexcount; ++index)
+	{
+		if (!(usage[index] & 1)) continue;
+		const nvertex &vertex = vertices[index];
+		if (usage[index] == 3 || !std::isfinite(vertex._.x) || !std::isfinite(vertex._.y) ||
+			!std::isfinite(vertex._.z) || !std::isfinite(vertex.color.w))
+		{
+			ffnx_unexpected_once("Unexpected FF8 world-map strip vertex sharing or position\n");
+			return false;
+		}
+		const float v = vertex.v * 256.0f;
+		const Position position = {vertex._.x, vertex._.y, vertex._.z, vertex.color.w};
+		auto join = joins.try_emplace(position, std::array<float, 2>{v, v}).first;
+		join->second[0] = std::min(join->second[0], v);
+		join->second[1] = std::max(join->second[1], v);
+	}
+	if (joins.empty()) return false;
+
+	adjusted.assign(vertices, vertices + vertexcount);
+	for (uint32_t index = 0; index < vertexcount; ++index)
+	{
+		if (usage[index] != 1) continue;
+		nvertex &vertex = adjusted[index];
+		const float v = vertex.v * 256.0f;
+		const Position position = {vertex._.x, vertex._.y, vertex._.z, vertex.color.w};
+		const auto &join = joins.at(position);
+		float inset = 0.0f;
+		// Flipped pieces must agree under V -> 16 - V. Some authored cuts already do.
+		if (v == 0.0f || v == 15.0f ||
+			(join[0] < 8.0f && join[1] > 8.0f && join[0] + join[1] == 15.0f))
+			inset = 0.5f;
+		vertex.u += 0.5f / 256.0f;
+		vertex.v = (v + inset) / 256.0f;
+	}
+
+	if (strip == FF8WorldMapStrip::Rail)
+	{
+		using Endpoint = std::array<float, 6>;
+		using Edge = std::array<Endpoint, 2>;
+		struct RailEdge
+		{
+			uint32_t triangle;
+			uint16_t a, b;
+			uint32_t uses;
+		};
+		std::map<Edge, RailEdge> edges;
+		std::vector<uint32_t> components(count / 3);
+		for (uint32_t triangle = 0; triangle < count / 3; ++triangle)
+			components[triangle] = triangle;
+		for (uint32_t triangle = 0; triangle < count / 3; ++triangle)
+		{
+			if (usage[indices[triangle * 3]] != 1) continue;
+			for (uint32_t corner = 0; corner < 3; ++corner)
+			{
+				const uint16_t a = indices[triangle * 3 + corner];
+				const uint16_t b = indices[triangle * 3 + (corner + 1) % 3];
+				const auto endpoint = [](const nvertex &vertex)
+				{
+					return Endpoint{vertex._.x, vertex._.y, vertex._.z, vertex.color.w, vertex.u, vertex.v};
+				};
+				Edge edge = {endpoint(vertices[a]), endpoint(vertices[b])};
+				if (edge[1] < edge[0]) std::swap(edge[0], edge[1]);
+				auto [entry, inserted] = edges.try_emplace(edge, RailEdge{triangle, a, b, 1});
+				if (inserted) continue;
+				++entry->second.uses;
+				const uint32_t from = components[triangle];
+				const uint32_t to = components[entry->second.triangle];
+				if (from != to)
+					for (auto &component : components)
+						if (component == from) component = to;
+			}
+		}
+
+		std::map<uint32_t, std::vector<std::array<uint16_t, 2>>> boundaries;
+		for (const auto &[key, edge] : edges)
+		{
+			const nvertex &a = vertices[edge.a], &b = vertices[edge.b];
+			if (edge.uses == 1 && a.v == b.v && (a.v == 0.0f || a.v == 15.0f / 256.0f))
+				boundaries[components[edge.triangle]].push_back({edge.a, edge.b});
+		}
+		for (uint32_t triangle = 0; triangle < count / 3; ++triangle)
+		{
+			if (usage[indices[triangle * 3]] != 1) continue;
+			const auto boundary = boundaries.find(components[triangle]);
+			if (boundary == boundaries.end()) continue;
+			for (uint32_t corner = 0; corner < 3; ++corner)
+			{
+				const uint16_t index = indices[triangle * 3 + corner];
+				const nvertex &vertex = vertices[index];
+				if (vertex.v == 0.0f || vertex.v == 15.0f / 256.0f || vertex.color.w <= 0.0f) continue;
+				std::array<std::array<float, 3>, 2> points = {};
+				std::array<uint32_t, 2> matches = {};
+				for (const auto &edge : boundary->second)
+				{
+					const nvertex &a = vertices[edge[0]], &b = vertices[edge[1]];
+					if (a.u == b.u || vertex.u < std::min(a.u, b.u) || vertex.u > std::max(a.u, b.u) ||
+						a.color.w <= 0.0f || b.color.w <= 0.0f) continue;
+					const uint32_t side = a.v == 0.0f ? 0 : 1;
+					std::array<float, 3> point;
+					if (vertex.u == a.u) point = {a._.x, a._.y, a.color.w};
+					else if (vertex.u == b.u) point = {b._.x, b._.y, b.color.w};
+					else
+					{
+						// TL vertices carry reciprocal W; interpolate in homogeneous space.
+						const float t = (vertex.u - a.u) / (b.u - a.u);
+						const float w = (1.0f - t) / a.color.w + t / b.color.w;
+						const float s = (t / b.color.w) / w;
+						point = {a._.x + s * (b._.x - a._.x), a._.y + s * (b._.y - a._.y), 1.0f / w};
+					}
+					if (matches[side] == 0)
+					{
+						points[side] = point;
+						matches[side] = 1;
+					}
+					else if (points[side] != point) matches[side] = 2;
+				}
+				// Junctions or incomplete strips do not define a unique cross section.
+				if (matches[0] != 1 || matches[1] != 1) continue;
+				const float dx = points[1][0] - points[0][0], dy = points[1][1] - points[0][1];
+				const float length2 = dx * dx + dy * dy;
+				if (length2 == 0.0f) continue;
+				const float s = ((vertex._.x - points[0][0]) * dx + (vertex._.y - points[0][1]) * dy) / length2;
+				if (s <= 0.0f || s >= 1.0f) continue;
+				const float t = s * points[1][2] / ((1.0f - s) * points[0][2] + s * points[1][2]);
+				adjusted[index].v = (0.5f + 15.0f * t) / 256.0f;
+			}
+		}
+	}
+	return true;
+}
+
 struct MapBlockPolygon
 {
 	uint8_t vi[3];

@@ -22,4 +22,18 @@
 
 #pragma once
 
+#include <cstdint>
+#include <vector>
+
+struct nvertex;
+
+enum class FF8WorldMapStrip
+{
+	None,
+	Road,
+	Rail
+};
+
 void uv_patch_init();
+bool ff8_worldmap_adjust_strip_uvs(const nvertex *vertices, uint32_t vertexcount,
+	const uint16_t *indices, uint32_t count, FF8WorldMapStrip strip, std::vector<nvertex> &adjusted);
