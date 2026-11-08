@@ -36,6 +36,7 @@ uniform vec4 FSMiscFlags;
 uniform vec4 FSHDRFlags;
 uniform vec4 FSTexFlags;
 uniform vec4 WMFlags;
+uniform vec4 PSXWorldDither;
 
 uniform vec4 lightingSettings;
 uniform vec4 lightingDebugData;
@@ -107,7 +108,8 @@ void main()
     // v_color0 is used for solid-color polygon faces (e.g., all original FF7 models) and colorizing textures
     // (Not used for solid-color 2D elements b/c this shader isn't used for 2D elements.)
     vec4 color = v_color0; //previously linearized in vertex shader
-    if (isPSXWorld) color.rgb = ApplyPSXWorldColorPrecision(color.rgb);
+    float worldDither = GetPSXWorldDither(gl_FragCoord.xy, PSXWorldDither);
+    if (isPSXWorld) color.rgb = ApplyPSXWorldColorPrecision(color.rgb, worldDither);
     vec4 color_nml = vec4(0.0, 0.0, 0.0, 0.0);
     vec4 color_pbr = vec4(0.0, 0.0, 0.0, 0.0);
 
@@ -173,7 +175,7 @@ void main()
 
             color.rgb = toLinear(toGamma(v_color0.rgb) * texture_color.rgb);
         }
-        else if (isPSXWorld) color.rgb = ApplyPSXWorldModulation(v_color0.rgb, texture_color.rgb);
+        else if (isPSXWorld) color.rgb = ApplyPSXWorldModulation(v_color0.rgb, texture_color.rgb, worldDither);
         else color.rgb *= texture_color.rgb;
 
         // multiply by v_color0

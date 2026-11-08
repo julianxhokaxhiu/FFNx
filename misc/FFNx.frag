@@ -40,6 +40,7 @@ uniform vec4 FSMiscFlags;
 uniform vec4 FSHDRFlags;
 uniform vec4 FSTexFlags;
 uniform vec4 WMFlags;
+uniform vec4 PSXWorldDither;
 uniform vec4 TimeColor;
 uniform vec4 TimeData;
 uniform vec4 gameLightingFlags;
@@ -92,7 +93,8 @@ void main()
 {
     // v_color0 is used for solid 2D colors (e.g., textbox backgrounds), solid-color polygon faces (e.g., all original FF7 models), and colorizing textures
     vec4 color = v_color0;
-    if (isPSXWorld) color.rgb = ApplyPSXWorldColorPrecision(color.rgb);
+    float worldDither = GetPSXWorldDither(gl_FragCoord.xy, PSXWorldDither);
+    if (isPSXWorld || PSXWorldDither.w > 0.5) color.rgb = ApplyPSXWorldColorPrecision(color.rgb, worldDither);
     else color.rgb = toLinear(color.rgb);
 
     if (isTexture)
@@ -156,7 +158,7 @@ void main()
             // The original framebuffer modulation operates on encoded RGB.
             color.rgb = toLinear(v_color0.rgb * texture_color.rgb);
         }
-        else if (isPSXWorld) color.rgb = ApplyPSXWorldModulation(v_color0.rgb, texture_color.rgb);
+        else if (isPSXWorld) color.rgb = ApplyPSXWorldModulation(v_color0.rgb, texture_color.rgb, worldDither);
         else color.rgb *= texture_color.rgb;
 
         // multiply by v_color0

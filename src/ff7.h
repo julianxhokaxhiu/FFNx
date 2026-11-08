@@ -1264,6 +1264,18 @@ struct world_model_animation
 
 static_assert(sizeof(world_model_animation) == 0xB8);
 
+struct world_light_point
+{
+	vector4<int> position;
+	uint8_t light_color[4];
+	uint8_t sky_top_color[4];
+	uint8_t sky_bottom_color[4];
+	int fade_range;
+	int core_range;
+};
+
+static_assert(sizeof(world_light_point) == 0x24);
+
 struct hrc_bone
 {
 	char *bone_name;
@@ -3766,8 +3778,10 @@ struct ff7_externals
 	ff7_graphics_object** world_terrain_graphics_objects;
 	uint32_t* world_terrain_graphics_object_count;
 	ff7_graphics_object** world_radar_graphics_object;
+	ff7_graphics_object** world_sky_graphics_object;
 	int16_t (*world_update_terrain_lighting)(vector4<int>*);
 	int (*world_set_terrain_light_color)(const int16_t*);
+	int (*world_get_distance_to_light_point)(vector4<int>*, world_light_point*);
 	uint32_t world_draw_all_3d_model_74C6B0;
 	hrc_data** world_player_hrc;
 	anim_header*** world_player_animations;

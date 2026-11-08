@@ -144,6 +144,13 @@ void Renderer::setCommonUniforms()
     };
     if (uniform_log) ffnx_trace("%s: WMFlags XYZW(sphericalWorldRate %f, bIsFogEnabled %f, psxWorld %f, psxWorldRadar %f)\n", __func__, internalState.WMFlags[0], internalState.WMFlags[1], internalState.WMFlags[2], internalState.WMFlags[3]);
 
+    internalState.PSXWorldDither = {
+        2.0f * scalingFactor,
+        2.0f * scalingFactor,
+        getCaps()->originBottomLeft ? static_cast<float>(framebufferHeight) : 0.0f,
+        static_cast<float>(!ff8 && !enable_worldmap_external_mesh && current_state.psx_world_dither)
+    };
+
     internalState.FSMovieFlags = {
         (float)internalState.bIsMovieColorMatrix,
         (float)internalState.bIsMovieColorGamut,
@@ -175,6 +182,7 @@ void Renderer::setCommonUniforms()
     setUniform(RendererUniform::FS_MOVIE_FLAGS, internalState.FSMovieFlags.data());
     setUniform(RendererUniform::FS_MORE_MOVIE_FLAGS, internalState.FSMoreMovieFlags.data());
     setUniform(RendererUniform::WM_FLAGS, internalState.WMFlags.data());
+    setUniform(RendererUniform::PSX_WORLD_DITHER, internalState.PSXWorldDither.data());
     setUniform(RendererUniform::TIME_COLOR, internalState.TimeColor.data());
     setUniform(RendererUniform::TIME_DATA, internalState.TimeData.data());
 
@@ -1146,6 +1154,7 @@ void Renderer::init()
     bgfxUniformHandles[RendererUniform::FS_MOVIE_FLAGS] = createUniform("FSMovieFlags", bgfx::UniformType::Vec4);
     bgfxUniformHandles[RendererUniform::FS_MORE_MOVIE_FLAGS] = createUniform("FSMoreMovieFlags", bgfx::UniformType::Vec4);
     bgfxUniformHandles[RendererUniform::WM_FLAGS] = createUniform("WMFlags", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::PSX_WORLD_DITHER] = createUniform("PSXWorldDither", bgfx::UniformType::Vec4);
     bgfxUniformHandles[RendererUniform::TIME_COLOR] = createUniform("TimeColor", bgfx::UniformType::Vec4);
     bgfxUniformHandles[RendererUniform::TIME_DATA] = createUniform("TimeData", bgfx::UniformType::Vec4);
 

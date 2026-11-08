@@ -1362,7 +1362,9 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_terrain_graphics_objects = (ff7_graphics_object**)get_absolute_value((uint32_t)ff7_externals.world_wm0_overworld_draw_all_74C179, 0x9A);
 	ff7_externals.world_terrain_graphics_object_count = (uint32_t*)get_absolute_value((uint32_t)ff7_externals.world_wm0_overworld_draw_all_74C179, 0x7A);
 	ff7_externals.world_radar_graphics_object = (ff7_graphics_object**)get_absolute_value((uint32_t)ff7_externals.world_wm0_overworld_draw_all_74C179, 0x196);
+	ff7_externals.world_sky_graphics_object = (ff7_graphics_object**)get_absolute_value((uint32_t)ff7_externals.world_wm0_overworld_draw_all_74C179, 0xAF);
 	ff7_externals.world_update_terrain_lighting = (int16_t(*)(vector4<int>*))get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x3FA);
+	ff7_externals.world_get_distance_to_light_point = (int(*)(vector4<int>*, world_light_point*))get_relative_call((uint32_t)ff7_externals.world_update_terrain_lighting, 0x67);
 	ff7_externals.world_set_terrain_light_color = (int(*)(const int16_t*))get_relative_call((uint32_t)ff7_externals.world_update_terrain_lighting, 0x147);
 	ff7_externals.world_draw_all_3d_model_74C6B0 =  get_relative_call((uint32_t)ff7_externals.world_wm0_overworld_draw_all_74C179, 0x155);
 	ff7_externals.world_player_hrc = (hrc_data**)get_absolute_value(ff7_externals.world_draw_all_3d_model_74C6B0, 0x23);

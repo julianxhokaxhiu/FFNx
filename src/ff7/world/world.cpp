@@ -48,9 +48,19 @@ namespace ff7::world
         namespace gte = field::kawai::gte;
 
         gte::Matrix terrain_colors = {{{1774, 0, 0}, {1774, 0, 0}, {1774, 0, 0}}};
+        bool terrain_dither = false;
+        bool inside_light_core = false;
+
+        int get_distance_to_light_point(vector4<int>* position, world_light_point* point)
+        {
+            const int distance = ff7_externals.world_get_distance_to_light_point(position, point);
+            inside_light_core |= distance < static_cast<int64_t>(point->core_range) * 1024;
+            return distance;
+        }
 
         int set_terrain_light_color(const int16_t* colors)
         {
+            terrain_dither = true;
             for (size_t i = 0; i < 3; ++i) terrain_colors[i][0] = colors[3 * i];
             return ff7_externals.world_set_terrain_light_color(colors);
         }
@@ -58,7 +68,12 @@ namespace ff7::world
         int16_t update_terrain_lighting(vector4<int>* position)
         {
             terrain_colors = {{{1774, 0, 0}, {1774, 0, 0}, {1774, 0, 0}}};
-            return ff7_externals.world_update_terrain_lighting(position);
+            terrain_dither = false;
+            inside_light_core = false;
+            const auto result = ff7_externals.world_update_terrain_lighting(position);
+            // PSX enables GPU dithering only in the outer fade, not inside any active point's core.
+            terrain_dither &= !inside_light_core;
+            return result;
         }
 
         struct ModelLighting
@@ -220,13 +235,16 @@ namespace ff7::world
         }
         const bool saved_world = current_state.psx_world;
         const bool saved_radar = current_state.psx_world_radar;
+        const bool saved_dither = current_state.psx_world_dither;
         current_state.psx_world = true;
         current_state.psx_world_radar = false;
+        current_state.psx_world_dither = is_world_dithering_enabled();
         gl_draw_indexed_primitive(primitive->primitivetype, primitive->vertextype, vertices.data(),
             lighting.normals.data(), primitive->vertexcount, primitive->indices,
             primitive->indexcount, nullptr, polygon->boundingboxdata, nullptr, clip, true);
         current_state.psx_world = saved_world;
         current_state.psx_world_radar = saved_radar;
+        current_state.psx_world_dither = saved_dither;
         return true;
     }
 
@@ -365,12 +383,18 @@ namespace ff7::world
         return false;
     }
 
+    bool is_world_dithering_enabled()
+    {
+        return terrain_dither;
+    }
+
     void world_hook_init()
     {
         if (!enable_worldmap_external_mesh)
         {
             replace_call_function(ff7_externals.world_mode_loop_sub_74DB8C + 0x3FA, update_terrain_lighting);
             replace_call_function((uint32_t)ff7_externals.world_update_terrain_lighting + 0x147, set_terrain_light_color);
+            replace_call_function((uint32_t)ff7_externals.world_update_terrain_lighting + 0x67, get_distance_to_light_point);
             replace_call_function(ff7_externals.world_draw_all_3d_model_74C6B0 + 0x46, draw_world_model);
             replace_call_function(ff7_externals.world_draw_all_3d_model_74C6B0 + 0x103, draw_world_model);
             replace_call_function(ff7_externals.world_submit_draw_bg_meshes_75F68C + 0xEB3, calculate_terrain_lighting);

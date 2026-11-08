@@ -113,6 +113,7 @@ enum RendererUniform
     FS_MOVIE_FLAGS,
     FS_MORE_MOVIE_FLAGS,
     WM_FLAGS,
+    PSX_WORLD_DITHER,
     TIME_COLOR,
     TIME_DATA,
     D3D_VIEWPORT,
@@ -327,6 +328,7 @@ private:
         std::vector<float> FSHDRFlags;
         std::vector<float> FSTexFlags;
         std::vector<float> WMFlags;
+        std::array<float, 4> PSXWorldDither;
         std::vector<float> FSMovieFlags;
         std::vector<float> FSMoreMovieFlags;
 

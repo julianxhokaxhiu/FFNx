@@ -86,17 +86,29 @@ vec3 ExpandPSXWorldColor(vec3 color5)
 	return toLinear((color5 * 8.0 + floor(color5 / 4.0)) / 255.0);
 }
 
-vec3 ApplyPSXWorldColorPrecision(vec3 encodedColor)
+float GetPSXWorldDither(vec2 screenPosition, vec4 settings)
 {
-	return ExpandPSXWorldColor(floor(saturate(encodedColor) * (255.0 / 8.0) + 0.00001));
+	if (settings.w < 0.5) return 0.0;
+	if (settings.z > 0.0) screenPosition.y = settings.z - screenPosition.y;
+	vec2 pixel = mod(floor(screenPosition / settings.xy), vec2_splat(4.0));
+	vec4 row = pixel.y < 1.0 ? vec4(-4.0, 0.0, -3.0, 1.0) :
+		pixel.y < 2.0 ? vec4(2.0, -2.0, 3.0, -1.0) :
+		pixel.y < 3.0 ? vec4(-3.0, 1.0, -4.0, 0.0) : vec4(3.0, -1.0, 2.0, -2.0);
+	return row[int(pixel.x)] / 8.0;
 }
 
-vec3 ApplyPSXWorldModulation(vec3 lightingColor, vec3 textureColor)
+vec3 ApplyPSXWorldColorPrecision(vec3 encodedColor, float dither)
+{
+	return ExpandPSXWorldColor(clamp(floor(saturate(encodedColor) * (255.0 / 8.0) + dither + 0.00001),
+		vec3_splat(0.0), vec3_splat(31.0)));
+}
+
+vec3 ApplyPSXWorldModulation(vec3 lightingColor, vec3 textureColor, float dither)
 {
 	// Recover the 5-bit texel before modulation; expanded 8-bit colors change the product.
 	vec3 texture5 = floor(floor(toGamma(textureColor) * 255.0 + 0.5) / 8.0);
 	vec3 lighting8 = floor(saturate(lightingColor) * 255.0 + 0.0001);
-	vec3 color5 = min(floor(texture5 * lighting8 / 128.0), vec3_splat(31.0));
+	vec3 color5 = clamp(floor(texture5 * lighting8 / 128.0 + dither), vec3_splat(0.0), vec3_splat(31.0));
 	return ExpandPSXWorldColor(color5);
 }
 
