@@ -100,11 +100,6 @@ namespace ff7::world
 
     constexpr int INVALID_DIRECTION = 9999;
 
-    inline uint8_t terrain_light_component(float directional, float ambient, float base_color)
-    {
-        return static_cast<uint8_t>(std::clamp(base_color * (ambient + std::max(directional, 0.0f)), 0.0f, 255.0f));
-    }
-
     class World
     {
     public:

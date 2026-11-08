@@ -47,6 +47,20 @@ namespace ff7::world
     {
         namespace gte = field::kawai::gte;
 
+        gte::Matrix terrain_colors = {{{1774, 0, 0}, {1774, 0, 0}, {1774, 0, 0}}};
+
+        int set_terrain_light_color(const int16_t* colors)
+        {
+            for (size_t i = 0; i < 3; ++i) terrain_colors[i][0] = colors[3 * i];
+            return ff7_externals.world_set_terrain_light_color(colors);
+        }
+
+        int16_t update_terrain_lighting(vector4<int>* position)
+        {
+            terrain_colors = {{{1774, 0, 0}, {1774, 0, 0}, {1774, 0, 0}}};
+            return ff7_externals.world_update_terrain_lighting(position);
+        }
+
         struct ModelLighting
         {
             std::vector<uint32_t> colors;
@@ -308,19 +322,22 @@ namespace ff7::world
         return encounter_rate / common_frame_multiplier;
     }
 
-    bgra_color_ui8* calculate_terrain_lighting(matrix* light_matrix, vector3<float>* normal,
-        bgra_color* base_color, bgra_color_ui8* source_color, bgra_color_ui8* out_color)
+    bgra_color_ui8* calculate_terrain_lighting(matrix*, vector3<float>* normal,
+        bgra_color*, bgra_color_ui8* source_color, bgra_color_ui8* out_color)
     {
-        // Vanilla terrain has one directional light. Clamp it before adding ambient, as PSX NCT does.
-        out_color->r = terrain_light_component(
-            light_matrix->_11 * normal->x + light_matrix->_12 * normal->y + light_matrix->_13 * normal->z,
-            light_matrix->_14, base_color->r);
-        out_color->g = terrain_light_component(
-            light_matrix->_21 * normal->x + light_matrix->_22 * normal->y + light_matrix->_23 * normal->z,
-            light_matrix->_24, base_color->g);
-        out_color->b = terrain_light_component(
-            light_matrix->_31 * normal->x + light_matrix->_32 * normal->y + light_matrix->_33 * normal->z,
-            light_matrix->_34, base_color->b);
+        // PSX NCT uses untransformed normals; distance fading is already in the texture palette.
+        const bool underwater = *ff7_externals.world_map_type_E045E8 == UNDERWATER;
+        const gte::Matrix directions = underwater ?
+            gte::Matrix{{{0, -4096, 0}, {0, 0, 0}, {0, 0, 0}}} :
+            gte::Matrix{{{-4096, -4096, -4096}, {0, 0, 0}, {0, 0, 0}}};
+        const gte::LongVector ambient = underwater ?
+            gte::LongVector{32 * 16, 32 * 16, 48 * 16} : gte::LongVector{64 * 16, 64 * 16, 64 * 16};
+        const auto light = gte::transform_ir({directions, {}},
+            field::kawai::fixed_normal({normal->x, normal->y, normal->z}), true);
+        const auto color = gte::transform_ir({terrain_colors, ambient}, light, true);
+        out_color->r = static_cast<uint8_t>(std::clamp(color[0] >> 4, 0, 255));
+        out_color->g = static_cast<uint8_t>(std::clamp(color[1] >> 4, 0, 255));
+        out_color->b = static_cast<uint8_t>(std::clamp(color[2] >> 4, 0, 255));
         out_color->a = source_color->a;
         return out_color;
     }
@@ -339,6 +356,8 @@ namespace ff7::world
     {
         if (!enable_worldmap_external_mesh)
         {
+            replace_call_function(ff7_externals.world_mode_loop_sub_74DB8C + 0x3FA, update_terrain_lighting);
+            replace_call_function((uint32_t)ff7_externals.world_update_terrain_lighting + 0x147, set_terrain_light_color);
             replace_call_function(ff7_externals.world_draw_all_3d_model_74C6B0 + 0x46, draw_world_model);
             replace_call_function(ff7_externals.world_draw_all_3d_model_74C6B0 + 0x103, draw_world_model);
             replace_call_function(ff7_externals.world_submit_draw_bg_meshes_75F68C + 0xEB3, calculate_terrain_lighting);
