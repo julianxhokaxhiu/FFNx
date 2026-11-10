@@ -290,6 +290,8 @@ void ff8_find_externals()
 	ff8_externals.sub_505DF0 = get_relative_call(ff8_externals.sub_506CF0, 0xAA);
 	ff8_externals.sub_4A94D0 = get_relative_call(ff8_externals.sub_47D890, 0x9);
 	ff8_externals.sub_4BCBE0 = get_relative_call(ff8_externals.sub_4A94D0, 0x1E0);
+	ff8_externals.battle_menu_draw_inline_command_list_sub_4BCCD0 = get_absolute_value(ff8_externals.sub_4BCBE0, 0x82);
+	ff8_externals.battle_draw_window_box_sub_4A7510 = get_relative_call(ff8_externals.battle_menu_draw_inline_command_list_sub_4BCCD0, 0x127);
 	ff8_externals.sub_4B1B00 = get_relative_call(ff8_externals.sub_4A94D0, 0x1E5);
 	ff8_externals.sub_4B9A40 = get_relative_call(ff8_externals.sub_4A94D0, 0x245);
 	ff8_externals.battle_menu_hud_renderer_sub_4B1740 = get_absolute_value(ff8_externals.sub_4B1B00, 0x64);

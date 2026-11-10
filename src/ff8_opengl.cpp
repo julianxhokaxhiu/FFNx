@@ -42,6 +42,7 @@
 #include "ff8/battle/ai.h"
 #include "ff8/battle/effect_camera.h"
 #include "ff8/battle/anim_set.h"
+#include "ff8/battle/ui_window.h"
 #include "ff8/field/movie.h"
 #include "ff8/kernel_magic.h"
 #include "ff8/kernel_ability.h"
@@ -2424,6 +2425,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// Battle anim sets (limit breaks, Blue Magic...) from <direct_mode_path>/exe/effect_NNN.animset
 	// #####################
 	ff8_battle_anim_set_init();
+
+	// #####################
+	// Battle menu windows kept on screen while another window opens
+	// #####################
+	ff8_battle_ui_window_init();
 
 	// #####################
 	// Field scripts and models in sync with movies above 15 FPS

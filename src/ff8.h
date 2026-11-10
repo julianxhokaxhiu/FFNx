@@ -2009,6 +2009,8 @@ struct ff8_externals
 	uint32_t sub_505DF0;
 	uint32_t sub_4A94D0;
 	uint32_t sub_4BCBE0;
+	uint32_t battle_menu_draw_inline_command_list_sub_4BCCD0;
+	uint32_t battle_draw_window_box_sub_4A7510;
 	uint32_t sub_4C8B10;
 	uint32_t battle_pause_sub_4CD140;
 	uint32_t *is_alternative_pause_menu;
