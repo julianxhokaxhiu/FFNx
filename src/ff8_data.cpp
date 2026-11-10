@@ -290,6 +290,16 @@ void ff8_find_externals()
 	ff8_externals.sub_505DF0 = get_relative_call(ff8_externals.sub_506CF0, 0xAA);
 	ff8_externals.sub_4A94D0 = get_relative_call(ff8_externals.sub_47D890, 0x9);
 	ff8_externals.sub_4BCBE0 = get_relative_call(ff8_externals.sub_4A94D0, 0x1E0);
+	ff8_externals.battle_menu_draw_inline_command_list_sub_4BCCD0 = get_absolute_value(ff8_externals.sub_4BCBE0, 0x82);
+	ff8_externals.battle_draw_window_box_sub_4A7510 = get_relative_call(ff8_externals.battle_menu_draw_inline_command_list_sub_4BCCD0, 0x127);
+	ff8_externals.battle_ui_context_dword_1D6D490 = (ff8_battle_ui_context **)get_absolute_value(ff8_externals.battle_draw_window_box_sub_4A7510, 0x2);
+	ff8_externals.battle_compute_window_scale_rect_sub_4A7440 = (void(*)(int, int16_t *, int16_t *))get_relative_call(ff8_externals.battle_draw_window_box_sub_4A7510, 0x20);
+	ff8_externals.battle_emit_relative_draw_area_sub_4A73A0 = (uint32_t *(*)(int *, uint32_t *, int16_t *))get_relative_call(ff8_externals.battle_draw_window_box_sub_4A7510, 0x4F);
+	ff8_externals.battle_draw_icon_sub_4B77C0 = (uint32_t *(*)(int *, uint32_t *, int, int, int, uint32_t, int))get_relative_call(ff8_externals.battle_draw_window_box_sub_4A7510, 0xB0);
+	ff8_externals.battle_draw_window_background_sub_4B6A60 = (uint32_t *(*)(int *, uint32_t *, int16_t *, uint32_t))get_relative_call(ff8_externals.battle_draw_window_box_sub_4A7510, 0xC8);
+	ff8_externals.battle_draw_window_border_sub_4B6A80 = (uint32_t *(*)(int *, uint32_t *, int16_t *, uint32_t, uint32_t))get_relative_call(ff8_externals.battle_draw_window_box_sub_4A7510, 0xDE);
+	ff8_externals.battle_register_window_overlap_sub_4B1660 = (void(*)(int16_t *))get_relative_call(ff8_externals.battle_draw_window_box_sub_4A7510, 0x107);
+	ff8_externals.battle_emit_full_draw_area_sub_4A7630 = (uint32_t *(*)(int *, uint32_t *))get_relative_call(ff8_externals.battle_menu_draw_inline_command_list_sub_4BCCD0, 0x7E);
 	ff8_externals.sub_4B1B00 = get_relative_call(ff8_externals.sub_4A94D0, 0x1E5);
 	ff8_externals.sub_4B9A40 = get_relative_call(ff8_externals.sub_4A94D0, 0x245);
 	ff8_externals.battle_menu_hud_renderer_sub_4B1740 = get_absolute_value(ff8_externals.sub_4B1B00, 0x64);

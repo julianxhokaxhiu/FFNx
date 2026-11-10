@@ -1317,6 +1317,18 @@ struct ff8_battle_com_file_data {
 	void *sequences;
 };
 
+// Battle menu drawing context shared by the window and text helpers
+struct ff8_battle_ui_context {
+	uint32_t color;
+	uint8_t unknown_04[0x1F];
+	uint8_t window_border_flags;
+	uint8_t unknown_24[0x10];
+	int16_t window_rect[4];
+	int16_t scaled_window_rect[4];
+	uint16_t icon_id;
+	uint16_t icon_palette;
+};
+
 struct ff8_menu_callback {
 	void (*func)(int);
 	uint32_t field_4;
@@ -2009,6 +2021,16 @@ struct ff8_externals
 	uint32_t sub_505DF0;
 	uint32_t sub_4A94D0;
 	uint32_t sub_4BCBE0;
+	uint32_t battle_menu_draw_inline_command_list_sub_4BCCD0;
+	uint32_t battle_draw_window_box_sub_4A7510;
+	ff8_battle_ui_context **battle_ui_context_dword_1D6D490;
+	void (*battle_compute_window_scale_rect_sub_4A7440)(int, int16_t *, int16_t *);
+	uint32_t *(*battle_emit_relative_draw_area_sub_4A73A0)(int *, uint32_t *, int16_t *);
+	uint32_t *(*battle_emit_full_draw_area_sub_4A7630)(int *, uint32_t *);
+	uint32_t *(*battle_draw_icon_sub_4B77C0)(int *, uint32_t *, int, int, int, uint32_t, int);
+	uint32_t *(*battle_draw_window_background_sub_4B6A60)(int *, uint32_t *, int16_t *, uint32_t);
+	uint32_t *(*battle_draw_window_border_sub_4B6A80)(int *, uint32_t *, int16_t *, uint32_t, uint32_t);
+	void (*battle_register_window_overlap_sub_4B1660)(int16_t *);
 	uint32_t sub_4C8B10;
 	uint32_t battle_pause_sub_4CD140;
 	uint32_t *is_alternative_pause_menu;

@@ -11,6 +11,7 @@
 
 ## FF8
 
+- Core: Fix battle menu windows disappearing for a few frames while another window opens, like the Magic or Item list when choosing an ally target ( https://github.com/julianxhokaxhiu/FFNx/pull/1076 )
 - Core: Fix Scan not saving scanned enemies in the vanilla savemap field when no loose scene.out is found ( https://github.com/julianxhokaxhiu/FFNx/issues/1077 )
 - Direct mode: Add the chunk feature for the character and weapon battle files (dXcNNN.dat, dXwNNN.dat), see [Direct mode](docs/mods/direct_mode.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/1074 )
 - Renderer: Preserve PSX texture-page coordinates, fixing battle effects sampling past their image edges, including Tonberry's Doink bubble ( https://github.com/julianxhokaxhiu/FFNx/issues/1073 )
