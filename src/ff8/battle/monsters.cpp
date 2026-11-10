@@ -124,13 +124,14 @@ static bool ff8_get_battle_file_size_on_disk(const char *relative_path, uint32_t
 // True if any encounter in scene.out uses a new monster (com_id >= 160) - the
 // Scan relocation below is only needed then. Read through sm_pc_read so file
 // overrides count, and sized from the real file so a modded scene.out works. If
-// the size can't be found, assume it's needed rather than skip a real fix.
+// the size can't be found (retail keeps scene.out in battle.fs), assume it's not
+// needed so vanilla keeps its scanned-once field where save editors expect it.
 static bool ff8_scene_out_uses_new_monsters()
 {
 	char scene_out_filename[] = "battle/scene.out";
 	uint32_t file_size;
 	if (!ff8_get_battle_file_size_on_disk(scene_out_filename, &file_size))
-		return true;
+		return false;
 
 	uint8_t *scene_out = new uint8_t[file_size];
 	uint32_t read_size = ff8_externals.sm_pc_read(scene_out_filename, scene_out);
