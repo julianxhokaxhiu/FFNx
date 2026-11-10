@@ -43,6 +43,7 @@
 #include "ff8/battle/effect_camera.h"
 #include "ff8/battle/anim_set.h"
 #include "ff8/battle/ui_window.h"
+#include "ff8/battle/effects_screen_units.h"
 #include "ff8/field/movie.h"
 #include "ff8/kernel_magic.h"
 #include "ff8/kernel_ability.h"
@@ -2430,6 +2431,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// Battle menu windows kept on screen while another window opens
 	// #####################
 	ff8_battle_ui_window_init();
+
+	// #####################
+	// Battle effects that test screen coordinates in PSX pixels (Cure, Cura, Potion, Hi-Potion, Hypnotize)
+	// #####################
+	ff8_battle_effects_screen_units_init();
 
 	// #####################
 	// Field scripts and models in sync with movies above 15 FPS
