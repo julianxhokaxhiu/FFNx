@@ -13,6 +13,7 @@
 
 - Core: Fix battle menu windows disappearing for a few frames while another window opens, like the Magic or Item list when choosing an ally target ( https://github.com/julianxhokaxhiu/FFNx/pull/1076 )
 - Core: Fix battle sounds playing almost all on the right and field footsteps jumping from one side to the other, they are panned from the screen position like on PSX ( https://github.com/julianxhokaxhiu/FFNx/pull/1084 )
+- Core: Fix lightning and acid streams drawn as thin or crossed lines (Quezacotl, Breath, Electric Discharge, Gastric Juice, Electrocute, Acid, Saliva, Dissolving Acid, Mega Spark, Mega Pulse Cannon, X-ATM092, Ultimecia), they are as wide as on PSX
 - Core: Fix Scan not saving scanned enemies in the vanilla savemap field when no loose scene.out is found ( https://github.com/julianxhokaxhiu/FFNx/issues/1077 )
 - Core: Fix the Doom countdown drawn lower than on PSX and overlapping the second status countdown above battle models ( https://github.com/julianxhokaxhiu/FFNx/pull/1086 )
 - Core: Fix the missing light on Cure, Cura, Potion and Hi-Potion, the missing swirl on Hypnotize, and the missing flash on Boko's ChocoBocle ( https://github.com/julianxhokaxhiu/FFNx/pull/1083 )
