@@ -1655,6 +1655,7 @@ struct ff8_externals
 	uint32_t sub_53E6B0;
 	uint32_t sub_4023D0;
 	uint32_t sub_53C750;
+	uint32_t worldmap_no_fog_filter_polygons_in_block;
 	uint32_t sub_544630;
 	uint32_t sub_548080;
 	uint32_t sub_549E80;

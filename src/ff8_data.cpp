@@ -904,6 +904,7 @@ void ff8_find_externals()
 		ff8_externals.worldmap_fog_filter_polygons_in_block_2 = get_relative_call(ff8_externals.sub_53BB90, 0x442);
 		ff8_externals.worldmap_fog_filter_polygons_fallback = get_relative_call(ff8_externals.sub_53BB90, 0x466);
 		ff8_externals.sub_53C750 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x2DB);
+		ff8_externals.worldmap_no_fog_filter_polygons_in_block = get_relative_call(ff8_externals.sub_53C750, 0x439);
 		ff8_externals.sub_54E9B0 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x369);
 		ff8_externals.sub_54FDA0 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x375);
 		ff8_externals.sub_54D7E0 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x3C2);

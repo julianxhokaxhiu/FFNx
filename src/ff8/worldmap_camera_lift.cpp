@@ -28,10 +28,6 @@
 
 #include <stdint.h>
 
-// World_UpdateAndDrawTerrain_Fog / _NoFog -> the block drawers
-#define TERRAIN_FOG_FAR_BLOCK 0x466
-#define TERRAIN_FOG_NEAR_BLOCK 0x442
-#define TERRAIN_NO_FOG_NEAR_BLOCK 0x439
 // Far blocks: mov edx, 0xA0 / mov edx, 0xB4 against the triangle's screen x / y
 #define FAR_BLOCK_X_LIMIT 0x529
 #define FAR_BLOCK_Y_LIMIT 0x553
@@ -59,11 +55,9 @@ void ff8_worldmap_camera_lift_init()
 {
 	if (!FF8_US_VERSION) return;
 
-	const uint32_t far_block = get_relative_call(ff8_externals.sub_53BB90, TERRAIN_FOG_FAR_BLOCK);
+	patch_code_dword(ff8_externals.worldmap_fog_filter_polygons_fallback + FAR_BLOCK_X_LIMIT, LIFT_POINT_X);
+	patch_code_dword(ff8_externals.worldmap_fog_filter_polygons_fallback + FAR_BLOCK_Y_LIMIT, LIFT_POINT_Y);
 
-	patch_code_dword(far_block + FAR_BLOCK_X_LIMIT, LIFT_POINT_X);
-	patch_code_dword(far_block + FAR_BLOCK_Y_LIMIT, LIFT_POINT_Y);
-
-	patch_near_block(get_relative_call(ff8_externals.sub_53BB90, TERRAIN_FOG_NEAR_BLOCK), fog_near_block);
-	patch_near_block(get_relative_call(ff8_externals.sub_53C750, TERRAIN_NO_FOG_NEAR_BLOCK), no_fog_near_block);
+	patch_near_block(ff8_externals.worldmap_fog_filter_polygons_in_block_2, fog_near_block);
+	patch_near_block(ff8_externals.worldmap_no_fog_filter_polygons_in_block, no_fog_near_block);
 }
