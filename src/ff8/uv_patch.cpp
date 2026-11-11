@@ -337,8 +337,9 @@ int pubintro_psxvram_buffer_init_sub_45B310()
 	int ret = ((int(*)())ff8_externals.sub_45B310)();
 
 	// Texel 255 is inside a 256-wide page, not its exclusive outer boundary.
+	// Each UV sits 1/64 texel inside its texel: exactly on the edge, nearest sampling can take the previous texel.
 	for (int i = 0; i < 256; ++i) {
-		ff8_externals.psx_floats1[i] = float(double(i) / 256.0);
+		ff8_externals.psx_floats1[i] = float((double(i) + 1.0 / 64.0) / 256.0);
 	}
 
 	for (int i = 0; i < 512; ++i) {

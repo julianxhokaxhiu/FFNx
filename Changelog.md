@@ -18,6 +18,7 @@
 - Core: Fix the missing light on Cure, Cura, Potion and Hi-Potion, the missing swirl on Hypnotize, and the missing flash on Boko's ChocoBocle ( https://github.com/julianxhokaxhiu/FFNx/pull/1083 )
 - Core: Fix the missing sword slash on Gilgamesh's Masamune, the Eden sparkles drawn off screen and the long spikes Magic Summon throws across the screen ( https://github.com/julianxhokaxhiu/FFNx/pull/1088 )
 - Direct mode: Add the chunk feature for the character and weapon battle files (dXcNNN.dat, dXwNNN.dat), see [Direct mode](docs/mods/direct_mode.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/1074 )
+- Renderer: Fix 3D models sampling the previous texel since the UV regression fix, like a red stripe on Selphie's nunchaku chain in battle
 - Renderer: Preserve PSX texture-page coordinates, fixing battle effects sampling past their image edges, including Tonberry's Doink bubble ( https://github.com/julianxhokaxhiu/FFNx/issues/1073 )
 - Renderer: Restore world-map UV precision automatically without affecting unrelated polygons. The `ff8_fix_uv_coords_precision` option is no longer needed and is ignored.
 - Renderer: Fix UV gemotry for Roads and Rail tracks in World
