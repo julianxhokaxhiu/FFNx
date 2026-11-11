@@ -16,5 +16,5 @@
 
 #pragma once
 
-// Battle effects that compare GTE screen coordinates with PSX pixels (Cure, Cura, Potion, Hi-Potion, Hypnotize). Call once.
+// Battle effects that compare GTE screen coordinates with PSX pixels (Cure, Cura, Potion, Hi-Potion, Hypnotize, ChocoBocle). Call once.
 void ff8_battle_effects_screen_units_init();

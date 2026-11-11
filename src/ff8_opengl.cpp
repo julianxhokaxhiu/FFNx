@@ -2433,7 +2433,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	ff8_battle_ui_window_init();
 
 	// #####################
-	// Battle effects that test screen coordinates in PSX pixels (Cure, Cura, Potion, Hi-Potion, Hypnotize)
+	// Battle effects that test screen coordinates in PSX pixels (Cure, Cura, Potion, Hi-Potion, Hypnotize, ChocoBocle)
 	// #####################
 	ff8_battle_effects_screen_units_init();
 

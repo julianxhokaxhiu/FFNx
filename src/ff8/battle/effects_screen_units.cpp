@@ -15,7 +15,7 @@
 /****************************************************************************/
 
 // The PC GTE returns SX/SY in eighths of a pixel, the PSX returned pixels.
-// These effects compare them with pixel values, so they get pixels back here.
+// These effects compare them with pixel values, so they get pixels back here (or the limits go to eighths).
 
 #include "effects_screen_units.h"
 #include "effects.h"
@@ -115,6 +115,50 @@ static uint32_t cura_overlay_render(uint32_t effect)
 	return get_relative_call(draw, 0xA9);
 }
 
+// ChocoBocle: Init -> Tick -> ... -> particle draw -> polygon list dispatcher
+static uint32_t chocobocle_polygon_dispatch(uint32_t effect)
+{
+	uint32_t address = effect;
+
+	for (uint32_t offset : {0x2D, 0x4A, 0x9, 0xD, 0x26, 0xD, 0x45, 0xD}) address = get_absolute_value(address, offset);
+
+	uint32_t particle_task = get_relative_call(address, 0x38);
+	uint32_t particle_draw = get_absolute_value(particle_task, 0x101);
+
+	return get_relative_call(particle_draw, 0x2C7);
+}
+
+// ChocoBocle's polygon renderers skip a polygon when its corners are all past x 320 or all past y 216
+// (PSX pixels): the limits go to 320 * 8 and 216 * 8. Call offset in the dispatcher, then the limits.
+struct chocobocle_renderer
+{
+	uint32_t call;
+	uint32_t x_limits[4];
+	uint32_t y_limits[4];
+};
+
+static const chocobocle_renderer chocobocle_renderers[] = {
+	{0x65, {0xF5, 0x10E, 0x120}, {0x132, 0x144, 0x156}},
+	{0x86, {0x108, 0x11E, 0x138, 0x1AD}, {0x151, 0x16A, 0x183, 0x1C9}},
+	{0xA3, {0x148, 0x162, 0x174}, {0x186, 0x198, 0x1AA}},
+	{0xC0, {0x163, 0x17E, 0x190, 0x1EA}, {0x1A2, 0x1B4, 0x1C6, 0x1FC}},
+	{0xDD, {0xF4, 0x10D, 0x11E}, {0x130, 0x142, 0x154}},
+	{0xFA, {0x10A, 0x120, 0x139, 0x1AF}, {0x152, 0x16B, 0x184, 0x1CB}},
+	{0x117, {0x145, 0x15F, 0x171}, {0x183, 0x195, 0x1A7}},
+	{0x134, {0x164, 0x17E, 0x190, 0x1E9}, {0x1A2, 0x1B4, 0x1C6, 0x1FB}}
+};
+
+static void patch_chocobocle_limits(uint32_t dispatch)
+{
+	for (const chocobocle_renderer &renderer : chocobocle_renderers)
+	{
+		const uint32_t render = get_relative_call(dispatch, renderer.call);
+
+		for (uint32_t offset : renderer.x_limits) if (offset != 0) patch_code_word(render + offset, 0x140 * 8);
+		for (uint32_t offset : renderer.y_limits) if (offset != 0) patch_code_word(render + offset, 0xD8 * 8);
+	}
+}
+
 static void patch_overlay_render(uint32_t render)
 {
 	replace_call(render + OVERLAY_TRI_READ_SXY012, read_sxy012_pixels);
@@ -137,6 +181,7 @@ void ff8_battle_effects_screen_units_init()
 	const uint32_t hi_potion = cura_overlay_render(effects[FF8BattleEffect::HiPotion]);
 	const uint32_t hypnotize_master = get_absolute_value(get_relative_call(effects[FF8BattleEffect::Hypnotize], 0x5), 0x4C);
 	const uint32_t hypnotize_main = get_absolute_value(hypnotize_master, 0xC8);
+	const uint32_t chocobocle = chocobocle_polygon_dispatch(effects[FF8BattleEffect::BokoChocobocle]);
 
 	// Resolve the GTE and SSIGPU helpers from Cure before anything is patched
 	gte_read_sxy012 = (int16_t *(*)(int16_t *))get_relative_call(cure, OVERLAY_TRI_READ_SXY012);
@@ -150,4 +195,6 @@ void ff8_battle_effects_screen_units_init()
 	patch_overlay_render(hi_potion);
 
 	replace_call(hypnotize_main + HYPNOTIZE_MAIN_READ_SXY2, read_sxy2_pixels);
+
+	patch_chocobocle_limits(chocobocle);
 }

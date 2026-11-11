@@ -11,7 +11,7 @@
 
 ## FF8
 
-- Battle: Fix the missing light on Cure, Cura, Potion and Hi-Potion, and the missing swirl on Hypnotize ( https://github.com/julianxhokaxhiu/FFNx/pull/1083 )
+- Battle: Fix the missing light on Cure, Cura, Potion and Hi-Potion, the missing swirl on Hypnotize, and the missing flash on Boko's ChocoBocle ( https://github.com/julianxhokaxhiu/FFNx/pull/1083 )
 - Core: Fix battle menu windows disappearing for a few frames while another window opens, like the Magic or Item list when choosing an ally target ( https://github.com/julianxhokaxhiu/FFNx/pull/1076 )
 - Core: Fix Scan not saving scanned enemies in the vanilla savemap field when no loose scene.out is found ( https://github.com/julianxhokaxhiu/FFNx/issues/1077 )
 - Direct mode: Add the chunk feature for the character and weapon battle files (dXcNNN.dat, dXwNNN.dat), see [Direct mode](docs/mods/direct_mode.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/1074 )
