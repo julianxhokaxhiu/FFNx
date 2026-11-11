@@ -14,6 +14,7 @@
 - Core: Fix battle menu windows disappearing for a few frames while another window opens, like the Magic or Item list when choosing an ally target ( https://github.com/julianxhokaxhiu/FFNx/pull/1076 )
 - Core: Fix battle sounds playing almost all on the right and field footsteps jumping from one side to the other, they are panned from the screen position like on PSX ( https://github.com/julianxhokaxhiu/FFNx/pull/1084 )
 - Core: Fix Scan not saving scanned enemies in the vanilla savemap field when no loose scene.out is found ( https://github.com/julianxhokaxhiu/FFNx/issues/1077 )
+- Core: Fix the Doom countdown drawn lower than on PSX and overlapping the second status countdown above battle models ( https://github.com/julianxhokaxhiu/FFNx/pull/1086 )
 - Core: Fix the missing light on Cure, Cura, Potion and Hi-Potion, the missing swirl on Hypnotize, and the missing flash on Boko's ChocoBocle ( https://github.com/julianxhokaxhiu/FFNx/pull/1083 )
 - Direct mode: Add the chunk feature for the character and weapon battle files (dXcNNN.dat, dXwNNN.dat), see [Direct mode](docs/mods/direct_mode.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/1074 )
 - Renderer: Preserve PSX texture-page coordinates, fixing battle effects sampling past their image edges, including Tonberry's Doink bubble ( https://github.com/julianxhokaxhiu/FFNx/issues/1073 )
