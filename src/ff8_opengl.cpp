@@ -45,6 +45,7 @@
 #include "ff8/battle/ui_window.h"
 #include "ff8/battle/effects_screen_units.h"
 #include "ff8/battle/status_countdown.h"
+#include "ff8/battle/effects_ribbons.h"
 #include "ff8/field/movie.h"
 #include "ff8/sound_pan.h"
 #include "ff8/kernel_magic.h"
@@ -2443,6 +2444,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// Status countdown numbers placed like on PSX
 	// #####################
 	ff8_battle_status_countdown_init();
+
+	// #####################
+	// Lightning and acid ribbons as wide as on PSX
+	// #####################
+	ff8_battle_effects_ribbons_init();
 
 	// #####################
 	// Field scripts and models in sync with movies above 15 FPS
