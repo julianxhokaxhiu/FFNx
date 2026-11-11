@@ -11,7 +11,7 @@
 
 ## FF8
 
-- Core: Apply the battle effect, ribbon, Doom countdown and sound panning fixes to the French, German, Italian, Spanish and Japanese releases too
+- Core: Apply the battle effect, ribbon, Doom countdown and sound panning fixes to the French, German, Italian, Spanish and Japanese releases too ( https://github.com/julianxhokaxhiu/FFNx/pull/1092 )
 - Core: Fix battle menu windows disappearing for a few frames while another window opens, like the Magic or Item list when choosing an ally target ( https://github.com/julianxhokaxhiu/FFNx/pull/1076 )
 - Core: Fix battle sounds playing almost all on the right and field footsteps jumping from one side to the other, they are panned from the screen position like on PSX ( https://github.com/julianxhokaxhiu/FFNx/pull/1084 )
 - Core: Fix lightning and acid streams drawn as thin or crossed lines (Quezacotl, Breath, Electric Discharge, Gastric Juice, Electrocute, Acid, Saliva, Dissolving Acid, Mega Spark, Mega Pulse Cannon, X-ATM092, Ultimecia), they are as wide as on PSX ( https://github.com/julianxhokaxhiu/FFNx/pull/1085 )
