@@ -28,8 +28,7 @@
 #include "../ff8.h"
 #include "../log.h"
 #include "../globals.h"
-
-#include <string.h>
+#include "../patch.h"
 #include <algorithm>
 
 namespace
@@ -75,9 +74,9 @@ namespace
 		int16_t x[3], y[3];
 		for (int i = 0; i < 3; ++i)
 		{
-			const uint8_t *xy = packet + layout.first_record + (first_vertex + i) * layout.record_size + layout.xy;
-			memcpy(&x[i], xy, sizeof(int16_t));
-			memcpy(&y[i], xy + 2, sizeof(int16_t));
+			const uint32_t xy = get_absolute_value(uint32_t(packet), layout.first_record + (first_vertex + i) * layout.record_size + layout.xy);
+			x[i] = int16_t(xy & 0xFFFF);
+			y[i] = int16_t(xy >> 16);
 		}
 		const int min_position = GTE_MIN_POSITION * unit, max_position = GTE_MAX_POSITION * unit;
 		bool outside = false;
@@ -130,7 +129,7 @@ namespace
 		if (!first_skipped)
 		{
 			// Vertices 0, 1, 2: the same packet read as a triangle
-			memcpy(triangle, packet, size);
+			memcpy_code(uint32_t(triangle), packet, size);
 			triangle[7] = triangle_code;
 			triangle_handler(triangle);
 		}
@@ -138,13 +137,14 @@ namespace
 		if (!second_skipped)
 		{
 			// Vertices 1, 2, 3: the records move down by one, the triangle keeps the quad's code, clut and tpage
-			memcpy(triangle, packet, layout.first_record);
-			memcpy(triangle + layout.first_record, packet + layout.first_record + layout.record_size, 3 * layout.record_size);
+			memcpy_code(uint32_t(triangle), packet, layout.first_record);
+			memcpy_code(uint32_t(triangle + layout.first_record), packet + layout.first_record + layout.record_size, 3 * layout.record_size);
 			if (code & POLYGON_TEXTURED)
 			{
 				for (int i = 0; i < 2; ++i)
 				{
-					memcpy(triangle + layout.first_record + i * layout.record_size + layout.uv + 2, packet + layout.first_record + i * layout.record_size + layout.uv + 2, sizeof(uint16_t));
+					const size_t clut_or_tpage = layout.first_record + i * layout.record_size + layout.uv + 2;
+					memcpy_code(uint32_t(triangle + clut_or_tpage), packet + clut_or_tpage, sizeof(uint16_t));
 				}
 			}
 			triangle[7] = triangle_code;
