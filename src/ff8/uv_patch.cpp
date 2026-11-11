@@ -34,15 +34,32 @@
 #include <cmath>
 #include <map>
 
-bool ff8_worldmap_adjust_strip_uvs(const nvertex *vertices, uint32_t vertexcount,
+// Polygon UVs sit this far (in texels) inside their texel, see pubintro_psxvram_buffer_init_sub_45B310
+constexpr double polygon_uv_inset = 1.0 / 64.0;
+
+bool ff8_worldmap_adjust_strip_uvs(const nvertex *drawn_vertices, uint32_t vertexcount,
 	const uint16_t *indices, uint32_t count, FF8WorldMapStrip strip, std::vector<nvertex> &adjusted)
 {
 	if (strip == FF8WorldMapStrip::None) return false;
-	if (!vertices || !indices || count % 3 != 0)
+	if (!drawn_vertices || !indices || count % 3 != 0)
 	{
 		ffnx_unexpected_once("Invalid FF8 world-map strip triangle list\n");
 		return false;
 	}
+
+	// Strip pieces are found on their whole-texel UVs: take the polygon table's inset back out
+	const auto texel_uv = [](float uv)
+	{
+		const float texel = std::floor(uv * 256.0f);
+		return uv * 256.0f - texel == float(polygon_uv_inset) ? texel / 256.0f : uv;
+	};
+	std::vector<nvertex> texel_vertices(drawn_vertices, drawn_vertices + vertexcount);
+	for (nvertex &vertex : texel_vertices)
+	{
+		vertex.u = texel_uv(vertex.u);
+		vertex.v = texel_uv(vertex.v);
+	}
+	const nvertex *vertices = texel_vertices.data();
 
 	const float min_u = strip == FF8WorldMapStrip::Road ? 32.0f : 0.0f;
 	std::vector<uint8_t> usage(vertexcount);
@@ -87,12 +104,12 @@ bool ff8_worldmap_adjust_strip_uvs(const nvertex *vertices, uint32_t vertexcount
 	}
 	if (joins.empty()) return false;
 
-	adjusted.assign(vertices, vertices + vertexcount);
+	adjusted.assign(drawn_vertices, drawn_vertices + vertexcount);
 	for (uint32_t index = 0; index < vertexcount; ++index)
 	{
 		if (usage[index] != 1) continue;
 		nvertex &vertex = adjusted[index];
-		const float v = vertex.v * 256.0f;
+		const float v = vertices[index].v * 256.0f;
 		const Position position = {vertex._.x, vertex._.y, vertex._.z, vertex.color.w};
 		const auto &join = joins.at(position);
 		float inset = 0.0f;
@@ -100,7 +117,7 @@ bool ff8_worldmap_adjust_strip_uvs(const nvertex *vertices, uint32_t vertexcount
 		if (v == 0.0f || v == 15.0f ||
 			(join[0] < 8.0f && join[1] > 8.0f && join[0] + join[1] == 15.0f))
 			inset = 0.5f;
-		vertex.u += 0.5f / 256.0f;
+		vertex.u = vertices[index].u + 0.5f / 256.0f;
 		vertex.v = (v + inset) / 256.0f;
 	}
 
@@ -337,8 +354,9 @@ int pubintro_psxvram_buffer_init_sub_45B310()
 	int ret = ((int(*)())ff8_externals.sub_45B310)();
 
 	// Texel 255 is inside a 256-wide page, not its exclusive outer boundary.
+	// Each UV sits inside its texel: exactly on the edge, nearest sampling can take the previous texel.
 	for (int i = 0; i < 256; ++i) {
-		ff8_externals.psx_floats1[i] = float(double(i) / 256.0);
+		ff8_externals.psx_floats1[i] = float((double(i) + polygon_uv_inset) / 256.0);
 	}
 
 	for (int i = 0; i < 512; ++i) {
