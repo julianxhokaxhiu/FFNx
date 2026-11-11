@@ -761,14 +761,15 @@ void ff8_widescreen_hook_init() {
 
 	const int worldmap_clip_top = 4 * (wide_viewport_y - 16);
 	const int worldmap_clip_height = 4 * wide_viewport_height;
-	memset_code(ff8_externals.worldmap_fog_filter_polygons_fallback + 0x1D9, 0x90, 2);
-	// The fallback's unsigned Y tests also reject negative packet coordinates in the top strip.
-	patch_code_int(ff8_externals.worldmap_fog_filter_polygons_fallback + 0x1E0, worldmap_clip_top + worldmap_clip_height);
-	patch_code_byte(ff8_externals.worldmap_fog_filter_polygons_fallback + 0x1E8, 0x7E); // jle
-	patch_code_byte(ff8_externals.worldmap_fog_filter_polygons_fallback + 0x1EE, 0x7E); // jle
-	patch_code_byte(ff8_externals.worldmap_fog_filter_polygons_fallback + 0x1F5, 0x8F); // jg
 	if (FF8_US_VERSION)
 	{
+		// These fallback offsets match the US release only
+		memset_code(ff8_externals.worldmap_fog_filter_polygons_fallback + 0x1D9, 0x90, 2);
+		// The fallback's unsigned Y tests also reject negative packet coordinates in the top strip.
+		patch_code_int(ff8_externals.worldmap_fog_filter_polygons_fallback + 0x1E0, worldmap_clip_top + worldmap_clip_height);
+		patch_code_byte(ff8_externals.worldmap_fog_filter_polygons_fallback + 0x1E8, 0x7E); // jle
+		patch_code_byte(ff8_externals.worldmap_fog_filter_polygons_fallback + 0x1EE, 0x7E); // jle
+		patch_code_byte(ff8_externals.worldmap_fog_filter_polygons_fallback + 0x1F5, 0x8F); // jg
 		memset_code(ff8_externals.worldmap_cull_blocks_sub_53D3C0 + 0x3A2, 0x90, 2);
 		memset_code(ff8_externals.worldmap_cull_blocks_sub_53D3C0 + 0x3A8, 0x90, 2);
 	}
