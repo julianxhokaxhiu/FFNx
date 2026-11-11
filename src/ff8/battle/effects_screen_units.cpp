@@ -24,6 +24,8 @@
 #include "../../patch.h"
 #include "../../globals.h"
 
+#include <algorithm>
+#include <cstdlib>
 #include <stdint.h>
 
 // Call sites in the overlay renderer shared by Cure, Cura, Potion and Hi-Potion (projector pass)
@@ -36,10 +38,30 @@
 #define OVERLAY_QUAD_MODEL_INSERT 0x898
 #define HYPNOTIZE_MAIN_READ_SXY2 0x4C
 
+// Gilgamesh: the timeline task starts the attack task from a table (Zantetsuken, Masamune, Excaliber, Excalipoor)
+#define GILGAMESH_ATTACK_TASKS 0x5B3
+#define GILGAMESH_MASAMUNE_TASK 1
+#define MASAMUNE_READ_SXY2 0xA3
+// Eden: the draw functions are called from a table, number 53 draws the pixel particles
+#define EDEN_DRAW_FUNCTIONS 0xA6
+#define EDEN_PIXEL_PARTICLE_DRAW 53
+#define EDEN_PIXEL_PARTICLE_PROJECT 0x5B0
+// Magic Summon: the vertex warp and what it calls
+#define MAGIC_SUMMON_WARP_VERTICES 0x99
+#define WARP_LOAD_VECTOR 0x32
+#define WARP_PROJECT 0x37
+#define WARP_READ_OTZ 0x50
+#define WARP_DISTANCES 0xD4
+
 static int16_t *(*gte_read_sxy012)(int16_t *) = nullptr;
 static int16_t *(*gte_read_sxy2)(int16_t *) = nullptr;
 static void *(*insert_prim_auto_depth)(void *, void *) = nullptr;
 static void *(*insert_prim_depth_keys)(void *, void *, int, int, int, int) = nullptr;
+static int (*project_point)(void *, int16_t *, void *, void *) = nullptr;
+static void (*gte_load_vector)(void *) = nullptr;
+static void (*gte_project)() = nullptr;
+static void (*gte_read_otz)(void *) = nullptr;
+static const uint8_t *warp_distances = nullptr;
 
 static void *pending_light_ot = nullptr;
 static void *pending_light = nullptr;
@@ -61,6 +83,90 @@ static int16_t *read_sxy2_pixels(int16_t *out)
 	gte_read_sxy2(out);
 	sxy_to_pixels(out, 1);
 	return out;
+}
+
+// Eden's pixel particles: the projected point goes into a dot placed in pixels
+static int project_point_pixels(void *vector, int16_t *sxy, void *p, void *flag)
+{
+	int ret = project_point(vector, sxy, p, flag);
+	sxy_to_pixels(sxy, 1);
+	return ret;
+}
+
+#pragma pack(push, 1)
+// Magic Summon's warp work block
+struct magic_summon_warp
+{
+	uint8_t unknown_0[0xC];
+	int16_t clip_x0, clip_y0, clip_x1, clip_y1; // pixels
+	uint8_t unknown_14[0x8];
+	int16_t sx, sy;
+	uint16_t otz;
+	uint8_t clip_flags;
+	uint8_t unknown_23[0x29];
+	uint16_t *weights;
+	int16_t radius; // pixels
+	int16_t centre_x, centre_y; // the point on screen
+	int16_t largest_offset; // pixels, the radius of the next frame
+};
+#pragma pack(pop)
+
+// Magic Summon pushes the target's vertices away from a point on screen. Its offsets, their limit (128),
+// the distance table and the radius are PSX pixels: the offset from the point goes to pixels and the
+// pushed offset back to eighths. The rest is the game's code.
+static void magic_summon_warp_vertices(uint8_t **vertices, uint8_t **records, magic_summon_warp *warp)
+{
+	uint8_t *vertex = *vertices;
+	uint32_t *record = (uint32_t *)*records;
+	int count = *(int16_t *)vertex;
+
+	vertex += 2;
+
+	for (; count > 0; --count, record += 2)
+	{
+		gte_load_vector(vertex);
+		gte_project();
+		vertex += 6;
+		gte_read_sxy2(&warp->sx);
+		gte_read_otz(&warp->otz);
+
+		if (warp->otz == 0)
+		{
+			((uint16_t *)record)[3] = 0x10;
+			continue;
+		}
+
+		const int dx = (warp->sx - warp->centre_x) >> 3;
+		const int dy = (warp->sy - warp->centre_y) >> 3;
+		const int16_t abs_dx = int16_t((std::min)(std::abs(dx), 0x80));
+		const int16_t abs_dy = int16_t((std::min)(std::abs(dy), 0x80));
+
+		if (warp->largest_offset < abs_dx) warp->largest_offset = abs_dx;
+		if (warp->largest_offset < abs_dy) warp->largest_offset = abs_dy;
+
+		const int distance = warp_distances[(abs_dy << 7) + abs_dx];
+
+		if (distance != 0 && distance < warp->radius)
+		{
+			const int weight = warp->weights[(distance << 7) / warp->radius];
+
+			// (offset x weight) >> 12 in pixels, << 3 for eighths
+			warp->sx = int16_t(warp->centre_x + ((dx * weight) >> 9));
+			warp->sy = int16_t(warp->centre_y + ((dy * weight) >> 9));
+		}
+
+		if (warp->sx < warp->clip_x0 * 8) warp->clip_flags |= 1;
+		else if (warp->sx >= warp->clip_x1 * 8) warp->clip_flags |= 2;
+
+		if (warp->sy < warp->clip_y0 * 8) warp->clip_flags |= 4;
+		else if (warp->sy >= warp->clip_y1 * 8) warp->clip_flags |= 8;
+
+		record[0] = *(uint32_t *)&warp->sx;
+		record[1] = *(uint32_t *)&warp->otz;
+	}
+
+	*vertices = vertex;
+	*records = (uint8_t *)record;
 }
 
 // The light would take its keys from the projector pass, far behind the model: keep it for the model insert
@@ -182,12 +288,25 @@ void ff8_battle_effects_screen_units_init()
 	const uint32_t hypnotize_master = get_absolute_value(get_relative_call(effects[FF8BattleEffect::Hypnotize], 0x5), 0x4C);
 	const uint32_t hypnotize_main = get_absolute_value(hypnotize_master, 0xC8);
 	const uint32_t chocobocle = chocobocle_polygon_dispatch(effects[FF8BattleEffect::BokoChocobocle]);
+	const uint32_t gilgamesh_timeline = get_absolute_value(effects[FF8BattleEffect::GilgameshMasamune], 0x8F);
+	const uint32_t masamune = ((uint32_t *)get_absolute_value(gilgamesh_timeline, GILGAMESH_ATTACK_TASKS))[GILGAMESH_MASAMUNE_TASK];
+	const uint32_t eden_draw = get_relative_call(get_absolute_value(effects[FF8BattleEffect::Eden], 0x45), 0x1D7);
+	const uint32_t eden_pixel_particles = ((uint32_t *)get_absolute_value(eden_draw, EDEN_DRAW_FUNCTIONS))[EDEN_PIXEL_PARTICLE_DRAW];
+	uint32_t magic_summon = get_relative_call(effects[FF8BattleEffect::MagicSummon], 0x5);
+	magic_summon = get_absolute_value(get_absolute_value(magic_summon, 0x4C), 0x72);
+	magic_summon = get_relative_call(get_relative_call(magic_summon, 0x1D7), 0xFC);
+	const uint32_t warp_vertices = get_relative_call(magic_summon, MAGIC_SUMMON_WARP_VERTICES);
 
 	// Resolve the GTE and SSIGPU helpers from Cure before anything is patched
 	gte_read_sxy012 = (int16_t *(*)(int16_t *))get_relative_call(cure, OVERLAY_TRI_READ_SXY012);
 	gte_read_sxy2 = (int16_t *(*)(int16_t *))get_relative_call(cure, OVERLAY_QUAD_READ_SXY2);
 	insert_prim_auto_depth = (void *(*)(void *, void *))get_relative_call(cure, OVERLAY_TRI_LIGHT_INSERT);
 	insert_prim_depth_keys = (void *(*)(void *, void *, int, int, int, int))get_relative_call(cure, OVERLAY_TRI_MODEL_INSERT);
+	project_point = (int (*)(void *, int16_t *, void *, void *))get_relative_call(eden_pixel_particles, EDEN_PIXEL_PARTICLE_PROJECT);
+	gte_load_vector = (void (*)(void *))get_relative_call(warp_vertices, WARP_LOAD_VECTOR);
+	gte_project = (void (*)())get_relative_call(warp_vertices, WARP_PROJECT);
+	gte_read_otz = (void (*)(void *))get_relative_call(warp_vertices, WARP_READ_OTZ);
+	warp_distances = (const uint8_t *)get_absolute_value(warp_vertices, WARP_DISTANCES);
 
 	patch_overlay_render(cure);
 	patch_overlay_render(potion);
@@ -197,4 +316,8 @@ void ff8_battle_effects_screen_units_init()
 	replace_call(hypnotize_main + HYPNOTIZE_MAIN_READ_SXY2, read_sxy2_pixels);
 
 	patch_chocobocle_limits(chocobocle);
+
+	replace_call(masamune + MASAMUNE_READ_SXY2, read_sxy2_pixels);
+	replace_call(eden_pixel_particles + EDEN_PIXEL_PARTICLE_PROJECT, project_point_pixels);
+	replace_function(warp_vertices, magic_summon_warp_vertices);
 }

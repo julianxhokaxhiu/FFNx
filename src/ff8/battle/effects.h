@@ -58,6 +58,7 @@ namespace FF8BattleEffect {
         Apocalypse = 220,
         Meteor = 222,
         Carbuncle = 277,
+        MagicSummon = 282,
         Pandemona = 290,
         WhiteWind = 296,
         Diablos = 324,
