@@ -51,8 +51,6 @@ static int project_pixels(void *position, int16_t *sxy, int *p, int *flag)
 
 void ff8_sound_pan_init()
 {
-	if (!FF8_US_VERSION) return;
-
 	const uint32_t battle_pan = get_relative_call(ff8_externals.battle_actor_sound_3d, BATTLE_ACTOR_SOUND_3D_PAN);
 	const uint32_t field_footstep = get_relative_call(common_externals.update_field_entities, FIELD_FOOTSTEP_SOUND);
 

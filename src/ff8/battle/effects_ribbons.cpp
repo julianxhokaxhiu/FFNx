@@ -168,8 +168,6 @@ static uint32_t ribbon_draw(const ribbon &ribbon)
 
 void ff8_battle_effects_ribbons_init()
 {
-	if (!FF8_US_VERSION) return;
-
 	static const std::array<ribbon_edge_fn, ribbon_count> hooks = ribbon_edges_hooks(std::make_index_sequence<ribbon_count>());
 	uint32_t draws[ribbon_count];
 

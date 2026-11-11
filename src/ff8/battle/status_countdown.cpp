@@ -35,8 +35,6 @@
 
 void ff8_battle_status_countdown_init()
 {
-	if (!FF8_US_VERSION) return;
-
 	uint32_t animation_init = get_relative_call(ff8_externals.sub_502380, 0x3F);
 	uint32_t entity_update = get_absolute_value(animation_init, 0x6);
 	uint32_t status_visuals = get_relative_call(entity_update, 0xAD);

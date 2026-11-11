@@ -278,8 +278,6 @@ static void patch_overlay_render(uint32_t render)
 
 void ff8_battle_effects_screen_units_init()
 {
-	if (!FF8_US_VERSION) return;
-
 	const DWORD *effects = ff8_externals.func_off_battle_effects_C81774;
 	const uint32_t cure = cure_overlay_render(effects[FF8BattleEffect::Cure]);
 	const uint32_t potion = cure_overlay_render(effects[FF8BattleEffect::Potion]);
