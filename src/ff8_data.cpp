@@ -578,6 +578,8 @@ void ff8_find_externals()
 
 	ff8_externals.ssigpu_callbacks_1 = (uint32_t *)get_absolute_value(ff8_externals.sub_45D080, 0x21E);
 	ff8_externals.ssigpu_callbacks_2 = (uint32_t *)get_absolute_value(ff8_externals.sub_45D080, 0x122);
+	ff8_externals.ssigpu_callbacks_3 = (uint32_t *)get_absolute_value(ff8_externals.sub_45D080, 0x239);
+	ff8_externals.ssigpu_packet_in_pixels_dword_1CA89FC = (uint32_t *)get_absolute_value(ff8_externals.sub_45D080, 0xC3);
 	ff8_externals.sub_461E00 = ff8_externals.ssigpu_callbacks_1[52];
 	ff8_externals.sub_461220 = get_relative_call(ff8_externals.sub_461E00, 0x50);
 	ff8_externals.dword_1CA8848 = get_absolute_value(ff8_externals.sub_461E00, 0x56);

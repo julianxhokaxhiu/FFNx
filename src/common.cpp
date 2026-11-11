@@ -81,6 +81,7 @@
 #include "ff8/vibration.h"
 #include "ff8/engine.h"
 #include "ff8/uv_patch.h"
+#include "ff8/psx_polygon_size.h"
 #include "ff8/ambient.h"
 #include "ff8/file.h"
 #include "ff8/remaster.h"
@@ -935,6 +936,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				{
 					vram_init();
 					uv_patch_init();
+					ff8_psx_polygon_size_init();
 					vibration_init();
 					if (ff8_remastered_edition) {
 						ff8_remaster_init();

@@ -1773,6 +1773,8 @@ struct ff8_externals
 	uint32_t sub_470250;
 	uint32_t *ssigpu_callbacks_1;
 	uint32_t *ssigpu_callbacks_2;
+	uint32_t *ssigpu_callbacks_3;
+	uint32_t *ssigpu_packet_in_pixels_dword_1CA89FC;
 	uint32_t sub_462AD0;
 	uint32_t sub_462DF0;
 	uint32_t sub_461220;
