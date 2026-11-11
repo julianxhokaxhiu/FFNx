@@ -3788,6 +3788,8 @@ struct ff7_externals
 	anim_header*** world_player_animations;
 	world_model_animation* world_other_model_animations;
 	int (*world_get_model_count)();
+	uint32_t world_recolor_model;
+	int (*world_add_model_color)(const bgra_color*, hrc_data*);
 	uint32_t world_draw_fade_quad_75551A;
 	uint32_t world_sub_75079D;
 	uint32_t world_sub_751EFC;

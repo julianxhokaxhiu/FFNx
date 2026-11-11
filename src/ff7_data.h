@@ -1372,6 +1372,8 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_player_animations = (anim_header***)get_absolute_value(ff7_externals.world_draw_all_3d_model_74C6B0, 0x37);
 	ff7_externals.world_other_model_animations = (world_model_animation*)get_absolute_value(ff7_externals.world_draw_all_3d_model_74C6B0, 0xEB);
 	ff7_externals.world_get_model_count = (int(*)())get_relative_call(ff7_externals.world_draw_all_3d_model_74C6B0, 0x4E);
+	ff7_externals.world_recolor_model = get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0x999);
+	ff7_externals.world_add_model_color = (int(*)(const bgra_color*, hrc_data*))get_relative_call(ff7_externals.world_recolor_model, 0xA9);
 	ff7_externals.world_draw_fade_quad_75551A = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x554);
 	ff7_externals.world_sub_75079D = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x421);
 	ff7_externals.world_sub_751EFC = get_relative_call(ff7_externals.world_sub_75079D, 0x1FB);
