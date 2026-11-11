@@ -4,6 +4,7 @@
       "kind": "filesystem",
       "path": ".vcpkg",
       "packages": [
+        "dav1d",
         "amd-amf",
         "bx",
         "bimg",
