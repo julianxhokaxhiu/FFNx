@@ -28,7 +28,10 @@ namespace FF8BattleEffect {
     enum Effect {
         Cure = 0,
         Leviathan = 5,
+        Cura = 24,
         Scan = 39,
+        Potion = 49,
+        HiPotion = 50,
         Scan2 = 67,
         TheEnd = 84,
         Tonberry = 89,
@@ -39,6 +42,7 @@ namespace FF8BattleEffect {
         BokoChocometeor = 98,
         BokoChocobocle = 99,
         Quezacotl = 115,
+        Hypnotize = 132,
         Phoenix = 139,
         Ultima = 148,
         Shiva = 184,
