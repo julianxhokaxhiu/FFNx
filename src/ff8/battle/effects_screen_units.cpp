@@ -23,8 +23,6 @@
 #include "../../ff8.h"
 #include "../../patch.h"
 #include "../../globals.h"
-#include "../../cfg.h"
-#include "../../log.h"
 
 #include <stdint.h>
 
@@ -36,8 +34,6 @@
 #define OVERLAY_QUAD_READ_SXY2 0x74A
 #define OVERLAY_QUAD_LIGHT_INSERT 0x831
 #define OVERLAY_QUAD_MODEL_INSERT 0x898
-// Camera pass, only used to cross-check GTE_ReadSXY2
-#define OVERLAY_QUAD_CAMERA_READ_SXY2 0x663
 #define HYPNOTIZE_MAIN_READ_SXY2 0x4C
 
 static int16_t *(*gte_read_sxy012)(int16_t *) = nullptr;
@@ -93,11 +89,6 @@ static void *insert_model_then_light(void *ot_entry, void *prim, int z0, int z1,
 	return ret;
 }
 
-static bool is_call_to(uint32_t site, uint32_t target)
-{
-	return *(uint8_t *)site == 0xE8 && get_relative_call(site, 0) == target;
-}
-
 // Cure and Potion: Init -> Tick -> spawn emitter -> Emitter -> spawn ring -> Ring -> draw -> render
 static uint32_t cure_overlay_render(uint32_t effect)
 {
@@ -124,35 +115,15 @@ static uint32_t cura_overlay_render(uint32_t effect)
 	return get_relative_call(draw, 0xA9);
 }
 
-struct overlay_call
+static void patch_overlay_render(uint32_t render)
 {
-	uint32_t offset;
-	uint32_t original;
-	void *wrapper;
-};
-
-static void patch_overlay_render(const char *name, uint32_t render)
-{
-	const overlay_call calls[] = {
-		{OVERLAY_TRI_READ_SXY012, uint32_t(gte_read_sxy012), read_sxy012_pixels},
-		{OVERLAY_TRI_LIGHT_INSERT, uint32_t(insert_prim_auto_depth), defer_light_insert},
-		{OVERLAY_TRI_MODEL_INSERT, uint32_t(insert_prim_depth_keys), insert_model_then_light},
-		{OVERLAY_QUAD_READ_SXY012, uint32_t(gte_read_sxy012), read_sxy012_pixels},
-		{OVERLAY_QUAD_READ_SXY2, uint32_t(gte_read_sxy2), read_sxy2_pixels},
-		{OVERLAY_QUAD_LIGHT_INSERT, uint32_t(insert_prim_auto_depth), defer_light_insert},
-		{OVERLAY_QUAD_MODEL_INSERT, uint32_t(insert_prim_depth_keys), insert_model_then_light}
-	};
-
-	for (const overlay_call &call : calls)
-	{
-		if (!is_call_to(render + call.offset, call.original))
-		{
-			if (trace_all) ffnx_trace("%s: %s overlay call at 0x%X does not match, not patched\n", __func__, name, render + call.offset);
-			return;
-		}
-	}
-
-	for (const overlay_call &call : calls) replace_call(render + call.offset, call.wrapper);
+	replace_call(render + OVERLAY_TRI_READ_SXY012, read_sxy012_pixels);
+	replace_call(render + OVERLAY_TRI_LIGHT_INSERT, defer_light_insert);
+	replace_call(render + OVERLAY_TRI_MODEL_INSERT, insert_model_then_light);
+	replace_call(render + OVERLAY_QUAD_READ_SXY012, read_sxy012_pixels);
+	replace_call(render + OVERLAY_QUAD_READ_SXY2, read_sxy2_pixels);
+	replace_call(render + OVERLAY_QUAD_LIGHT_INSERT, defer_light_insert);
+	replace_call(render + OVERLAY_QUAD_MODEL_INSERT, insert_model_then_light);
 }
 
 void ff8_battle_effects_screen_units_init()
@@ -173,17 +144,10 @@ void ff8_battle_effects_screen_units_init()
 	insert_prim_auto_depth = (void *(*)(void *, void *))get_relative_call(cure, OVERLAY_TRI_LIGHT_INSERT);
 	insert_prim_depth_keys = (void *(*)(void *, void *, int, int, int, int))get_relative_call(cure, OVERLAY_TRI_MODEL_INSERT);
 
-	if (!is_call_to(cure + OVERLAY_QUAD_CAMERA_READ_SXY2, uint32_t(gte_read_sxy2)))
-	{
-		if (trace_all) ffnx_trace("%s: Cure overlay at 0x%X does not match, not patched\n", __func__, cure);
-		return;
-	}
+	patch_overlay_render(cure);
+	patch_overlay_render(potion);
+	patch_overlay_render(cura);
+	patch_overlay_render(hi_potion);
 
-	patch_overlay_render("Cure", cure);
-	patch_overlay_render("Potion", potion);
-	patch_overlay_render("Cura", cura);
-	patch_overlay_render("Hi-Potion", hi_potion);
-
-	if (is_call_to(hypnotize_main + HYPNOTIZE_MAIN_READ_SXY2, uint32_t(gte_read_sxy2))) replace_call(hypnotize_main + HYPNOTIZE_MAIN_READ_SXY2, read_sxy2_pixels);
-	else if (trace_all) ffnx_trace("%s: Hypnotize at 0x%X does not match, not patched\n", __func__, hypnotize_main);
+	replace_call(hypnotize_main + HYPNOTIZE_MAIN_READ_SXY2, read_sxy2_pixels);
 }
