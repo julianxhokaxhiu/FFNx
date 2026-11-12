@@ -16,5 +16,5 @@
 
 #pragma once
 
-// Status countdown numbers (Doom...) above the battle model where the PSX draws them. Call once.
-void ff8_battle_status_countdown_init();
+// Game sound fixes: battle sounds and field footsteps panned from the source's screen position like on PSX. Call once.
+void ff8_sound_init();

@@ -1985,6 +1985,9 @@ struct ff8_externals
 	uint32_t sub_502380;
 	uint32_t battle_actor_sound;
 	uint32_t battle_actor_sound_3d;
+	uint32_t battle_actor_sound_pan;
+	uint32_t field_footstep_sound;
+	uint32_t battle_status_countdown;
 	uint32_t (*battle_actor_sounds)[7];
 	uint32_t sub_50A790;
 	uint32_t sub_50B2A0;

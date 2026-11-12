@@ -16,5 +16,5 @@
 
 #pragma once
 
-// Lightning and acid ribbons (Quezacotl, Breath, Electric Discharge, Gastric Juice...) as wide as on PSX. Call once.
-void ff8_battle_effects_ribbons_init();
+// PC GPU layer (SSIGPU) fixes. Call once, after uv_patch_init.
+void ff8_gpu_init();

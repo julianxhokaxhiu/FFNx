@@ -14,13 +14,9 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-// Battle sounds and field footsteps are panned from the screen X of their source, but the PC GTE
-// returns it in eighths of a pixel where the PSX returned pixels:
-// - battle: pan = 96 * (x - 160) / 320 + 128, clamped to 80..175, so almost every sound plays on the right
-// - field footsteps: pan = x / 4 + 128, clamped to -512..508 first, so steps jump from one side to the other
-// The projection calls get the coordinates back in pixels, like the game's own divided-by-8 projection does.
+// Game sound fixes
 
-#include "sound_pan.h"
+#include "sound.h"
 
 #include "../ff8.h"
 #include "../patch.h"
@@ -28,17 +24,19 @@
 
 #include <stdint.h>
 
-// Battle: BdPlayActorSE3D -> screen pan -> projection
-#define BATTLE_ACTOR_SOUND_3D_PAN 0xBF
+// Battle: screen pan -> projection. Field: footstep sound -> projection
 #define BATTLE_PAN_PROJECT 0x1D
-// Field: script frame -> footstep sound -> projection
-#define FIELD_FOOTSTEP_SOUND 0x32C
 #define FIELD_FOOTSTEP_PROJECT 0x6D
 
 typedef int (*project_fn)(void *, int16_t *, int *, int *);
 
 static project_fn project = nullptr;
 
+// Battle sounds and field footsteps are panned from the screen X of their source, but the PC GTE
+// returns it in eighths of a pixel where the PSX returned pixels:
+// - battle: pan = 96 * (x - 160) / 320 + 128, clamped to 80..175, so almost every sound plays on the right
+// - field footsteps: pan = x / 4 + 128, clamped to -512..508 first, so steps jump from one side to the other
+// The projection calls get the coordinates back in pixels, like the game's own divided-by-8 projection does.
 static int project_pixels(void *position, int16_t *sxy, int *p, int *flag)
 {
 	const int otz = project(position, sxy, p, flag);
@@ -49,15 +47,10 @@ static int project_pixels(void *position, int16_t *sxy, int *p, int *flag)
 	return otz;
 }
 
-void ff8_sound_pan_init()
+void ff8_sound_init()
 {
-	if (!FF8_US_VERSION) return;
+	project = (project_fn)get_relative_call(ff8_externals.battle_actor_sound_pan, BATTLE_PAN_PROJECT);
 
-	const uint32_t battle_pan = get_relative_call(ff8_externals.battle_actor_sound_3d, BATTLE_ACTOR_SOUND_3D_PAN);
-	const uint32_t field_footstep = get_relative_call(common_externals.update_field_entities, FIELD_FOOTSTEP_SOUND);
-
-	project = (project_fn)get_relative_call(battle_pan, BATTLE_PAN_PROJECT);
-
-	replace_call(battle_pan + BATTLE_PAN_PROJECT, project_pixels);
-	replace_call(field_footstep + FIELD_FOOTSTEP_PROJECT, project_pixels);
+	replace_call(ff8_externals.battle_actor_sound_pan + BATTLE_PAN_PROJECT, project_pixels);
+	replace_call(ff8_externals.field_footstep_sound + FIELD_FOOTSTEP_PROJECT, project_pixels);
 }

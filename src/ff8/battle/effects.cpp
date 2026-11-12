@@ -14,7 +14,21 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#pragma once
+#include "effects.h"
+#include "effects/screen_units.h"
 
-// Battle effects that compare GTE screen coordinates with PSX pixels (Cure, Cura, Potion, Hi-Potion, Hypnotize, ChocoBocle, Masamune, Eden, Magic Summon). Call once.
-void ff8_battle_effects_screen_units_init();
+#include "../../ff8.h"
+#include "../../globals.h"
+
+void ff8_battle_effects_init()
+{
+	const DWORD *effects = ff8_externals.func_off_battle_effects_C81774;
+
+	// The shared helpers are read from Cure's renderer, before the magic patches it
+	ff8_battle_effects::resolve_screen_units(effects);
+
+	ff8_battle_effects::patch_magic(effects);
+	ff8_battle_effects::patch_summons(effects);
+	ff8_battle_effects::patch_enemy_attacks(effects);
+	ff8_battle_effects::patch_items(effects);
+}

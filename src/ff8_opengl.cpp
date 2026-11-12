@@ -39,19 +39,10 @@
 #include "ff8/vram.h"
 #include "ff8/save_data.h"
 #include "ff8/kernel_item.h"
-#include "ff8/battle/ai.h"
-#include "ff8/battle/effect_camera.h"
-#include "ff8/battle/anim_set.h"
-#include "ff8/battle/ui_window.h"
-#include "ff8/battle/effects_screen_units.h"
-#include "ff8/battle/status_countdown.h"
-#include "ff8/battle/effects_ribbons.h"
-#include "ff8/worldmap_camera_lift.h"
+#include "ff8/battle.h"
 #include "ff8/field/movie.h"
-#include "ff8/sound_pan.h"
-#include "ff8/kernel_magic.h"
-#include "ff8/kernel_ability.h"
-#include "ff8/battle/monsters.h"
+#include "ff8/sound.h"
+#include "ff8/kernel.h"
 #include "ff8/remaster.h"
 #include "ff8/menu/volume.h"
 #include "ff8/esc_menu.h"
@@ -2215,9 +2206,6 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.cdcheck_sub_52F9E0 + 0x15E, ff8_retry_configured_drive);
 	}
 
-	// Show "Has nothing" instead of "[Card]" when a monster has no drawable magic.
-	patch_code_byte(ff8_externals.battle_get_monster_name_sub_495100 + 0x30 + 1, 0x12);
-
 	// Force SFX IDs for Quezacotl
 	patch_code_dword(int(ff8_externals.vibrate_data_summon_quezacotl) - 16, 240030); // 240030 - 240000 + 370 = ID 400
 	patch_code_dword(int(ff8_externals.vibrate_data_summon_quezacotl) - 12, 240033); // 240033 - 240000 + 370 = ID 403
@@ -2393,7 +2381,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// #####################
 	replace_call(ff8_externals.sub_530C30 + 0x46A, ff8_field_3d_models_push_rects);
 	replace_call(uint32_t(ff8_externals.field_push_mch_vertices_rect_sub_533A90) + 0x4D, ff8_field_calc_triangle_condition);
-	ff8_worldmap_model_depth_init();
+
+	// #####################
+	// World map
+	// #####################
+	ff8_world_init();
 
 	// #####################
 	// Config menu: Sound volumes
@@ -2406,55 +2398,14 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	ff8_esc_menu_init();
 
 	// #####################
-	// AddMoreMagic: extended kernel.bin magic section (ids 57-63 and 96-255; 64-95 reserved for GFs)
+	// kernel.bin extensions: magic, abilities, items, battle commands
 	// #####################
-	ff8_kernel_magic_init();
-	ff8_kernel_ability_init();
+	ff8_kernel_init();
 
 	// #####################
-	// Unlock unused battle monster models c0m144-c0m199
+	// Battle: monsters, AI, effect cameras and anim sets, menus, effects
 	// #####################
-	ff8_battle_monsters_init();
-
-	// #####################
-	// Monster-AI target values 228-248 -> fixed battle-slot pairs
-	// #####################
-	ff8_battle_ai_init();
-
-	// #####################
-	// Battle effect cameras from <direct_mode_path>/exe/effect_NNN.bcam
-	// #####################
-	ff8_battle_effect_camera_init();
-
-	// #####################
-	// Battle anim sets (limit breaks, Blue Magic...) from <direct_mode_path>/exe/effect_NNN.animset
-	// #####################
-	ff8_battle_anim_set_init();
-
-	// #####################
-	// Battle menu windows kept on screen while another window opens
-	// #####################
-	ff8_battle_ui_window_init();
-
-	// #####################
-	// Battle effects that test screen coordinates in PSX pixels (Cure, Cura, Potion, Hi-Potion, Hypnotize, ChocoBocle)
-	// #####################
-	ff8_battle_effects_screen_units_init();
-
-	// #####################
-	// Status countdown numbers placed like on PSX
-	// #####################
-	ff8_battle_status_countdown_init();
-
-	// #####################
-	// Lightning and acid ribbons as wide as on PSX
-	// #####################
-	ff8_battle_effects_ribbons_init();
-
-	// #####################
-	// World map camera lifted when terrain hides the player, as on PSX
-	// #####################
-	ff8_worldmap_camera_lift_init();
+	ff8_battle_init();
 
 	// #####################
 	// Field scripts and models in sync with movies above 15 FPS
@@ -2462,9 +2413,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	ff8_field_movie_init();
 
 	// #####################
-	// Battle sounds and field footsteps panned like on PSX
+	// Game sounds
 	// #####################
-	ff8_sound_pan_init();
+	ff8_sound_init();
 
 }
 

@@ -88,3 +88,6 @@ namespace FF8BattleEffectOpcode {
         UploadPalette75 = 75
     };
 }
+
+// Battle effect fixes, per topic (effects/magic.cpp, summon.cpp, enemy.cpp, items.cpp)
+void ff8_battle_effects_init();

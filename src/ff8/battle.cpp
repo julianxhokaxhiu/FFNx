@@ -14,7 +14,27 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#pragma once
+// Battle: monsters, AI, effect cameras and anim sets, menus, effects
 
-// World map camera lift checked where the player stands on screen, as on PSX. Call once.
-void ff8_worldmap_camera_lift_init();
+#include "battle.h"
+
+#include "battle/monsters.h"
+#include "battle/ai.h"
+#include "battle/effect_camera.h"
+#include "battle/anim_set.h"
+#include "battle/ui.h"
+#include "battle/effects.h"
+
+void ff8_battle_init()
+{
+	// Monster models c0m144-c0m199, their sounds and Scan camera framing
+	ff8_battle_monsters_init();
+	// Monster AI target values 228-248 -> fixed battle slot pairs
+	ff8_battle_ai_init();
+	// Effect cameras from <direct_mode_path>/exe/effect_NNN.bcam
+	ff8_battle_effect_camera_init();
+	// Anim sets (limit breaks, Blue Magic...) from <direct_mode_path>/exe/effect_NNN.animset
+	ff8_battle_anim_set_init();
+	ff8_battle_ui_init();
+	ff8_battle_effects_init();
+}
