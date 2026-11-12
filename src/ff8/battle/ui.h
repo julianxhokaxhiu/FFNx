@@ -16,5 +16,5 @@
 
 #pragma once
 
-// Keep battle menu windows on screen while another window opens. Call once.
+// Battle menu windows, status countdowns and command messages. Call once.
 void ff8_battle_ui_init();

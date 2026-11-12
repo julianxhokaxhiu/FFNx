@@ -39,16 +39,10 @@
 #include "ff8/vram.h"
 #include "ff8/save_data.h"
 #include "ff8/kernel_item.h"
-#include "ff8/battle/ai.h"
-#include "ff8/battle/effect_camera.h"
-#include "ff8/battle/anim_set.h"
-#include "ff8/battle/ui.h"
-#include "ff8/battle/effects.h"
+#include "ff8/battle.h"
 #include "ff8/field/movie.h"
 #include "ff8/sound.h"
-#include "ff8/kernel_magic.h"
-#include "ff8/kernel_ability.h"
-#include "ff8/battle/monsters.h"
+#include "ff8/kernel.h"
 #include "ff8/remaster.h"
 #include "ff8/menu/volume.h"
 #include "ff8/esc_menu.h"
@@ -2212,9 +2206,6 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.cdcheck_sub_52F9E0 + 0x15E, ff8_retry_configured_drive);
 	}
 
-	// Show "Has nothing" instead of "[Card]" when a monster has no drawable magic.
-	patch_code_byte(ff8_externals.battle_get_monster_name_sub_495100 + 0x30 + 1, 0x12);
-
 	// Force SFX IDs for Quezacotl
 	patch_code_dword(int(ff8_externals.vibrate_data_summon_quezacotl) - 16, 240030); // 240030 - 240000 + 370 = ID 400
 	patch_code_dword(int(ff8_externals.vibrate_data_summon_quezacotl) - 12, 240033); // 240033 - 240000 + 370 = ID 403
@@ -2407,40 +2398,14 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	ff8_esc_menu_init();
 
 	// #####################
-	// AddMoreMagic: extended kernel.bin magic section (ids 57-63 and 96-255; 64-95 reserved for GFs)
+	// kernel.bin extensions: magic, abilities, items, battle commands
 	// #####################
-	ff8_kernel_magic_init();
-	ff8_kernel_ability_init();
+	ff8_kernel_init();
 
 	// #####################
-	// Unlock unused battle monster models c0m144-c0m199
+	// Battle: monsters, AI, effect cameras and anim sets, menus, effects
 	// #####################
-	ff8_battle_monsters_init();
-
-	// #####################
-	// Monster-AI target values 228-248 -> fixed battle-slot pairs
-	// #####################
-	ff8_battle_ai_init();
-
-	// #####################
-	// Battle effect cameras from <direct_mode_path>/exe/effect_NNN.bcam
-	// #####################
-	ff8_battle_effect_camera_init();
-
-	// #####################
-	// Battle anim sets (limit breaks, Blue Magic...) from <direct_mode_path>/exe/effect_NNN.animset
-	// #####################
-	ff8_battle_anim_set_init();
-
-	// #####################
-	// Battle menu windows and status countdowns
-	// #####################
-	ff8_battle_ui_init();
-
-	// #####################
-	// Battle effects: magic, summons, enemy attacks, items
-	// #####################
-	ff8_battle_effects_init();
+	ff8_battle_init();
 
 	// #####################
 	// Field scripts and models in sync with movies above 15 FPS

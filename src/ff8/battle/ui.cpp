@@ -27,6 +27,9 @@
 
 #define FF8_BATTLE_WINDOW_FULLY_OPEN 0x1000
 
+// The function after the monster name one: push 0x10, the battle text id of "[Card]"
+#define CARD_SUFFIX_TEXT_ID (0x30 + 1)
+#define NOTHING_TO_DRAW_TEXT_ID 0x12
 // Status countdown: add word [esi + 0xA], -8 before each counter
 #define COUNTDOWN_FIRST_RAISE 0x3D
 #define COUNTDOWN_SECOND_RAISE 0x99
@@ -89,4 +92,7 @@ void ff8_battle_ui_init()
 	// number drawing turns it into pixels, but the 8 was left in PSX pixels: both counters overlapped, 1 pixel apart.
 	patch_code_byte(ff8_externals.battle_status_countdown + COUNTDOWN_FIRST_RAISE, uint8_t(-8 * 8));
 	patch_code_byte(ff8_externals.battle_status_countdown + COUNTDOWN_SECOND_RAISE, uint8_t(-8 * 8));
+
+	// Show "Has nothing" instead of "[Card]" when a monster has no drawable magic
+	patch_code_byte(ff8_externals.battle_get_monster_name_sub_495100 + CARD_SUFFIX_TEXT_ID, NOTHING_TO_DRAW_TEXT_ID);
 }
