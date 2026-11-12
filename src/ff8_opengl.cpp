@@ -42,13 +42,10 @@
 #include "ff8/battle/ai.h"
 #include "ff8/battle/effect_camera.h"
 #include "ff8/battle/anim_set.h"
-#include "ff8/battle/ui_window.h"
-#include "ff8/battle/effects_screen_units.h"
-#include "ff8/battle/status_countdown.h"
-#include "ff8/battle/effects_ribbons.h"
-#include "ff8/worldmap_camera_lift.h"
+#include "ff8/battle/ui.h"
+#include "ff8/battle/effects.h"
 #include "ff8/field/movie.h"
-#include "ff8/sound_pan.h"
+#include "ff8/sound.h"
 #include "ff8/kernel_magic.h"
 #include "ff8/kernel_ability.h"
 #include "ff8/battle/monsters.h"
@@ -2393,7 +2390,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// #####################
 	replace_call(ff8_externals.sub_530C30 + 0x46A, ff8_field_3d_models_push_rects);
 	replace_call(uint32_t(ff8_externals.field_push_mch_vertices_rect_sub_533A90) + 0x4D, ff8_field_calc_triangle_condition);
-	ff8_worldmap_model_depth_init();
+
+	// #####################
+	// World map
+	// #####################
+	ff8_world_init();
 
 	// #####################
 	// Config menu: Sound volumes
@@ -2432,29 +2433,14 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	ff8_battle_anim_set_init();
 
 	// #####################
-	// Battle menu windows kept on screen while another window opens
+	// Battle menu windows and status countdowns
 	// #####################
-	ff8_battle_ui_window_init();
+	ff8_battle_ui_init();
 
 	// #####################
-	// Battle effects that test screen coordinates in PSX pixels (Cure, Cura, Potion, Hi-Potion, Hypnotize, ChocoBocle)
+	// Battle effects: magic, summons, enemy attacks, items
 	// #####################
-	ff8_battle_effects_screen_units_init();
-
-	// #####################
-	// Status countdown numbers placed like on PSX
-	// #####################
-	ff8_battle_status_countdown_init();
-
-	// #####################
-	// Lightning and acid ribbons as wide as on PSX
-	// #####################
-	ff8_battle_effects_ribbons_init();
-
-	// #####################
-	// World map camera lifted when terrain hides the player, as on PSX
-	// #####################
-	ff8_worldmap_camera_lift_init();
+	ff8_battle_effects_init();
 
 	// #####################
 	// Field scripts and models in sync with movies above 15 FPS
@@ -2462,9 +2448,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	ff8_field_movie_init();
 
 	// #####################
-	// Battle sounds and field footsteps panned like on PSX
+	// Game sounds
 	// #####################
-	ff8_sound_pan_init();
+	ff8_sound_init();
 
 }
 

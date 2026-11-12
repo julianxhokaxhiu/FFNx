@@ -14,12 +14,9 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-// The PC port draws the queued menu sprites each time a window sets a draw area, clipped to that new area.
-// A window only sets one while it opens, so the content of a fully open window stays queued and the next
-// opening window clips it away: the Magic or Item list disappears for a few frames when the HP window opens
-// on an ally target. A fully open window now ends with a full screen draw area, so its content is drawn first.
+// Battle menu windows and the numbers drawn over the battle
 
-#include "ui_window.h"
+#include "ui.h"
 
 #include "../../ff8.h"
 #include "../../patch.h"
@@ -30,11 +27,19 @@
 
 #define FF8_BATTLE_WINDOW_FULLY_OPEN 0x1000
 
+// Status countdown: add word [esi + 0xA], -8 before each counter
+#define COUNTDOWN_FIRST_RAISE 0x3D
+#define COUNTDOWN_SECOND_RAISE 0x99
+
 static_assert(offsetof(ff8_battle_ui_context, window_border_flags) == 0x23);
 static_assert(offsetof(ff8_battle_ui_context, window_rect) == 0x34);
 static_assert(offsetof(ff8_battle_ui_context, scaled_window_rect) == 0x3C);
 static_assert(offsetof(ff8_battle_ui_context, icon_id) == 0x44);
 
+// The PC port draws the queued menu sprites each time a window sets a draw area, clipped to that new area.
+// A window only sets one while it opens, so the content of a fully open window stays queued and the next
+// opening window clips it away: the Magic or Item list disappears for a few frames when the HP window opens
+// on an ally target. A fully open window now ends with a full screen draw area, so its content is drawn first.
 static uint32_t *ff8_battle_draw_window_box(int *ot, uint32_t *prim, int open_scale, int icon_id)
 {
 	ff8_battle_ui_context *context = *ff8_externals.battle_ui_context_dword_1D6D490;
@@ -74,7 +79,14 @@ static uint32_t *ff8_battle_draw_window_box(int *ot, uint32_t *prim, int open_sc
 	return prim;
 }
 
-void ff8_battle_ui_window_init()
+void ff8_battle_ui_init()
 {
+	// Menu windows kept on screen while another window opens
 	replace_function(ff8_externals.battle_draw_window_box_sub_4A7510, ff8_battle_draw_window_box);
+
+	// The status countdown numbers (Doom, and the second counter drawn above it) are placed from the model's screen
+	// position, raised by 8 between the two counters. The PC GTE gives that position in eighths of a pixel and the
+	// number drawing turns it into pixels, but the 8 was left in PSX pixels: both counters overlapped, 1 pixel apart.
+	patch_code_byte(ff8_externals.battle_status_countdown + COUNTDOWN_FIRST_RAISE, uint8_t(-8 * 8));
+	patch_code_byte(ff8_externals.battle_status_countdown + COUNTDOWN_SECOND_RAISE, uint8_t(-8 * 8));
 }

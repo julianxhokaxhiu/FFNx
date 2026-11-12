@@ -16,5 +16,5 @@
 
 #pragma once
 
-// Lightning and acid ribbons (Quezacotl, Breath, Electric Discharge, Gastric Juice...) as wide as on PSX. Call once.
-void ff8_battle_effects_ribbons_init();
+// Game sound fixes: battle sounds and field footsteps panned from the source's screen position like on PSX. Call once.
+void ff8_sound_init();

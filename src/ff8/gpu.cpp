@@ -14,7 +14,9 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-// The PS1 GTE clamps screen positions to -1024..1023 pixels, and the PS1 GPU does not draw a triangle whose
+// PC GPU layer (SSIGPU) fixes
+
+// Polygon size: the PS1 GTE clamps screen positions to -1024..1023 pixels, and the PS1 GPU does not draw a triangle whose
 // vertices are more than 1023 pixels apart horizontally or 511 vertically (a quad is drawn as two triangles, tested
 // one by one). The PC port can give a vertex far outside that range, and its GPU layer draws the triangle: one
 // triangle then covers the screen with a single texel of its texture (one frame of Eden's summon shows the pit and
@@ -23,7 +25,7 @@
 // Triangles inside the GTE range are left alone: the PC port draws some large polygons (summon close-ups) that the
 // PS1 version splits into smaller ones before they reach the GPU.
 
-#include "psx_polygon_size.h"
+#include "gpu.h"
 
 #include "../ff8.h"
 #include "../log.h"
@@ -172,7 +174,7 @@ namespace
 	}
 }
 
-void ff8_psx_polygon_size_init()
+void ff8_gpu_init()
 {
 	wrap_polygon_handlers(ff8_externals.ssigpu_callbacks_1, pass_1_handlers, pass_1_polygon);
 	wrap_polygon_handlers(ff8_externals.ssigpu_callbacks_3, pass_2_handlers, pass_2_polygon);

@@ -16,5 +16,5 @@
 
 #pragma once
 
-// Keep battle menu windows on screen while another window opens. Call once.
-void ff8_battle_ui_window_init();
+// PC GPU layer (SSIGPU) fixes. Call once, after uv_patch_init.
+void ff8_gpu_init();

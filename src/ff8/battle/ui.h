@@ -16,5 +16,5 @@
 
 #pragma once
 
-// Battle sounds and field footsteps panned from the source's screen position in pixels, like on PSX. Call once.
-void ff8_sound_pan_init();
+// Keep battle menu windows on screen while another window opens. Call once.
+void ff8_battle_ui_init();
