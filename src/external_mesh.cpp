@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 
 #include "cfg.h"
 #include "log.h"
@@ -398,6 +399,7 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
         std::transform(animName.begin(), animName.end(), animName.begin(), [](unsigned char c) { return std::toupper(c); });
 
         Animation outAnim;
+        std::map<const cgltf_accessor*, std::vector<float>> timelines;
         
         int jointCount = skins[0].joints.size();
         outAnim.keyFrames.resize(jointCount);
@@ -408,7 +410,7 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
             int targetJointIndex = -1;
             for (int jointIndex = 0; jointIndex < jointCount; ++jointIndex)
             {
-                auto joint = skins[0].joints[jointIndex];
+                const auto& joint = skins[0].joints[jointIndex];
                 if(channel.target_node->name == joint.name)
                 {
                     targetJointIndex = jointIndex;
@@ -418,6 +420,24 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 
             float* samplerBuffer = (float*)((char*)channel.sampler->output->buffer_view->buffer->data + channel.sampler->output->buffer_view->offset);
 
+            // Key times, used to stretch the animation when its key count differs from the game's frame count.
+            // Channels usually share one timeline, so each is read once.
+            auto cachedTimes = timelines.find(channel.sampler->input);
+            if (cachedTimes == timelines.end())
+            {
+                std::vector<float> times(channel.sampler->input->count);
+                cgltf_accessor_unpack_floats(channel.sampler->input, times.data(), times.size());
+                cachedTimes = timelines.emplace(channel.sampler->input, std::move(times)).first;
+            }
+            const std::vector<float>& keyTimes = cachedTimes->second;
+
+            if (!keyTimes.empty())
+            {
+                if (outAnim.keyCount == 0 || keyTimes.front() < outAnim.startTime) outAnim.startTime = keyTimes.front();
+                if (outAnim.keyCount == 0 || keyTimes.back() > outAnim.endTime) outAnim.endTime = keyTimes.back();
+                outAnim.keyCount = std::max(outAnim.keyCount, keyTimes.size());
+            }
+
             if(targetJointIndex == -1)
             {
                 if (rootNode != nullptr && channel.target_node == rootNode)
@@ -426,11 +446,13 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
                     {
                         for (int k = 0; k < channel.sampler->output->count; ++k)
                             outAnim.rootTranslation.push_back({ samplerBuffer[k * 3 + 0], samplerBuffer[k * 3 + 1], samplerBuffer[k * 3 + 2] });
+                        outAnim.rootTranslationTimes = keyTimes;
                     }
                     else if (channel.target_path == cgltf_animation_path_type_rotation)
                     {
                         for (int k = 0; k < channel.sampler->output->count; ++k)
                             outAnim.rootRotation.push_back({ samplerBuffer[k * 4 + 0], samplerBuffer[k * 4 + 1], samplerBuffer[k * 4 + 2], samplerBuffer[k * 4 + 3] });
+                        outAnim.rootRotationTimes = keyTimes;
                     }
                 }
 
@@ -448,8 +470,8 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
                     translation.z = samplerBuffer[k * 3 + 2];
                     outKeyFrame.translation.push_back(translation);  
                 }
+                outKeyFrame.translationTimes = keyTimes;
                 outKeyFrame.targetJointIndex = targetJointIndex;
-                outAnim.keyFrames.push_back(outKeyFrame);
             }
             else if (channel.target_path == cgltf_animation_path_type_rotation)
             {
@@ -463,10 +485,11 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
                     rotation.w = samplerBuffer[k * 4 + 3];
                     outKeyFrame.rotation.push_back(rotation);  
                 }
+                outKeyFrame.rotationTimes = keyTimes;
             }        
         }
 
-        animations[animName] = outAnim;
+        animations[animName] = std::move(outAnim);
     }
 
     updateExternalMeshBuffers();
@@ -640,7 +663,7 @@ int ExternalMesh::getFrameInterval(std::string tex_name)
 // Builds the game's root matrix for this frame (as its root animation would) from the gltf root node's keys.
 // translationScale converts gltf units to the game's, normally the scale the mesh is drawn with.
 // Returns false when the animation doesn't animate the root node, so the game's own root motion is used.
-bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, float translationScale, struct matrix* outMatrix)
+bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, int frameCount, float clockSeconds, float translationScale, struct matrix* outMatrix)
 {
     auto it = animations.find(animName);
     if (it == animations.end()) return false;
@@ -648,8 +671,19 @@ bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, f
     const Animation& anim = it->second;
     if (anim.rootTranslation.empty() || anim.rootRotation.empty()) return false;
 
-    const auto& t = anim.rootTranslation[std::clamp(frame, 0, static_cast<int>(anim.rootTranslation.size()) - 1)];
-    const auto& q = anim.rootRotation[std::clamp(frame, 0, static_cast<int>(anim.rootRotation.size()) - 1)];
+    AnimationPosition position = getAnimationPosition(anim, frame, frameCount, clockSeconds);
+    auto t = sampleTranslation(anim.rootTranslationTimes, anim.rootTranslation, position, anim.rootTranslation.front());
+    auto q = sampleRotation(anim.rootRotationTimes, anim.rootRotation, position, anim.rootRotation.front());
+
+    float blendWeight = getSwitchBlendWeight(clockSeconds);
+    if (blendWeight < 1.0f && blendFromHasRoot)
+    {
+        t = lerpTranslation(blendFromRootTranslation, t, blendWeight);
+        q = slerpRotation(blendFromRootRotation, q, blendWeight);
+    }
+    lastRootTranslation = t;
+    lastRootRotation = q;
+    lastHasRoot = true;
 
     // glTF rotation as a column-vector matrix
     float r[3][3] = {
@@ -674,4 +708,170 @@ bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, f
     outMatrix->_44 = 1.0f;
 
     return true;
+}
+
+// Seconds since the game switched this model to animName (restarts on every switch)
+float ExternalMesh::getAnimationClock(const std::string& animName)
+{
+    auto now = std::chrono::steady_clock::now();
+
+    if (animName != clockAnim)
+    {
+        // Blend from the pose shown last (the previous animation's, or a blend still in progress)
+        bool hadAnim = !clockAnim.empty();
+        blendFromTranslation = hadAnim ? lastTranslation : std::vector<vector3<float>>();
+        blendFromRotation = hadAnim ? lastRotation : std::vector<vector4<float>>();
+        blendFromHasRoot = hadAnim && lastHasRoot;
+        blendFromRootTranslation = lastRootTranslation;
+        blendFromRootRotation = lastRootRotation;
+        lastHasRoot = false;
+
+        clockAnim = animName;
+        clockStart = now;
+    }
+
+    return std::chrono::duration<float>(now - clockStart).count();
+}
+
+AnimationPosition getAnimationPosition(const Animation& anim, int frame, int frameCount, float clockSeconds)
+{
+    AnimationPosition position;
+
+    // The game holds a single frame (e.g. an idle) but the gltf animates: loop it on its own clock
+    if (frameCount <= 1 && anim.keyCount > 1 && anim.endTime > anim.startTime)
+    {
+        position.useKeyIndex = false;
+        position.time = anim.startTime + std::fmod(std::max(clockSeconds, 0.0f), anim.endTime - anim.startTime);
+        return position;
+    }
+
+    // One key per game frame (or a single held game frame): show the key of the game's frame, as before.
+    // One extra key also counts: KimeraCS's 60 fps exports end with a loop-closing key between the last
+    // frame and the first, which stretching would wrongly blend into the end of one-shot animations.
+    size_t frames = static_cast<size_t>(std::max(frameCount, 0));
+    if (frameCount <= 1 || anim.keyCount == frames || anim.keyCount == frames + 1 || anim.endTime <= anim.startTime)
+    {
+        position.keyIndex = frame;
+        return position;
+    }
+
+    // Otherwise stretch the gltf timeline over the game animation, first frame to first key, last to last
+    float progress = std::clamp(static_cast<float>(frame) / static_cast<float>(frameCount - 1), 0.0f, 1.0f);
+
+    position.useKeyIndex = false;
+    position.time = anim.startTime + progress * (anim.endTime - anim.startTime);
+    return position;
+}
+
+// The two keys around a time, and how far the time is between them (0 = first, 1 = second)
+static void findKeys(const std::vector<float>& times, size_t valueCount, float time, size_t& first, size_t& second, float& blend)
+{
+    size_t count = std::min(times.size(), valueCount);
+
+    second = std::upper_bound(times.begin(), times.begin() + count, time) - times.begin();
+    if (second == 0)
+    {
+        first = second = 0;
+        blend = 0.0f;
+        return;
+    }
+    if (second >= count)
+    {
+        first = second = count - 1;
+        blend = 0.0f;
+        return;
+    }
+
+    first = second - 1;
+    float span = times[second] - times[first];
+    blend = span > 0.0f ? (time - times[first]) / span : 0.0f;
+}
+
+vector3<float> sampleTranslation(const std::vector<float>& times, const std::vector<vector3<float>>& values, const AnimationPosition& position, const vector3<float>& fallback)
+{
+    if (values.empty()) return fallback;
+
+    if (position.useKeyIndex || times.empty())
+        return values[std::clamp(position.keyIndex, 0, static_cast<int>(values.size()) - 1)];
+
+    size_t first, second;
+    float blend;
+    findKeys(times, values.size(), position.time, first, second, blend);
+
+    return lerpTranslation(values[first], values[second], blend);
+}
+
+vector4<float> sampleRotation(const std::vector<float>& times, const std::vector<vector4<float>>& values, const AnimationPosition& position, const vector4<float>& fallback)
+{
+    if (values.empty()) return fallback;
+
+    if (position.useKeyIndex || times.empty())
+        return values[std::clamp(position.keyIndex, 0, static_cast<int>(values.size()) - 1)];
+
+    size_t first, second;
+    float blend;
+    findKeys(times, values.size(), position.time, first, second, blend);
+
+    return slerpRotation(values[first], values[second], blend);
+}
+
+vector3<float> lerpTranslation(const vector3<float>& a, const vector3<float>& b, float blend)
+{
+    return { a.x + (b.x - a.x) * blend, a.y + (b.y - a.y) * blend, a.z + (b.z - a.z) * blend };
+}
+
+vector4<float> slerpRotation(const vector4<float>& a, vector4<float> b, float blend)
+{
+    // Spherical interpolation along the shorter way around
+    float cosAngle = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+    if (cosAngle < 0.0f)
+    {
+        b = { -b.x, -b.y, -b.z, -b.w };
+        cosAngle = -cosAngle;
+    }
+
+    float weightA = 1.0f - blend, weightB = blend;
+    if (cosAngle < 0.9995f)
+    {
+        float angle = std::acos(cosAngle);
+        float sinAngle = std::sin(angle);
+        weightA = std::sin((1.0f - blend) * angle) / sinAngle;
+        weightB = std::sin(blend * angle) / sinAngle;
+    }
+
+    vector4<float> result = { a.x * weightA + b.x * weightB, a.y * weightA + b.y * weightB, a.z * weightA + b.z * weightB, a.w * weightA + b.w * weightB };
+    float length = std::sqrt(result.x * result.x + result.y * result.y + result.z * result.z + result.w * result.w);
+    if (length > 0.0f)
+    {
+        result.x /= length;
+        result.y /= length;
+        result.z /= length;
+        result.w /= length;
+    }
+    return result;
+}
+
+// How far a switch between animations has blended from the previous pose (0) to the new animation (1)
+float getSwitchBlendWeight(float clockSeconds)
+{
+    if (clockSeconds >= EXTERNAL_MESH_SWITCH_BLEND_SECONDS) return 1.0f;
+
+    float progress = std::max(clockSeconds, 0.0f) / EXTERNAL_MESH_SWITCH_BLEND_SECONDS;
+    return progress * progress * (3.0f - 2.0f * progress); // Eases in and out
+}
+
+// Blends a joint's sampled pose with the pose shown before an animation switch, and remembers the result
+void ExternalMesh::blendJointPose(size_t jointIndex, size_t jointCount, float clockSeconds, vector3<float>& translation, vector4<float>& rotation)
+{
+    float blendWeight = getSwitchBlendWeight(clockSeconds);
+    if (blendWeight < 1.0f && jointIndex < blendFromTranslation.size() && jointIndex < blendFromRotation.size())
+    {
+        translation = lerpTranslation(blendFromTranslation[jointIndex], translation, blendWeight);
+        rotation = slerpRotation(blendFromRotation[jointIndex], rotation, blendWeight);
+    }
+
+    if (lastTranslation.size() != jointCount) lastTranslation.resize(jointCount);
+    if (lastRotation.size() != jointCount) lastRotation.resize(jointCount);
+    lastTranslation[jointIndex] = translation;
+    lastRotation[jointIndex] = rotation;
 }
