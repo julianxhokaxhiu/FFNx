@@ -32,6 +32,8 @@
 #include "../globals.h"
 #include "../patch.h"
 #include <algorithm>
+#include <array>
+#include <utility>
 
 namespace
 {
@@ -93,9 +95,10 @@ namespace
 		return width > PSX_MAX_WIDTH * unit || height > PSX_MAX_HEIGHT * unit;
 	}
 
-	void draw_polygon(polygon_handler handler, uint8_t *packet)
+	void draw_polygon(polygon_handler *handlers, size_t handler_index, uint8_t *packet)
 	{
 		const uint8_t code = packet[7];
+		const polygon_handler handler = handlers[handler_index];
 		const PolygonLayout layout = layout_of(code);
 		const bool quad = code & POLYGON_QUAD;
 		const int unit = *ff8_externals.ssigpu_packet_in_pixels_dword_1CA89FC ? 1 : EIGHTHS;
@@ -126,10 +129,15 @@ namespace
 			return;
 		}
 		if (trace_all) ffnx_trace("%s: skip half of quad 0x%02X the PS1 would not draw (%d, %d)\n", __func__, code, first_skipped, second_skipped);
+		if (first_skipped && second_skipped) return;
 
 		const uint8_t triangle_code = code & ~POLYGON_QUAD;
-		const polygon_handler triangle_handler = (code & 0x02 ? pass_2_handlers : pass_1_handlers)[triangle_code - POLYGON_FIRST_CODE];
-		if (triangle_handler == nullptr) return;
+		const polygon_handler triangle_handler = handlers[handler_index & ~size_t(POLYGON_QUAD)];
+		if (triangle_handler == nullptr)
+		{
+			ffnx_unexpected_once("Missing FF8 triangle handler for polygon 0x%02X\n", code);
+			return;
+		}
 
 		const size_t size = layout.first_record + 4 * layout.record_size;
 		uint8_t triangle[4 + 12 * 4];
@@ -160,28 +168,33 @@ namespace
 		}
 	}
 
-	void pass_1_polygon(uint8_t *packet)
+	template<size_t index, bool first_pass>
+	void polygon_wrapper(uint8_t *packet)
 	{
-		draw_polygon(pass_1_handlers[packet[7] - POLYGON_FIRST_CODE], packet);
+		draw_polygon(first_pass ? pass_1_handlers : pass_2_handlers, index, packet);
 	}
 
-	void pass_2_polygon(uint8_t *packet)
+	template<bool first_pass, size_t... indices>
+	constexpr std::array<polygon_handler, POLYGON_CODES> polygon_wrappers(std::index_sequence<indices...>)
 	{
-		draw_polygon(pass_2_handlers[packet[7] - POLYGON_FIRST_CODE], packet);
+		return {polygon_wrapper<indices, first_pass>...};
 	}
 
-	void wrap_polygon_handlers(uint32_t *callbacks, polygon_handler *handlers, polygon_handler wrapper)
+	void wrap_polygon_handlers(uint32_t *callbacks, polygon_handler *handlers, const std::array<polygon_handler, POLYGON_CODES> &wrappers)
 	{
 		for (size_t i = 0; i < POLYGON_CODES; ++i)
 		{
 			handlers[i] = reinterpret_cast<polygon_handler>(callbacks[POLYGON_FIRST_CODE + i]);
-			if (handlers[i] != nullptr) callbacks[POLYGON_FIRST_CODE + i] = reinterpret_cast<uint32_t>(wrapper);
+			if (handlers[i] != nullptr) callbacks[POLYGON_FIRST_CODE + i] = reinterpret_cast<uint32_t>(wrappers[i]);
 		}
 	}
 }
 
 void ff8_gpu_init()
 {
-	wrap_polygon_handlers(ff8_externals.ssigpu_callbacks_1, pass_1_handlers, pass_1_polygon);
-	wrap_polygon_handlers(ff8_externals.ssigpu_callbacks_3, pass_2_handlers, pass_2_polygon);
+	// The native dispatcher can select a different opcode without modifying the packet.
+	static constexpr auto pass_1_wrappers = polygon_wrappers<true>(std::make_index_sequence<POLYGON_CODES>{});
+	static constexpr auto pass_2_wrappers = polygon_wrappers<false>(std::make_index_sequence<POLYGON_CODES>{});
+	wrap_polygon_handlers(ff8_externals.ssigpu_callbacks_1, pass_1_handlers, pass_1_wrappers);
+	wrap_polygon_handlers(ff8_externals.ssigpu_callbacks_3, pass_2_handlers, pass_2_wrappers);
 }
