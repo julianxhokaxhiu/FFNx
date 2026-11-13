@@ -378,7 +378,7 @@ void gl_draw_without_lighting(struct indexed_primitive* ip, struct polygon_data 
 	KawaiDrawScope kawai_scope(polydata);
 	if (enable_external_mesh && polydata->field_48)
 	{
-		auto externalMesh = reinterpret_cast<ExternalMesh*>(polydata->field_48);
+		auto externalMesh = reinterpret_cast<ExternalMeshInstance*>(polydata->field_48);
 		gl_draw_external_mesh(externalMesh, lightdata);
 		return;
 	}
@@ -405,7 +405,7 @@ void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *po
 	KawaiDrawScope kawai_scope(polydata);
 	if (enable_external_mesh && polydata->field_48)
 	{
-		auto externalMesh = reinterpret_cast<ExternalMesh*>(polydata->field_48);
+		auto externalMesh = reinterpret_cast<ExternalMeshInstance*>(polydata->field_48);
 		gl_draw_external_mesh(externalMesh, lightdata);
 		return;
 	}
@@ -631,12 +631,14 @@ static void gl_use_external_mesh_textures(const Shape& shape)
 	newRenderer.useTexture(bgfx::isValid(pbrTexHandle) ? pbrTexHandle.idx : 0, RendererTextureSlot::TEX_PBR);
 }
 
-void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightdata)
+// Draws one character with its (possibly shared) gltf model
+void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* lightdata)
 {
+	ExternalMesh* externalMesh = character->mesh.get();
 	auto shapeCount = externalMesh->shapes.size();
 	if (shapeCount == 0) return;
 
-	if(gl_defer_external_mesh(externalMesh, lightdata)) return;
+	if(gl_defer_external_mesh(character, lightdata)) return;
 	const bool kawai_active = current_state.kawai_effect.kind != ff7::field::kawai::Kind::none;
 
 	auto scale = gl_get_field_model_scale();
@@ -649,53 +651,74 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 	size_t jointCount = 0;
     if (externalMesh->skins.size() > 0)
 	{
-		auto skin = externalMesh->skins[0];
-		auto current_frame =  skin.current_frame;
+		auto& skin = externalMesh->skins[0];
 
 		// Joints past the bone limit are ignored instead of overflowing matrix_palette
 		jointCount = std::min(skin.joints.size(), static_cast<size_t>(MAX_BONE_MATRICES));
 
-		if(externalMesh->animations.contains(skin.current_anim))
+		if(externalMesh->animations.contains(character->current_anim) && character->joints.size() >= jointCount)
 		{
-			auto anim = externalMesh->animations[skin.current_anim];
+			const auto& anim = externalMesh->animations[character->current_anim];
+			AnimationPosition position = getAnimationPosition(anim, character->current_frame, character->current_frame_count, character->current_clock);
+			int springSteps = externalMesh->hasSpringBones ? character->getSpringSteps() : 0;
 
-			for(int i = 0; i < jointCount; ++i)
+			// Places a joint from its local transform and its parent (parents always come before their children)
+			auto poseJoint = [&](int i)
 			{
-				auto& joint = skin.joints[i];
-
-				auto frame = std::min(current_frame, static_cast<int>(anim.keyFrames[i].rotation.size()) - 1);
+				const auto& joint = skin.joints[i];
+				auto& state = character->joints[i];
 
 				float parentMatrix[16];
 				bx::mtxScale(parentMatrix, scale);
 
 				if(joint.parentJointIndex != -1)
 				{
-					auto& parentBone = skin.joints[joint.parentJointIndex];
-					memcpy(parentMatrix, parentBone.calculatedMatrix, sizeof(float) * 16);
+					memcpy(parentMatrix, character->joints[joint.parentJointIndex].calculatedMatrix, sizeof(float) * 16);
 				}
 
+				bx::mtxMul(state.calculatedMatrix, state.localMatrix, parentMatrix);
+			};
+
+			// The animation's pose; spring bones (and everything below them) wait until the body is posed
+			for(int i = 0; i < jointCount; ++i)
+			{
+				const auto& joint = skin.joints[i];
+				const auto& keyFrame = anim.keyFrames[i];
+
+				auto currentTranslation = sampleTranslation(keyFrame.translationTimes, keyFrame.translation, position, joint.translation);
+				auto currentRotation = sampleRotation(keyFrame.rotationTimes, keyFrame.rotation, position, joint.rotation);
+				character->blendJointPose(i, jointCount, character->current_clock, currentTranslation, currentRotation);
+
 				float currentTranslationMatrix[16];
-				auto currentTranslation = anim.keyFrames[i].translation[frame];
 				bx::mtxTranslate(currentTranslationMatrix, currentTranslation.x, currentTranslation.y, currentTranslation.z);
 
 				float currentRotationMatrix[16];
-				auto currentRotation = anim.keyFrames[i].rotation[frame];
 				bx::Quaternion rotationQuaternion = {currentRotation.x, currentRotation.y, currentRotation.z, -currentRotation.w};
 				bx::mtxFromQuaternion(currentRotationMatrix, rotationQuaternion);
 
-				float currentMatrix[16];
-				bx::mtxMul(currentMatrix, currentRotationMatrix, currentTranslationMatrix);
-			
-				float currentGlobalMatrix[16];
-				bx::mtxMul(currentGlobalMatrix, currentMatrix, parentMatrix);
-				
-				float boneMatrix[16];
-				bx::mtxMul(boneMatrix, joint.inverseBindPoseMatrix, currentGlobalMatrix);
+				bx::mtxMul(character->joints[i].localMatrix, currentRotationMatrix, currentTranslationMatrix);
 
-				memcpy(joint.calculatedMatrix, currentGlobalMatrix, sizeof(float) * 16);
-				
-				float identityMatrix[16];
-				bx::mtxIdentity(identityMatrix);
+				if(!joint.isSpring) poseJoint(i);
+			}
+
+			// Spring bones swing after the animation, colliding with this frame's body; children follow the swung bone
+			if(externalMesh->hasSpringBones)
+			{
+				character->updateSpringColliders(jointCount);
+
+				for(int i = 0; i < jointCount; ++i)
+				{
+					if(!skin.joints[i].isSpring) continue;
+
+					poseJoint(i);
+					character->simulateSpringBone(skin.joints[i], character->joints[i], springSteps, scale);
+				}
+			}
+
+			for(int i = 0; i < jointCount; ++i)
+			{
+				float boneMatrix[16];
+				bx::mtxMul(boneMatrix, skin.joints[i].inverseBindPoseMatrix, character->joints[i].calculatedMatrix);
 
 				memcpy(matrix_palette[i].m[0], boneMatrix, sizeof(float) * 16);
 			}

@@ -167,7 +167,6 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 
 	if (enable_external_mesh)
 	{
-		ExternalMesh* externalModel = new ExternalMesh;
 		std::string full_filename = filename;
 		size_t lastindex = full_filename.find_last_of("."); 
 		std::string filename_no_ext = full_filename.substr(0, lastindex);
@@ -183,26 +182,26 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 			if(trace_all || trace_loaders) ffnx_trace("External mesh: %s not found, using original model\n", file_path_gltf);
 
 			ret->field_48 = nullptr;
-			delete externalModel;
 		}
 		else
 		{
+			// Loaded once and shared by every character using it (and kept for later fields)
 			auto loadStart = std::chrono::steady_clock::now();
-			bool loaded = externalModel->importExternalMeshGltfFile(file_path_gltf, tex_path, true);
+			const char* source = "";
+			auto sharedMesh = acquireFieldExternalMesh(file_path_gltf, tex_path, &source);
 			float loadMilliseconds = std::chrono::duration<float, std::milli>(std::chrono::steady_clock::now() - loadStart).count();
 
-			if (loaded)
+			if (sharedMesh)
 			{
-				if(trace_all || trace_loaders) ffnx_trace("External mesh: loaded %s in %.0f ms\n", file_path_gltf, loadMilliseconds);
+				if(trace_all || trace_loaders) ffnx_trace("External mesh: %s %s in %.0f ms\n", source, file_path_gltf, loadMilliseconds);
 
-				ret->field_48 = reinterpret_cast<vector3<float>*>(externalModel);
+				ret->field_48 = reinterpret_cast<vector3<float>*>(new ExternalMeshInstance(sharedMesh));
 			}
 			else
 			{
 				ffnx_error("External mesh: failed to load %s, using original model\n", file_path_gltf);
 
 				ret->field_48 = nullptr;
-				delete externalModel;
 			}
 		}
 	}
@@ -241,8 +240,9 @@ void free_polygon_data(struct polygon_data *ret)
 	if (!ret) return;
 	if (enable_external_mesh && ret->field_48)
 	{
-		ExternalMesh* pExternalMesh = reinterpret_cast<ExternalMesh*>(ret->field_48);
-		external_free(pExternalMesh);
+		// Frees the character; its model stays cached for later fields (up to the cache's budget)
+		releaseFieldExternalMesh(reinterpret_cast<ExternalMeshInstance*>(ret->field_48));
+		ret->field_48 = nullptr;
 	}
 
 	ff7_externals.free_polygon_data_impl(1, ret);

@@ -25,6 +25,8 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
+#include <filesystem>
 
 #include "cfg.h"
 #include "log.h"
@@ -32,6 +34,35 @@
 
 #define CGLTF_IMPLEMENTATION
 #include "cgltf.h"
+
+// A number from a glTF "extras" JSON object (e.g. {"spring_drag": 0.4}); value is left alone when absent
+static bool readExtrasFloat(const std::string& extras, const char* key, float& value)
+{
+    size_t position = extras.find(std::string("\"") + key + "\"");
+    if (position == std::string::npos) return false;
+
+    position = extras.find(':', position);
+    if (position == std::string::npos) return false;
+
+    const char* start = extras.c_str() + position + 1;
+    char* end = nullptr;
+    float number = std::strtof(start, &end);
+    if (end == start) return false;
+
+    value = number;
+    return true;
+}
+
+// Spring settings from a model config table (stiffness, drag, gravity, radius); values it lacks are left alone
+static bool readConfigSpringSettings(toml::node_view<toml::node> table, Joint& joint)
+{
+    bool found = false;
+    if (auto value = table["stiffness"].value<double>()) { joint.springStiffness = static_cast<float>(*value); found = true; }
+    if (auto value = table["drag"].value<double>()) { joint.springDrag = static_cast<float>(*value); found = true; }
+    if (auto value = table["gravity"].value<double>()) { joint.springGravity = static_cast<float>(*value); found = true; }
+    if (auto value = table["radius"].value<double>()) { joint.springRadius = static_cast<float>(*value); found = true; }
+    return found;
+}
 
 // Name used to find an image's DDS files: its file name without extension
 // (e.g. "textures/cloud_0.png" -> "cloud_0"), or its name when it has no file
@@ -58,6 +89,7 @@ void createJointHierarchy(Skin* pSkin, int parentIndex, cgltf_node* pJointNode, 
     outJoint.translation.z = pJointNode->translation[2];
 
     outJoint.name = pJointNode->name;
+    outJoint.extras = pJointNode->extras.data != nullptr ? pJointNode->extras.data : "";
 
     outJoint.parentJointIndex = parentIndex;
 
@@ -373,6 +405,71 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
         skins.push_back(outSkin);
     }
 
+    // Spring bones: joints whose name contains "spring" (any case), and every joint below them
+    for (auto& skin : skins)
+    {
+        for (size_t j = 0; j < skin.joints.size(); j++)
+        {
+            Joint& joint = skin.joints[j];
+
+            std::string lowerName = joint.name;
+            std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(), [](unsigned char c) { return std::tolower(c); });
+            joint.isSpring = lowerName.find("spring") != std::string::npos
+                || (joint.parentJointIndex >= 0 && skin.joints[joint.parentJointIndex].isSpring);
+            if (!joint.isSpring) continue;
+
+            // The bone points at its first child, or (at the end of a chain) its own length further on
+            joint.springTail = joint.translation;
+            for (size_t c = j + 1; c < skin.joints.size(); c++)
+            {
+                if (skin.joints[c].parentJointIndex == static_cast<int>(j))
+                {
+                    joint.springTail = skin.joints[c].translation;
+                    break;
+                }
+            }
+
+            float length = std::sqrt(joint.springTail.x * joint.springTail.x + joint.springTail.y * joint.springTail.y + joint.springTail.z * joint.springTail.z);
+            if (length <= 0.0f) joint.isSpring = false;
+            else hasSpringBones = true;
+
+            // Settings, later sources winning (see Joint): defaults or the parent's, custom properties, config
+            bool chainStart = joint.parentJointIndex < 0 || !skin.joints[joint.parentJointIndex].isSpring;
+            if (chainStart)
+            {
+                joint.springStiffness = SPRING_BONE_STIFFNESS;
+                joint.springDrag = SPRING_BONE_DRAG;
+                joint.springGravity = SPRING_BONE_GRAVITY_FACTOR;
+                joint.springRadius = SPRING_BONE_RADIUS;
+                readConfigSpringSettings(config["spring_bones"], joint);
+            }
+            else
+            {
+                const Joint& parent = skin.joints[joint.parentJointIndex];
+                joint.springStiffness = parent.springStiffness;
+                joint.springDrag = parent.springDrag;
+                joint.springGravity = parent.springGravity;
+                joint.springRadius = parent.springRadius;
+            }
+
+            bool fromProperties = readExtrasFloat(joint.extras, "spring_stiffness", joint.springStiffness);
+            fromProperties |= readExtrasFloat(joint.extras, "spring_drag", joint.springDrag);
+            fromProperties |= readExtrasFloat(joint.extras, "spring_gravity", joint.springGravity);
+            fromProperties |= readExtrasFloat(joint.extras, "spring_radius", joint.springRadius);
+            bool fromConfig = readConfigSpringSettings(config["spring_bones"][joint.name], joint);
+            joint.springStiffness = std::clamp(joint.springStiffness, 0.0f, 1.0f);
+            joint.springDrag = std::clamp(joint.springDrag, 0.0f, 1.0f);
+            joint.springRadius = std::max(joint.springRadius, 0.0f);
+
+            if ((trace_all || trace_loaders) && joint.isSpring && (chainStart || fromProperties || fromConfig))
+                ffnx_trace("External mesh: spring bone %s: stiffness %.3f, drag %.3f, gravity %.3f, radius %.3f%s%s\n", joint.name.c_str(),
+                    joint.springStiffness, joint.springDrag, joint.springGravity, joint.springRadius,
+                    fromProperties ? " (custom properties)" : "", fromConfig ? " (config)" : "");
+        }
+    }
+
+    if (hasSpringBones) setupSpringColliders();
+
     // The skeleton's root node is the non-joint parent of its top joint. Its channels carry the root motion
     // (the height that stands the model on the floor, moves like jumps)
     cgltf_node* rootNode = nullptr;
@@ -398,6 +495,7 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
         std::transform(animName.begin(), animName.end(), animName.begin(), [](unsigned char c) { return std::toupper(c); });
 
         Animation outAnim;
+        std::map<const cgltf_accessor*, std::vector<float>> timelines;
         
         int jointCount = skins[0].joints.size();
         outAnim.keyFrames.resize(jointCount);
@@ -408,7 +506,7 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
             int targetJointIndex = -1;
             for (int jointIndex = 0; jointIndex < jointCount; ++jointIndex)
             {
-                auto joint = skins[0].joints[jointIndex];
+                const auto& joint = skins[0].joints[jointIndex];
                 if(channel.target_node->name == joint.name)
                 {
                     targetJointIndex = jointIndex;
@@ -418,6 +516,24 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 
             float* samplerBuffer = (float*)((char*)channel.sampler->output->buffer_view->buffer->data + channel.sampler->output->buffer_view->offset);
 
+            // Key times, used to stretch the animation when its key count differs from the game's frame count.
+            // Channels usually share one timeline, so each is read once.
+            auto cachedTimes = timelines.find(channel.sampler->input);
+            if (cachedTimes == timelines.end())
+            {
+                std::vector<float> times(channel.sampler->input->count);
+                cgltf_accessor_unpack_floats(channel.sampler->input, times.data(), times.size());
+                cachedTimes = timelines.emplace(channel.sampler->input, std::move(times)).first;
+            }
+            const std::vector<float>& keyTimes = cachedTimes->second;
+
+            if (!keyTimes.empty())
+            {
+                if (outAnim.keyCount == 0 || keyTimes.front() < outAnim.startTime) outAnim.startTime = keyTimes.front();
+                if (outAnim.keyCount == 0 || keyTimes.back() > outAnim.endTime) outAnim.endTime = keyTimes.back();
+                outAnim.keyCount = std::max(outAnim.keyCount, keyTimes.size());
+            }
+
             if(targetJointIndex == -1)
             {
                 if (rootNode != nullptr && channel.target_node == rootNode)
@@ -426,11 +542,13 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
                     {
                         for (int k = 0; k < channel.sampler->output->count; ++k)
                             outAnim.rootTranslation.push_back({ samplerBuffer[k * 3 + 0], samplerBuffer[k * 3 + 1], samplerBuffer[k * 3 + 2] });
+                        outAnim.rootTranslationTimes = keyTimes;
                     }
                     else if (channel.target_path == cgltf_animation_path_type_rotation)
                     {
                         for (int k = 0; k < channel.sampler->output->count; ++k)
                             outAnim.rootRotation.push_back({ samplerBuffer[k * 4 + 0], samplerBuffer[k * 4 + 1], samplerBuffer[k * 4 + 2], samplerBuffer[k * 4 + 3] });
+                        outAnim.rootRotationTimes = keyTimes;
                     }
                 }
 
@@ -448,8 +566,8 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
                     translation.z = samplerBuffer[k * 3 + 2];
                     outKeyFrame.translation.push_back(translation);  
                 }
+                outKeyFrame.translationTimes = keyTimes;
                 outKeyFrame.targetJointIndex = targetJointIndex;
-                outAnim.keyFrames.push_back(outKeyFrame);
             }
             else if (channel.target_path == cgltf_animation_path_type_rotation)
             {
@@ -463,10 +581,11 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
                     rotation.w = samplerBuffer[k * 4 + 3];
                     outKeyFrame.rotation.push_back(rotation);  
                 }
+                outKeyFrame.rotationTimes = keyTimes;
             }        
         }
 
-        animations[animName] = outAnim;
+        animations[animName] = std::move(outAnim);
     }
 
     updateExternalMeshBuffers();
@@ -637,10 +756,9 @@ int ExternalMesh::getFrameInterval(std::string tex_name)
     return 0;
 }
 
-// Builds the game's root matrix for this frame (as its root animation would) from the gltf root node's keys.
-// translationScale converts gltf units to the game's, normally the scale the mesh is drawn with.
-// Returns false when the animation doesn't animate the root node, so the game's own root motion is used.
-bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, float translationScale, struct matrix* outMatrix)
+// The gltf root node's keys for this point of an animation. Returns false when the animation doesn't animate the
+// root node, so the game's own root motion is used.
+bool ExternalMesh::getRootMotionSample(const std::string& animName, const AnimationPosition& position, vector3<float>& translation, vector4<float>& rotation) const
 {
     auto it = animations.find(animName);
     if (it == animations.end()) return false;
@@ -648,9 +766,15 @@ bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, f
     const Animation& anim = it->second;
     if (anim.rootTranslation.empty() || anim.rootRotation.empty()) return false;
 
-    const auto& t = anim.rootTranslation[std::clamp(frame, 0, static_cast<int>(anim.rootTranslation.size()) - 1)];
-    const auto& q = anim.rootRotation[std::clamp(frame, 0, static_cast<int>(anim.rootRotation.size()) - 1)];
+    translation = sampleTranslation(anim.rootTranslationTimes, anim.rootTranslation, position, anim.rootTranslation.front());
+    rotation = sampleRotation(anim.rootRotationTimes, anim.rootRotation, position, anim.rootRotation.front());
+    return true;
+}
 
+// Builds the game's root matrix (as its root animation would) from a gltf root translation and rotation.
+// translationScale converts gltf units to the game's, normally the scale the mesh is drawn with.
+void buildRootMatrix(const vector3<float>& t, const vector4<float>& q, float translationScale, struct matrix* outMatrix)
+{
     // glTF rotation as a column-vector matrix
     float r[3][3] = {
         { 1 - 2 * (q.y * q.y + q.z * q.z), 2 * (q.x * q.y - q.z * q.w), 2 * (q.x * q.z + q.y * q.w) },
@@ -672,6 +796,626 @@ bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, f
     outMatrix->_42 = -t.y * translationScale;
     outMatrix->_43 = t.z * translationScale;
     outMatrix->_44 = 1.0f;
+}
 
+AnimationPosition getAnimationPosition(const Animation& anim, int frame, int frameCount, float clockSeconds)
+{
+    AnimationPosition position;
+
+    // The game holds a single frame (e.g. an idle) but the gltf animates: loop it on its own clock
+    if (frameCount <= 1 && anim.keyCount > 1 && anim.endTime > anim.startTime)
+    {
+        position.useKeyIndex = false;
+        position.time = anim.startTime + std::fmod(std::max(clockSeconds, 0.0f), anim.endTime - anim.startTime);
+        return position;
+    }
+
+    // One key per game frame (or a single held game frame): show the key of the game's frame, as before.
+    // One extra key also counts: KimeraCS's 60 fps exports end with a loop-closing key between the last
+    // frame and the first, which stretching would wrongly blend into the end of one-shot animations.
+    size_t frames = static_cast<size_t>(std::max(frameCount, 0));
+    if (frameCount <= 1 || anim.keyCount == frames || anim.keyCount == frames + 1 || anim.endTime <= anim.startTime)
+    {
+        position.keyIndex = frame;
+        return position;
+    }
+
+    // Otherwise stretch the gltf timeline over the game animation, first frame to first key, last to last
+    float progress = std::clamp(static_cast<float>(frame) / static_cast<float>(frameCount - 1), 0.0f, 1.0f);
+
+    position.useKeyIndex = false;
+    position.time = anim.startTime + progress * (anim.endTime - anim.startTime);
+    return position;
+}
+
+// The two keys around a time, and how far the time is between them (0 = first, 1 = second)
+static void findKeys(const std::vector<float>& times, size_t valueCount, float time, size_t& first, size_t& second, float& blend)
+{
+    size_t count = std::min(times.size(), valueCount);
+
+    second = std::upper_bound(times.begin(), times.begin() + count, time) - times.begin();
+    if (second == 0)
+    {
+        first = second = 0;
+        blend = 0.0f;
+        return;
+    }
+    if (second >= count)
+    {
+        first = second = count - 1;
+        blend = 0.0f;
+        return;
+    }
+
+    first = second - 1;
+    float span = times[second] - times[first];
+    blend = span > 0.0f ? (time - times[first]) / span : 0.0f;
+}
+
+vector3<float> sampleTranslation(const std::vector<float>& times, const std::vector<vector3<float>>& values, const AnimationPosition& position, const vector3<float>& fallback)
+{
+    if (values.empty()) return fallback;
+
+    if (position.useKeyIndex || times.empty())
+        return values[std::clamp(position.keyIndex, 0, static_cast<int>(values.size()) - 1)];
+
+    size_t first, second;
+    float blend;
+    findKeys(times, values.size(), position.time, first, second, blend);
+
+    return lerpTranslation(values[first], values[second], blend);
+}
+
+vector4<float> sampleRotation(const std::vector<float>& times, const std::vector<vector4<float>>& values, const AnimationPosition& position, const vector4<float>& fallback)
+{
+    if (values.empty()) return fallback;
+
+    if (position.useKeyIndex || times.empty())
+        return values[std::clamp(position.keyIndex, 0, static_cast<int>(values.size()) - 1)];
+
+    size_t first, second;
+    float blend;
+    findKeys(times, values.size(), position.time, first, second, blend);
+
+    return slerpRotation(values[first], values[second], blend);
+}
+
+vector3<float> lerpTranslation(const vector3<float>& a, const vector3<float>& b, float blend)
+{
+    return { a.x + (b.x - a.x) * blend, a.y + (b.y - a.y) * blend, a.z + (b.z - a.z) * blend };
+}
+
+vector4<float> slerpRotation(const vector4<float>& a, vector4<float> b, float blend)
+{
+    // Spherical interpolation along the shorter way around
+    float cosAngle = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+    if (cosAngle < 0.0f)
+    {
+        b = { -b.x, -b.y, -b.z, -b.w };
+        cosAngle = -cosAngle;
+    }
+
+    float weightA = 1.0f - blend, weightB = blend;
+    if (cosAngle < 0.9995f)
+    {
+        float angle = std::acos(cosAngle);
+        float sinAngle = std::sin(angle);
+        weightA = std::sin((1.0f - blend) * angle) / sinAngle;
+        weightB = std::sin(blend * angle) / sinAngle;
+    }
+
+    vector4<float> result = { a.x * weightA + b.x * weightB, a.y * weightA + b.y * weightB, a.z * weightA + b.z * weightB, a.w * weightA + b.w * weightB };
+    float length = std::sqrt(result.x * result.x + result.y * result.y + result.z * result.z + result.w * result.w);
+    if (length > 0.0f)
+    {
+        result.x /= length;
+        result.y /= length;
+        result.z /= length;
+        result.w /= length;
+    }
+    return result;
+}
+
+// How far a switch between animations has blended from the previous pose (0) to the new animation (1)
+float getSwitchBlendWeight(float clockSeconds)
+{
+    if (clockSeconds >= EXTERNAL_MESH_SWITCH_BLEND_SECONDS) return 1.0f;
+
+    float progress = std::max(clockSeconds, 0.0f) / EXTERNAL_MESH_SWITCH_BLEND_SECONDS;
+    return progress * progress * (3.0f - 2.0f * progress); // Eases in and out
+}
+
+static vector3<float> transformPoint(const vector3<float>& point, const float* matrix)
+{
+    return {
+        point.x * matrix[0] + point.y * matrix[4] + point.z * matrix[8] + matrix[12],
+        point.x * matrix[1] + point.y * matrix[5] + point.z * matrix[9] + matrix[13],
+        point.x * matrix[2] + point.y * matrix[6] + point.z * matrix[10] + matrix[14]
+    };
+}
+
+static float vectorLength(const vector3<float>& v)
+{
+    return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+// Moves point along the line from head so it is length away from head
+static void keepLength(vector3<float>& point, const vector3<float>& head, float length)
+{
+    vector3<float> direction = { point.x - head.x, point.y - head.y, point.z - head.z };
+    float directionLength = vectorLength(direction);
+    if (directionLength <= 0.0f) return;
+
+    point = { head.x + direction.x * length / directionLength, head.y + direction.y * length / directionLength, head.z + direction.z * length / directionLength };
+}
+
+// The point on the segment start-end closest to point
+static vector3<float> closestPointOnSegment(const vector3<float>& point, const vector3<float>& start, const vector3<float>& end)
+{
+    vector3<float> segment = { end.x - start.x, end.y - start.y, end.z - start.z };
+    float lengthSquared = segment.x * segment.x + segment.y * segment.y + segment.z * segment.z;
+    float along = 0.0f;
+    if (lengthSquared > 0.0f)
+    {
+        along = ((point.x - start.x) * segment.x + (point.y - start.y) * segment.y + (point.z - start.z) * segment.z) / lengthSquared;
+        along = std::clamp(along, 0.0f, 1.0f);
+    }
+    return { start.x + segment.x * along, start.y + segment.y * along, start.z + segment.z * along };
+}
+
+// Pushes a point (a sphere of pointRadius) out of any capsule it is inside of; returns whether it moved
+static bool pushOutOfColliders(vector3<float>& point, const std::vector<SpringCollider>& colliders, float pointRadius)
+{
+    bool moved = false;
+    for (const auto& collider : colliders)
+    {
+        vector3<float> closest = closestPointOnSegment(point, collider.start, collider.end);
+        vector3<float> away = { point.x - closest.x, point.y - closest.y, point.z - closest.z };
+        float distance = vectorLength(away);
+        float radius = collider.radius + pointRadius;
+        if (distance >= radius || distance <= 0.0f) continue;
+
+        point = { closest.x + away.x * radius / distance, closest.y + away.y * radius / distance, closest.z + away.z * radius / distance };
+        moved = true;
+    }
+    return moved;
+}
+
+// Fits a capsule to every body joint (not a spring bone) from the vertices it mainly drives: from the joint to
+// its first body child (or to the middle of its vertices at the end of a chain), as thick as its vertices'
+// typical distance from that line, a bit smaller.
+void ExternalMesh::setupSpringColliders()
+{
+    if (skins.empty()) return;
+    Skin& skin = skins[0];
+    size_t jointCount = skin.joints.size();
+
+    // Joint positions in the bind pose (the mesh's space)
+    std::vector<vector3<float>> bindPositions(jointCount);
+    for (size_t j = 0; j < jointCount; j++)
+    {
+        float bindMatrix[16];
+        bx::mtxInverse(bindMatrix, skin.joints[j].inverseBindPoseMatrix);
+        bindPositions[j] = { bindMatrix[12], bindMatrix[13], bindMatrix[14] };
+    }
+
+    // Vertices by the joint with the largest weight on them
+    std::vector<std::vector<vector3<float>>> jointVertices(jointCount);
+    for (const auto& shape : shapes)
+    {
+        if (shape.joints.size() != shape.vertices.size() || shape.weights.size() != shape.vertices.size()) continue;
+
+        for (size_t v = 0; v < shape.vertices.size(); v++)
+        {
+            const auto& joints = shape.joints[v];
+            const auto& weights = shape.weights[v];
+            float jointIndices[4] = { joints.x, joints.y, joints.z, joints.w };
+            float jointWeights[4] = { weights.x, weights.y, weights.z, weights.w };
+
+            int best = 0;
+            for (int k = 1; k < 4; k++) if (jointWeights[k] > jointWeights[best]) best = k;
+
+            size_t jointIndex = static_cast<size_t>(jointIndices[best]);
+            if (jointWeights[best] > 0.0f && jointIndex < jointCount) jointVertices[jointIndex].push_back(shape.vertices[v]._);
+        }
+    }
+
+    for (size_t j = 0; j < jointCount; j++)
+    {
+        Joint& joint = skin.joints[j];
+        const auto& vertices = jointVertices[j];
+        if (joint.isSpring || vertices.size() < 8) continue;
+
+        vector3<float> start = bindPositions[j];
+        vector3<float> end = start;
+        bool hasChild = false;
+        for (size_t c = j + 1; c < jointCount; c++)
+        {
+            if (skin.joints[c].parentJointIndex == static_cast<int>(j) && !skin.joints[c].isSpring)
+            {
+                end = bindPositions[c];
+                hasChild = true;
+                break;
+            }
+        }
+        if (!hasChild)
+        {
+            vector3<float> center = {};
+            for (const auto& vertex : vertices) { center.x += vertex.x; center.y += vertex.y; center.z += vertex.z; }
+            end = { center.x / vertices.size(), center.y / vertices.size(), center.z / vertices.size() };
+        }
+
+        std::vector<float> distances;
+        distances.reserve(vertices.size());
+        for (const auto& vertex : vertices)
+        {
+            vector3<float> closest = closestPointOnSegment(vertex, start, end);
+            distances.push_back(vectorLength({ vertex.x - closest.x, vertex.y - closest.y, vertex.z - closest.z }));
+        }
+        std::nth_element(distances.begin(), distances.begin() + distances.size() / 2, distances.end());
+        float radius = distances[distances.size() / 2] * SPRING_BONE_COLLIDER_RADIUS_SCALE;
+        if (radius <= 0.0f) continue;
+
+        // Stored in the joint's own space so it follows the animated joint
+        joint.colliderStart = transformPoint(start, joint.inverseBindPoseMatrix);
+        joint.colliderEnd = transformPoint(end, joint.inverseBindPoseMatrix);
+        joint.colliderRadius = radius;
+        joint.hasCollider = true;
+    }
+}
+
+// Rough size of the model's data in memory (for the field model cache's budget)
+size_t ExternalMesh::estimateMemory() const
+{
+    size_t bytes = vertexBufferData.capacity() * sizeof(Vertex) + indexBufferData.capacity() * sizeof(uint32_t);
+
+    for (const auto& shape : shapes)
+    {
+        bytes += shape.vertices.capacity() * sizeof(nvertex) + shape.normals.capacity() * sizeof(vector3<float>)
+            + shape.joints.capacity() * sizeof(vector4<float>) + shape.weights.capacity() * sizeof(vector4<float>)
+            + shape.indices.capacity() * sizeof(uint32_t);
+    }
+
+    for (const auto& [name, anim] : animations)
+    {
+        for (const auto& keyFrame : anim.keyFrames)
+        {
+            bytes += keyFrame.rotation.capacity() * sizeof(vector4<float>) + keyFrame.translation.capacity() * sizeof(vector3<float>)
+                + (keyFrame.rotationTimes.capacity() + keyFrame.translationTimes.capacity()) * sizeof(float) + sizeof(KeyFrame);
+        }
+        bytes += anim.rootRotation.capacity() * sizeof(vector4<float>) + anim.rootTranslation.capacity() * sizeof(vector3<float>)
+            + (anim.rootRotationTimes.capacity() + anim.rootTranslationTimes.capacity()) * sizeof(float) + sizeof(Animation);
+    }
+
+    return bytes;
+}
+
+// Frees everything a field model holds on the graphics card (textures and its vertex and index buffers)
+void ExternalMesh::destroyFieldResources()
+{
+    unloadExternalMesh();
+
+    if (bgfx::isValid(vertexBufferHandle)) bgfx::destroy(vertexBufferHandle);
+    if (bgfx::isValid(indexBufferHandle)) bgfx::destroy(indexBufferHandle);
+    vertexBufferHandle = BGFX_INVALID_HANDLE;
+    indexBufferHandle = BGFX_INVALID_HANDLE;
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// One character drawn with a shared field model
+
+ExternalMeshInstance::ExternalMeshInstance(std::shared_ptr<ExternalMesh> sharedMesh) : mesh(std::move(sharedMesh))
+{
+    if (!mesh->skins.empty()) joints.resize(mesh->skins[0].joints.size());
+}
+
+// Seconds since the game switched this character to animName (restarts on every switch)
+float ExternalMeshInstance::getAnimationClock(const std::string& animName)
+{
+    auto now = std::chrono::steady_clock::now();
+
+    if (animName != clockAnim)
+    {
+        // Blend from the pose shown last (the previous animation's, or a blend still in progress)
+        bool hadAnim = !clockAnim.empty();
+        blendFromTranslation = hadAnim ? lastTranslation : std::vector<vector3<float>>();
+        blendFromRotation = hadAnim ? lastRotation : std::vector<vector4<float>>();
+        blendFromHasRoot = hadAnim && lastHasRoot;
+        blendFromRootTranslation = lastRootTranslation;
+        blendFromRootRotation = lastRootRotation;
+        lastHasRoot = false;
+
+        clockAnim = animName;
+        clockStart = now;
+    }
+
+    return std::chrono::duration<float>(now - clockStart).count();
+}
+
+// The game's root matrix for this frame from the gltf root node's keys (blended after a switch). Returns false
+// when the animation doesn't animate the root node, so the game's own root motion is used.
+bool ExternalMeshInstance::getRootMotionMatrix(const std::string& animName, int frame, int frameCount, float clockSeconds, float translationScale, struct matrix* outMatrix)
+{
+    auto it = mesh->animations.find(animName);
+    if (it == mesh->animations.end()) return false;
+
+    vector3<float> t;
+    vector4<float> q;
+    if (!mesh->getRootMotionSample(animName, getAnimationPosition(it->second, frame, frameCount, clockSeconds), t, q)) return false;
+
+    float blendWeight = getSwitchBlendWeight(clockSeconds);
+    if (blendWeight < 1.0f && blendFromHasRoot)
+    {
+        t = lerpTranslation(blendFromRootTranslation, t, blendWeight);
+        q = slerpRotation(blendFromRootRotation, q, blendWeight);
+    }
+    lastRootTranslation = t;
+    lastRootRotation = q;
+    lastHasRoot = true;
+
+    buildRootMatrix(t, q, translationScale, outMatrix);
     return true;
+}
+
+// Blends a joint's sampled pose with the pose shown before an animation switch, and remembers the result
+void ExternalMeshInstance::blendJointPose(size_t jointIndex, size_t jointCount, float clockSeconds, vector3<float>& translation, vector4<float>& rotation)
+{
+    float blendWeight = getSwitchBlendWeight(clockSeconds);
+    if (blendWeight < 1.0f && jointIndex < blendFromTranslation.size() && jointIndex < blendFromRotation.size())
+    {
+        translation = lerpTranslation(blendFromTranslation[jointIndex], translation, blendWeight);
+        rotation = slerpRotation(blendFromRotation[jointIndex], rotation, blendWeight);
+    }
+
+    if (lastTranslation.size() != jointCount) lastTranslation.resize(jointCount);
+    if (lastRotation.size() != jointCount) lastRotation.resize(jointCount);
+    lastTranslation[jointIndex] = translation;
+    lastRotation[jointIndex] = rotation;
+}
+
+// How many fixed physics steps spring bones should advance since they were last drawn
+int ExternalMeshInstance::getSpringSteps()
+{
+    auto now = std::chrono::steady_clock::now();
+
+    if (!springTimeStarted)
+    {
+        springTimeStarted = true;
+        springLastTime = now;
+        return 0;
+    }
+
+    // Long pauses (menus, loading) don't fast-forward the physics
+    float elapsed = std::min(std::chrono::duration<float>(now - springLastTime).count(), 0.1f);
+    springLastTime = now;
+
+    springTimeAccumulator += elapsed;
+    int steps = static_cast<int>(springTimeAccumulator / SPRING_BONE_STEP_SECONDS);
+    springTimeAccumulator -= steps * SPRING_BONE_STEP_SECONDS;
+
+    return steps;
+}
+
+// Places the body capsules in field space for this frame (body joints must already be posed)
+void ExternalMeshInstance::updateSpringColliders(size_t jointCount)
+{
+    springColliders.clear();
+    if (!hasSpringWorldMatrix || mesh->skins.empty()) return;
+
+    const auto& skinJoints = mesh->skins[0].joints;
+    for (size_t j = 0; j < jointCount; j++)
+    {
+        const Joint& joint = skinJoints[j];
+        if (!joint.hasCollider) continue;
+
+        float worldGlobalMatrix[16];
+        bx::mtxMul(worldGlobalMatrix, joints[j].calculatedMatrix, springWorldMatrix.m[0]);
+
+        // The joint's scale (model scale and the game's) applies to the radius too
+        float scale = vectorLength({ worldGlobalMatrix[0], worldGlobalMatrix[1], worldGlobalMatrix[2] });
+
+        springColliders.push_back({ transformPoint(joint.colliderStart, worldGlobalMatrix), transformPoint(joint.colliderEnd, worldGlobalMatrix), joint.colliderRadius * scale });
+    }
+}
+
+// Swings a spring bone: simulates where its tail is in the field (inertia, gravity, pull back to the animated
+// direction) and turns the bone's animated matrix (row-vector, model space) to point there.
+void ExternalMeshInstance::simulateSpringBone(const Joint& joint, JointState& state, int steps, float modelScale)
+{
+    if (!hasSpringWorldMatrix) return;
+
+    float* globalMatrix = state.calculatedMatrix;
+    float worldMatrix[16], inverseWorldMatrix[16], worldGlobalMatrix[16];
+    memcpy(worldMatrix, springWorldMatrix.m, sizeof(worldMatrix));
+    bx::mtxInverse(inverseWorldMatrix, worldMatrix);
+    bx::mtxMul(worldGlobalMatrix, globalMatrix, worldMatrix);
+
+    vector3<float> head = { worldGlobalMatrix[12], worldGlobalMatrix[13], worldGlobalMatrix[14] };
+    vector3<float> animatedTail = transformPoint(joint.springTail, worldGlobalMatrix);
+    vector3<float> animatedDirection = { animatedTail.x - head.x, animatedTail.y - head.y, animatedTail.z - head.z };
+    float length = vectorLength(animatedDirection);
+    if (length <= 0.0f) return;
+
+    // Start (or restart after a jump across the field) from the animated pose
+    vector3<float> offset = { state.springTailPosition.x - head.x, state.springTailPosition.y - head.y, state.springTailPosition.z - head.z };
+    if (!state.springStarted || vectorLength(offset) > 3.0f * length)
+    {
+        state.springTailPosition = state.springTailPrevious = animatedTail;
+        state.springStarted = true;
+    }
+
+    // The game's field space has Y pointing down
+    float gravity = joint.springGravity * SPRING_BONE_GRAVITY * modelScale * SPRING_BONE_STEP_SECONDS * SPRING_BONE_STEP_SECONDS;
+
+    // The tail's own thickness, scaled like the bone (model scale and the game's)
+    float tailRadius = joint.springRadius * vectorLength({ worldGlobalMatrix[0], worldGlobalMatrix[1], worldGlobalMatrix[2] });
+
+    for (int step = 0; step < steps; step++)
+    {
+        vector3<float>& tail = state.springTailPosition;
+        vector3<float>& previous = state.springTailPrevious;
+
+        vector3<float> next = {
+            tail.x + (tail.x - previous.x) * (1.0f - joint.springDrag) + (animatedTail.x - tail.x) * joint.springStiffness,
+            tail.y + (tail.y - previous.y) * (1.0f - joint.springDrag) + (animatedTail.y - tail.y) * joint.springStiffness + gravity,
+            tail.z + (tail.z - previous.z) * (1.0f - joint.springDrag) + (animatedTail.z - tail.z) * joint.springStiffness
+        };
+
+        // Keep the bone's length, push the tail out of the body, then keep the length again
+        keepLength(next, head, length);
+        if (pushOutOfColliders(next, springColliders, tailRadius)) keepLength(next, head, length);
+
+        previous = tail;
+        tail = next;
+    }
+
+    // Turn the bone from its animated direction to the simulated one (around its head)
+    vector3<float> from = { animatedDirection.x / length, animatedDirection.y / length, animatedDirection.z / length };
+    vector3<float> to = { state.springTailPosition.x - head.x, state.springTailPosition.y - head.y, state.springTailPosition.z - head.z };
+    float toLength = vectorLength(to);
+    if (toLength <= 0.0f) return;
+    to = { to.x / toLength, to.y / toLength, to.z / toLength };
+
+    vector3<float> axis = { from.y * to.z - from.z * to.y, from.z * to.x - from.x * to.z, from.x * to.y - from.y * to.x };
+    float sinAngle = vectorLength(axis);
+    float cosAngle = from.x * to.x + from.y * to.y + from.z * to.z;
+    if (sinAngle < 1e-6f) return;
+    axis = { axis.x / sinAngle, axis.y / sinAngle, axis.z / sinAngle };
+
+    // Rotation matrix (column-vector form) around axis by the angle between from and to
+    float c = cosAngle, s = sinAngle, t = 1.0f - cosAngle;
+    float rotation[3][3] = {
+        { t * axis.x * axis.x + c, t * axis.x * axis.y - s * axis.z, t * axis.x * axis.z + s * axis.y },
+        { t * axis.x * axis.y + s * axis.z, t * axis.y * axis.y + c, t * axis.y * axis.z - s * axis.x },
+        { t * axis.x * axis.z - s * axis.y, t * axis.y * axis.z + s * axis.x, t * axis.z * axis.z + c }
+    };
+
+    // Row-vector matrices keep each local axis in a row: turn the three axes, keep the head where it is
+    for (int row = 0; row < 3; row++)
+    {
+        float x = worldGlobalMatrix[row * 4 + 0], y = worldGlobalMatrix[row * 4 + 1], z = worldGlobalMatrix[row * 4 + 2];
+        worldGlobalMatrix[row * 4 + 0] = rotation[0][0] * x + rotation[0][1] * y + rotation[0][2] * z;
+        worldGlobalMatrix[row * 4 + 1] = rotation[1][0] * x + rotation[1][1] * y + rotation[1][2] * z;
+        worldGlobalMatrix[row * 4 + 2] = rotation[2][0] * x + rotation[2][1] * y + rotation[2][2] * z;
+    }
+
+    bx::mtxMul(globalMatrix, worldGlobalMatrix, inverseWorldMatrix);
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Field model cache: each gltf is loaded once and shared by every character using it. Models no field uses any
+// more stay loaded (up to a memory budget, least recently used dropped first) so later fields can reuse them.
+// A changed .gltf, .bin or _config.toml is loaded again.
+
+namespace
+{
+    struct FieldMeshCacheEntry
+    {
+        std::shared_ptr<ExternalMesh> mesh;
+        std::vector<std::filesystem::file_time_type> fileTimes;
+        size_t bytes = 0;
+        uint64_t lastUsed = 0;
+    };
+
+    // Never destroyed: models must not be freed after the renderer shuts down at exit
+    std::map<std::string, FieldMeshCacheEntry>& fieldMeshCache()
+    {
+        static auto* cache = new std::map<std::string, FieldMeshCacheEntry>();
+        return *cache;
+    }
+
+    uint64_t fieldMeshCacheClock = 0;
+
+    // The files a model is loaded from (missing ones count too, so adding a config file reloads the model)
+    std::vector<std::filesystem::file_time_type> getModelFileTimes(const std::string& gltfPath)
+    {
+        std::string withoutExtension = gltfPath.substr(0, gltfPath.find_last_of("."));
+        std::vector<std::filesystem::file_time_type> times;
+        for (const auto& path : { gltfPath, withoutExtension + ".bin", withoutExtension + "_config.toml" })
+        {
+            std::error_code error;
+            auto time = std::filesystem::last_write_time(path, error);
+            times.push_back(error ? std::filesystem::file_time_type::min() : time);
+        }
+        return times;
+    }
+
+    void trimFieldMeshCache()
+    {
+        auto& cache = fieldMeshCache();
+
+        while (true)
+        {
+            size_t unusedBytes = 0, unusedCount = 0;
+            auto oldest = cache.end();
+            for (auto it = cache.begin(); it != cache.end(); ++it)
+            {
+                if (it->second.mesh.use_count() > 1) continue; // Still drawn by some character
+                unusedBytes += it->second.bytes;
+                unusedCount++;
+                if (oldest == cache.end() || it->second.lastUsed < oldest->second.lastUsed) oldest = it;
+            }
+
+            if (oldest == cache.end() || (unusedBytes <= FIELD_MESH_CACHE_BUDGET_BYTES && unusedCount <= FIELD_MESH_CACHE_MAX_UNUSED)) break;
+
+            if (trace_all || trace_loaders) ffnx_trace("External mesh: dropped %s from the cache\n", oldest->first.c_str());
+            cache.erase(oldest);
+        }
+    }
+}
+
+std::shared_ptr<ExternalMesh> acquireFieldExternalMesh(char* file_path, char* tex_path, const char** outSource)
+{
+    auto& cache = fieldMeshCache();
+    std::string key = file_path;
+    auto fileTimes = getModelFileTimes(key);
+
+    auto it = cache.find(key);
+    if (it != cache.end() && it->second.fileTimes == fileTimes)
+    {
+        *outSource = it->second.mesh.use_count() > 1 ? "shared" : "reused from the cache";
+        it->second.lastUsed = ++fieldMeshCacheClock;
+        return it->second.mesh;
+    }
+
+    // Characters still drawn with an older version keep it until they're freed
+    auto mesh = std::shared_ptr<ExternalMesh>(new ExternalMesh(), [](ExternalMesh* oldMesh) { oldMesh->destroyFieldResources(); delete oldMesh; });
+    if (!mesh->importExternalMeshGltfFile(file_path, tex_path, true)) return nullptr;
+
+    *outSource = "loaded";
+    cache[key] = { mesh, fileTimes, mesh->estimateMemory(), ++fieldMeshCacheClock };
+    trimFieldMeshCache();
+    return mesh;
+}
+
+// Characters freed while lighting is on may still have a draw queued for the end of the frame (deferred
+// draws), so they are deleted once the queue has been drawn
+static std::vector<ExternalMeshInstance*>& pendingFieldMeshReleases()
+{
+    static auto* pending = new std::vector<ExternalMeshInstance*>();
+    return *pending;
+}
+
+void releaseFieldExternalMesh(ExternalMeshInstance* instance)
+{
+    if (trace_all || trace_loaders) ffnx_trace("External mesh: character freed (%p)\n", instance);
+
+    if (enable_lighting && !ff8)
+    {
+        pendingFieldMeshReleases().push_back(instance);
+        return;
+    }
+
+    delete instance;
+    trimFieldMeshCache();
+}
+
+void flushReleasedFieldExternalMeshes()
+{
+    auto& pending = pendingFieldMeshReleases();
+    if (pending.empty()) return;
+
+    for (auto* instance : pending) delete instance;
+    pending.clear();
+    trimFieldMeshCache();
 }
