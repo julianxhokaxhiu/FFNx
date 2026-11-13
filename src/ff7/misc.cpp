@@ -137,14 +137,14 @@ void field_text_box_window_opening_6317A9_autosize(short WINDOW_ID)
 	// script that's waiting on it deadlocks. Restore the normal owner assignment for any window
 	// found in this orphaned state before continuing.
 	if ( (ff7_japanese_edition || ff7_multibyte_font)
-		&& ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] == 0xFF )
-		ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] = *ff7_externals.current_entity_id_byte_CC0964;
+		&& reinterpret_cast<byte *>(ff7_externals.field_entity_id_list)[WINDOW_ID] == 0xFF )
+		reinterpret_cast<byte *>(ff7_externals.field_entity_id_list)[WINDOW_ID] = *ff7_externals.current_entity_id;
 
 	auto& window = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID];
 	autosize_text_box_window(WINDOW_ID,
 		reinterpret_cast<byte*>(ff7_externals.current_dialog_string_pointer[WINDOW_ID]), field_autosize_state);
 
-	if ( ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] == *ff7_externals.current_entity_id_byte_CC0964 )
+	if ( reinterpret_cast<byte *>(ff7_externals.field_entity_id_list)[WINDOW_ID] == *ff7_externals.current_entity_id )
 	{
 		ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width += ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width / 4;
 

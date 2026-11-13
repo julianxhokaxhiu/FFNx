@@ -421,16 +421,16 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	switch(version)
 		{
 			case VERSION_FF7_102_US:
-				patch_code_byte(ff7_externals.world_sub_75C283 + 0x2A8, 0x8);
+				patch_code_byte(reinterpret_cast<uint32_t>(ff7_externals.world_submit_draw_effects_75C283) + 0x2A8, 0x8);
 				break;
 			case VERSION_FF7_102_DE:
-				patch_code_byte(ff7_externals.world_sub_75C283 + 0x2A8, 0x20);
+				patch_code_byte(reinterpret_cast<uint32_t>(ff7_externals.world_submit_draw_effects_75C283) + 0x2A8, 0x20);
 				break;
 			case VERSION_FF7_102_FR:
-				patch_code_byte(ff7_externals.world_sub_75C283 + 0x2A8, 0x50);
+				patch_code_byte(reinterpret_cast<uint32_t>(ff7_externals.world_submit_draw_effects_75C283) + 0x2A8, 0x50);
 				break;
 			case VERSION_FF7_102_SP:
-				patch_code_byte(ff7_externals.world_sub_75C283 + 0x2A8, 0xB0);
+				patch_code_byte(reinterpret_cast<uint32_t>(ff7_externals.world_submit_draw_effects_75C283) + 0x2A8, 0xB0);
 				break;
 		}
 
@@ -502,7 +502,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_call(submit_vanilla_prompt_address + 0x6, universal_buttons_submit_vanilla_prompt);
 		replace_call_function(ff7_externals.field_submit_and_draw_text_box_and_text_6EBF2C + 0xBD, universal_buttons_flush_vanilla_field);
 		replace_call_function(ff7_externals.field_submit_and_draw_text_box_and_text_6EBF2C + 0x633, universal_buttons_flush_vanilla_field);
-		replace_call_function(ff7_externals.field_draw_everything_sub_63A60B + 0x3A2, universal_buttons_flush_vanilla_field);
+		replace_call_function(ff7_externals.field_draw_everything + 0x3A2, universal_buttons_flush_vanilla_field);
 		replace_call_function((uint32_t)ff7_externals.world_wm0_overworld_draw_all_74C179 + 0x23D,
 			universal_buttons_flush_vanilla_field);
 		replace_call_function((uint32_t)ff7_externals.world_wm2_underwater_draw_all_74C3F0 + 0x15F,

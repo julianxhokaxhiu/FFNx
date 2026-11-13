@@ -3375,7 +3375,6 @@ struct ff7_externals
 	DWORD* input_run_button_status;
 	uint32_t sub_62120E;
 	int (*field_load_map_trigger_data_sub_6211C3)();
-	uint32_t field_fade_screen_sub_63B84B;
 	uint32_t field_calc_fade_color_sub_63AE66;
 
 	// battle camera script externals
@@ -3619,6 +3618,8 @@ struct ff7_externals
 	short* pollensalta_cold_breath_white_dot_rgb_scalar;
 	uint32_t pollensalta_cold_breath_bg_texture_ctx;
 	uint32_t pandora_box_skill_init_566871;
+	uint32_t pandora_box_skill_main_loop_566E61;
+	uint32_t run_ifrit_main_5927C1;
 	uint32_t pandora_box_skill_draw_bg_flash_effect_568371;
 
 	// battle menu
@@ -3678,8 +3679,6 @@ struct ff7_externals
 	void (*world_init_load_wm_bot_block_7533AF)();
 	uint32_t run_world_event_scripts;
 	uint32_t run_world_event_scripts_system_operations;
-	uint32_t world_animate_all_models;
-	uint32_t world_animate_single_model;
 	uint32_t run_world_snake_ai_script_7562FF;
 	uint32_t update_world_snake_position_7564CD;
 	uint32_t is_update_snake_enabled_7562A9;
@@ -3795,9 +3794,7 @@ struct ff7_externals
 	uint32_t world_sub_751EFC;
 	uint32_t world_sub_75C02B;
 	uint32_t world_sub_75C0FD;
-	uint32_t world_sub_75C283;
 	uint32_t world_sub_75F0AD;
-	uint32_t world_sub_75042B;
 	uint32_t world_culling_bg_meshes_75F263;
 	uint32_t world_submit_draw_bg_meshes_75F68C;
 	uint32_t world_compute_skybox_data_754100;
@@ -3959,26 +3956,20 @@ struct ff7_externals
 	int* field_do_draw_character_DC3CEC;
 	int* field_do_draw_text_boxes_DC3CE8;
 
-	uint32_t engine_loop_main_loop_sub_4090E6;
-	uint32_t menu_enter_sub_6CD3B0;
 	void (*engine_load_menu_graphics_objects_6C1468)(int);
 	void (*sub_671082)(ff7_graphics_object**);
 	int (*sub_674530)();
 	void (*sub_67453A)(int);
-	void (*make_struc3_6745E6)(int, struc_3*);
 	void (*engine_set_blendmode_674659)(int, struc_3 *);
-	ff7_graphics_object* (*engine_load_graphics_object_6710AC)(int, signed int, struc_3*, char*, int);
 	int (*engine_get_viewport_type_404D80)();
 	ff7_game_obj* (*engine_get_game_object_676578)();
 
-	uint32_t field_draw_everything_sub_63A60B;
 	uint32_t field_submit_and_draw_text_box_and_text_6EBF2C;
 	uint32_t field_submit_draw_text_640x480_6E706D;
 
 	void (*field_draw_text_boxes_and_text_graphics_object_6ECA68)();
 	void (*engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95)(int, ff7_game_obj*);
 	void (*engine_gfx_set_single_renderstate_sub_660C3A)(int, int, ff7_game_obj*);
-	void (*engine_draw_graphics_object_66E641)(ff7_graphics_object*, ff7_game_obj*);
 	void (*reset_field_54_graphics_object_66E62C)(ff7_graphics_object*);
 
 	int* menu_is_small_viewport_320_240_DC130C;
@@ -3995,7 +3986,6 @@ struct ff7_externals
 
 
 
-	uint32_t battle_menu_display_menu_6D82EA;
 	uint32_t battle_display_base_menu_6DD041;
 	int (*common_submit_draw_char_from_buffer_6F564E)(int, int, int, unsigned __int16, float);
 	uint32_t menu_config_sub_6C3197;
@@ -4035,7 +4025,6 @@ struct ff7_externals
 	uint32_t japanese_text_large_glyph_char_call_7193DE;
 	int (*draw_string_from_buffer_sub_6F5B03)(int, int, byte*, byte, float);
 	int (*menu_shop_draw_string_from_buffer)(int, int, byte*, byte, float);
-	uint32_t menu_loop_sub_6CC623;
 	void (*menu_draw_everything_6CC9D3)();
 	int (*g_get_do_render_menu_6CDBF2)();
 
@@ -4064,26 +4053,22 @@ struct ff7_externals
 	ff7_graphics_object** menu_avatar_1_graphics_object_DC1014;
     ff7_graphics_object** menu_avatar_2_graphics_object_DC1018;
     ff7_graphics_object** menu_avatar_3_graphics_object_DC101C;
-	short* engine_game_mode_word_CBF9DC;
 	ff7_graphics_object** menu_buster_tex_graphics_object_DC1044;
 	ff7_graphics_object** menu_unknown4_graphics_object_DC1000;
 	ff7_graphics_object** menu_unknown2_graphics_object_DC0FF8;
 
-	uint32_t battle_loop_sub_41BAB3;
 	void (*battle_draw_menu_everything_6CEE84)();
 
 	ff7_graphics_object** menu_unknown5_graphics_object_DC1004;
 
 	uint32_t battle_display_text_6D7245;
 	void (*draw_text_top_display_6D1CC0)(int, __int16, char, unsigned __int16);
-	attack_name_fixed_buffer* (*kernel_get_text_sub_41963C)(unsigned int, int, int);
 	char (*sub_6D70F1)(int);
 
 	battle_menu_data** battle_menu_data_DC3630;
 	char* byte_DC3640;
 	attack_name_fixed_buffer** battle_text_buffer_DC208C;
 	battle_graphics_data** battle_graphics_data_ptr_9ADFD8;
-	char* g_is_battle_paused_DC0E6C;
 	bgra_byte* dword_91EFC8;
 	bgra_byte* dword_91EFCC;
 	bgra_byte* dword_91EFD0;
@@ -4093,8 +4078,6 @@ struct ff7_externals
 	void (*main_menu_draw_everything_maybe_6C0B91)();
 
 	text_box_data* text_box_window_data_array_CFF5B8;
-	byte* field_text_box_window_entity_id_CC0960;
-	byte* current_entity_id_byte_CC0964;
 
 	// JP Font graphics objects
 	ff7_graphics_object* menu_jafont_1_graphics_object;

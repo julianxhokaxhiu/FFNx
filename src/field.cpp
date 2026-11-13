@@ -251,7 +251,7 @@ void field_init()
 		// Proxy the window calculation formula so we can offset windows vertically
 		replace_call_function(common_externals.execute_opcode_table[0x50] + 0x174, field_calc_window_pos);
 
-		field_fade_screen_original = (uint16_t(*)())ff7_externals.field_fade_screen_sub_63B84B;
+		field_fade_screen_original = (uint16_t(*)())ff7_externals.field_handle_screen_fading;
 		field_draw_fade_original = (void(*)(ff7_game_obj*))get_relative_call(ff7_externals.field_draw_everything, 0x369);
 		field_final_fade_color = (uint32_t*)get_absolute_value(ff7_externals.field_calc_fade_color_sub_63AE66, 0x326);
 		field_fade_draw_flags = (uint32_t*)get_absolute_value((uint32_t)field_draw_fade_original, 0xB);

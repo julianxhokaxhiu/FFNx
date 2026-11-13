@@ -75,7 +75,7 @@ namespace ff7::battle
 
 	void battle_hook_init()
 	{
-		pandora_box_native_main_loop = reinterpret_cast<decltype(pandora_box_native_main_loop)>(get_absolute_value(ff7_externals.pandora_box_skill_init_566871, 0x1F));
+		pandora_box_native_main_loop = reinterpret_cast<decltype(pandora_box_native_main_loop)>(ff7_externals.pandora_box_skill_main_loop_566E61);
 		patch_code_dword(ff7_externals.pandora_box_skill_init_566871 + 0x1F, reinterpret_cast<uint32_t>(pandora_box_main_loop));
 
 		uint32_t hyperjump = ff7_externals.limit_break_effects_fn_table[30];
@@ -108,8 +108,7 @@ namespace ff7::battle
 			patch_code_dword(texture_resource, (flags & ~7u) | 2u);
 		}
 
-		uint32_t ifrit = get_relative_call(ff7_externals.run_summon_animations_5C0E4B, 0x3FC);
-		uint32_t ifrit_load_resources = get_relative_call(ifrit, 0x122);
+		uint32_t ifrit_load_resources = get_relative_call(ff7_externals.run_ifrit_main_5927C1, 0x122);
 		uint32_t ifrit_resources = get_absolute_value(ifrit_load_resources, 0x2C);
 
 		// Only the CIRCLE ground-hole model is subtractive; Ifrit's flames remain additive.
