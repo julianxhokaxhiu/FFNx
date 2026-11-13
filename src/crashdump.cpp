@@ -70,7 +70,8 @@ LONG WINAPI FailFastExceptionHandler(EXCEPTION_POINTERS *ep)
 
 	// Trace anything unusual so a silent termination still leaves a breadcrumb.
 	static uint32_t traced = 0;
-	if (code != 0xE06D7363 && code != 0x406D1388 && traced < 32)
+	if (code != 0xE06D7363 && code != 0x406D1388 &&
+		code != DBG_PRINTEXCEPTION_C && code != DBG_PRINTEXCEPTION_WIDE_C && traced < 32)
 	{
 		++traced;
 		ffnx_trace("First chance exception 0x%x at 0x%p\n", code, ep->ExceptionRecord->ExceptionAddress);
