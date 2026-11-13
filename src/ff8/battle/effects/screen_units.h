@@ -27,7 +27,7 @@
 namespace ff8_battle_effects
 {
 	// Resolves the GTE and SSIGPU helpers from Cure's overlay renderer, before any effect is patched
-	void resolve_screen_units(const DWORD *effects);
+	uint32_t resolve_screen_units(const DWORD *effects);
 
 	void sxy_to_pixels(int16_t *sxy, int count);
 	int16_t *read_sxy2_eighths(int16_t *out);
@@ -67,7 +67,7 @@ namespace ff8_battle_effects
 	void patch_ribbons(const ribbon *ribbons, size_t count);
 
 	// Topics
-	void patch_magic(const DWORD *effects);
+	void patch_magic(const DWORD *effects, uint32_t cure_render);
 	void patch_summons(const DWORD *effects);
 	void patch_enemy_attacks(const DWORD *effects);
 	void patch_items(const DWORD *effects);

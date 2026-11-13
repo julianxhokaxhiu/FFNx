@@ -28,10 +28,10 @@ namespace ff8_battle_effects
 		{FF8BattleEffect::QuistisAcid, 0x10, {0x17, 0x42, 0x5A}, {RIBBON_CALL_STEP(0x5), RIBBON_ABS_STEP(0x4C), RIBBON_ABS_STEP(0xDB), RIBBON_CALL_STEP(0x12C), RIBBON_ABS_STEP(0x23), RIBBON_CALL_STEP(0x200)}}
 	};
 
-	void patch_magic(const DWORD *effects)
+	void patch_magic(const DWORD *effects, uint32_t cure_render)
 	{
 		// Cure and Cura: the light on the target
-		patch_overlay_render(cure_overlay_render(effects[FF8BattleEffect::Cure]));
+		patch_overlay_render(cure_render);
 		patch_overlay_render(cura_overlay_render(effects[FF8BattleEffect::Cura]));
 
 		patch_ribbons(magic_ribbons, sizeof(magic_ribbons) / sizeof(magic_ribbons[0]));

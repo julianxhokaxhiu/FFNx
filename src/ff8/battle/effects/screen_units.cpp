@@ -132,7 +132,7 @@ namespace ff8_battle_effects
 		replace_call(render + OVERLAY_QUAD_MODEL_INSERT, insert_model_then_light);
 	}
 
-	void resolve_screen_units(const DWORD *effects)
+	uint32_t resolve_screen_units(const DWORD *effects)
 	{
 		const uint32_t cure = cure_overlay_render(effects[FF8BattleEffect::Cure]);
 
@@ -140,6 +140,8 @@ namespace ff8_battle_effects
 		gte_read_sxy2 = (int16_t *(*)(int16_t *))get_relative_call(cure, OVERLAY_QUAD_READ_SXY2);
 		insert_prim_auto_depth = (void *(*)(void *, void *))get_relative_call(cure, OVERLAY_TRI_LIGHT_INSERT);
 		insert_prim_depth_keys = (void *(*)(void *, void *, int, int, int, int))get_relative_call(cure, OVERLAY_TRI_MODEL_INSERT);
+
+		return cure;
 	}
 
 	// Ribbons: each patched draw function gets its own hook slot, which knows its segment layout and edge routine
@@ -208,14 +210,32 @@ namespace ff8_battle_effects
 		return {ribbon_edges_hook<I>...};
 	}
 
-	static uint32_t ribbon_draw(const ribbon &ribbon)
+	struct ribbon_resolution
+	{
+		uint32_t site, result;
+		ribbon_step_kind kind;
+	};
+
+	static uint32_t ribbon_draw(const ribbon &ribbon, ribbon_resolution *resolved, size_t &resolved_count)
 	{
 		uint32_t address = ff8_externals.func_off_battle_effects_C81774[ribbon.effect];
 
 		for (const ribbon_step &step : ribbon.path)
 		{
+			if (step.kind == RIBBON_END) break;
+
+			const uint32_t site = address + step.offset;
+			size_t i = 0;
+			while (i < resolved_count && (resolved[i].site != site || resolved[i].kind != step.kind)) ++i;
+			if (i < resolved_count)
+			{
+				address = resolved[i].result;
+				continue;
+			}
+
 			if (step.kind == RIBBON_ABS) address = get_absolute_value(address, step.offset);
-			else if (step.kind == RIBBON_CALL) address = get_relative_call(address, step.offset);
+			else address = get_relative_call(address, step.offset);
+			resolved[resolved_count++] = {site, address, step.kind};
 		}
 
 		return address;
@@ -225,6 +245,8 @@ namespace ff8_battle_effects
 	{
 		static const std::array<ribbon_edge_fn, RIBBON_SLOTS> hooks = ribbon_edges_hooks(std::make_index_sequence<RIBBON_SLOTS>());
 		uint32_t draws[RIBBON_SLOTS];
+		ribbon_resolution resolved[RIBBON_SLOTS * 12];
+		size_t resolved_count = 0;
 
 		if (ribbon_slots_used + count > RIBBON_SLOTS) return;
 
@@ -233,7 +255,7 @@ namespace ff8_battle_effects
 		{
 			const size_t slot = ribbon_slots_used + i;
 
-			draws[i] = ribbon_draw(ribbons[i]);
+			draws[i] = ribbon_draw(ribbons[i], resolved, resolved_count);
 			ribbon_sx_offsets[slot] = ribbons[i].sx_offset;
 			ribbon_edges[slot] = (ribbon_edge_fn)get_relative_call(draws[i], ribbons[i].edge_calls[0]);
 		}

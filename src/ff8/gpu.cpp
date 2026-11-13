@@ -59,6 +59,11 @@ namespace
 		size_t first_record, record_size, xy, uv;
 	};
 
+	struct ScreenPosition
+	{
+		int16_t x, y;
+	};
+
 	PolygonLayout layout_of(uint8_t code)
 	{
 		const bool gouraud = code & POLYGON_GOURAUD, textured = code & POLYGON_TEXTURED;
@@ -70,24 +75,16 @@ namespace
 		return layout;
 	}
 
-	bool psx_skips_triangle(const uint8_t *packet, const PolygonLayout &layout, int first_vertex)
+	bool psx_skips_triangle(const ScreenPosition *vertices, int unit)
 	{
-		const int unit = *ff8_externals.ssigpu_packet_in_pixels_dword_1CA89FC ? 1 : EIGHTHS;
-		int16_t x[3], y[3];
-		for (int i = 0; i < 3; ++i)
-		{
-			const uint32_t xy = get_absolute_value(uint32_t(packet), layout.first_record + (first_vertex + i) * layout.record_size + layout.xy);
-			x[i] = int16_t(xy & 0xFFFF);
-			y[i] = int16_t(xy >> 16);
-		}
 		const int min_position = GTE_MIN_POSITION * unit, max_position = GTE_MAX_POSITION * unit;
 		bool outside = false;
 		int clamped_x[3], clamped_y[3];
 		for (int i = 0; i < 3; ++i)
 		{
-			outside |= x[i] < min_position || x[i] > max_position || y[i] < min_position || y[i] > max_position;
-			clamped_x[i] = std::clamp<int>(x[i], min_position, max_position);
-			clamped_y[i] = std::clamp<int>(y[i], min_position, max_position);
+			outside |= vertices[i].x < min_position || vertices[i].x > max_position || vertices[i].y < min_position || vertices[i].y > max_position;
+			clamped_x[i] = std::clamp<int>(vertices[i].x, min_position, max_position);
+			clamped_y[i] = std::clamp<int>(vertices[i].y, min_position, max_position);
 		}
 		if (!outside) return false;
 
@@ -100,10 +97,19 @@ namespace
 	{
 		const uint8_t code = packet[7];
 		const PolygonLayout layout = layout_of(code);
-
-		if (!(code & POLYGON_QUAD))
+		const bool quad = code & POLYGON_QUAD;
+		const int unit = *ff8_externals.ssigpu_packet_in_pixels_dword_1CA89FC ? 1 : EIGHTHS;
+		ScreenPosition vertices[4];
+		for (int i = 0; i < (quad ? 4 : 3); ++i)
 		{
-			if (psx_skips_triangle(packet, layout, 0))
+			const uint8_t *xy = packet + layout.first_record + i * layout.record_size + layout.xy;
+			vertices[i] = {int16_t(uint16_t(xy[0]) | (uint16_t(xy[1]) << 8)),
+				int16_t(uint16_t(xy[2]) | (uint16_t(xy[3]) << 8))};
+		}
+
+		if (!quad)
+		{
+			if (psx_skips_triangle(vertices, unit))
 			{
 				if (trace_all) ffnx_trace("%s: skip triangle 0x%02X the PS1 would not draw\n", __func__, code);
 				return;
@@ -112,8 +118,8 @@ namespace
 			return;
 		}
 
-		const bool first_skipped = psx_skips_triangle(packet, layout, 0);
-		const bool second_skipped = psx_skips_triangle(packet, layout, 1);
+		const bool first_skipped = psx_skips_triangle(vertices, unit);
+		const bool second_skipped = psx_skips_triangle(vertices + 1, unit);
 		if (!first_skipped && !second_skipped)
 		{
 			handler(packet);
