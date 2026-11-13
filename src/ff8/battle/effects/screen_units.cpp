@@ -40,7 +40,6 @@ namespace ff8_battle_effects
 	static int16_t *(*gte_read_sxy012)(int16_t *) = nullptr;
 	static int16_t *(*gte_read_sxy2)(int16_t *) = nullptr;
 	static void *(*insert_prim_auto_depth)(void *, void *) = nullptr;
-	static void *(*insert_prim_depth_keys)(void *, void *, int, int, int, int) = nullptr;
 
 	static void *pending_light_ot = nullptr;
 	static void *pending_light = nullptr;
@@ -81,13 +80,13 @@ namespace ff8_battle_effects
 	}
 
 	// Model polygon first, then its light on top with the same depth keys
-	static void *insert_model_then_light(void *ot_entry, void *prim, int z0, int z1, int z2, int z3)
+	static uint32_t insert_model_then_light(int *ot_entry, uint32_t *prim, int z0, int z1, int z2, int z3)
 	{
-		void *ret = insert_prim_depth_keys(ot_entry, prim, z0, z1, z2, z3);
+		uint32_t ret = ff8_externals.submit_primitive_with_depth(ot_entry, prim, z0, z1, z2, z3);
 
 		if (pending_light != nullptr)
 		{
-			ret = insert_prim_depth_keys(ot_entry, pending_light, z0, z1, z2, z3);
+			ret = ff8_externals.submit_primitive_with_depth(ot_entry, (uint32_t *)pending_light, z0, z1, z2, z3);
 			pending_light = nullptr;
 			pending_light_ot = nullptr;
 		}
@@ -139,7 +138,6 @@ namespace ff8_battle_effects
 		gte_read_sxy012 = (int16_t *(*)(int16_t *))get_relative_call(cure, OVERLAY_TRI_READ_SXY012);
 		gte_read_sxy2 = (int16_t *(*)(int16_t *))get_relative_call(cure, OVERLAY_QUAD_READ_SXY2);
 		insert_prim_auto_depth = (void *(*)(void *, void *))get_relative_call(cure, OVERLAY_TRI_LIGHT_INSERT);
-		insert_prim_depth_keys = (void *(*)(void *, void *, int, int, int, int))get_relative_call(cure, OVERLAY_TRI_MODEL_INSERT);
 
 		return cure;
 	}
@@ -216,9 +214,9 @@ namespace ff8_battle_effects
 		ribbon_step_kind kind;
 	};
 
-	static uint32_t ribbon_draw(const ribbon &ribbon, ribbon_resolution *resolved, size_t &resolved_count)
+	static uint32_t ribbon_draw(const ribbon &ribbon, uint32_t root, ribbon_resolution *resolved, size_t &resolved_count)
 	{
-		uint32_t address = ff8_externals.func_off_battle_effects_C81774[ribbon.effect];
+		uint32_t address = root ? root : ff8_externals.func_off_battle_effects_C81774[ribbon.effect];
 
 		for (const ribbon_step &step : ribbon.path)
 		{
@@ -241,7 +239,7 @@ namespace ff8_battle_effects
 		return address;
 	}
 
-	void patch_ribbons(const ribbon *ribbons, size_t count)
+	void patch_ribbons(const ribbon *ribbons, size_t count, uint32_t root)
 	{
 		static const std::array<ribbon_edge_fn, RIBBON_SLOTS> hooks = ribbon_edges_hooks(std::make_index_sequence<RIBBON_SLOTS>());
 		uint32_t draws[RIBBON_SLOTS];
@@ -255,7 +253,7 @@ namespace ff8_battle_effects
 		{
 			const size_t slot = ribbon_slots_used + i;
 
-			draws[i] = ribbon_draw(ribbons[i], resolved, resolved_count);
+			draws[i] = ribbon_draw(ribbons[i], root, resolved, resolved_count);
 			ribbon_sx_offsets[slot] = ribbons[i].sx_offset;
 			ribbon_edges[slot] = (ribbon_edge_fn)get_relative_call(draws[i], ribbons[i].edge_calls[0]);
 		}

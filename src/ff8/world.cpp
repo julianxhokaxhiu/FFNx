@@ -27,7 +27,6 @@
 static uint32_t *ff8_worldmap_model_depths;
 static int16_t *ff8_worldmap_model_triangle_depth_scale;
 static int16_t *ff8_worldmap_model_quad_depth_scale;
-static uint32_t (*ff8_worldmap_model_submit)(int *, uint32_t *, int, int, int, int);
 
 template<int vertex_count>
 static uint32_t ff8_worldmap_submit_model_polygon(int *ordering_table, uint32_t *packet, int, int, int, int)
@@ -45,7 +44,7 @@ static uint32_t ff8_worldmap_submit_model_polygon(int *ordering_table, uint32_t 
 	}
 
 	// The caller has already culled the polygon and chosen its native average-depth sorting bucket.
-	return ff8_worldmap_model_submit(ordering_table, packet, depths[0], depths[1], depths[2], depths[3]);
+	return ff8_externals.submit_primitive_with_depth(ordering_table, packet, depths[0], depths[1], depths[2], depths[3]);
 }
 
 static void patch_model_depth()
@@ -58,7 +57,6 @@ static void patch_model_depth()
 	ff8_worldmap_model_depths = reinterpret_cast<uint32_t *>(ff8_externals.dword_1CA8A50);
 	ff8_worldmap_model_triangle_depth_scale = reinterpret_cast<int16_t *>(get_absolute_value(average_triangle_depth, 0x31));
 	ff8_worldmap_model_quad_depth_scale = reinterpret_cast<int16_t *>(get_absolute_value(average_quad_depth, 0x35));
-	ff8_worldmap_model_submit = reinterpret_cast<decltype(ff8_worldmap_model_submit)>(get_relative_call(draw_model, FF8_US_VERSION ? 0x2E0 : 0x30A));
 	replace_call(draw_model + (FF8_US_VERSION ? 0x2E0 : 0x30A), ff8_worldmap_submit_model_polygon<3>);
 	replace_call(draw_quads + (FF8_US_VERSION ? 0x181 : 0x187), ff8_worldmap_submit_model_polygon<4>);
 }

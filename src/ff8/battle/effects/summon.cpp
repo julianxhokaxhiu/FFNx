@@ -19,6 +19,7 @@
 #include "screen_units.h"
 
 #include "../../../ff8.h"
+#include "../../../globals.h"
 #include "../../../patch.h"
 
 // Gilgamesh: the timeline task starts the attack task from a table (Zantetsuken, Masamune, Excaliber, Excalipoor)
@@ -32,21 +33,19 @@
 
 namespace ff8_battle_effects
 {
-	static int (*project_point)(void *, int16_t *, void *, void *) = nullptr;
-
 	// Eden's pixel particles: the projected point goes into a dot placed in pixels
-	static int project_point_pixels(void *vector, int16_t *sxy, void *p, void *flag)
+	static int project_point_pixels(void *vector, int16_t *sxy, int *p, int *flag)
 	{
-		int ret = project_point(vector, sxy, p, flag);
+		int ret = ff8_externals.project_screen_position(vector, sxy, p, flag);
 		sxy_to_pixels(sxy, 1);
 		return ret;
 	}
 
 	static const ribbon summon_ribbons[] = {
 		// Quezacotl branches, bolts, arcs
-		{FF8BattleEffect::Quezacotl, 0x4, {0x49, 0x74, 0x8C}, {RIBBON_CALL_STEP(0x5), RIBBON_ABS_STEP(0x8B), RIBBON_ABS_STEP(0x88), RIBBON_CALL_STEP(0xC82), RIBBON_CALL_STEP(0x16), RIBBON_ABS_STEP(0x4A), RIBBON_CALL_STEP(0x13B)}},
-		{FF8BattleEffect::Quezacotl, 0x10, {0x17, 0x42, 0x5A}, {RIBBON_CALL_STEP(0x5), RIBBON_ABS_STEP(0x8B), RIBBON_ABS_STEP(0x88), RIBBON_CALL_STEP(0x7D5), RIBBON_ABS_STEP(0x23), RIBBON_CALL_STEP(0x503)}},
-		{FF8BattleEffect::Quezacotl, 0x0, {0x6C, 0x88, 0xA3}, {RIBBON_CALL_STEP(0x5), RIBBON_ABS_STEP(0x8B), RIBBON_ABS_STEP(0x88), RIBBON_CALL_STEP(0x6E9), RIBBON_ABS_STEP(0x2), RIBBON_CALL_STEP(0x370)}}
+		{FF8BattleEffect::Quezacotl, 0x4, {0x49, 0x74, 0x8C}, {RIBBON_ABS_STEP(0x88), RIBBON_CALL_STEP(0xC82), RIBBON_CALL_STEP(0x16), RIBBON_ABS_STEP(0x4A), RIBBON_CALL_STEP(0x13B)}},
+		{FF8BattleEffect::Quezacotl, 0x10, {0x17, 0x42, 0x5A}, {RIBBON_ABS_STEP(0x88), RIBBON_CALL_STEP(0x7D5), RIBBON_ABS_STEP(0x23), RIBBON_CALL_STEP(0x503)}},
+		{FF8BattleEffect::Quezacotl, 0x0, {0x6C, 0x88, 0xA3}, {RIBBON_ABS_STEP(0x88), RIBBON_CALL_STEP(0x6E9), RIBBON_ABS_STEP(0x2), RIBBON_CALL_STEP(0x370)}}
 	};
 
 	void patch_summons(const DWORD *effects)
@@ -61,9 +60,8 @@ namespace ff8_battle_effects
 		const uint32_t eden_draw = get_relative_call(get_absolute_value(effects[FF8BattleEffect::Eden], 0x45), 0x1D7);
 		const uint32_t eden_pixel_particles = ((uint32_t *)get_absolute_value(eden_draw, EDEN_DRAW_FUNCTIONS))[EDEN_PIXEL_PARTICLE_DRAW];
 
-		project_point = (int (*)(void *, int16_t *, void *, void *))get_relative_call(eden_pixel_particles, EDEN_PIXEL_PARTICLE_PROJECT);
 		replace_call(eden_pixel_particles + EDEN_PIXEL_PARTICLE_PROJECT, project_point_pixels);
 
-		patch_ribbons(summon_ribbons, sizeof(summon_ribbons) / sizeof(summon_ribbons[0]));
+		patch_ribbons(summon_ribbons, sizeof(summon_ribbons) / sizeof(summon_ribbons[0]), ff8_externals.sub_6C3760);
 	}
 }

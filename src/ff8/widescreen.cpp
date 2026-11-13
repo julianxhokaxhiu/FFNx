@@ -61,7 +61,6 @@ static int ff8_card_background_source = -1;
 static int ff8_card_background_sprite = -1;
 static std::unordered_map<const void *, ff8_card_background_packet> ff8_card_background_packets;
 static std::unordered_map<const void *, int> ff8_card_background_objects;
-static uint32_t (*ff8_card_submit_background)(int *, uint32_t *, int, int, int, int);
 static void (*ff8_card_draw_sprite)(uint32_t *);
 static int (*ff8_card_append_sprite)(int, ff8_graphics_object *);
 
@@ -138,7 +137,7 @@ void ff8_widescreen_set_card_background_source(const uint8_t *image)
 
 static uint32_t ff8_card_submit_background_page(int *ordering_table, uint32_t *packet, int z0, int z1, int z2, int z3, bool first_page)
 {
-	const uint32_t result = ff8_card_submit_background(ordering_table, packet, z0, z1, z2, z3);
+	const uint32_t result = ff8_externals.submit_primitive_with_depth(ordering_table, packet, z0, z1, z2, z3);
 	if (getmode_cached()->driver_mode == MODE_CARDGAME && ff8_card_background_source >= 0)
 		ff8_card_background_packets[packet] = {ff8_card_background_source, first_page};
 	else
@@ -496,8 +495,6 @@ int ff8_worldmap_model_store_wide_depths(uint32_t *depth0, uint32_t *depth1, uin
 	return result;
 }
 
-static uint32_t (*ff8_worldmap_submit_sky_quad)(int *, uint32_t *, int, int, int, int);
-
 uint32_t ff8_worldmap_submit_wide_sky_quad(int *ordering_table, uint32_t *packet, int z0, int z1, int z2, int z3)
 {
 	// These two native sky-gradient packets use quarter-pixel X coordinates.
@@ -506,7 +503,7 @@ uint32_t ff8_worldmap_submit_wide_sky_quad(int *ordering_table, uint32_t *packet
 	for (int i = 0; i < 4; ++i)
 		packet[2 + 2 * i] = (packet[2 + 2 * i] & 0xFFFF0000u) | (i % 2 == 0 ? left : right);
 
-	return ff8_worldmap_submit_sky_quad(ordering_table, packet, z0, z1, z2, z3);
+	return ff8_externals.submit_primitive_with_depth(ordering_table, packet, z0, z1, z2, z3);
 }
 
 using ff8_shop_draw_panel = int (*)(int, int *, int, int, int);
@@ -699,8 +696,6 @@ static void ff8_battle_effects_widescreen_init()
 }
 
 void ff8_widescreen_hook_init() {
-	ff8_card_submit_background = reinterpret_cast<decltype(ff8_card_submit_background)>(
-		get_relative_call(ff8_externals.sub_5391B0, 0xC7));
 	replace_call(ff8_externals.sub_5391B0 + 0xC7, ff8_card_submit_first_background_page);
 	replace_call(ff8_externals.sub_5391B0 + 0x177, ff8_card_submit_second_background_page);
 	ff8_card_draw_sprite = reinterpret_cast<decltype(ff8_card_draw_sprite)>(ff8_externals.ssigpu_callbacks_1[100]);
@@ -739,7 +734,6 @@ void ff8_widescreen_hook_init() {
 
 		const uint32_t worldmap_draw_sky = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0xA78);
 		const uint32_t worldmap_draw_sky_gradient = get_relative_call(worldmap_draw_sky, 0x1BA);
-		ff8_worldmap_submit_sky_quad = reinterpret_cast<decltype(ff8_worldmap_submit_sky_quad)>(get_relative_call(worldmap_draw_sky_gradient, 0xDE));
 		replace_call(worldmap_draw_sky_gradient + 0xDE, ff8_worldmap_submit_wide_sky_quad);
 		replace_call(worldmap_draw_sky_gradient + 0x1A7, ff8_worldmap_submit_wide_sky_quad);
 

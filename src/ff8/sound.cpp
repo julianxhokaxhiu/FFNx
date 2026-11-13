@@ -28,10 +28,6 @@
 #define BATTLE_PAN_PROJECT 0x1D
 #define FIELD_FOOTSTEP_PROJECT 0x6D
 
-typedef int (*project_fn)(void *, int16_t *, int *, int *);
-
-static project_fn project = nullptr;
-
 // Battle sounds and field footsteps are panned from the screen X of their source, but the PC GTE
 // returns it in eighths of a pixel where the PSX returned pixels:
 // - battle: pan = 96 * (x - 160) / 320 + 128, clamped to 80..175, so almost every sound plays on the right
@@ -39,7 +35,7 @@ static project_fn project = nullptr;
 // The projection calls get the coordinates back in pixels, like the game's own divided-by-8 projection does.
 static int project_pixels(void *position, int16_t *sxy, int *p, int *flag)
 {
-	const int otz = project(position, sxy, p, flag);
+	const int otz = ff8_externals.project_screen_position(position, sxy, p, flag);
 
 	sxy[0] = int16_t(sxy[0] >> 3);
 	sxy[1] = int16_t(sxy[1] >> 3);
@@ -49,8 +45,6 @@ static int project_pixels(void *position, int16_t *sxy, int *p, int *flag)
 
 void ff8_sound_init()
 {
-	project = (project_fn)get_relative_call(ff8_externals.battle_actor_sound_pan, BATTLE_PAN_PROJECT);
-
 	replace_call(ff8_externals.battle_actor_sound_pan + BATTLE_PAN_PROJECT, project_pixels);
 	replace_call(ff8_externals.field_footstep_sound + FIELD_FOOTSTEP_PROJECT, project_pixels);
 }

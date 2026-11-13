@@ -1861,8 +1861,6 @@ struct ff8_externals
 	uint32_t init_pause_menu;
 	int16_t *pause_menu_window_rect;
 	ff8_draw_menu_sprite_texture_infos *(*draw_text_sub_4A1020)(int, ff8_draw_menu_sprite_texture_infos *, int, int, const char *, int);
-	ff8_draw_menu_sprite_texture_infos *(*draw_window_frame_sub_4B6A60)(int, ff8_draw_menu_sprite_texture_infos *, const int16_t *, uint32_t);
-	ff8_draw_menu_sprite_texture_infos *(*draw_window_background_sub_4B6A80)(int, ff8_draw_menu_sprite_texture_infos *, const int16_t *, uint32_t, int);
 	uint32_t sub_49BB30;
 	uint32_t sub_49BAB0;
 	uint32_t sub_49B300;
@@ -1986,6 +1984,7 @@ struct ff8_externals
 	uint32_t battle_actor_sound;
 	uint32_t battle_actor_sound_3d;
 	uint32_t battle_actor_sound_pan;
+	int (*project_screen_position)(void *, int16_t *, int *, int *);
 	uint32_t field_footstep_sound;
 	uint32_t battle_status_countdown;
 	uint32_t (*battle_actor_sounds)[7];
@@ -2030,6 +2029,7 @@ struct ff8_externals
 	uint32_t battle_menu_draw_inline_command_list_sub_4BCCD0;
 	uint32_t battle_draw_window_box_sub_4A7510;
 	ff8_battle_ui_context **battle_ui_context_dword_1D6D490;
+	uint32_t (*submit_primitive_with_depth)(int *, uint32_t *, int, int, int, int);
 	void (*battle_compute_window_scale_rect_sub_4A7440)(int, int16_t *, int16_t *);
 	uint32_t *(*battle_emit_relative_draw_area_sub_4A73A0)(int *, uint32_t *, int16_t *);
 	uint32_t *(*battle_emit_full_draw_area_sub_4A7630)(int *, uint32_t *);
@@ -2041,7 +2041,6 @@ struct ff8_externals
 	uint32_t battle_pause_sub_4CD140;
 	uint32_t *is_alternative_pause_menu;
 	uint32_t *pause_menu_option_state;
-	void *battle_menu_state;
 	uint32_t battle_pause_window_sub_4CD350;
 	int16_t *battle_pause_window_rect;
 	uint32_t sub_4A7210;

@@ -64,7 +64,7 @@ namespace ff8_battle_effects
 		ribbon_step path[12];
 	};
 
-	void patch_ribbons(const ribbon *ribbons, size_t count);
+	void patch_ribbons(const ribbon *ribbons, size_t count, uint32_t root = 0);
 
 	// Topics
 	void patch_magic(const DWORD *effects, uint32_t cure_render);
