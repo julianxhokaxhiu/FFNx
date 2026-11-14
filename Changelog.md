@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.25.2...master
 
+## Common
+
+- Rendering: Vulkan now supports HDR10 rendering
+
 ## FF7
 
 - Core: Add support for the PSX Star Field loop in post-credits, instead of closing the game. Thanks to the https://github.com/Xeeynamo/ff7-decomp project for the PSX source.
