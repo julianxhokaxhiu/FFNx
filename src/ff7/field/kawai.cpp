@@ -203,7 +203,7 @@ namespace ff7::field
         *result = direct ? -1 : opcode;
         *complete = !model.state.executing || direct ||
             ((opcode == 6 || opcode == 8) && model.state.fade.finished);
-        if (opcode == 6 && model.state.executing && model.state.fade.finished)
+        if (opcode == 6 && model.state.executing && model.state.fade.finished && model.state.fade.interpolating)
             model.pending_final_packets.fill(true);
         if (opcode == 9 && model.state.executing &&
             model.splash_frame++ % std::max(common_frame_multiplier, 1) != 0)
@@ -229,7 +229,7 @@ namespace ff7::field
                     model.packet_effects.fill(effect);
                 kawai::advance(model.state, frame_multiplier);
             }
-            // LIGHT's native callback stops on completion; settle each bank on its next use.
+            // Interpolating LIGHT fades settle each bank after their native callback stops.
             if (model.pending_final_packets[current_packet])
             {
                 model.packet_effects[current_packet] = model.state.effect;
