@@ -23,7 +23,7 @@
 // This shader is used for 3D elements when advanced lighting is disabled.
 
 $input a_position, a_color0, a_texcoord0, a_normal, a_indices, a_weight
-$output v_color0, v_texcoord0, v_position0, v_normal0
+$output v_color0, v_texcoord0, v_position0, v_normal0, v_normal1
 
 #include <bgfx/bgfx_shader.sh>
 #include "FFNx.common.sh"
@@ -60,6 +60,8 @@ uniform vec4 WMFlags;
 #define sphericaWorldRadiusScale  WMFlags.x
 
 #define gameLightingMode gameLightingFlags.x
+#define isPSXFieldFacial gameLightingFlags.y > 0.0
+#define useGameLighting gameLightingFlags.z > 0.0
 #define GAME_LIGHTING_PER_VERTEX 1
 
 void main()
@@ -106,9 +108,17 @@ void main()
 
         pos = mul(mul(d3dViewport, d3dProjection), vec4(pos.xyz, 1.0));
         v_normal0 = mul(normalMatrix, vec4(nrm, 0.0)).xyz;
+        v_normal1 = nrm;
 
         // In this default shader, lighting is applied in gamma space so that it does better match the original lighting
-        if (gameLightingMode == GAME_LIGHTING_PER_VERTEX)
+        if (isPSXFieldFacial && useGameLighting && gameLightingMode == GAME_LIGHTING_PER_VERTEX)
+        {
+            vec3 normal = sign(nrm) * floor(abs(nrm) * 4096.0 + vec3_splat(0.5)) / 4096.0;
+            color.rgb = ApplyPSXFieldLighting(color.rgb, normal, gameGlobalLightColor.rgb,
+                gameLightColor1.rgb, gameLightColor2.rgb, gameLightColor3.rgb,
+                gameLightDir1.xyz, gameLightDir2.xyz, gameLightDir3.xyz);
+        }
+        else if (!(isPSXFieldFacial) && gameLightingMode == GAME_LIGHTING_PER_VERTEX)
         {
             vec3 worldNormal = mul(invViewMatrix, vec4(v_normal0, 0)).xyz;
             float dotLight1 = saturate(dot(worldNormal, gameLightDir1.xyz));

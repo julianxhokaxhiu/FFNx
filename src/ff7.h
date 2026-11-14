@@ -2371,7 +2371,7 @@ struct field_animation_data
 	WORD field_174;
 	WORD field_176;
 	ff7_hrc_polygon_data *anim_frame_object;
-	uint32_t *field_17C;
+	anim_header **animations;
 	p_hundred* custom_left_eye_tex;
   p_hundred* static_left_eye_tex;
   p_hundred* custom_right_eye_tex;

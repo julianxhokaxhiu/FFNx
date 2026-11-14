@@ -77,6 +77,8 @@ struct driver_state
 	struct matrix d3dprojection_matrix;
 	ff7::field::kawai::Effect kawai_effect;
 	struct matrix kawai_camera_matrix;
+	bool psx_field_facial;
+	ff7::field::kawai::Vector psx_field_facial_filter;
 	bool psx_world;
 	bool psx_world_radar;
 	bool psx_world_meteor;

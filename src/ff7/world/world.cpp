@@ -124,39 +124,15 @@ namespace ff7::world
 
         void prepare_model_lighting(hrc_data* model, anim_header* animation)
         {
-            if (!model || !animation || !animation->num_frames || !animation->anim_frames || !model->bone_list ||
-                (animation->use_matrix_array && !animation->matrix_array))
-            {
-                ffnx_unexpected_once("Cannot prepare world model lighting: missing initial animation, matrices or skeleton\n");
-                return;
-            }
-            auto* frame = &animation->anim_frames[0];
-            const bool alternate = model->field_A4 && *model->field_A4;
-            auto root_animation = alternate ? ff7_externals._root_animation : ff7_externals.root_animation;
-            auto frame_animation = alternate ? ff7_externals._frame_animation : ff7_externals.frame_animation;
-            std::vector<matrix> stack(1);
-            if (animation->use_matrix_array) stack.back() = animation->matrix_array[0];
-            else root_animation(&stack.back(), frame, animation, model);
+            std::vector<matrix> pose;
+            if (!get_model_initial_pose(model, animation, pose)) return;
             list_node* node;
             LIST_FOR_EACH(node, model->bone_list)
             {
                 auto* entry = reinterpret_cast<bone_list_member*>(&node->object);
-                if (entry->bone_type == 2)
-                {
-                    stack.pop_back();
-                    continue;
-                }
                 if (entry->bone_type != 1) continue;
                 auto* bone = &model->bones[entry->bone_index];
-                vector3<float> zero{};
-                auto* rotation = entry->bone_index < animation->num_bones ? &frame->data[entry->bone_index] : &zero;
-                matrix local, posed;
-                if (animation->use_matrix_array)
-                    local = animation->matrix_array[entry->bone_index + 1];
-                else
-                    frame_animation(entry->bone_index, &local, rotation, frame, animation, bone, model);
-                multiply_matrix(&local, &stack.back(), &posed);
-                stack.push_back(posed);
+                const auto& posed = pose[entry->bone_index];
                 if (!bone->rsd_array) continue;
                 for (uint32_t part = 0; part < bone->num_rsd; ++part)
                 {

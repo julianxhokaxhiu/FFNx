@@ -12,6 +12,7 @@
 - Core: World rendering now matches the PSX edition of the game when run vanilla
 - Core: Fix KAWAI TRNSP behavior when using lighting on the GPU, instead of on the CPU, preventing a double lighting bug
 - Core: Fix Universal Button Prompts rendering incorrectly in World game mode
+- Renderer: Restore PSX-style field facial lighting and texture modulation across all `game_lighting` modes, including scripted colors and fades ( https://github.com/julianxhokaxhiu/FFNx/issues/1095 )
 - Cheats: Add support to skip credits using the Skip FMV cheat shortcut
 
 ## FF8

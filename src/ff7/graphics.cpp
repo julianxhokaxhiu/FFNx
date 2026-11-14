@@ -506,6 +506,56 @@ static void apply_struc110_transforms(struct matrix *matrix, struct struc_110 *s
 	matrix->_43 += struc_110->position.z;
 }
 
+bool get_model_initial_pose(hrc_data* model, anim_header* animation, std::vector<matrix>& pose)
+{
+	if (!model || !animation || !animation->num_frames || !animation->anim_frames || !model->bone_list ||
+		(animation->use_matrix_array && !animation->matrix_array))
+	{
+		ffnx_unexpected_once("Cannot prepare model lighting: missing initial animation, matrices or skeleton\n");
+		return false;
+	}
+	auto* frame = &animation->anim_frames[0];
+	const bool alternate = model->field_A4 && *model->field_A4;
+	auto root_animation = alternate ? ff7_externals._root_animation : ff7_externals.root_animation;
+	auto frame_animation = alternate ? ff7_externals._frame_animation : ff7_externals.frame_animation;
+	std::vector<matrix> stack(1);
+	pose.resize(model->num_bones);
+	if (animation->use_matrix_array) stack.back() = animation->matrix_array[0];
+	else root_animation(&stack.back(), frame, animation, model);
+	list_node* node;
+	LIST_FOR_EACH(node, model->bone_list)
+	{
+		auto* entry = reinterpret_cast<bone_list_member*>(&node->object);
+		if (entry->bone_type == 2)
+		{
+			if (stack.size() == 1)
+			{
+				ffnx_unexpected_once("Cannot prepare model lighting: unbalanced skeleton\n");
+				return false;
+			}
+			stack.pop_back();
+			continue;
+		}
+		if (entry->bone_type != 1) continue;
+		if (entry->bone_index >= model->num_bones)
+		{
+			ffnx_unexpected_once("Cannot prepare model lighting: invalid bone index\n");
+			return false;
+		}
+		auto* bone = &model->bones[entry->bone_index];
+		vector3<float> zero{};
+		auto* rotation = entry->bone_index < animation->num_bones ? &frame->data[entry->bone_index] : &zero;
+		matrix local;
+		if (animation->use_matrix_array)
+			local = animation->matrix_array[entry->bone_index + 1];
+		else
+			frame_animation(entry->bone_index, &local, rotation, frame, animation, bone, model);
+		multiply_matrix(&local, &stack.back(), &pose[entry->bone_index]);
+		stack.push_back(pose[entry->bone_index]);
+	}
+	return true;
+}
+
 void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, struct struc_110 *struc_110, struct hrc_data *hrc_data, struct ff7_game_obj *game_object)
 {
 	struct anim_frame *anim_frame;
