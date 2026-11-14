@@ -57,7 +57,7 @@ static std::unordered_map<short, autosize_window_state> field_autosize_state;
 static std::unordered_map<short, autosize_window_state> world_autosize_state;
 
 static void autosize_text_box_window(short WINDOW_ID, byte* buffer_text,
-	std::unordered_map<short, autosize_window_state>& autosize_state)
+	std::unordered_map<short, autosize_window_state>& autosize_state, bool fit_text_width = false)
 {
 	auto& window = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID];
 	// WSPCL timer and numeric displays use fixed-size sprites, not dialog glyphs.
@@ -67,9 +67,17 @@ static void autosize_text_box_window(short WINDOW_ID, byte* buffer_text,
 	const bool firstOpeningFrame =
 		window.current_window_width == std::max<int16_t>(window.window_width / 4, 8)
 		&& window.current_window_height == std::max<int16_t>(window.window_height / 4, 8);
-	if ( !ff7_field_autosize_text_box || !buffer_text
+	if ( (!ff7_field_autosize_text_box && !fit_text_width) || !buffer_text
 		|| (!ff7_japanese_edition && !firstOpeningFrame) )
 		return;
+
+	int16_t W = 0, H = 0;
+	auto_resize_text_box(WINDOW_ID, buffer_text, &W, &H);
+	if (!ff7_field_autosize_text_box)
+	{
+		W = std::max(W, window.window_width);
+		H = window.window_height;
+	}
 
 	auto& state = autosize_state[WINDOW_ID];
 	if ( !state.initialized
@@ -80,8 +88,6 @@ static void autosize_text_box_window(short WINDOW_ID, byte* buffer_text,
 		state.initialized = true;
 	}
 
-	int16_t W = 0, H = 0;
-	auto_resize_text_box(WINDOW_ID, buffer_text, &W, &H);
 	if (ff7_field_autosize_text_box == 1)
 		H = state.authored_height;
 	window.window_width = std::clamp<int16_t>(W, 0, 320);
@@ -173,7 +179,7 @@ void field_text_box_window_opening_6317A9_autosize(short WINDOW_ID)
 void world_text_box_window_opening_autosize(short WINDOW_ID)
 {
 	autosize_text_box_window(WINDOW_ID,
-		reinterpret_cast<byte*>(ff7_externals.world_current_dialog_string_pointer[WINDOW_ID]), world_autosize_state);
+		reinterpret_cast<byte*>(ff7_externals.world_current_dialog_string_pointer[WINDOW_ID]), world_autosize_state, true);
 	reinterpret_cast<void (*)(short)>(ff7_externals.world_text_box_window_opening_769A66)(WINDOW_ID);
 }
 

@@ -809,10 +809,12 @@ bool universal_buttons_parse_field_prompt(const byte* buffer, int* button, int* 
   *byte_count = 1;
   byte extension = buffer[0] == 0xF6 ? buffer[1] : 0xFF;
   if (buffer[0] == 0xF6 && extension == 0xFF
-      && ff7_externals.text_box_window_data_array_CFF5B8
-      && ff7_externals.current_dialog_string_pointer)
+      && ff7_externals.text_box_window_data_array_CFF5B8)
   {
-    for (int window_index = 0; window_index < 4; ++window_index)
+    const uint32_t mode = getmode()->driver_mode;
+    const DWORD* dialog_pointers = mode == MODE_FIELD ? ff7_externals.current_dialog_string_pointer
+      : mode == MODE_WORLDMAP ? ff7_externals.world_current_dialog_string_pointer : nullptr;
+    for (int window_index = 0; dialog_pointers && window_index < 4; ++window_index)
     {
       const text_box_data& window = ff7_externals.text_box_window_data_array_CFF5B8[window_index];
       const uintptr_t buffer_address = reinterpret_cast<uintptr_t>(buffer);
@@ -823,7 +825,7 @@ bool universal_buttons_parse_field_prompt(const byte* buffer, int* button, int* 
         continue;
 
       const byte* source = reinterpret_cast<const byte*>(
-        ff7_externals.current_dialog_string_pointer[window_index]);
+        dialog_pointers[window_index]);
       if (source && source[-1] == 0xF6)
         extension = source[0];
       break;

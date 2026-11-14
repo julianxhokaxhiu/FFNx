@@ -7,6 +7,7 @@
 - Core: Add support for the PSX Star Field loop in post-credits, instead of closing the game. Thanks to the https://github.com/Xeeynamo/ff7-decomp project for the PSX source.
 - Core: World rendering now matches the PSX edition of the game when run vanilla
 - Core: Fix KAWAI TRNSP behavior when using lighting on the GPU, instead of on the CPU, preventing a double lighting bug
+- Core: Fix Universal Button Prompts rendering incorrectly in World game mode
 - Cheats: Add support to skip credits using the Skip FMV cheat shortcut
 
 ## FF8
