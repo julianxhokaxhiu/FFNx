@@ -166,7 +166,10 @@ static uint16_t field_fade_screen()
 {
 	const uint16_t fade_type = ff7_externals.modules_global_object->fade_type;
 	const bool subtractive = fade_type == 2 || fade_type == 12 || (fade_type == 1 && !*field_system_fade);
-	field_subtractive_fade_color = 0;
+	const uint16_t field_id = *common_externals.current_field_id;
+	const bool keep_black_overlay = fade_type == 0 && field_subtractive_fade_field_id == field_id &&
+		(field_subtractive_fade_color & 0xFFFFFF) == 0xFFFFFF;
+	if (!keep_black_overlay) field_subtractive_fade_color = 0;
 	const uint16_t result = field_fade_screen_original();
 
 	if (subtractive)
@@ -175,9 +178,9 @@ static uint16_t field_fade_screen()
 		// NFADE supplies the subtraction color directly and interpolates RGB, not opacity.
 		field_subtractive_fade_color = ff7_subtractive_fade_color(fade.fade_r, fade.fade_g, fade.fade_b,
 			fade_type == 12 ? 255 : static_cast<int16_t>(fade.fade_adjustment), fade_type != 12);
-		field_subtractive_fade_field_id = *common_externals.current_field_id;
-		// Keep native timing and state changes, but suppress both PC tinting paths.
-		*field_final_fade_color = 0xFFFFFFFF;
+		field_subtractive_fade_field_id = field_id;
+		// Preserve the native black sentinel for MAPJUMP's already-faded handoff.
+		*field_final_fade_color = (field_subtractive_fade_color & 0xFFFFFF) == 0xFFFFFF ? 0xFF000000 : 0xFFFFFFFF;
 		field_fade_draw_flags[0] = 0;
 	}
 
