@@ -269,7 +269,7 @@ void gl_calculate_normals(std::vector<vector3<float>>* pNormals, struct indexed_
 
 namespace
 {
-	FF8WorldMapStrip ff8_strip_texture()
+	FF8WorldMapStrip ff8_road_texture()
 	{
 		if (!current_state.texture_set || current_state.fb_texture) return FF8WorldMapStrip::None;
 		VOBJ(texture_set, texture_set, current_state.texture_set);
@@ -279,17 +279,16 @@ namespace
 		if (!tiled.isValid() || tiled.bpp() != Tim::Bpp4 || tiled.x() != 13 * 64 || tiled.y() != 256)
 			return FF8WorldMapStrip::None;
 		const auto palette = tiled.palette(VREF(texture_set, palette_index));
-		if (!palette.isValid() || (palette.x() != 0 && palette.x() != 16) || palette.y() != 240)
+		if (!palette.isValid() || palette.x() != 16 || palette.y() != 240)
 			return FF8WorldMapStrip::None;
-		const auto strip = palette.x() == 0 ? FF8WorldMapStrip::Rail : FF8WorldMapStrip::Road;
-		const int tile_x = tiled.x() + (strip == FF8WorldMapStrip::Road ? 8 : 0);
+		const int tile_x = tiled.x() + 8;
 		for (const auto &texture : texturePacker.matchTextures(tiled))
 		{
 			const auto &image = texture.texture();
 			if (texture.name().starts_with("world/dat/wmset/section39/") &&
 				image.x() <= tile_x && image.x() + image.w() >= tile_x + 8 &&
 				image.y() <= tiled.y() && image.y() + image.h() >= tiled.y() + 16)
-				return strip;
+				return FF8WorldMapStrip::Road;
 		}
 		return FF8WorldMapStrip::None;
 	}
@@ -470,7 +469,7 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 
 	std::vector<nvertex> strip_vertices;
 	if (ff8 && mode == MODE_WORLDMAP && vertextype == TLVERTEX && primitivetype == PT_TRIANGLES &&
-		ff8_worldmap_adjust_strip_uvs(vertices, vertexcount, indices, count, ff8_strip_texture(), strip_vertices))
+		ff8_worldmap_adjust_strip_uvs(vertices, vertexcount, indices, count, ff8_road_texture(), strip_vertices))
 		vertices = strip_vertices.data();
 
 	// handle some special cases, see special_case.c

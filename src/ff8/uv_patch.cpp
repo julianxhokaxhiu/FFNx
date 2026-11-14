@@ -28,6 +28,7 @@
 #include "../log.h"
 
 #include "uv_patch.h"
+#include "vram.h"
 
 #include <algorithm>
 #include <array>
@@ -175,25 +176,22 @@ bool ff8_worldmap_adjust_strip_uvs(const nvertex *drawn_vertices, uint32_t verte
 			{
 				const uint16_t index = indices[triangle * 3 + corner];
 				const nvertex &vertex = vertices[index];
-				if (vertex.v == 0.0f || vertex.v == 15.0f / 256.0f || vertex.color.w <= 0.0f) continue;
+				if (vertex.v == 0.0f || vertex.v == 15.0f / 256.0f) continue;
 				std::array<std::array<float, 3>, 2> points = {};
 				std::array<uint32_t, 2> matches = {};
 				for (const auto &edge : boundary->second)
 				{
 					const nvertex &a = vertices[edge[0]], &b = vertices[edge[1]];
-					if (a.u == b.u || vertex.u < std::min(a.u, b.u) || vertex.u > std::max(a.u, b.u) ||
-						a.color.w <= 0.0f || b.color.w <= 0.0f) continue;
+					if (a.u == b.u || vertex.u < std::min(a.u, b.u) || vertex.u > std::max(a.u, b.u)) continue;
 					const uint32_t side = a.v == 0.0f ? 0 : 1;
 					std::array<float, 3> point;
-					if (vertex.u == a.u) point = {a._.x, a._.y, a.color.w};
-					else if (vertex.u == b.u) point = {b._.x, b._.y, b.color.w};
+					if (vertex.u == a.u) point = {a._.x, a._.y, a._.z};
+					else if (vertex.u == b.u) point = {b._.x, b._.y, b._.z};
 					else
 					{
-						// TL vertices carry reciprocal W; interpolate in homogeneous space.
 						const float t = (vertex.u - a.u) / (b.u - a.u);
-						const float w = (1.0f - t) / a.color.w + t / b.color.w;
-						const float s = (t / b.color.w) / w;
-						point = {a._.x + s * (b._.x - a._.x), a._.y + s * (b._.y - a._.y), 1.0f / w};
+						point = {a._.x + t * (b._.x - a._.x), a._.y + t * (b._.y - a._.y),
+							a._.z + t * (b._.z - a._.z)};
 					}
 					if (matches[side] == 0)
 					{
@@ -204,12 +202,13 @@ bool ff8_worldmap_adjust_strip_uvs(const nvertex *drawn_vertices, uint32_t verte
 				}
 				// Junctions or incomplete strips do not define a unique cross section.
 				if (matches[0] != 1 || matches[1] != 1) continue;
-				const float dx = points[1][0] - points[0][0], dy = points[1][1] - points[0][1];
-				const float length2 = dx * dx + dy * dy;
+				const float dx = points[1][0] - points[0][0], dy = points[1][1] - points[0][1],
+					dz = points[1][2] - points[0][2];
+				const float length2 = dx * dx + dy * dy + dz * dz;
 				if (length2 == 0.0f) continue;
-				const float s = ((vertex._.x - points[0][0]) * dx + (vertex._.y - points[0][1]) * dy) / length2;
-				if (s <= 0.0f || s >= 1.0f) continue;
-				const float t = s * points[1][2] / ((1.0f - s) * points[0][2] + s * points[1][2]);
+				const float t = ((vertex._.x - points[0][0]) * dx + (vertex._.y - points[0][1]) * dy
+					+ (vertex._.z - points[0][2]) * dz) / length2;
+				if (t <= 0.0f || t >= 1.0f) continue;
 				adjusted[index].v = (0.5f + 15.0f * t) / 256.0f;
 			}
 		}
@@ -227,103 +226,228 @@ struct MapBlockPolygon
 };
 
 int current_polygon = -1;
-void *current_polygon_condition_old = nullptr;
-bool old_dword_2045C90_value = false;
 uint8_t *current_block_data_start = nullptr;
 float *maybe_hundred_bak = nullptr;
 float psx_floats512[512] = {};
-static std::unordered_map<const SsigpuExecutionInstructionTriangle52 *, uint8_t> worldmap_uv_bits;
 
-void worldmap_fog_filter_polygons_in_block_enter(uint8_t *block)
+struct WorldMapRailUV
 {
+	bool valid = false;
+	std::array<std::array<float, 2>, 3> corners = {};
+};
+
+struct WorldMapPacketUV
+{
+	uint8_t lost_bits = 0;
+	bool recover_precision = false;
+	WorldMapRailUV rail;
+};
+
+static std::unordered_map<const SsigpuExecutionInstructionTriangle52 *, WorldMapPacketUV> worldmap_packet_uvs;
+static std::unordered_map<const SsigpuExecutionInstructionTriangle52 *, WorldMapPacketUV> worldmap_previous_packet_uvs;
+static std::vector<WorldMapRailUV> worldmap_block_rail_uvs;
+static int *worldmap_normals;
+static const uint32_t *worldmap_colors;
+using WorldMapBlockFilter = int (*)(uint8_t *, int, void *);
+static std::array<WorldMapBlockFilter, 5> worldmap_block_filters;
+static std::array<uint32_t, 5> worldmap_block_filter_hooks;
+static bool worldmap_recover_precision = false;
+
+static std::vector<WorldMapRailUV> worldmap_source_rail_uvs(const uint8_t *block)
+{
+	const uint32_t polygon_count = block[0], vertex_count = block[1];
+	const auto *polygons = reinterpret_cast<const MapBlockPolygon *>(block + 4);
+	const auto *positions = reinterpret_cast<const int16_t *>(block + 4 + polygon_count * sizeof(MapBlockPolygon));
+	std::vector<WorldMapRailUV> result(polygon_count);
+	std::map<uint8_t, std::vector<uint32_t>> materials;
+	for (uint32_t polygon = 0; polygon < polygon_count; ++polygon)
+	{
+		const auto &source = polygons[polygon];
+		if (!(source.flags & 0x20)) continue;
+		bool selected = true;
+		for (uint32_t corner = 0; corner < 3; ++corner)
+			selected &= source.pos[corner].u <= 31 && source.pos[corner].v <= 15;
+		if (selected) materials[source.texi].push_back(polygon);
+	}
+	for (const auto &[material, selected] : materials)
+	{
+		std::vector<nvertex> vertices;
+		std::vector<uint16_t> indices;
+		for (const uint32_t polygon : selected)
+		{
+			const auto &source = polygons[polygon];
+			for (uint32_t corner = 0; corner < 3; ++corner)
+			{
+				if (source.vi[corner] >= vertex_count)
+				{
+					ffnx_unexpected_once("Invalid FF8 world-map source strip vertex index\n");
+					return result;
+				}
+				const int16_t *position = positions + 4 * source.vi[corner];
+				nvertex vertex = {};
+				vertex._ = {float(position[0]), float(position[1]), float(position[2])};
+				vertex.color.w = 1.0f;
+				vertex.u = source.pos[corner].u / 256.0f;
+				vertex.v = source.pos[corner].v / 256.0f;
+				indices.push_back(static_cast<uint16_t>(vertices.size()));
+				vertices.push_back(vertex);
+			}
+		}
+		std::vector<nvertex> adjusted;
+		if (!ff8_worldmap_adjust_strip_uvs(vertices.data(), static_cast<uint32_t>(vertices.size()),
+			indices.data(), static_cast<uint32_t>(indices.size()), FF8WorldMapStrip::Rail, adjusted)) continue;
+		for (uint32_t polygon = 0; polygon < selected.size(); ++polygon)
+		{
+			auto &uv = result[selected[polygon]];
+			uv.valid = true;
+			for (uint32_t corner = 0; corner < 3; ++corner)
+				uv.corners[corner] = {adjusted[polygon * 3 + corner].u, adjusted[polygon * 3 + corner].v};
+		}
+	}
+	return result;
+}
+
+template<size_t filter>
+static int worldmap_filter_block(uint8_t *block, int ordering_table, void *out)
+{
+	uint8_t *saved_block = current_block_data_start;
+	const int saved_polygon = current_polygon;
+	const bool saved_precision = worldmap_recover_precision;
+	auto saved_uvs = std::move(worldmap_block_rail_uvs);
 	current_block_data_start = block;
 	current_polygon = -1;
-	old_dword_2045C90_value = *(bool *)ff8_externals.worldmap_has_polygon_condition_2045C90;
-	current_polygon_condition_old = *(void **)ff8_externals.worldmap_polygon_condition_2045C8C;
+	worldmap_recover_precision = filter < 2;
+	worldmap_block_rail_uvs = worldmap_source_rail_uvs(block);
+	unreplace_function(worldmap_block_filter_hooks[filter]);
+	const int result = worldmap_block_filters[filter](block, ordering_table, out);
+	rereplace_function(worldmap_block_filter_hooks[filter]);
+	worldmap_block_rail_uvs = std::move(saved_uvs);
+	worldmap_recover_precision = saved_precision;
+	current_polygon = saved_polygon;
+	current_block_data_start = saved_block;
+	return result;
 }
 
-void worldmap_fog_filter_polygons_in_block_leave()
+static int *worldmap_set_normals(const int *a, const int *b, int *c, const MapBlockPolygon *polygon)
 {
-	*(bool *)ff8_externals.worldmap_has_polygon_condition_2045C90 = old_dword_2045C90_value;
-	*(void **)ff8_externals.worldmap_polygon_condition_2045C8C = current_polygon_condition_old;
-	current_block_data_start = nullptr;
-	current_polygon = -1;
-}
-
-void worldmap_fog_filter_polygons_in_block_1(uint8_t *block, int a2, void *out)
-{
-	worldmap_fog_filter_polygons_in_block_enter(block);
-
-	((void(*)(uint8_t*,int,void*))ff8_externals.worldmap_fog_filter_polygons_in_block_1)(block, a2, out);
-
-	worldmap_fog_filter_polygons_in_block_leave();
-}
-
-void worldmap_fog_filter_polygons_in_block_2(uint8_t *block, int a2, void *out)
-{
-	worldmap_fog_filter_polygons_in_block_enter(block);
-
-	((void(*)(uint8_t*,int,void*))ff8_externals.worldmap_fog_filter_polygons_in_block_2)(block, a2, out);
-
-	worldmap_fog_filter_polygons_in_block_leave();
-}
-
-bool current_polygon_condition(int polygon_id)
-{
-	current_polygon = polygon_id;
-
-	if (!old_dword_2045C90_value) {
-		return true;
+	if (current_block_data_start)
+	{
+		const uintptr_t begin = reinterpret_cast<uintptr_t>(current_block_data_start + 4);
+		const uintptr_t address = reinterpret_cast<uintptr_t>(polygon);
+		current_polygon = -1;
+		if (address >= begin && address < begin + current_block_data_start[0] * sizeof(MapBlockPolygon) &&
+			(address - begin) % sizeof(MapBlockPolygon) == 0)
+			current_polygon = static_cast<int>((address - begin) / sizeof(MapBlockPolygon));
+		else
+			ffnx_unexpected_once("Missing FF8 world-map source polygon at normal submission\n");
 	}
-
-	return ((bool(*)(int))current_polygon_condition_old)(polygon_id);
+	const int *sources[] = {a, b, c};
+	for (uint32_t corner = 0; corner < 3; ++corner)
+	{
+		const int x = sources[corner][0], y = sources[corner][1];
+		worldmap_normals[2 * corner] = x;
+		worldmap_normals[2 * corner + 1] = y;
+	}
+	return c;
 }
 
-void sub_45DF20(int a1, int a2, int a3)
+// All five native terrain loops keep the source polygon in EDI at sub_45DFE0.
+// The shim adds that provenance without changing the native three-argument ABI.
+static __declspec(naked) void worldmap_set_normals_hook()
 {
-	void **current_polygon_condition_dword_2045964 = (void **)ff8_externals.worldmap_polygon_condition_2045C8C;
-
-	*(bool *)ff8_externals.worldmap_has_polygon_condition_2045C90 = true;
-	*current_polygon_condition_dword_2045964 = current_polygon_condition;
-
-	((void(*)(int,int,int))ff8_externals.worldmap_sub_45DF20)(a1, a2, a3);
+	__asm
+	{
+		push edi
+		push dword ptr [esp + 16]
+		push dword ptr [esp + 16]
+		push dword ptr [esp + 16]
+		call worldmap_set_normals
+		add esp, 16
+		ret
+	}
 }
 
-SsigpuExecutionInstructionTriangle52 *enrich_tex_coords_sub_45E3A0(SsigpuExecutionInstructionTriangle52 *a1)
+static bool worldmap_rail_packet(const SsigpuExecutionInstructionTriangle52 &packet)
+{
+	if ((packet.tex_header & 0x19F) != 0x1D || (packet.tex_pos_x6_y9 & 0x7FFF) != (240 << 6)) return false;
+	const TexturePacker::TiledTex tiled(13 * 64, 256, 64, 256, Tim::Bpp4, 0, 240);
+	for (const auto &texture : texturePacker.matchTextures(tiled))
+	{
+		const auto &image = texture.texture();
+		if (texture.name().starts_with("world/dat/wmset/section39/") &&
+			image.x() <= tiled.x() && image.x() + image.w() >= tiled.x() + 8 &&
+			image.y() <= tiled.y() && image.y() + image.h() >= tiled.y() + 16)
+			return true;
+	}
+	return false;
+}
+
+static void worldmap_record_packet_uv(SsigpuExecutionInstructionTriangle52 *a1)
 {
 	if (current_block_data_start == nullptr || current_polygon < 0)
 	{
-		worldmap_uv_bits.erase(a1);
-		ffnx_warning("%s: missing world-map polygon for UV recovery.\n", __func__);
+		worldmap_packet_uvs.erase(a1);
+		worldmap_previous_packet_uvs.erase(a1);
 	}
 	else
 	{
 		MapBlockPolygon *polygon = (MapBlockPolygon *)(current_block_data_start + 4 + current_polygon * sizeof(MapBlockPolygon));
 		// Packet padding is also present in unrelated GT3 draws and may contain stale data.
-		worldmap_uv_bits[a1] = ((polygon->pos[0].u & 1) << 0) | ((polygon->pos[0].v & 1) << 1)
+		auto &uv = worldmap_packet_uvs[a1];
+		uv.lost_bits = ((polygon->pos[0].u & 1) << 0) | ((polygon->pos[0].v & 1) << 1)
 			| ((polygon->pos[1].u & 1) << 2) | ((polygon->pos[1].v & 1) << 3)
 			| ((polygon->pos[2].u & 1) << 4) | ((polygon->pos[2].v & 1) << 5);
+		uv.recover_precision = worldmap_recover_precision && (polygon->flags & 0x60) == 0;
+		uv.rail = worldmap_block_rail_uvs[current_polygon];
 	}
+}
 
-	return ((SsigpuExecutionInstructionTriangle52*(*)(SsigpuExecutionInstructionTriangle52*))ff8_externals.sub_45E3A0)(a1);
+SsigpuExecutionInstructionTriangle52 *enrich_tex_coords_sub_45E3A0(SsigpuExecutionInstructionTriangle52 *a1)
+{
+	uint32_t *packet = reinterpret_cast<uint32_t *>(a1);
+	packet[1] = worldmap_colors[0];
+	packet[4] = worldmap_colors[1];
+	packet[7] = worldmap_colors[2];
+	worldmap_record_packet_uv(a1);
+	return a1;
 }
 
 ff8_graphics_object *ssigpu_callback_sub_461E00(SsigpuExecutionInstructionTriangle52 *a1)
 {
+	// The fallback terrain loop draws through sub_45B3B0 before its color-copy call.
+	if (getmode_cached()->driver_mode == MODE_WORLDMAP && current_block_data_start && current_polygon >= 0)
+		worldmap_record_packet_uv(a1);
+
 	maybe_hundred_bak = nullptr;
 	ff8_graphics_object *ret = ((ff8_graphics_object*(*)(SsigpuExecutionInstructionTriangle52*))ff8_externals.sub_461E00)(a1);
 	float *vertices = maybe_hundred_bak;
 	maybe_hundred_bak = nullptr;
 
-	const auto uv_bits = worldmap_uv_bits.find(a1);
-	if (uv_bits != worldmap_uv_bits.end() && !(*(int *)ff8_externals.dword_1CA8848) && vertices != nullptr) {
-		const uint8_t lost_bits = uv_bits->second;
+	if (getmode_cached()->driver_mode != MODE_WORLDMAP) return ret;
+
+	const WorldMapPacketUV *uv = nullptr;
+	if (const auto current = worldmap_packet_uvs.find(a1); current != worldmap_packet_uvs.end())
+		uv = &current->second;
+	else if (const auto previous = worldmap_previous_packet_uvs.find(a1); previous != worldmap_previous_packet_uvs.end())
+		uv = &previous->second;
+	if (uv != nullptr && !(*(int *)ff8_externals.dword_1CA8848) && vertices != nullptr &&
+		uv->recover_precision) {
+		const uint8_t lost_bits = uv->lost_bits;
 		vertices[6] = psx_floats512[uint32_t(a1->tex_coord_a.u) * 2 + ((lost_bits >> 0) & 1)];
 		vertices[7] = psx_floats512[uint32_t(a1->tex_coord_a.v) * 2 + ((lost_bits >> 1) & 1)];
 		vertices[14] = psx_floats512[uint32_t(a1->tex_coord_b.u) * 2 + ((lost_bits >> 2) & 1)];
 		vertices[15] = psx_floats512[uint32_t(a1->tex_coord_b.v) * 2 + ((lost_bits >> 3) & 1)];
 		vertices[22] = psx_floats512[uint32_t(a1->tex_coord_c.u) * 2 + ((lost_bits >> 4) & 1)];
 		vertices[23] = psx_floats512[uint32_t(a1->tex_coord_c.v) * 2 + ((lost_bits >> 5) & 1)];
+	}
+	if (uv != nullptr && !(*(int *)ff8_externals.dword_1CA8848) && vertices != nullptr &&
+		uv->rail.valid && worldmap_rail_packet(*a1))
+	{
+		for (uint32_t corner = 0; corner < 3; ++corner)
+		{
+			vertices[8 * corner + 6] = uv->rail.corners[corner][0];
+			vertices[8 * corner + 7] = uv->rail.corners[corner][1];
+		}
 	}
 
 	return ret;
@@ -336,15 +460,14 @@ float *ssigpu_sub_461220(float *maybe_hundred)
 	return ((float*(*)(float*))ff8_externals.sub_461220)(maybe_hundred);
 }
 
-int ssigpu_render_packets(int ordering_table)
+static int worldmap_build_packets()
 {
-	int ret = ((int(*)(int))ff8_externals.sub_45D080)(ordering_table);
-
-	// Native sorting keeps the packet addresses until this batch has finished drawing.
-	worldmap_uv_bits.clear();
+	// Generation replays the preceding ordering table before building the next one.
+	// Paused frames instead replay the latest bank without entering this function.
+	worldmap_previous_packet_uvs.clear();
+	worldmap_packet_uvs.swap(worldmap_previous_packet_uvs);
 	maybe_hundred_bak = nullptr;
-
-	return ret;
+	return reinterpret_cast<int (*)()>(ff8_externals.worldmap_with_fog_sub_53FAC0)();
 }
 
 int pubintro_psxvram_buffer_init_sub_45B310()
@@ -372,23 +495,37 @@ void uv_patch_init()
 	 * - We need the UVs directly from the game data. To obtain this,
 	 *   we get the current block data and the current polygon from the game.
 	 * - The game stores the UVs divided by 2, so we remember the forgotten bits
-	 *   by packet address until the SSIGPU batch has finished drawing.
+	 *   by packet address for both live generations, including running and paused replays.
 	 * - And when the game uses the UVs from the SSIGPU instruction, we alter
 	 *   the computation of U and V using the forgotten bits.
 	 */
 
-	// Worldmap with Fog enabled
-	replace_call(ff8_externals.sub_53BB90 + (FF8_US_VERSION ? 0x42D : 0x43B), worldmap_fog_filter_polygons_in_block_1);
-	replace_call(ff8_externals.sub_53BB90 + (FF8_US_VERSION ? 0xADD : 0xB11), worldmap_fog_filter_polygons_in_block_1);
-	replace_call(ff8_externals.sub_53BB90 + (FF8_US_VERSION ? 0x442 : 0x450), worldmap_fog_filter_polygons_in_block_2);
-	replace_call(ff8_externals.sub_53BB90 + (FF8_US_VERSION ? 0xAF2 : 0xB26), worldmap_fog_filter_polygons_in_block_2);
-	replace_call(ff8_externals.worldmap_fog_filter_polygons_in_block_1 + (FF8_US_VERSION ? 0x1FC : 0x202), sub_45DF20);
-	replace_call(ff8_externals.worldmap_fog_filter_polygons_in_block_1 + (FF8_US_VERSION ? 0x5C8 : 0x5DC), enrich_tex_coords_sub_45E3A0);
-	replace_call(ff8_externals.worldmap_fog_filter_polygons_in_block_2 + (FF8_US_VERSION ? 0x242 : 0x241), sub_45DF20);
-	replace_call(ff8_externals.worldmap_fog_filter_polygons_in_block_2 + (FF8_US_VERSION ? 0x698 : 0x6CD), enrich_tex_coords_sub_45E3A0);
+	const uint32_t set_normals = get_relative_call(ff8_externals.worldmap_fog_filter_polygons_in_block_1,
+		FF8_US_VERSION ? 0x3FB : 0x40F);
+	worldmap_normals = reinterpret_cast<int *>(get_absolute_value(set_normals, 0xF));
+	worldmap_colors = reinterpret_cast<const uint32_t *>(get_absolute_value(ff8_externals.sub_45E3A0, 0x6));
+	worldmap_block_filters = {
+		reinterpret_cast<WorldMapBlockFilter>(ff8_externals.worldmap_fog_filter_polygons_in_block_1),
+		reinterpret_cast<WorldMapBlockFilter>(ff8_externals.worldmap_fog_filter_polygons_in_block_2),
+		reinterpret_cast<WorldMapBlockFilter>(get_relative_call(ff8_externals.sub_53C750, FF8_US_VERSION ? 0x424 : 0x432)),
+		reinterpret_cast<WorldMapBlockFilter>(ff8_externals.worldmap_no_fog_filter_polygons_in_block),
+		reinterpret_cast<WorldMapBlockFilter>(ff8_externals.worldmap_fog_filter_polygons_fallback)
+	};
+	worldmap_block_filter_hooks[0] = replace_function(reinterpret_cast<uint32_t>(worldmap_block_filters[0]), worldmap_filter_block<0>);
+	worldmap_block_filter_hooks[1] = replace_function(reinterpret_cast<uint32_t>(worldmap_block_filters[1]), worldmap_filter_block<1>);
+	worldmap_block_filter_hooks[2] = replace_function(reinterpret_cast<uint32_t>(worldmap_block_filters[2]), worldmap_filter_block<2>);
+	worldmap_block_filter_hooks[3] = replace_function(reinterpret_cast<uint32_t>(worldmap_block_filters[3]), worldmap_filter_block<3>);
+	worldmap_block_filter_hooks[4] = replace_function(reinterpret_cast<uint32_t>(worldmap_block_filters[4]), worldmap_filter_block<4>);
+	replace_function(set_normals, worldmap_set_normals_hook);
+	replace_function(ff8_externals.sub_45E3A0, enrich_tex_coords_sub_45E3A0);
 	replace_call(ff8_externals.sub_461E00 + 0x50, ssigpu_sub_461220);
-	ff8_externals.ssigpu_callbacks_1[52] = uint32_t(ssigpu_callback_sub_461E00);
+	for (uint32_t *callbacks : {ff8_externals.ssigpu_callbacks_1, ff8_externals.ssigpu_callbacks_3})
+	{
+		for (uint32_t instruction = 0x34; instruction <= 0x37; ++instruction)
+			if (callbacks[instruction] == ff8_externals.sub_461E00)
+				callbacks[instruction] = uint32_t(ssigpu_callback_sub_461E00);
+	}
 
-	replace_call(ff8_externals.sub_45D610 + 0x5, ssigpu_render_packets);
+	replace_call(ff8_externals.worldmap_main_loop + (FF8_US_VERSION ? 0x134 : 0x137), worldmap_build_packets);
 	replace_call(ff8_externals.pubintro_init + 0x91, pubintro_psxvram_buffer_init_sub_45B310);
 }
