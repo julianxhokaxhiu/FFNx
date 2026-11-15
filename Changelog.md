@@ -15,6 +15,7 @@
 - Core: Fix model flickering after ordinary KAWAI LIGHT fades finish by settling both packet buffers without delaying scripts ( https://github.com/julianxhokaxhiu/FFNx/issues/1096 )
 - Core: Restore Cloud's PSX KAWAI LIGHT strobing during the Lifestream sequence by preserving authored fade steps and intentional packet-buffer color differences ( https://github.com/julianxhokaxhiu/FFNx/issues/1097 )
 - Core: Fix Universal Button Prompts rendering incorrectly in World game mode
+- Core: Fix Safer Sephiroth missing eyes and mouth in death animation ( https://github.com/julianxhokaxhiu/FFNx/issues/1057 )
 - Renderer: Restore PSX-style field facial lighting and texture modulation across all `game_lighting` modes, including scripted colors and fades ( https://github.com/julianxhokaxhiu/FFNx/issues/1095 )
 - Cheats: Add support to skip credits using the Skip FMV cheat shortcut
 
