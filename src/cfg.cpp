@@ -317,7 +317,7 @@ void read_cfg()
 	steam_achievements_debug_mode = config["steam_achievements_debug_mode"].value_or(false);
 	hdr_max_nits = config["hdr_max_nits"].value_or(0);
 	external_audio_number_of_channels = config["external_audio_number_of_channels"].value_or(2);
-	external_audio_sample_rate = config["external_audio_sample_rate"].value_or(44100);
+	external_audio_sample_rate = config["external_audio_sample_rate"].value_or(0);
 	ff8_worldmap_internal_highres_textures = config["ff8_worldmap_internal_highres_textures"].value_or(true);
 	ff8_use_gamepad_icons = config["ff8_use_gamepad_icons"].value_or(false);
 	ff8_always_capture_input = config["ff8_always_capture_input"].value_or(false);

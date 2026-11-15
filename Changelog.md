@@ -4,6 +4,7 @@
 
 ## Common
 
+- Audio: Reduce latency issues and introduce frequency autodetection ( https://github.com/julianxhokaxhiu/FFNx/issues/1075 )
 - Rendering: Vulkan now supports HDR10 rendering
 
 ## FF7

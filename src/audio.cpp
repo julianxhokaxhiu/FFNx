@@ -40,6 +40,29 @@ extern "C" {
 
 NxAudioEngine nxAudioEngine;
 
+static void NxAudioEngineBackendLogCallback(unsigned int level, const char* message, void*)
+{
+	std::string text(message);
+	if (text.empty() || text.back() != '\n') text += '\n';
+
+	switch (level)
+	{
+	case SoLoud::Soloud::BACKEND_LOG_ERROR:
+		ffnx_error("NxAudioEngine backend: %s", text.c_str());
+		break;
+	case SoLoud::Soloud::BACKEND_LOG_WARNING:
+		ffnx_warning("NxAudioEngine backend: %s", text.c_str());
+		break;
+	case SoLoud::Soloud::BACKEND_LOG_INFO:
+		ffnx_info("NxAudioEngine backend: %s", text.c_str());
+		break;
+	default:
+		if (trace_all || trace_music || trace_sfx || trace_voice || trace_ambient)
+			ffnx_trace("NxAudioEngine backend: %s", text.c_str());
+		break;
+	}
+}
+
 // PRIVATE
 
 void NxAudioEngine::loadConfig()
@@ -156,11 +179,16 @@ bool NxAudioEngine::fileExists(const char* filename)
 
 bool NxAudioEngine::init()
 {
-	if (_engine.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, external_audio_sample_rate, SoLoud::Soloud::AUTO, external_audio_number_of_channels) == 0)
+	_engine.setBackendLogCallback(NxAudioEngineBackendLogCallback);
+	SoLoud::result result = _engine.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO,
+		external_audio_sample_rate, SoLoud::Soloud::AUTO, external_audio_number_of_channels);
+	if (result == SoLoud::SO_NO_ERROR)
 	{
 		_engineInitialized = true;
 
-		ffnx_info("NxAudioEngine initialized: channels=%u,sample_rate=%u\n", _engine.getBackendChannels(), _engine.getBackendSamplerate());
+		ffnx_info("NxAudioEngine initialized: backend=%s,channels=%u,sample_rate=%u,callback_frames=%u\n",
+			_engine.getBackendString(), _engine.getBackendChannels(), _engine.getBackendSamplerate(),
+			_engine.getBackendBufferSize());
 
 		// 100 -> LOG_LEVEL_ALL: https://github.com/vgmstream/vgmstream/blob/4cda04d02595b381dc8cf98ec39e771c80987d18/src/util/log.c#L20
 		if (trace_all || trace_ambient || trace_sfx || trace_music || trace_voice) vgm_log_set_callback(NULL, 100, 0, NxAudioEngineVgmstreamCallback);
@@ -185,6 +213,7 @@ bool NxAudioEngine::init()
 		return true;
 	}
 
+	ffnx_error("NxAudioEngine initialization failed: %s (%u)\n", _engine.getErrorString(result), result);
 	return false;
 }
 
