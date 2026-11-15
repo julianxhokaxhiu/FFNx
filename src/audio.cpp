@@ -23,6 +23,9 @@
 
 #include "audio.h"
 
+#include <cmath>
+#include <limits>
+
 #include "log.h"
 #include "gamehacks.h"
 #include "utils.h"
@@ -717,6 +720,27 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Mu
 	}
 }
 
+bool NxAudioEngine::scheduleMusicStart(SoLoud::handle handle, const MusicOptions& options)
+{
+	if (!options.getStartDelay) return true;
+
+	SoLoud::time delaySeconds = 0.0;
+	if (!options.getStartDelay(delaySeconds)) {
+		ffnx_error("NxAudioEngine::%s: cannot obtain scheduled music start time\n", __func__);
+		return false;
+	}
+
+	const double samples = delaySeconds * _engine.getBackendSamplerate();
+	if (!std::isfinite(delaySeconds) || delaySeconds < 0.0 || samples > std::numeric_limits<unsigned int>::max()) {
+		ffnx_error("NxAudioEngine::%s: invalid playback delay %fs\n", __func__, delaySeconds);
+		return false;
+	}
+
+	if (trace_all || trace_music) ffnx_info("NxAudioEngine::%s: remaining playback delay %fs\n", __func__, delaySeconds);
+	_engine.setDelaySamples(handle, static_cast<unsigned int>(samples));
+	return true;
+}
+
 bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicOptions options)
 {
 	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %s (%d) on channel #%d\n", __func__, name, id, channel);
@@ -759,7 +783,7 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 			music.wantedMusicVolume = options.targetVolume;
 		}
 		const float initialVolume = options.fadetime > 0.0 || offsetSeconds > 0.0 ? 0.0f : music.wantedMusicVolume * _musicMasterVolume;
-		music.handle = _engine.playBackground(*audioSource, initialVolume, offsetSeconds > 0.0);
+		music.handle = _engine.playBackground(*audioSource, initialVolume, offsetSeconds > 0.0 || bool(options.getStartDelay));
 		music.id = id;
 		music.sourceName = name;
 		music.sync = options.sync;
@@ -769,11 +793,29 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 
 		if (offsetSeconds > 0.0) {
 			if (trace_all || trace_music) ffnx_info("NxAudioEngine::%s: seek to time %fs\n", __func__, offsetSeconds);
-			_engine.seek(music.handle, offsetSeconds);
+			const SoLoud::result result = _engine.seek(music.handle, offsetSeconds);
+			if (result != SoLoud::SO_NO_ERROR) {
+				ffnx_error("NxAudioEngine::%s: cannot seek %s to %fs ( SoLoud error: %u )\n", __func__, overloadedName, offsetSeconds, result);
+				stopMusic(channel);
+				return false;
+			}
+		}
+
+		// Loading and seeking consume time from the game's playback deadline.
+		if (!scheduleMusicStart(music.handle, options)) {
+			stopMusic(channel);
+			return false;
+		}
+
+		if (offsetSeconds > 0.0) {
 			resumeMusic(channel, options.fadetime == 0.0 ? 1.0 : options.fadetime); // Slight fade
 		}
 		else if (options.fadetime > 0.0) {
 			setMusicVolume(music.wantedMusicVolume, channel, options.fadetime);
+		}
+
+		if (options.getStartDelay && offsetSeconds <= 0.0) {
+			_engine.setPause(music.handle, false);
 		}
 
 		if (options.relativeSpeed > 0.0f && options.relativeSpeed != 1.0f) {
@@ -826,6 +868,10 @@ void NxAudioEngine::playSynchronizedMusics(const std::vector<SynchronizedMusic>&
 	if (!_engine.isVoiceGroupEmpty(groupHandle)) {
 		_musics[channel].handle = groupHandle;
 		_musics[channel].id = id;
+		if (!scheduleMusicStart(groupHandle, options)) {
+			stopMusic(channel);
+			return;
+		}
 		// Play synchronously
 		_engine.setPause(groupHandle, false);
 	}

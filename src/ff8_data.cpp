@@ -761,6 +761,8 @@ void ff8_find_externals()
 	ff8_externals.choice_music = get_relative_call(ff8_externals.opcode_choicemusic, 0x5D);
 	ff8_externals.sd_music_play_at = get_relative_call(ff8_externals.opcode_musicskip, 0x46);
 	ff8_externals.load_and_play_midi_segment = get_relative_call(ff8_externals.choice_music, 0x99);
+	const uint32_t native_get_music_time = get_relative_call(ff8_externals.load_and_play_midi_segment, 0x52);
+	ff8_externals.dmusic_performance = reinterpret_cast<DMusic**>(get_absolute_value(native_get_music_time, 0x1));
 	ff8_externals.load_midi_segment_from_id = get_relative_call(ff8_externals.choice_music, 0xD0);
 	ff8_externals.stop_midi_segments = get_relative_call(ff8_externals.load_and_play_midi_segment, 0xB);
 	ff8_externals.play_midi_segments = get_relative_call(ff8_externals.choice_music, 0x172);

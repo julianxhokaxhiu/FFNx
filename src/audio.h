@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <functional>
 #include <stack>
 #include <string>
 #include <vector>
@@ -56,6 +57,7 @@ public:
 			matchName(false)
 		{}
 		SoLoud::time offsetSeconds;
+		std::function<bool(SoLoud::time&)> getStartDelay;
 		SoLoud::time fadetime;
 		float targetVolume;
 		float relativeSpeed;
@@ -202,6 +204,7 @@ private:
 	void cleanOldAudioSources();
 	SoLoud::AudioSource* loadMusic(const char* name, bool useNameAsFullPath = false, const char* format = nullptr, bool suppressOpeningSilence = false);
 	void overloadPlayArgumentsFromConfig(char* name, uint32_t *id, MusicOptions *MusicOptions);
+	bool scheduleMusicStart(SoLoud::handle handle, const MusicOptions& options);
 	void backupMusic(int channelSource);
 	void restoreMusic(int channelDest, double stopTime = 0);
 	void resetMusicVolume(double time = 0);

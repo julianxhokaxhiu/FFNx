@@ -29,6 +29,7 @@
 #include <windows.h>
 #include <ddraw.h>
 #include <dinput.h>
+#include <dmusicc.h>
 
 #include "common_imports.h"
 #include "ff8/save_data.h"
@@ -1377,6 +1378,28 @@ struct SsigpuExecutionInstructionRect44 {
 
 // --------------- end of FF8 imports ---------------
 
+struct IDirectMusicSegment;
+struct IDirectMusicSegmentState;
+struct _DMUS_PMSG;
+
+// Native IDirectMusicPerformance COM prefix; method order must match the SDK.
+struct DMusic : IUnknown
+{
+	virtual HRESULT WINAPI Init(IDirectMusic**, IDirectSound*, HWND) = 0;
+	virtual HRESULT WINAPI PlaySegment(IDirectMusicSegment*, DWORD, int64_t, IDirectMusicSegmentState**) = 0;
+	virtual HRESULT WINAPI Stop(IDirectMusicSegment*, IDirectMusicSegmentState*, int32_t, DWORD) = 0;
+	virtual HRESULT WINAPI GetSegmentState(IDirectMusicSegmentState**, int32_t) = 0;
+	virtual HRESULT WINAPI SetPrepareTime(DWORD) = 0;
+	virtual HRESULT WINAPI GetPrepareTime(DWORD*) = 0;
+	virtual HRESULT WINAPI SetBumperLength(DWORD) = 0;
+	virtual HRESULT WINAPI GetBumperLength(DWORD*) = 0;
+	virtual HRESULT WINAPI SendPMsg(_DMUS_PMSG*) = 0;
+	virtual HRESULT WINAPI MusicToReferenceTime(int32_t, int64_t*) = 0;
+	virtual HRESULT WINAPI ReferenceToMusicTime(int64_t, int32_t*) = 0;
+	virtual HRESULT WINAPI IsPlaying(IDirectMusicSegment*, IDirectMusicSegmentState*) = 0;
+	virtual HRESULT WINAPI GetTime(int64_t*, int32_t*) = 0;
+};
+
 // memory addresses and function pointers from FF8.exe
 struct ff8_externals
 {
@@ -1754,6 +1777,7 @@ struct ff8_externals
 	uint32_t load_midi_segment_from_id;
 	uint32_t play_midi_segments;
 	uint32_t load_and_play_midi_segment;
+	DMusic** dmusic_performance;
 	uint32_t stop_midi_segments;
 	uint32_t volume_update;
 	uint32_t volume_music_update;

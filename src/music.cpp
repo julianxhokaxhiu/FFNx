@@ -37,7 +37,6 @@ bool next_music_is_skipped = false;
 bool next_music_is_skipped_with_saved_offset = false;
 std::unordered_map<uint32_t, bool> remember_musics;
 bool hold_volume_for_channel[2] = { false, false };
-bool next_music_is_not_multi = false;
 double next_music_fade_time = 0.0;
 bool next_music_is_battle = false;
 bool next_music_is_world = false;
@@ -1146,6 +1145,28 @@ uint32_t ff8_stop_cdrom()
 
 std::vector<NxAudioEngine::SynchronizedMusic> musics;
 
+static bool ff8_get_music_start_delay(int32_t start_time, SoLoud::time& delay)
+{
+	DMusic* performance = *ff8_externals.dmusic_performance;
+	if (performance == nullptr) {
+		ffnx_error("%s: native DirectMusic performance is not initialized\n", __func__);
+		return false;
+	}
+
+	// FFNx uses the classic engine's DirectMusic clock even with Remastered data.
+	int64_t deadline = 0, now = 0;
+	HRESULT result = performance->MusicToReferenceTime(start_time, &deadline);
+	if (SUCCEEDED(result)) result = performance->GetTime(&now, nullptr);
+	if (FAILED(result)) {
+		ffnx_error("%s: cannot resolve native DirectMusic start time (HRESULT: %08X)\n", __func__, result);
+		return false;
+	}
+
+	const int64_t remaining = deadline - now;
+	delay = remaining > 0 ? remaining / 10000000.0 : 0.0;
+	return true;
+}
+
 uint32_t ff8_opcode_choicemusic(uint32_t unused, uint32_t instruments)
 {
 	if (trace_all || trace_music) ffnx_trace("%s: Clear musics\n", __func__);
@@ -1160,15 +1181,6 @@ uint32_t ff8_load_midi_segment(void* directsound, const char* filename)
 	const char* midi_name = ff8_format_midi_name(filename, false);
 
 	hold_volume_for_channel[0] = false;
-
-	if (next_music_is_not_multi) {
-		next_music_is_not_multi = false;
-		NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions();
-		options.suppressOpeningSilence = true;
-		const std::string archive_path = ff8_remastered_midi_segment_archive_path(filename);
-		play_music(midi_name, 43, 0, options, nullptr, archive_path.empty() ? nullptr : archive_path.c_str());
-		return 1; // Success
-	}
 
 	if (trace_all || trace_music) ffnx_trace("%s: load music %s (%s)\n", __func__, midi_name, filename);
 
@@ -1189,14 +1201,28 @@ uint32_t ff8_play_midi_segments()
 	return 0;
 }
 
-uint32_t ff8_load_and_play_one_midi_segment(uint32_t segment_id)
+uint32_t ff8_play_one_midi_segment(void*, uint32_t measure, int32_t start_time)
 {
-	// In this call we know that we play only one segment
-	next_music_is_not_multi = true;
-	((uint32_t(*)(uint32_t))ff8_externals.load_midi_segment_from_id)(segment_id);
-	next_music_is_not_multi = false;
+	if (musics.size() != 1 || measure == 0) {
+		ffnx_error("%s: invalid solo cue (segments: %u, measure: %u)\n", __func__, unsigned(musics.size()), measure);
+		return 0;
+	}
 
-	return 0; // Fail (to prevent execution of the game's code)
+	if (trace_all || trace_music) ffnx_trace("%s: native measure=%u, start time=%d\n", __func__, measure, start_time);
+
+	const NxAudioEngine::SynchronizedMusic& music = musics.front();
+	NxAudioEngine::MusicOptions options;
+	// The authored concert segments use two-second measures (4/4, 120 BPM).
+	options.offsetSeconds = (measure - 1) * 2.0;
+	options.getStartDelay = [start_time](SoLoud::time& delay) {
+		return ff8_get_music_start_delay(start_time, delay);
+	};
+	if (!play_music(music.name.c_str(), 43, 0, options, nullptr,
+		music.remasteredArchivePath.empty() ? nullptr : music.remasteredArchivePath.c_str())) {
+		ffnx_error("%s: cannot play solo segment %s\n", __func__, music.name.c_str());
+		return 0;
+	}
+	return 1;
 }
 
 uint32_t ff8_set_music_volume_intro_credits(uint32_t channel, uint32_t volume)
@@ -1297,8 +1323,8 @@ void music_init()
 			replace_function(ff8_externals.play_midi_segments, ff8_play_midi_segments);
 			// The next played song will stop the previous one
 			replace_function(ff8_externals.stop_midi_segments, noop);
-			// Detect solo play_midi
-			replace_call(ff8_externals.load_and_play_midi_segment + 0x41, ff8_load_and_play_one_midi_segment);
+			// Retain native solo measure selection and scheduling; replace only playback.
+			replace_call(ff8_externals.load_and_play_midi_segment + 0x6E, ff8_play_one_midi_segment);
 			/* Nullify MIDI subs */
 			replace_function(ff8_externals.volume_music_update, noop_a1);
 			replace_function(ff8_externals.dmusic_segment_connect_to_dls, noop_a2);
