@@ -786,7 +786,7 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 	return false;
 }
 
-void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names, uint32_t id, MusicOptions options)
+void NxAudioEngine::playSynchronizedMusics(const std::vector<SynchronizedMusic>& musics, uint32_t id, MusicOptions options)
 {
 	const int channel = 0;
 
@@ -806,8 +806,12 @@ void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names
 		return;
 	}
 
-	for (const std::string &name: names) {
-		SoLoud::AudioSource* audioSource = loadMusic(name.c_str());
+	for (const SynchronizedMusic& music : musics) {
+		SoLoud::AudioSource* audioSource = loadMusic(music.name.c_str());
+
+		if (audioSource == nullptr && !music.remasteredArchivePath.empty()) {
+			audioSource = loadMusic(music.remasteredArchivePath.c_str(), true, "ogg");
+		}
 
 		if (audioSource != nullptr) {
 			SoLoud::handle musicHandle = _engine.playBackground(*audioSource, _musicMasterVolume, true);

@@ -20,6 +20,7 @@
 /****************************************************************************/
 
 #include <windows.h>
+#include <string>
 #include <unordered_map>
 
 #include "audio.h"
@@ -178,6 +179,33 @@ char* ff8_format_midi_name(const char* midi_name, bool force_original_filenames)
 	return nullptr;
 }
 
+std::string ff8_remastered_midi_segment_archive_path(const char* filename)
+{
+	if (!ff8_remastered_edition || filename == nullptr) {
+		return {};
+	}
+
+	const char* basename = filename;
+	const char* backslash = strrchr(filename, '\\');
+	const char* slash = strrchr(filename, '/');
+	if (backslash != nullptr && backslash + 1 > basename) {
+		basename = backslash + 1;
+	}
+	if (slash != nullptr && slash + 1 > basename) {
+		basename = slash + 1;
+	}
+
+	const char* extension = strrchr(basename, '.');
+	if (extension == nullptr || _stricmp(extension, ".sgt") != 0) {
+		return {};
+	}
+
+	std::string path = "zzz://data\\music\\dmusic\\ogg\\";
+	path.append(basename, size_t(extension - basename));
+	path += ".ogg";
+	return path;
+}
+
 char* ff8_midi_name(uint32_t musicId, bool force_original_filenames)
 {
 	if (musicId != UINT_MAX)
@@ -220,7 +248,7 @@ uint32_t ff7_use_midi(uint32_t midi)
 	return strcmp(name, "HEART") != 0 && strcmp(name, "SATO") != 0 && strcmp(name, "SENSUI") != 0 && strcmp(name, "WIND") != 0;
 }
 
-bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions(), char* wav_fullpath = nullptr)
+bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions(), char* wav_fullpath = nullptr, const char* remastered_archive_path = nullptr)
 {
 	const struct game_mode* mode;
 	bool playing = false;
@@ -296,6 +324,14 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 			options.useNameAsFullPath = true;
 			strcpy(options.format, "wav");
 			playing = nxAudioEngine.playMusic(wav_fullpath, music_id, channel, options);
+		}
+
+		if (!playing && remastered_archive_path != nullptr && ff8_remastered_edition)
+		{
+			NxAudioEngine::MusicOptions archive_options = options;
+			archive_options.useNameAsFullPath = true;
+			strcpy(archive_options.format, "ogg");
+			playing = nxAudioEngine.playMusic(remastered_archive_path, music_id, channel, archive_options);
 		}
 
 		if (!playing && ff8_remastered_edition)
@@ -1108,7 +1144,7 @@ uint32_t ff8_stop_cdrom()
 	return ff8_externals.stop_cdrom();
 }
 
-std::vector<std::string> musics;
+std::vector<NxAudioEngine::SynchronizedMusic> musics;
 
 uint32_t ff8_opcode_choicemusic(uint32_t unused, uint32_t instruments)
 {
@@ -1129,13 +1165,14 @@ uint32_t ff8_load_midi_segment(void* directsound, const char* filename)
 		next_music_is_not_multi = false;
 		NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions();
 		options.suppressOpeningSilence = true;
-		play_music(midi_name, 43, 0, options);
+		const std::string archive_path = ff8_remastered_midi_segment_archive_path(filename);
+		play_music(midi_name, 43, 0, options, nullptr, archive_path.empty() ? nullptr : archive_path.c_str());
 		return 1; // Success
 	}
 
 	if (trace_all || trace_music) ffnx_trace("%s: load music %s (%s)\n", __func__, midi_name, filename);
 
-	musics.push_back(midi_name);
+	musics.push_back({ midi_name, ff8_remastered_midi_segment_archive_path(filename) });
 
 	return 1; // Success
 }

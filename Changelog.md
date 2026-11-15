@@ -36,6 +36,10 @@
 - Renderer: Fix UV gemotry for Roads and Rail tracks in World
 - Renderer: Keep world-map rail textures aligned when rotating the camera or pausing, with or without texture mods ( https://github.com/julianxhokaxhiu/FFNx/issues/1100 )
 
+## FF8 Remastered
+
+- Core: Fix Garden Festival background music not playing ( https://github.com/julianxhokaxhiu/FFNx/issues/1094 )
+
 # 1.25.2
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.25.1...1.25.2
