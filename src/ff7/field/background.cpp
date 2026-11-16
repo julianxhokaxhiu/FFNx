@@ -26,6 +26,8 @@
 #include "../widescreen.h"
 
 #include "../../renderer.h"
+#include "../../gl.h"
+#include "../../log.h"
 
 #include "background.h"
 #include "defs.h"
@@ -33,10 +35,161 @@
 #include "camera.h"
 
 #include <functional>
+#include <algorithm>
+#include <array>
+#include <limits>
+#include <tuple>
 
 namespace ff7::field
 {
     constexpr float MIN_STEP_INVERSE = 10.f;
+
+    struct BackgroundTileOrder
+    {
+        uint16_t depth;
+        uint8_t layer;
+        uint32_t tile_index;
+    };
+
+    static std::array<std::vector<BackgroundTileOrder>, 42> background_tile_order;
+
+    void reset_background_tile_order()
+    {
+        for (auto& page : background_tile_order) page.clear();
+    }
+
+    static void add_background_tile(float x, float y, float z, const field_tile& tile, uint32_t page,
+        uint16_t depth, uint8_t layer, uint32_t tile_index)
+    {
+        if (page >= background_tile_order.size())
+        {
+            ffnx_error("Field background tile has invalid texture page %u\n", page);
+            return;
+        }
+        background_tile_order[page].push_back({depth, layer, tile_index});
+        ff7_externals.add_page_tile(x, y, z, tile.u, tile.v, tile.palette_index, page);
+    }
+
+    bool draw_background_effects(ff7_game_obj* game_object, uint16_t first_page, uint16_t end_page,
+        uint16_t extra_first_page, uint16_t extra_end_page)
+    {
+        struct Tile
+        {
+            BackgroundTileOrder order;
+            ff7_graphics_object* graphics;
+            const ff7_indexed_vertices* source;
+            const nvertex* vertices;
+            unsigned char palette;
+        };
+        static std::vector<Tile> tiles;
+        static std::vector<nvertex> vertices;
+        static std::vector<WORD> indices;
+        static std::vector<unsigned char> palettes;
+        tiles.clear();
+
+        const auto collect_pages = [](uint16_t first, uint16_t end) {
+            if (first > end || end > background_tile_order.size())
+            {
+                ffnx_error("Field background effect page range is invalid: %u-%u\n", first, end);
+                return false;
+            }
+            for (uint16_t page = first; page < end; ++page)
+            {
+                const auto& order = background_tile_order[page];
+                if (order.empty()) continue;
+                const field_layer* layer = ff7_externals.field_layers[page];
+                const auto graphics = layer ? layer->graphics_object : nullptr;
+                if (!layer || !layer->present || !layer->field_14 || !graphics || !graphics->graphics_instance ||
+                    graphics->field_54 != static_cast<graphics_instance*>(graphics->graphics_instance)->frame_counter)
+                {
+                    ffnx_error("Field background page %u has no current geometry\n", page);
+                    return false;
+                }
+                if (graphics->vertices_per_shape != 4 || graphics->indices_per_shape != 6 ||
+                    !graphics->func_90 || !graphics->func_94)
+                {
+                    ffnx_error("Field background page %u has unsupported geometry\n", page);
+                    return false;
+                }
+                size_t tile_index = 0;
+                for (auto source = graphics->indexed_vertices; source;
+                    source = reinterpret_cast<ff7_indexed_vertices*>(source->field_0))
+                {
+                    if (!source->count) continue;
+                    if (!source->vertices || !source->indices || (layer->type != 2 && !source->palettes) ||
+                        source->count > order.size() - tile_index)
+                    {
+                        ffnx_error("Field background page %u does not match submitted tiles\n", page);
+                        return false;
+                    }
+                    for (size_t i = 0; i < 6; ++i)
+                    {
+                        if (source->indices[i] >= 4)
+                        {
+                            ffnx_error("Field background page %u has invalid quad indices\n", page);
+                            return false;
+                        }
+                    }
+                    for (uint32_t i = 0; i < source->count; ++i, ++tile_index)
+                        tiles.push_back({order[tile_index], graphics, source, source->vertices + 4 * i,
+                            layer->type != 2 ? source->palettes[i] : static_cast<unsigned char>(0)});
+                }
+                if (tile_index != order.size())
+                {
+                    ffnx_error("Field background page %u is missing submitted tiles\n", page);
+                    return false;
+                }
+            }
+            return true;
+        };
+        if (!collect_pages(first_page, end_page) || !collect_pages(extra_first_page, extra_end_page))
+            return false;
+
+        // PSX traverses depth buckets back-to-front and prepends each layer's tiles to the bucket.
+        std::stable_sort(tiles.begin(), tiles.end(), [](const Tile& left, const Tile& right) {
+            return std::tie(left.order.depth, left.order.layer, left.order.tile_index) >
+                std::tie(right.order.depth, right.order.layer, right.order.tile_index);
+        });
+
+        driver_state saved_state;
+        gl_save_state(&saved_state);
+        for (size_t first = 0; first < tiles.size();)
+        {
+            const auto graphics = tiles[first].graphics;
+            size_t end = first + 1;
+            while (end < tiles.size() && tiles[end].graphics == graphics &&
+                end - first < std::numeric_limits<WORD>::max() / 4)
+                ++end;
+            vertices.clear();
+            indices.clear();
+            palettes.clear();
+            for (size_t i = first; i < end; ++i)
+            {
+                const WORD base = static_cast<WORD>(vertices.size());
+                vertices.insert(vertices.end(), tiles[i].vertices, tiles[i].vertices + 4);
+                for (size_t j = 0; j < 6; ++j)
+                    indices.push_back(base + tiles[i].source->indices[j]);
+                palettes.push_back(tiles[i].palette);
+            }
+            ff7_indexed_vertices batch = *tiles[first].source;
+            batch.field_0 = 0;
+            batch.count = static_cast<uint32_t>(end - first);
+            batch.vertexcount = static_cast<uint32_t>(vertices.size());
+            batch.indexcount = static_cast<uint32_t>(indices.size());
+            batch.vertices = vertices.data();
+            batch.indices = indices.data();
+            batch.palettes = palettes.data();
+            auto indexed = reinterpret_cast<indexed_vertices*>(&batch);
+            graphics->func_90(graphics->polygon_set, indexed, reinterpret_cast<game_obj*>(game_object));
+            // Effects obey the model depth buffer, but must not occlude later ordering-table buckets.
+            internal_set_renderstate(V_DEPTHTEST, true, reinterpret_cast<game_obj*>(game_object));
+            internal_set_renderstate(V_DEPTHMASK, false, reinterpret_cast<game_obj*>(game_object));
+            graphics->func_94(graphics->polygon_set, indexed, reinterpret_cast<game_obj*>(game_object));
+            first = end;
+        }
+        gl_load_state(&saved_state);
+        return true;
+    }
 
     // ##################################################################
     // ----------------- DRAW GRAPHICS RELATED --------------------------
@@ -72,8 +225,8 @@ namespace ff7::field
 
             tile_position.x = initial_pos.x + field_bg_multiplier * layer1_tiles[tile_index].x;
             tile_position.y = initial_pos.y + field_bg_multiplier * layer1_tiles[tile_index].y;
-            ff7_externals.add_page_tile(tile_position.x, tile_position.y, 0.9997, layer1_tiles[tile_index].u,
-                                        layer1_tiles[tile_index].v, layer1_tiles[tile_index].palette_index, layer1_tiles[tile_index].page);
+            add_background_tile(tile_position.x, tile_position.y, 0.9997f, layer1_tiles[tile_index],
+                layer1_tiles[tile_index].page, 4095, 0, tile_index);
         }
     }
 
@@ -118,8 +271,8 @@ namespace ff7::field
             if(layer2_tiles[tile_index].use_fx_page && layer2_tiles[tile_index].blend_mode == 2) page += 14;
             if(layer2_tiles[tile_index].use_fx_page && layer2_tiles[tile_index].blend_mode == 3) page += 18;
 
-            ff7_externals.add_page_tile(tile_position.x, tile_position.y, layer2_tiles[tile_index].z, layer2_tiles[tile_index].u,
-                                        layer2_tiles[tile_index].v, layer2_tiles[tile_index].palette_index, page);
+            add_background_tile(tile_position.x, tile_position.y, layer2_tiles[tile_index].z, layer2_tiles[tile_index],
+                page, layer2_tiles[tile_index].flags, 1, tile_index);
         }
     }
 
@@ -198,8 +351,8 @@ namespace ff7::field
 
             uint32_t page = (layer3_tiles[tile_index].use_fx_page) ? layer3_tiles[tile_index].fx_page : layer3_tiles[tile_index].page;
 
-            ff7_externals.add_page_tile(tile_position.x, tile_position.y, z_value, layer3_tiles[tile_index].u,
-                                        layer3_tiles[tile_index].v, layer3_tiles[tile_index].palette_index, page);
+            add_background_tile(tile_position.x, tile_position.y, z_value, layer3_tiles[tile_index],
+                page, ff7_externals.modules_global_object->field_B0, 2, tile_index);
         }
 
         if(widescreen_enabled || enable_uncrop)
@@ -238,8 +391,8 @@ namespace ff7::field
 
                     uint32_t page = (layer3_tiles[tile_index].use_fx_page) ? layer3_tiles[tile_index].fx_page : layer3_tiles[tile_index].page;
 
-                    ff7_externals.add_page_tile(tile_position.x, tile_position.y, z_value, layer3_tiles[tile_index].u,
-                                                layer3_tiles[tile_index].v, layer3_tiles[tile_index].palette_index, page);
+                    add_background_tile(tile_position.x, tile_position.y, z_value, layer3_tiles[tile_index],
+                        page, ff7_externals.modules_global_object->field_B0, 2, tile_index);
                 }
             }
         }
@@ -321,8 +474,8 @@ namespace ff7::field
                 if(!*ff7_externals.field_layer_CFF1D8 || layer4_tiles[tile_index].palette_index != (*ff7_externals.field_palette_D00088) + 1)
                 {
                     uint32_t page = (layer4_tiles[tile_index].use_fx_page) ? layer4_tiles[tile_index].fx_page : layer4_tiles[tile_index].page;
-                    ff7_externals.add_page_tile(tile_position.x, tile_position.y, z_value, layer4_tiles[tile_index].u,
-                                                layer4_tiles[tile_index].v, layer4_tiles[tile_index].palette_index, page);
+                    add_background_tile(tile_position.x, tile_position.y, z_value, layer4_tiles[tile_index],
+                        page, ff7_externals.modules_global_object->field_AE, 3, tile_index);
                 }
             }
 
@@ -361,8 +514,8 @@ namespace ff7::field
                         if(!*ff7_externals.field_layer_CFF1D8 || layer4_tiles[tile_index].palette_index != (*ff7_externals.field_palette_D00088) + 1)
                         {
                             uint32_t page = (layer4_tiles[tile_index].use_fx_page) ? layer4_tiles[tile_index].fx_page : layer4_tiles[tile_index].page;
-                            ff7_externals.add_page_tile(tile_position.x, tile_position.y, z_value, layer4_tiles[tile_index].u,
-                                                        layer4_tiles[tile_index].v, layer4_tiles[tile_index].palette_index, page);
+                            add_background_tile(tile_position.x, tile_position.y, z_value, layer4_tiles[tile_index],
+                                page, ff7_externals.modules_global_object->field_AE, 3, tile_index);
                         }
                     }
                 }
