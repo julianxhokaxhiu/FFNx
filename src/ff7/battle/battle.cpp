@@ -19,10 +19,17 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <array>
+#include <cmath>
+
 #include "../../globals.h"
+#include "../../cfg.h"
+#include "../../common.h"
+#include "../../gl.h"
 #include "../../log.h"
 #include "../../achievement.h"
 #include "../../patch.h"
+#include "../../renderer.h"
 
 #include "defs.h"
 
@@ -30,6 +37,73 @@ namespace ff7::battle
 {
 	namespace
 	{
+		struct BattleShadowResource
+		{
+			matrix_set *matrices;
+			ff7_polygon_set *polygons;
+		};
+
+		void draw_battle_shadow(const BattleShadowResource *shadow, ff7_game_obj *game_object)
+		{
+			if (enable_lighting || !game_object->in_scene) return;
+
+			if (!shadow || !shadow->matrices || !shadow->matrices->matrix_world ||
+				!shadow->polygons || !shadow->polygons->struc_173)
+			{
+				ffnx_unexpected_once("Missing FF7 battle shadow draw data\n");
+				return;
+			}
+
+			const auto strength = shadow->polygons->struc_173->color.a;
+			if (!strength) return;
+
+			constexpr size_t sides = 16;
+			static const auto rim = [] {
+				std::array<vector3<float>, sides> points{};
+				for (size_t i = 0; i < sides; ++i)
+				{
+					const float angle = 6.283185307f * i / sides;
+					points[i] = {900.0f * std::cos(angle), 0.0f, 900.0f * std::sin(angle)};
+				}
+				return points;
+			}();
+
+			std::array<nvertex, sides + 1> vertices{};
+			std::array<WORD, sides * 3> indices{};
+			const auto shade = [strength](uint32_t intensity) {
+				return 0xFF000000u | ((intensity * strength / 255u) * 0x010101u);
+			};
+			vertices[0].color.color = shade(200);
+			for (size_t i = 0; i < sides; ++i)
+			{
+				vertices[i + 1]._ = rim[i];
+				vertices[i + 1].color.color = shade(6);
+				indices[i * 3 + 1] = static_cast<WORD>(i + 1);
+				indices[i * 3 + 2] = static_cast<WORD>((i + 1) % sides + 1);
+			}
+
+			// The PSX shadow ordering table sets semi-transparency mode 2 (subtract).
+			// Keep the native ground transform and fade, but don't submit the PC mesh.
+			driver_state saved;
+			gl_save_state(&saved);
+			gl_bind_texture_set(nullptr);
+			current_state.fb_texture = false;
+			gl_set_blend_func(RendererBlendMode::BLEND_SUB);
+			internal_set_renderstate(V_DEPTHTEST, true, nullptr);
+			internal_set_renderstate(V_DEPTHMASK, false, nullptr);
+			internal_set_renderstate(V_NOCULL, true, nullptr);
+			internal_set_renderstate(V_ALPHATEST, false, nullptr);
+			internal_set_renderstate(V_SHADEMODE, true, nullptr);
+			gl_set_worldview_matrix(shadow->matrices->matrix_world);
+			if (auto *projection = shadow->polygons->matrix_set ?
+				shadow->polygons->matrix_set->matrix_projection : nullptr)
+				gl_set_d3dprojection_matrix(projection);
+			gl_draw_indexed_primitive(RendererPrimitiveType::PT_TRIANGLES, LVERTEX,
+				vertices.data(), nullptr, static_cast<uint32_t>(vertices.size()), indices.data(),
+				static_cast<uint32_t>(indices.size()), nullptr, nullptr, nullptr, shadow->polygons->field_4, false);
+			gl_load_state(&saved);
+		}
+
 		ff7_graphics_object *(*get_effect_graphics)(int, void *);
 		void (*set_primitive_graphics)(int, int, ff7_graphics_object *);
 		void (*set_primitive_blend_mode)(int);
@@ -86,6 +160,9 @@ namespace ff7::battle
 
 	void battle_hook_init()
 	{
+		// The final call in the actor's shadow block submits only the KAGE resource.
+		replace_call_function(ff7_externals.battle_sub_42F3E8 + 0xDC3, draw_battle_shadow);
+
 		const auto draw_effects = reinterpret_cast<uint32_t>(ff7_externals.battle_draw_call_42908C);
 		draw_effect_resources = reinterpret_cast<decltype(draw_effect_resources)>(get_relative_call(draw_effects, 0x4F));
 		draw_effect_primitives = reinterpret_cast<decltype(draw_effect_primitives)>(get_relative_call(draw_effects, 0x5B));
