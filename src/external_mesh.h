@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <vector>
 #include <map>
 #include <set>
@@ -67,6 +68,8 @@ struct Skin
     std::vector<Joint> joints;
     std::string current_anim;
     int current_frame = 0;
+    int current_frame_count = 0; // Frame count of the game's current animation (.a)
+    float current_clock = 0.0f; // Seconds since the game switched to the current animation
 };
 
 struct KeyFrame
@@ -74,6 +77,8 @@ struct KeyFrame
     int targetJointIndex = 0;
     std::vector<vector4<float>> rotation;
     std::vector<vector3<float>> translation;
+    std::vector<float> rotationTimes;
+    std::vector<float> translationTimes;
 };
 
 struct Animation
@@ -83,7 +88,33 @@ struct Animation
     // Keys of the skeleton's root node (the non-joint parent of the top joint), if the file animates it
     std::vector<vector3<float>> rootTranslation;
     std::vector<vector4<float>> rootRotation;
+    std::vector<float> rootTranslationTimes;
+    std::vector<float> rootRotationTimes;
+
+    size_t keyCount = 0; // Most keys of any channel
+    float startTime = 0.0f;
+    float endTime = 0.0f;
 };
+
+// Where to sample an animation for one of the game's frames: a key index when the gltf has one key per game
+// frame, otherwise a time on the gltf's own timeline (stretched over the game animation's length, or looping on
+// its own clock when the game holds a single frame)
+struct AnimationPosition
+{
+    bool useKeyIndex = true;
+    int keyIndex = 0;
+    float time = 0.0f;
+};
+
+AnimationPosition getAnimationPosition(const Animation& anim, int frame, int frameCount, float clockSeconds);
+vector3<float> sampleTranslation(const std::vector<float>& times, const std::vector<vector3<float>>& values, const AnimationPosition& position, const vector3<float>& fallback);
+vector4<float> sampleRotation(const std::vector<float>& times, const std::vector<vector4<float>>& values, const AnimationPosition& position, const vector4<float>& fallback);
+vector3<float> lerpTranslation(const vector3<float>& a, const vector3<float>& b, float blend);
+vector4<float> slerpRotation(const vector4<float>& a, vector4<float> b, float blend);
+
+// Animation switches blend from the previous pose over this long instead of snapping
+constexpr float EXTERNAL_MESH_SWITCH_BLEND_SECONDS = 0.15f;
+float getSwitchBlendWeight(float clockSeconds);
 
 class ExternalMesh
 {
@@ -96,7 +127,9 @@ public:
     void bindField3dIndexBuffer(uint32_t offset, uint32_t inCount);
     void clearExternalMesh3dBuffers();
     void unloadExternalMesh();
-    bool getRootMotionMatrix(const std::string& animName, int frame, float translationScale, struct matrix* outMatrix);
+    bool getRootMotionMatrix(const std::string& animName, int frame, int frameCount, float clockSeconds, float translationScale, struct matrix* outMatrix);
+    float getAnimationClock(const std::string& animName);
+    void blendJointPose(size_t jointIndex, size_t jointCount, float clockSeconds, vector3<float>& translation, vector4<float>& rotation);
 
     std::vector<Shape> shapes;
 	std::map<std::string, Material> materials;
@@ -105,6 +138,17 @@ public:
 
     // Animations already reported as using the gltf root motion (trace_loaders)
     std::set<std::string> rootMotionChecked;
+
+    // Animation the own clock is running for, and when the game switched to it
+    std::string clockAnim;
+    std::chrono::steady_clock::time_point clockStart;
+
+    // Pose shown last (joint-local, plus the gltf root), and the one to blend from after a switch
+    std::vector<vector3<float>> lastTranslation, blendFromTranslation;
+    std::vector<vector4<float>> lastRotation, blendFromRotation;
+    vector3<float> lastRootTranslation = {}, blendFromRootTranslation = {};
+    vector4<float> lastRootRotation = {}, blendFromRootRotation = {};
+    bool lastHasRoot = false, blendFromHasRoot = false;
 private:
     void loadConfig(const std::string& path);
 
