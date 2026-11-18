@@ -29,7 +29,7 @@
 struct CharaOneModel {
 	char name[6];
 	bool isMch;
-	bool isDirect;
+	bool isClassicDirect;
 	std::vector<uint32_t> texturesData;
 	uint32_t modelId;
 	int8_t rgbaModifier[4];

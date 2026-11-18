@@ -1661,7 +1661,7 @@ int ff8_field_chara_one_read_model(int fd, uint8_t *const data, size_t size)
 	if (trace_all || trace_vram) ffnx_trace("%s: size=%d\n", __func__, size);
 
 	if (chara_one_models.contains(chara_one_current_pos)) {
-		chara_one_models[chara_one_current_pos].isDirect = ff8_is_direct_file(fd);
+		chara_one_models[chara_one_current_pos].isClassicDirect = ff8_is_classic_direct_file(fd);
 
 		if (save_textures) {
 			char filename[MAX_PATH];
@@ -1685,7 +1685,7 @@ int ff8_field_chara_one_read_mch(int fd, uint8_t *const data, size_t size)
 	for (uint32_t addr: chara_one_loaded_models) {
 		if (chara_one_models[addr].isMch) {
 			if (id == chara_one_current_mch) {
-				chara_one_models[addr].isDirect = ff8_is_direct_file(fd);
+				chara_one_models[addr].isClassicDirect = ff8_is_classic_direct_file(fd);
 				ff8_mch_parse_model(chara_one_models[addr], data, size);
 				if (save_textures) {
 					char filename[MAX_PATH];
@@ -1714,7 +1714,7 @@ int ff8_field_texture_upload_one(char *image_buffer, char bpp, char a3, int x, i
 		if (chara_one_current_texture < model.texturesData.size()) {
 			next_rgba_modifier = model.rgbaModifier;
 			next_bpp = Tim::Bpp(bpp);
-			if (!model.isDirect && !is_remastered_hd_textures_disabled("field")) {
+			if (!model.isClassicDirect && !is_remastered_hd_textures_disabled("field")) {
 				snprintf(next_remastered_texture_name, MAX_PATH, "field.fs\\field_hd_new\\%s_%d", model.name, chara_one_current_texture);
 			} else {
 				next_remastered_texture_name[0] = '\0';

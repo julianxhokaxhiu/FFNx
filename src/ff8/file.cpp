@@ -37,12 +37,13 @@
 #include "Shlwapi.h"
 
 char next_direct_file[MAX_PATH] = "";
+bool next_direct_file_is_remastered_model = false;
 bool last_fopen_is_redirected = false;
 uint32_t last_compression_type = 0;
 size_t last_compressed_size = 0;
 size_t last_uncompressed_size = 0;
 std::map<int, Zzz::File *> openedZzzFiles;
-std::unordered_set<int> openedDirectFiles;
+std::unordered_set<int> openedClassicDirectFiles;
 bool remastered_font_asset = false;
 
 size_t get_fl_prefix_size(bool with_lang = true)
@@ -55,11 +56,11 @@ void ff8_fs_lang_string(char *data)
 	strncpy(data, ff8_externals.archive_path_prefix + 10, strlen(ff8_externals.archive_path_prefix) - 10 - 1);
 }
 
-bool set_direct_path(const char *fullpath, char *output, size_t output_size)
+bool set_direct_path(const char *fullpath, char *output, size_t output_size, const char *subdirectory = "")
 {
 	if (strnicmp(fullpath + 2, "\\FF8\\Data\\Magic\\", strlen("\\FF8\\Data\\Magic\\")) == 0)
 	{
-		_snprintf(output, output_size, "%s/%s/%s", basedir, direct_mode_path.c_str(), fullpath + get_fl_prefix_size(false));
+		_snprintf(output, output_size, "%s/%s/%s%s", basedir, direct_mode_path.c_str(), subdirectory, fullpath + get_fl_prefix_size(false));
 
 		if (!fileExists(output))
 		{
@@ -106,14 +107,14 @@ bool set_direct_path(const char *fullpath, char *output, size_t output_size)
 	}
 
 	// Try with the lang prefix
-	_snprintf(output, output_size, "%s/%s/%s", basedir, direct_mode_path.c_str(), fullpath_copy + get_fl_prefix_size(false));
+	_snprintf(output, output_size, "%s/%s/%s%s", basedir, direct_mode_path.c_str(), subdirectory, fullpath_copy + get_fl_prefix_size(false));
 
 	if (!fileExists(output))
 	{
 		if (trace_all || trace_direct) ffnx_warning("Direct file not found %s\n", output);
 
 		// Retry without the lang prefix
-		_snprintf(output, output_size, "%s/%s/%s", basedir, direct_mode_path.c_str(), fullpath_copy + get_fl_prefix_size());
+		_snprintf(output, output_size, "%s/%s/%s%s", basedir, direct_mode_path.c_str(), subdirectory, fullpath_copy + get_fl_prefix_size());
 
 		if (!fileExists(output))
 		{
@@ -124,6 +125,18 @@ bool set_direct_path(const char *fullpath, char *output, size_t output_size)
 	}
 
 	return true;
+}
+
+bool set_remastered_model_path(const char *fullpath, char *output, size_t output_size)
+{
+	if (!ff8_remastered_edition
+		|| (_stricmp(PathFindExtensionA(fullpath), ".mch") != 0
+			&& _stricmp(PathFindFileNameA(fullpath), "chara.one") != 0))
+	{
+		return false;
+	}
+
+	return set_direct_path(fullpath, output, output_size, "remastered/");
 }
 
 bool check_direct_sub_archive_exists(const char *ext, const char *path_without_ext)
@@ -168,6 +181,7 @@ bool set_classic_mch_path(const char *fullpath, char *output, size_t output_size
 
 void ff8_fs_archive_sub_archive_get_filename(const char *filename, char *dirname)
 {
+	next_direct_file_is_remastered_model = false;
 	ff8_externals.sub_archive_get_filename(filename, dirname);
 
 	char cleaned_dirname[MAX_PATH] = "c:";
@@ -303,6 +317,15 @@ int ff8_fs_archive_search_filename_sub_archive(const char *fullpath, ff8_file_fi
 	char direct_path[MAX_PATH];
 	char classic_path[MAX_PATH];
 	const bool is_font_asset = _stricmp(PathFindFileNameA(fullpath), "sysfnt.tdw") == 0;
+	next_direct_file_is_remastered_model = false;
+
+	if (set_remastered_model_path(fullpath, direct_path, sizeof(direct_path)))
+	{
+		strncpy(next_direct_file, direct_path, sizeof(next_direct_file));
+		next_direct_file_is_remastered_model = true;
+
+		return 0; // Bypass Moriya filesystem
+	}
 
 	if (set_classic_mch_path(fullpath, classic_path, sizeof(classic_path)))
 	{
@@ -336,6 +359,7 @@ void ff8_fs_archive_free_file_container_sub_archive(ff8_file_container *file_con
 	if (trace_all || trace_files) ffnx_trace("%s\n", __func__);
 
 	*next_direct_file = '\0';
+	next_direct_file_is_remastered_model = false;
 
 	return ff8_externals.free_file_container(file_container);
 }
@@ -444,11 +468,12 @@ int ff8_open(const char *fileName, int oflag, ...)
 		if (trace_all || trace_direct) ffnx_info("Direct file using %s\n", next_direct_file);
 
 		int ret = ff8_externals._sopen(next_direct_file, oflag, shflag, pmode);
-		if (ff8_remastered_edition && ret != -1) {
-			openedDirectFiles.insert(ret);
+		if (ff8_remastered_edition && ret != -1 && !next_direct_file_is_remastered_model) {
+			openedClassicDirectFiles.insert(ret);
 		}
 
 		*next_direct_file = '\0';
+		next_direct_file_is_remastered_model = false;
 
 		return ret;
 	}
@@ -610,7 +635,7 @@ int ff8_close(int fd)
 {
 	if (trace_all || trace_files) ffnx_info("%s: fd=%X\n", __func__, fd);
 
-	openedDirectFiles.erase(fd);
+	openedClassicDirectFiles.erase(fd);
 
 	if (ff8_remastered_edition && openedZzzFiles.contains(fd)) {
 		Zzz::closeFile(openedZzzFiles.at(fd));
@@ -635,9 +660,9 @@ int ff8_close(int fd)
 	return -1;
 }
 
-bool ff8_is_direct_file(int fd)
+bool ff8_is_classic_direct_file(int fd)
 {
-	return openedDirectFiles.contains(fd);
+	return openedClassicDirectFiles.contains(fd);
 }
 
 FILE *ff8_fopen(const char *fileName, const char *mode)
@@ -653,6 +678,7 @@ FILE *ff8_fopen(const char *fileName, const char *mode)
 		FILE *file = ff8_externals._fsopen(next_direct_file, mode, shflag);
 
 		*next_direct_file = '\0';
+		next_direct_file_is_remastered_model = false;
 
 		return file;
 	}
@@ -734,12 +760,13 @@ ff8_file *ff8_open_file(ff8_file_context *infos, const char *fs_path)
 			if (infos->file_container != nullptr)
 			{
 				char direct_path[MAX_PATH] = "";
+				const bool is_remastered_model = set_remastered_model_path(fullpath, direct_path, sizeof(direct_path));
 
-				if (set_direct_path(fullpath, direct_path, sizeof(direct_path)))
+				if (is_remastered_model || set_direct_path(fullpath, direct_path, sizeof(direct_path)))
 				{
 					file->fd = ff8_externals._sopen(direct_path, oflag, shflag, pmode);
-					if (ff8_remastered_edition && file->fd != -1) {
-						openedDirectFiles.insert(file->fd);
+					if (ff8_remastered_edition && file->fd != -1 && !is_remastered_model) {
+						openedClassicDirectFiles.insert(file->fd);
 					}
 
 					if (trace_all || trace_direct) ffnx_info("Direct file using %s\n", direct_path);

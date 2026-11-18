@@ -358,7 +358,7 @@ void ff8_remaster_set_field_model_scaling(const std::unordered_map<uint32_t, Cha
         if (model_id >= 0) {
             const CharaOneModel &model = models_ordered.at(model_id);
 
-            if (! model.isDirect) {
+            if (! model.isClassicDirect) {
                 const double divisor = ff8_remaster_get_model_divisor_by_name(model.name);
 
                 if (divisor != 1.0) {
