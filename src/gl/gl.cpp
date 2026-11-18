@@ -186,6 +186,8 @@ void gl_load_state(struct driver_state *src, bool bind_textures)
 
 	current_state.kawai_effect = src->kawai_effect;
 	current_state.kawai_camera_matrix = src->kawai_camera_matrix;
+	current_state.psx_field_facial = src->psx_field_facial;
+	current_state.psx_field_facial_filter = src->psx_field_facial_filter;
 	current_state.psx_world = src->psx_world;
 	current_state.psx_world_radar = src->psx_world_radar;
 	current_state.psx_world_meteor = src->psx_world_meteor;
@@ -267,7 +269,7 @@ void gl_calculate_normals(std::vector<vector3<float>>* pNormals, struct indexed_
 
 namespace
 {
-	FF8WorldMapStrip ff8_strip_texture()
+	FF8WorldMapStrip ff8_road_texture()
 	{
 		if (!current_state.texture_set || current_state.fb_texture) return FF8WorldMapStrip::None;
 		VOBJ(texture_set, texture_set, current_state.texture_set);
@@ -277,17 +279,16 @@ namespace
 		if (!tiled.isValid() || tiled.bpp() != Tim::Bpp4 || tiled.x() != 13 * 64 || tiled.y() != 256)
 			return FF8WorldMapStrip::None;
 		const auto palette = tiled.palette(VREF(texture_set, palette_index));
-		if (!palette.isValid() || (palette.x() != 0 && palette.x() != 16) || palette.y() != 240)
+		if (!palette.isValid() || palette.x() != 16 || palette.y() != 240)
 			return FF8WorldMapStrip::None;
-		const auto strip = palette.x() == 0 ? FF8WorldMapStrip::Rail : FF8WorldMapStrip::Road;
-		const int tile_x = tiled.x() + (strip == FF8WorldMapStrip::Road ? 8 : 0);
+		const int tile_x = tiled.x() + 8;
 		for (const auto &texture : texturePacker.matchTextures(tiled))
 		{
 			const auto &image = texture.texture();
 			if (texture.name().starts_with("world/dat/wmset/section39/") &&
 				image.x() <= tile_x && image.x() + image.w() >= tile_x + 8 &&
 				image.y() <= tiled.y() && image.y() + image.h() >= tiled.y() + 16)
-				return strip;
+				return FF8WorldMapStrip::Road;
 		}
 		return FF8WorldMapStrip::None;
 	}
@@ -334,9 +335,12 @@ namespace
 	{
 		ff7::field::kawai::Effect effect = current_state.kawai_effect;
 		matrix camera = current_state.kawai_camera_matrix;
+		bool facial = current_state.psx_field_facial;
+		ff7::field::kawai::Vector facial_filter = current_state.psx_field_facial_filter;
 
 		explicit KawaiDrawScope(polygon_data* polygon)
 		{
+			current_state.psx_field_facial = false;
 			ff7::field::bind_kawai_effect(ff8 ? nullptr : polygon);
 		}
 
@@ -344,33 +348,10 @@ namespace
 		{
 			current_state.kawai_effect = effect;
 			current_state.kawai_camera_matrix = camera;
+			current_state.psx_field_facial = facial;
+			current_state.psx_field_facial_filter = facial_filter;
 		}
 	};
-
-	bool draw_field_facial_texture(indexed_primitive* ip, polygon_data* polygon, uint32_t clip)
-	{
-		if (ff8 || !ff7::field::ff7_field_is_facial_primitive(polygon, ip)) return false;
-
-		std::vector<nvertex> vertices(ip->vertices, ip->vertices + ip->vertexcount);
-		std::vector<uint32_t> colors;
-		colors.reserve(vertices.size());
-		for (auto& vertex : vertices)
-		{
-			vertex.color.r = vertex.color.g = vertex.color.b = 255;
-			colors.push_back(vertex.color.color);
-		}
-		auto facial = *ip;
-		facial.vertices = vertices.data();
-
-		// The enclosing KawaiDrawScope restores this; retain non-lighting script effects.
-		auto& kind = current_state.kawai_effect.kind;
-		if (kind == ff7::field::kawai::Kind::lighting || kind == ff7::field::kawai::Kind::positional_lighting)
-			kind = ff7::field::kawai::Kind::none;
-		if (!ff7::field::draw_kawai_model(polygon, &facial, {}, nullptr, clip, colors))
-			gl_draw_indexed_primitive(facial.primitivetype, facial.vertextype, facial.vertices, nullptr,
-				facial.vertexcount, facial.indices, facial.indexcount, nullptr, nullptr, nullptr, clip, true);
-		return true;
-	}
 }
 
 void gl_draw_without_lighting(struct indexed_primitive* ip, struct polygon_data *polydata, struct light_data* lightdata, uint32_t clip)
@@ -382,7 +363,7 @@ void gl_draw_without_lighting(struct indexed_primitive* ip, struct polygon_data 
 		gl_draw_external_mesh(externalMesh, lightdata);
 		return;
 	}
-	if (draw_field_facial_texture(ip, polydata, clip)) return;
+	if (!ff8 && ff7::field::draw_field_facial_primitive(polydata, ip, clip)) return;
 	if (!ff8 && ff7::world::draw_model_with_psx_lighting(ip, polydata, clip)) return;
 	
 	static std::vector<vector3<float>> normals;
@@ -409,7 +390,7 @@ void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *po
 		gl_draw_external_mesh(externalMesh, lightdata);
 		return;
 	}
-	if (draw_field_facial_texture(ip, polydata, clip)) return;
+	if (!ff8 && ff7::field::draw_field_facial_primitive(polydata, ip, clip)) return;
 	if (!ff8 && ff7::world::draw_model_with_psx_lighting(ip, polydata, clip)) return;
 
 	static std::vector<vector3<float>> normals;
@@ -488,7 +469,7 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 
 	std::vector<nvertex> strip_vertices;
 	if (ff8 && mode == MODE_WORLDMAP && vertextype == TLVERTEX && primitivetype == PT_TRIANGLES &&
-		ff8_worldmap_adjust_strip_uvs(vertices, vertexcount, indices, count, ff8_strip_texture(), strip_vertices))
+		ff8_worldmap_adjust_strip_uvs(vertices, vertexcount, indices, count, ff8_road_texture(), strip_vertices))
 		vertices = strip_vertices.data();
 
 	// handle some special cases, see special_case.c

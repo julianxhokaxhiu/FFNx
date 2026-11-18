@@ -38,6 +38,7 @@ namespace ff7::field
             kawai::State state;
             kawai::Effect draw_effect;
             std::array<kawai::Effect, 2> packet_effects{};
+            std::array<bool, 2> pending_final_packets{};
             std::array<uint8_t, 32> params{};
             size_t parameter_count = 0;
             int opcode = -1;
@@ -140,10 +141,12 @@ namespace ff7::field
                 model.state = {};
                 model.draw_effect = {};
                 model.packet_effects = {};
+                model.pending_final_packets = {};
                 model.applied = false;
             }
             return false;
         }
+        model.pending_final_packets = {};
         model.opcode = opcode;
         model.pending = true;
         model.parameter_count = std::min(params.size(), model.params.size());
@@ -167,6 +170,7 @@ namespace ff7::field
                 model.state = {};
                 model.draw_effect = {};
                 model.packet_effects = {};
+                model.pending_final_packets = {};
                 model.pending = false;
                 *result = -1;
                 *complete = 1;
@@ -199,6 +203,8 @@ namespace ff7::field
         *result = direct ? -1 : opcode;
         *complete = !model.state.executing || direct ||
             ((opcode == 6 || opcode == 8) && model.state.fade.finished);
+        if (opcode == 6 && model.state.executing && model.state.fade.finished && model.state.fade.interpolating)
+            model.pending_final_packets.fill(true);
         if (opcode == 9 && model.state.executing &&
             model.splash_frame++ % std::max(common_frame_multiplier, 1) != 0)
             return true;
@@ -216,12 +222,18 @@ namespace ff7::field
                 // PSX 0C initialization hides normal packets until its projected renderer executes.
                 if (model.state.opcode == 0xC && !model.state.executing)
                     effect.kind = kawai::Kind::hidden;
-                // AMBNT and LIGHT write only the active PSX packet buffer, including the final fade value.
+                // AMBNT and LIGHT write only the active PSX packet buffer.
                 if (model.state.opcode == 2 || model.state.opcode == 6)
                     model.packet_effects[current_packet] = effect;
                 else
                     model.packet_effects.fill(effect);
                 kawai::advance(model.state, frame_multiplier);
+            }
+            // Interpolating LIGHT fades settle each bank after their native callback stops.
+            if (model.pending_final_packets[current_packet])
+            {
+                model.packet_effects[current_packet] = model.state.effect;
+                model.pending_final_packets[current_packet] = false;
             }
             model.draw_effect = model.packet_effects[current_packet];
             model.applied = false;

@@ -23,6 +23,9 @@
 
 #include "audio.h"
 
+#include <cmath>
+#include <limits>
+
 #include "log.h"
 #include "gamehacks.h"
 #include "utils.h"
@@ -39,6 +42,29 @@ extern "C" {
 #endif
 
 NxAudioEngine nxAudioEngine;
+
+static void NxAudioEngineBackendLogCallback(unsigned int level, const char* message, void*)
+{
+	std::string text(message);
+	if (text.empty() || text.back() != '\n') text += '\n';
+
+	switch (level)
+	{
+	case SoLoud::Soloud::BACKEND_LOG_ERROR:
+		ffnx_error("NxAudioEngine backend: %s", text.c_str());
+		break;
+	case SoLoud::Soloud::BACKEND_LOG_WARNING:
+		ffnx_warning("NxAudioEngine backend: %s", text.c_str());
+		break;
+	case SoLoud::Soloud::BACKEND_LOG_INFO:
+		ffnx_info("NxAudioEngine backend: %s", text.c_str());
+		break;
+	default:
+		if (trace_all || trace_music || trace_sfx || trace_voice || trace_ambient)
+			ffnx_trace("NxAudioEngine backend: %s", text.c_str());
+		break;
+	}
+}
 
 // PRIVATE
 
@@ -156,11 +182,16 @@ bool NxAudioEngine::fileExists(const char* filename)
 
 bool NxAudioEngine::init()
 {
-	if (_engine.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, external_audio_sample_rate, SoLoud::Soloud::AUTO, external_audio_number_of_channels) == 0)
+	_engine.setBackendLogCallback(NxAudioEngineBackendLogCallback);
+	SoLoud::result result = _engine.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO,
+		external_audio_sample_rate, SoLoud::Soloud::AUTO, external_audio_number_of_channels);
+	if (result == SoLoud::SO_NO_ERROR)
 	{
 		_engineInitialized = true;
 
-		ffnx_info("NxAudioEngine initialized: channels=%u,sample_rate=%u\n", _engine.getBackendChannels(), _engine.getBackendSamplerate());
+		ffnx_info("NxAudioEngine initialized: backend=%s,channels=%u,sample_rate=%u,callback_frames=%u\n",
+			_engine.getBackendString(), _engine.getBackendChannels(), _engine.getBackendSamplerate(),
+			_engine.getBackendBufferSize());
 
 		// 100 -> LOG_LEVEL_ALL: https://github.com/vgmstream/vgmstream/blob/4cda04d02595b381dc8cf98ec39e771c80987d18/src/util/log.c#L20
 		if (trace_all || trace_ambient || trace_sfx || trace_music || trace_voice) vgm_log_set_callback(NULL, 100, 0, NxAudioEngineVgmstreamCallback);
@@ -185,6 +216,7 @@ bool NxAudioEngine::init()
 		return true;
 	}
 
+	ffnx_error("NxAudioEngine initialization failed: %s (%u)\n", _engine.getErrorString(result), result);
 	return false;
 }
 
@@ -688,6 +720,27 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Mu
 	}
 }
 
+bool NxAudioEngine::scheduleMusicStart(SoLoud::handle handle, const MusicOptions& options)
+{
+	if (!options.getStartDelay) return true;
+
+	SoLoud::time delaySeconds = 0.0;
+	if (!options.getStartDelay(delaySeconds)) {
+		ffnx_error("NxAudioEngine::%s: cannot obtain scheduled music start time\n", __func__);
+		return false;
+	}
+
+	const double samples = delaySeconds * _engine.getBackendSamplerate();
+	if (!std::isfinite(delaySeconds) || delaySeconds < 0.0 || samples > std::numeric_limits<unsigned int>::max()) {
+		ffnx_error("NxAudioEngine::%s: invalid playback delay %fs\n", __func__, delaySeconds);
+		return false;
+	}
+
+	if (trace_all || trace_music) ffnx_info("NxAudioEngine::%s: remaining playback delay %fs\n", __func__, delaySeconds);
+	_engine.setDelaySamples(handle, static_cast<unsigned int>(samples));
+	return true;
+}
+
 bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicOptions options)
 {
 	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %s (%d) on channel #%d\n", __func__, name, id, channel);
@@ -730,7 +783,7 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 			music.wantedMusicVolume = options.targetVolume;
 		}
 		const float initialVolume = options.fadetime > 0.0 || offsetSeconds > 0.0 ? 0.0f : music.wantedMusicVolume * _musicMasterVolume;
-		music.handle = _engine.playBackground(*audioSource, initialVolume, offsetSeconds > 0.0);
+		music.handle = _engine.playBackground(*audioSource, initialVolume, offsetSeconds > 0.0 || bool(options.getStartDelay));
 		music.id = id;
 		music.sourceName = name;
 		music.sync = options.sync;
@@ -740,11 +793,29 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 
 		if (offsetSeconds > 0.0) {
 			if (trace_all || trace_music) ffnx_info("NxAudioEngine::%s: seek to time %fs\n", __func__, offsetSeconds);
-			_engine.seek(music.handle, offsetSeconds);
+			const SoLoud::result result = _engine.seek(music.handle, offsetSeconds);
+			if (result != SoLoud::SO_NO_ERROR) {
+				ffnx_error("NxAudioEngine::%s: cannot seek %s to %fs ( SoLoud error: %u )\n", __func__, overloadedName, offsetSeconds, result);
+				stopMusic(channel);
+				return false;
+			}
+		}
+
+		// Loading and seeking consume time from the game's playback deadline.
+		if (!scheduleMusicStart(music.handle, options)) {
+			stopMusic(channel);
+			return false;
+		}
+
+		if (offsetSeconds > 0.0) {
 			resumeMusic(channel, options.fadetime == 0.0 ? 1.0 : options.fadetime); // Slight fade
 		}
 		else if (options.fadetime > 0.0) {
 			setMusicVolume(music.wantedMusicVolume, channel, options.fadetime);
+		}
+
+		if (options.getStartDelay && offsetSeconds <= 0.0) {
+			_engine.setPause(music.handle, false);
 		}
 
 		if (options.relativeSpeed > 0.0f && options.relativeSpeed != 1.0f) {
@@ -757,7 +828,7 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 	return false;
 }
 
-void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names, uint32_t id, MusicOptions options)
+void NxAudioEngine::playSynchronizedMusics(const std::vector<SynchronizedMusic>& musics, uint32_t id, MusicOptions options)
 {
 	const int channel = 0;
 
@@ -777,8 +848,12 @@ void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names
 		return;
 	}
 
-	for (const std::string &name: names) {
-		SoLoud::AudioSource* audioSource = loadMusic(name.c_str());
+	for (const SynchronizedMusic& music : musics) {
+		SoLoud::AudioSource* audioSource = loadMusic(music.name.c_str());
+
+		if (audioSource == nullptr && !music.remasteredArchivePath.empty()) {
+			audioSource = loadMusic(music.remasteredArchivePath.c_str(), true, "ogg");
+		}
 
 		if (audioSource != nullptr) {
 			SoLoud::handle musicHandle = _engine.playBackground(*audioSource, _musicMasterVolume, true);
@@ -793,6 +868,10 @@ void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names
 	if (!_engine.isVoiceGroupEmpty(groupHandle)) {
 		_musics[channel].handle = groupHandle;
 		_musics[channel].id = id;
+		if (!scheduleMusicStart(groupHandle, options)) {
+			stopMusic(channel);
+			return;
+		}
 		// Play synchronously
 		_engine.setPause(groupHandle, false);
 	}

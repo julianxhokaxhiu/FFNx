@@ -46,23 +46,31 @@
 namespace ff7::field
 {
     static int (*field_draw_effect_pages_original)(ff7_game_obj*, uint16_t, uint16_t);
+    static int (*field_pick_tiles_original)(short, short);
+    static uint16_t field_effect_first_page;
+    static uint16_t field_effect_end_page;
 
-    static int field_draw_effect_pages(ff7_game_obj* game_object, uint16_t first_page, uint16_t end_page)
+    static int field_pick_tiles(short x, short y)
     {
-        const char* field_name = get_current_field_name();
-        if (!field_name || strcmp(field_name, "mogu_1") != 0 || first_page != 15 || end_page != 26)
-            return field_draw_effect_pages_original(game_object, first_page, end_page);
+        reset_background_tile_order();
+        return field_pick_tiles_original(x, y);
+    }
 
-        // PSX draws the water at depth 4094 before the screen lighting at depth 1.
-        const int result = field_draw_effect_pages_original(game_object, 24, end_page);
-        const uint32_t depthtest = current_state.depthtest;
-        const uint32_t depthmask = current_state.depthmask;
-        internal_set_renderstate(V_DEPTHTEST, false, (game_obj*)game_object);
-        internal_set_renderstate(V_DEPTHMASK, false, (game_obj*)game_object);
-        field_draw_effect_pages_original(game_object, first_page, 24);
-        internal_set_renderstate(V_DEPTHTEST, depthtest, (game_obj*)game_object);
-        internal_set_renderstate(V_DEPTHMASK, depthmask, (game_obj*)game_object);
-        return result;
+    static int field_draw_effect_pages(ff7_game_obj*, uint16_t first_page, uint16_t end_page)
+    {
+        field_effect_first_page = first_page;
+        field_effect_end_page = end_page;
+        return end_page;
+    }
+
+    static int field_draw_extra_effect_pages(ff7_game_obj* game_object, uint16_t first_page, uint16_t end_page)
+    {
+        if (!draw_background_effects(game_object, field_effect_first_page, field_effect_end_page, first_page, end_page))
+        {
+            field_draw_effect_pages_original(game_object, field_effect_first_page, field_effect_end_page);
+            return field_draw_effect_pages_original(game_object, first_page, end_page);
+        }
+        return end_page;
     }
 
     // helper function initializes page dst, copies texture from src and applies
@@ -276,7 +284,10 @@ namespace ff7::field
     void ff7_field_hook_init()
     {
         field_draw_effect_pages_original = (decltype(field_draw_effect_pages_original))get_relative_call(ff7_externals.field_draw_everything, 0x348);
+        field_pick_tiles_original = (decltype(field_pick_tiles_original))ff7_externals.field_pick_tiles_make_vertices;
+        replace_call_function(ff7_externals.field_draw_everything + 0xC9, field_pick_tiles);
         replace_call_function(ff7_externals.field_draw_everything + 0x348, field_draw_effect_pages);
+        replace_call_function(ff7_externals.field_draw_everything + 0x358, field_draw_extra_effect_pages);
 
         // Fix camera model clipping in various fields
         replace_function(ff7_externals.field_culling_model_639252, ff7_field_do_draw_3d_model);

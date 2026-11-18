@@ -16,7 +16,7 @@
 // This shader is never used for 2D elements.
 // This shader is used for 3D elements when advanced lighting is enabled.
 
-$input v_color0, v_texcoord0, v_position0, v_shadow0, v_normal0
+$input v_color0, v_texcoord0, v_position0, v_shadow0, v_normal0, v_normal1
 
 #include <bgfx/bgfx_shader.sh>
 #include "FFNx.lighting.sh"
@@ -101,6 +101,8 @@ uniform vec4 kawaiColorOffset;
 #define isIblTextureLoaded FSTexFlags.z > 0.0
 
 #define gameLightingMode gameLightingFlags.x
+#define isPSXFieldFacial gameLightingFlags.y > 0.0
+#define useGameLighting gameLightingFlags.z > 0.0
 #define GAME_LIGHTING_PER_PIXEL 2
 
 void main()
@@ -108,8 +110,19 @@ void main()
     // v_color0 is used for solid-color polygon faces (e.g., all original FF7 models) and colorizing textures
     // (Not used for solid-color 2D elements b/c this shader isn't used for 2D elements.)
     vec4 color = v_color0; //previously linearized in vertex shader
+    vec3 facialColor = color.rgb;
     float worldDither = GetPSXWorldDither(gl_FragCoord.xy, PSXWorldDither);
-    if (PSXWorldDither.w > 1.5) color.rgb = ApplyPSXWorldAverageDither(color.rgb);
+    if (isPSXFieldFacial)
+    {
+        if (useGameLighting && gameLightingMode == GAME_LIGHTING_PER_PIXEL)
+            facialColor = ApplyPSXFieldLighting(facialColor, NormalizePSXFieldNormal(v_normal1), gameGlobalLightColor.rgb,
+                gameLightColor1.rgb, gameLightColor2.rgb, gameLightColor3.rgb,
+                gameLightDir1.xyz, gameLightDir2.xyz, gameLightDir3.xyz);
+        facialColor = ApplyKawaiColorOffset(facialColor, kawaiColorOffset);
+        facialColor = floor(saturate(facialColor * gameScriptedLightColor.rgb) * 255.0 + vec3_splat(0.0001)) / 255.0;
+        color.rgb = toLinear(facialColor);
+    }
+    else if (PSXWorldDither.w > 1.5) color.rgb = ApplyPSXWorldAverageDither(color.rgb);
     else if (isPSXWorld) color.rgb = ApplyPSXWorldColorPrecision(color.rgb, worldDither);
     vec4 color_nml = vec4(0.0, 0.0, 0.0, 0.0);
     vec4 color_pbr = vec4(0.0, 0.0, 0.0, 0.0);
@@ -176,6 +189,7 @@ void main()
 
             color.rgb = toLinear(toGamma(v_color0.rgb) * texture_color.rgb);
         }
+        else if (isPSXFieldFacial) color.rgb = ApplyPSXFieldModulation(facialColor, texture_color.rgb, FSTexFlags.w > 0.0);
         else if (isPSXWorld) color.rgb = ApplyPSXWorldModulation(v_color0.rgb, texture_color.rgb, worldDither, PSXWorldDither.w, WMFlags.z > 1.5);
         else color.rgb *= texture_color.rgb;
 
@@ -292,7 +306,7 @@ void main()
         if (isFogEnabled && debugOutput == DEBUG_OUTPUT_DISABLED ) gl_FragColor.rgb = ApplyWorldFog(gl_FragColor.rgb, v_position0.xyz);
     }
 
-    if(!(isTLVertex) && gameLightingMode == GAME_LIGHTING_PER_PIXEL && debugOutput == DEBUG_OUTPUT_DISABLED)
+    if(!(isTLVertex) && !(isPSXFieldFacial) && gameLightingMode == GAME_LIGHTING_PER_PIXEL && debugOutput == DEBUG_OUTPUT_DISABLED)
     {
         vec3 worldNormal = mul(invViewMatrix, vec4(normal, 0)).xyz;
         float dotLight1 = saturate(dot(worldNormal, gameLightDir1.xyz));
@@ -310,7 +324,7 @@ void main()
 
     // return to sRGB gamma space so we can do alpha blending the same way FF7/8 did.
     gl_FragColor.rgb = toGamma(gl_FragColor.rgb);
-    if (!(isTLVertex) && debugOutput == DEBUG_OUTPUT_DISABLED && kawaiColorOffset.w > 0.0)
+    if (!(isTLVertex) && !(isPSXFieldFacial) && debugOutput == DEBUG_OUTPUT_DISABLED && kawaiColorOffset.w > 0.0)
         gl_FragColor.rgb = ApplyKawaiColorOffset(gl_FragColor.rgb, kawaiColorOffset);
 
 }

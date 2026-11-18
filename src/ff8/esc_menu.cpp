@@ -113,8 +113,10 @@ static void draw_menu(int a1, const int16_t *pause_window)
 
 	for (int i = 0; i < ESC_MENU_COUNT; ++i) next = ff8_externals.draw_text_sub_4A1020(a1, next, x, y + i * ROW_HEIGHT, rows[i].c_str(), 7); // White
 
-	next = ff8_externals.draw_window_frame_sub_4B6A60(a1, next, window, WINDOW_COLOR);
-	ff8_externals.draw_window_background_sub_4B6A80(a1, next, window, WINDOW_COLOR, 8); // Same style as the game pause window
+	next = reinterpret_cast<ff8_draw_menu_sprite_texture_infos *>(ff8_externals.battle_draw_window_background_sub_4B6A60(
+		reinterpret_cast<int *>(a1), reinterpret_cast<uint32_t *>(next), window, WINDOW_COLOR));
+	ff8_externals.battle_draw_window_border_sub_4B6A80(
+		reinterpret_cast<int *>(a1), reinterpret_cast<uint32_t *>(next), window, WINDOW_COLOR, 8); // Same style as the game pause window
 }
 
 static void exit_game()
@@ -211,7 +213,7 @@ int ff8_esc_menu_pause_screen(int callback)
 
 ff8_draw_menu_sprite_texture_infos *ff8_esc_menu_battle_pause_window(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos)
 {
-	uint16_t &keyon = *(uint16_t *)(*(int *)ff8_externals.battle_menu_state + 0x14);
+	uint16_t &keyon = *(uint16_t *)((uint8_t *)*ff8_externals.battle_ui_context_dword_1D6D490 + 0x14);
 
 	menu_open = true;
 	opening_frames = 0;

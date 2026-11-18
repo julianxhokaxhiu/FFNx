@@ -68,6 +68,7 @@ namespace ff7::field::kawai
         std::array<int16_t, 4> value{};
         std::array<int16_t, 4> target{};
         std::array<int16_t, 4> step{};
+        bool interpolating = true;
         bool finished = false;
         int frame = 0;
     };
@@ -223,9 +224,10 @@ namespace ff7::field::kawai
                 state.fade.value[i] = read_s16(params, 2 + 2 * i);
                 state.fade.target[i] = read_s16(params, 2 + 2 * channels + 2 * i);
                 state.fade.step[i] = read_s16(params, 2 + 4 * channels + 2 * i);
-                // PC LIGHT scripts can use positive steps toward negative targets.
-                if (opcode == 6 && state.fade.target[i] < 0 && state.fade.step[i] > 0)
-                    state.fade.step[i] = signed_word(-state.fade.step[i]);
+                // PSX snap transitions deliberately leave different colors in the packet banks.
+                if ((state.fade.value[i] < state.fade.target[i] && state.fade.step[i] <= 0) ||
+                    (state.fade.value[i] > state.fade.target[i] && state.fade.step[i] >= 0))
+                    state.fade.interpolating = false;
             }
             effect.flags = params[2 + 6 * channels];
             update_fade_color(state);

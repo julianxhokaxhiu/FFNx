@@ -1,5 +1,9 @@
 {
   "default": {
+    "dav1d": {
+      "baseline": "1.5.4",
+      "port-version": 1
+    },
     "amd-amf": {
       "baseline": "1.5.3",
       "port-version": 0

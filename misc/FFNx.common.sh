@@ -129,6 +129,29 @@ vec3 ApplyPSXWorldModulation(vec3 lightingColor, vec3 textureColor, float dither
 	return ExpandPSXWorldColor(color5);
 }
 
+vec3 NormalizePSXFieldNormal(vec3 normal)
+{
+	float magnitude = length(normal);
+	return magnitude > 0.0 ? normal / magnitude : vec3_splat(0.0);
+}
+
+vec3 ApplyPSXFieldLighting(vec3 color, vec3 normal, vec3 ambient,
+	vec3 color1, vec3 color2, vec3 color3, vec3 direction1, vec3 direction2, vec3 direction3)
+{
+	vec3 intensity = vec3(dot(normal, direction1), dot(normal, direction2), dot(normal, direction3));
+	intensity = clamp(floor(intensity * 4096.0), vec3_splat(0.0), vec3_splat(32767.0)) / 4096.0;
+	vec3 illumination = ambient + color1 * intensity.x + color2 * intensity.y + color3 * intensity.z;
+	illumination = clamp(floor(illumination * 4096.0), vec3_splat(0.0), vec3_splat(32767.0));
+	return saturate(floor(color * 255.0 * illumination / 4096.0) / 255.0);
+}
+
+vec3 ApplyPSXFieldModulation(vec3 packetColor, vec3 textureColor, bool externalTexture)
+{
+	// Replacement artwork retains its precision; vanilla texels use the PSX's 5-bit product.
+	if (externalTexture) return toLinear(saturate(toGamma(textureColor) * packetColor * (255.0 / 128.0)));
+	return ApplyPSXWorldModulation(packetColor, textureColor, 0.0, 0.0, false);
+}
+
 // Fog ---------------------------------------------
 vec3 ApplyWorldFog(vec3 color, vec3 viewPosition)
 {

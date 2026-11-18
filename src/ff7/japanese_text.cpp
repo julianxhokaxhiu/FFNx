@@ -1073,7 +1073,7 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
     {
       ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(0, game_object);
       ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_window_bg_graphics_object_DC0FF0, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_window_bg_graphics_object_DC0FF0, game_object);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_window_bg_graphics_object_DC0FF0);
       *ff7_externals.dword_DC3CE0 = 0;
     }
@@ -1081,8 +1081,8 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
     {
       ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(1, game_object);
       ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_0_graphics_object_DC0FDC, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_a_blend_0_graphics_object_DC0FDC, game_object);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_win_a_blend_0_graphics_object_DC0FDC);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4);
       *ff7_externals.dword_DC3CDC = 0;
@@ -1091,18 +1091,18 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
     ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
     if ( *ff7_externals.field_do_draw_character_DC3CEC )
     {
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_a_graphics_object_DC100C, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_b_graphics_object_DC1010, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_font_a_graphics_object_DC100C, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_font_b_graphics_object_DC1010, game_object);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_font_a_graphics_object_DC100C);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_font_b_graphics_object_DC1010);
 
       // jp
-      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_1_graphics_object, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_2_graphics_object, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_3_graphics_object, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_4_graphics_object, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_5_graphics_object, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_6_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_1_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_2_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_3_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_4_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_5_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_6_graphics_object, game_object);
       ff7_externals.reset_field_54_graphics_object_66E62C(ff7_externals.menu_jafont_1_graphics_object);
       ff7_externals.reset_field_54_graphics_object_66E62C(ff7_externals.menu_jafont_2_graphics_object);
       ff7_externals.reset_field_54_graphics_object_66E62C(ff7_externals.menu_jafont_3_graphics_object);
@@ -1117,13 +1117,13 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
       uint32_t previous_viewport[4];
       memcpy(previous_viewport, current_state.viewport, sizeof(previous_viewport));
       ff7_externals.engine_gfx_setviewport_sub_66067A(0, 0, 640, 480, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4, game_object);
       ff7_externals.engine_gfx_setviewport_sub_66067A(previous_viewport[0], previous_viewport[1],
         previous_viewport[2], previous_viewport[3], game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC, game_object);
       universal_buttons_draw(game_object);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC);
@@ -1138,7 +1138,7 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
     {
       ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(1, game_object);
       ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_text_box_quad_graphics_object_DC1008, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_text_box_quad_graphics_object_DC1008, game_object);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_text_box_quad_graphics_object_DC1008);
       *ff7_externals.dword_DC3D00 = 0;
       *ff7_externals.text_box_do_draw_black_quad_graphics_object_DC3CF0 = 0;
@@ -1152,14 +1152,14 @@ void field_draw_graphics_object_full_viewport(ff7_graphics_object* graphics_obje
 {
   if (graphics_object == *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC)
   {
-    ff7_externals.engine_draw_graphics_object_66E641(graphics_object, game_object);
+    ff7_externals.engine_draw_graphics_object(graphics_object, game_object);
     return;
   }
 
   uint32_t previous_viewport[4];
   memcpy(previous_viewport, current_state.viewport, sizeof(previous_viewport));
   ff7_externals.engine_gfx_setviewport_sub_66067A(0, 0, 640, 480, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(graphics_object, game_object);
+  ff7_externals.engine_draw_graphics_object(graphics_object, game_object);
   ff7_externals.engine_gfx_setviewport_sub_66067A(previous_viewport[0], previous_viewport[1],
     previous_viewport[2], previous_viewport[3], game_object);
 }
@@ -1474,77 +1474,77 @@ void menu_draw_everything_6CC9D3_jp()
     ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(0, game_object);
     ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
     ff7_externals.engine_gfx_draw_graphics_object_polygon_set_field_80_sub_660E6A(*ff7_externals.menu_unknown3_graphics_object_DC0FFC, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_window_bg_graphics_object_DC0FF0, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_window_bg_graphics_object_DC0FF0, game_object);
     if (*ff7_externals.menu_is_small_viewport_320_240_DC130C == 1)
     {
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_blend_4_graphics_object_DC104C, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_blend_4_graphics_object_DC1048, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_blend_4_graphics_object_DC104C, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_font_blend_4_graphics_object_DC1048, game_object);
     }
     else
     {
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_a_graphics_object_DC100C, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_b_graphics_object_DC1010, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_font_a_graphics_object_DC100C, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_font_b_graphics_object_DC1010, game_object);
 
       // jp
-      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_1_graphics_object, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_2_graphics_object, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_3_graphics_object, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_4_graphics_object, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_5_graphics_object, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_6_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_1_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_2_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_3_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_4_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_5_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_6_graphics_object, game_object);
     }
     universal_buttons_draw(game_object);
     universal_buttons_reset();
     if (*ff7_externals.dword_DC12EC == 9 || *ff7_externals.dword_DC12E4)
     {
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_1_graphics_object_DC1020, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_2_graphics_object_DC1024, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_3_graphics_object_DC1028, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_4_graphics_object_DC102C, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_5_graphics_object_DC1030, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_6_graphics_object_DC1034, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_7_graphics_object_DC1038, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_8_graphics_object_DC103C, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_9_graphics_object_DC1040, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_avatar2_1_graphics_object_DC1020, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_avatar2_2_graphics_object_DC1024, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_avatar2_3_graphics_object_DC1028, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_avatar2_4_graphics_object_DC102C, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_avatar2_5_graphics_object_DC1030, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_avatar2_6_graphics_object_DC1034, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_avatar2_7_graphics_object_DC1038, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_avatar2_8_graphics_object_DC103C, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_avatar2_9_graphics_object_DC1040, game_object);
     }
     else
     {
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar_1_graphics_object_DC1014, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar_2_graphics_object_DC1018, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar_3_graphics_object_DC101C, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_avatar_1_graphics_object_DC1014, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_avatar_2_graphics_object_DC1018, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_avatar_3_graphics_object_DC101C, game_object);
     }
-    if (*ff7_externals.engine_game_mode_word_CBF9DC == 20)
+    if (*common_externals._mode == 20)
     {
       ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 1, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_buster_tex_graphics_object_DC1044, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_buster_tex_graphics_object_DC1044, game_object);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_buster_tex_graphics_object_DC1044);
     }
     ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(1, game_object);
     ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_unknown4_graphics_object_DC1000, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_unknown2_graphics_object_DC0FF8, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_unknown4_graphics_object_DC1000, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_unknown2_graphics_object_DC0FF8, game_object);
     if (*ff7_externals.menu_is_small_viewport_320_240_DC130C == 1)
     {
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_blend_0_graphics_object_DC1050, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_blend_1_graphics_object_DC1054, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_blend_0_graphics_object_DC1050, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_blend_1_graphics_object_DC1054, game_object);
     }
     else
     {
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_0_graphics_object_DC0FDC, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_1_graphics_object_DC0FE0, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_1_graphics_object_DC0FE8, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_b_blend_1_graphics_object_DC0FE4, game_object);
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_d_blend_1_graphics_object_DC0FEC, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_a_blend_0_graphics_object_DC0FDC, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_a_blend_1_graphics_object_DC0FE0, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_1_graphics_object_DC0FE8, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_b_blend_1_graphics_object_DC0FE4, game_object);
+      ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_d_blend_1_graphics_object_DC0FEC, game_object);
     }
     ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(9, 1, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_text_box_quad_graphics_object_DC1008, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_text_box_quad_graphics_object_DC1008, game_object);
     ff7_externals.engine_gfx_setviewport_sub_66067A(*ff7_externals.menu_viewport_x_DC105C, *ff7_externals.menu_viewport_y_DC1060, *ff7_externals.menu_viewport_width_DC1064, *ff7_externals.menu_viewport_view_DC1068, game_object);
   }
 }
@@ -1561,7 +1561,7 @@ static void draw_jafonts(ff7_game_obj* game_object)
   };
 
   for (ff7_graphics_object* graphics_object : jafont_objects)
-    ff7_externals.engine_draw_graphics_object_66E641(graphics_object, game_object);
+    ff7_externals.engine_draw_graphics_object(graphics_object, game_object);
 }
 
 static void reset_jafonts()
@@ -1596,22 +1596,22 @@ ff7_game_obj* menu_draw_with_viewport_6FA12F_jp(unsigned int x, unsigned int y, 
 
   ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(0, game_object);
   ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_window_bg_graphics_object_DC0FF0, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_a_graphics_object_DC100C, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_b_graphics_object_DC1010, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_window_bg_graphics_object_DC0FF0, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_font_a_graphics_object_DC100C, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_font_b_graphics_object_DC1010, game_object);
   draw_jafonts(game_object);
   ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(1, game_object);
   ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_1_graphics_object_DC0FE0, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_b_blend_1_graphics_object_DC0FE4, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_1_graphics_object_DC0FE8, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_d_blend_1_graphics_object_DC0FEC, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_a_blend_1_graphics_object_DC0FE0, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_b_blend_1_graphics_object_DC0FE4, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_1_graphics_object_DC0FE8, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_d_blend_1_graphics_object_DC0FEC, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4, game_object);
   ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4);
   ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_font_a_graphics_object_DC100C);
   ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_font_b_graphics_object_DC1010);
@@ -1635,23 +1635,23 @@ ff7_game_obj* menu_draw_640x480_6FA347_jp()
 
   ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(0, game_object);
   ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_window_bg_graphics_object_DC0FF0, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_a_graphics_object_DC100C, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_b_graphics_object_DC1010, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_window_bg_graphics_object_DC0FF0, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_font_a_graphics_object_DC100C, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_font_b_graphics_object_DC1010, game_object);
   draw_jafonts(game_object);
   ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(1, game_object);
   ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4, game_object);
   ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_1_graphics_object_DC0FE0, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_b_blend_1_graphics_object_DC0FE4, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_1_graphics_object_DC0FE8, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_d_blend_1_graphics_object_DC0FEC, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_a_blend_1_graphics_object_DC0FE0, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_b_blend_1_graphics_object_DC0FE4, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_1_graphics_object_DC0FE8, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_d_blend_1_graphics_object_DC0FEC, game_object);
   ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_font_a_graphics_object_DC100C);
   ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_font_b_graphics_object_DC1010);
   reset_jafonts();
@@ -1678,54 +1678,54 @@ void battle_draw_menu_everything_6CEE84_jp()
     ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(0, game_object);
     ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
     ff7_externals.engine_gfx_draw_graphics_object_polygon_set_field_80_sub_660E6A(*ff7_externals.menu_unknown3_graphics_object_DC0FFC, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_window_bg_graphics_object_DC0FF0, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_blend_4_graphics_object_DC104C, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_blend_4_graphics_object_DC1048, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_window_bg_graphics_object_DC0FF0, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_blend_4_graphics_object_DC104C, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_font_blend_4_graphics_object_DC1048, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
     ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(1, game_object);
     ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_unknown4_graphics_object_DC1000, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_unknown5_graphics_object_DC1004, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_unknown2_graphics_object_DC0FF8, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_blend_0_graphics_object_DC1050, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_blend_1_graphics_object_DC1054, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_unknown4_graphics_object_DC1000, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_unknown5_graphics_object_DC1004, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_unknown2_graphics_object_DC0FF8, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_blend_0_graphics_object_DC1050, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_blend_1_graphics_object_DC1054, game_object);
   }
   else
   {
     ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(0, game_object);
     ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
     ff7_externals.engine_gfx_draw_graphics_object_polygon_set_field_80_sub_660E6A(*ff7_externals.menu_unknown3_graphics_object_DC0FFC, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_window_bg_graphics_object_DC0FF0, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_a_graphics_object_DC100C, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_b_graphics_object_DC1010, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_window_bg_graphics_object_DC0FF0, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_font_a_graphics_object_DC100C, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_font_b_graphics_object_DC1010, game_object);
 
     // jp
-    ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_1_graphics_object, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_2_graphics_object, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_3_graphics_object, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_4_graphics_object, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_5_graphics_object, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_6_graphics_object, game_object);
+    ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_1_graphics_object, game_object);
+    ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_2_graphics_object, game_object);
+    ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_3_graphics_object, game_object);
+    ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_4_graphics_object, game_object);
+    ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_5_graphics_object, game_object);
+    ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_6_graphics_object, game_object);
 
     ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(1, game_object);
     ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_unknown4_graphics_object_DC1000, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_unknown5_graphics_object_DC1004, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_unknown2_graphics_object_DC0FF8, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_0_graphics_object_DC0FDC, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_1_graphics_object_DC0FE0, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_1_graphics_object_DC0FE8, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_b_blend_1_graphics_object_DC0FE4, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_d_blend_1_graphics_object_DC0FEC, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_unknown4_graphics_object_DC1000, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_unknown5_graphics_object_DC1004, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_unknown2_graphics_object_DC0FF8, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_a_blend_0_graphics_object_DC0FDC, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_a_blend_1_graphics_object_DC0FE0, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_1_graphics_object_DC0FE8, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_b_blend_1_graphics_object_DC0FE4, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_d_blend_1_graphics_object_DC0FEC, game_object);
   }
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_text_box_quad_graphics_object_DC1008, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_text_box_quad_graphics_object_DC1008, game_object);
   ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_unknown4_graphics_object_DC1000);
   ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_unknown5_graphics_object_DC1004);
   ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4);
@@ -1735,7 +1735,7 @@ void battle_draw_menu_everything_6CEE84_jp()
 
 void battle_draw_graphics_object_and_jafonts(ff7_graphics_object* graphics_object, ff7_game_obj* game_object)
 {
-  ff7_externals.engine_draw_graphics_object_66E641(graphics_object, game_object);
+  ff7_externals.engine_draw_graphics_object(graphics_object, game_object);
 
   ff7_graphics_object* jafont_objects[] = {
     ff7_externals.menu_jafont_1_graphics_object,
@@ -1748,7 +1748,7 @@ void battle_draw_graphics_object_and_jafonts(ff7_graphics_object* graphics_objec
 
   for (ff7_graphics_object* graphics_object : jafont_objects)
   {
-    ff7_externals.engine_draw_graphics_object_66E641(graphics_object, game_object);
+    ff7_externals.engine_draw_graphics_object(graphics_object, game_object);
   }
 }
 
@@ -1933,30 +1933,30 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
       {
         case 0:
         case 2:
-          text_sub_41963C = ff7_externals.kernel_get_text_sub_41963C(0, a4, 8);
+          text_sub_41963C = reinterpret_cast<attack_name_fixed_buffer *>(ff7_externals.get_kernel_text(0, a4, 8));
           break;
         case 3:
-          text_sub_41963C = ff7_externals.kernel_get_text_sub_41963C(6u, a4, 8);
+          text_sub_41963C = reinterpret_cast<attack_name_fixed_buffer *>(ff7_externals.get_kernel_text(6u, a4, 8));
           break;
         case 4:
         case 8:
-          text_sub_41963C = ff7_externals.kernel_get_text_sub_41963C(4u, a4, 8);
+          text_sub_41963C = reinterpret_cast<attack_name_fixed_buffer *>(ff7_externals.get_kernel_text(4u, a4, 8));
           break;
         case 7:
           ff7_externals.sub_6D70F1(a4);
           text_sub_41963C = (attack_name_fixed_buffer *)ff7_externals.byte_DC3640;
           break;
         case 13:
-          text_sub_41963C = ff7_externals.kernel_get_text_sub_41963C(2u, a4, 8);
+          text_sub_41963C = reinterpret_cast<attack_name_fixed_buffer *>(ff7_externals.get_kernel_text(2u, a4, 8));
           break;
         case 20:
-          text_sub_41963C = ff7_externals.kernel_get_text_sub_41963C(3u, a4, 8);
+          text_sub_41963C = reinterpret_cast<attack_name_fixed_buffer *>(ff7_externals.get_kernel_text(3u, a4, 8));
           break;
         case 32:
-          text_sub_41963C = ff7_externals.kernel_get_text_sub_41963C(9u, a4, 8);
+          text_sub_41963C = reinterpret_cast<attack_name_fixed_buffer *>(ff7_externals.get_kernel_text(9u, a4, 8));
           break;
         default:
-          text_sub_41963C = ff7_externals.kernel_get_text_sub_41963C(0, 0, 8);
+          text_sub_41963C = reinterpret_cast<attack_name_fixed_buffer *>(ff7_externals.get_kernel_text(0, 0, 8));
           break;
       }
       break;
@@ -2206,7 +2206,7 @@ LABEL_31:
   else
   {
     if ( ff7_externals.g_get_do_render_menu_6CDBF2()
-      && !*ff7_externals.g_is_battle_paused_DC0E6C
+      && !*ff7_externals.g_is_battle_paused
       && common_externals.draw_graphics_object(8, (struct graphics_object*)(*ff7_externals.battle_graphics_data_ptr_9ADFD8)->btl_win_c_menu_border_graphics_object) )
     {
       v85 = (*ff7_externals.battle_graphics_data_ptr_9ADFD8)->btl_win_c_menu_border_graphics_object->vertex_transform;
@@ -2532,7 +2532,7 @@ LABEL_31:
     v113 = (*ff7_externals.battle_menu_data_DC3630)[menu_box_idx].menu_height - 12;
     if ( v118
       && ff7_externals.g_get_do_render_menu_6CDBF2()
-      && !*ff7_externals.g_is_battle_paused_DC0E6C
+      && !*ff7_externals.g_is_battle_paused
       && common_externals.draw_graphics_object(1, (struct graphics_object*)(*ff7_externals.battle_graphics_data_ptr_9ADFD8)->graphics_data_other_array[0]) )
     {
       v53 = (*ff7_externals.battle_graphics_data_ptr_9ADFD8)->graphics_data_other_array[0]->vertex_transform;
@@ -2565,7 +2565,7 @@ LABEL_31:
       v50->alpha_mask = -16777216;
     }
     if ( ff7_externals.g_get_do_render_menu_6CDBF2()
-      && !*ff7_externals.g_is_battle_paused_DC0E6C
+      && !*ff7_externals.g_is_battle_paused
       && common_externals.draw_graphics_object(1, (struct graphics_object*)(*ff7_externals.battle_graphics_data_ptr_9ADFD8)->box_color_graphics_object) )
     {
       v49 = (*ff7_externals.battle_graphics_data_ptr_9ADFD8)->box_color_graphics_object->vertex_transform;
@@ -2607,38 +2607,38 @@ void main_menu_draw_everything_maybe_6C0B91_jp()
   game_object = ff7_externals.engine_get_game_object_676578();
   ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(0, game_object);
   ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*(ff7_graphics_object**)ff7_externals.menu_objects, game_object);
-  ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_window_bg_graphics_object_DC0FF0, game_object);
+  ff7_externals.engine_draw_graphics_object(*(ff7_graphics_object**)ff7_externals.menu_objects, game_object);
+  ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_window_bg_graphics_object_DC0FF0, game_object);
   if ( *ff7_externals.menu_is_small_viewport_320_240_DC130C == 1 )
   {
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_blend_4_graphics_object_DC104C, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_blend_4_graphics_object_DC1048, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_blend_4_graphics_object_DC104C, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_font_blend_4_graphics_object_DC1048, game_object);
   }
   else
   {
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_a_graphics_object_DC100C, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_b_graphics_object_DC1010, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_font_a_graphics_object_DC100C, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_font_b_graphics_object_DC1010, game_object);
 
     // jp
-    ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_1_graphics_object, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_2_graphics_object, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_3_graphics_object, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_4_graphics_object, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_5_graphics_object, game_object);
-    ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_6_graphics_object, game_object);
+    ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_1_graphics_object, game_object);
+    ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_2_graphics_object, game_object);
+    ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_3_graphics_object, game_object);
+    ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_4_graphics_object, game_object);
+    ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_5_graphics_object, game_object);
+    ff7_externals.engine_draw_graphics_object(ff7_externals.menu_jafont_6_graphics_object, game_object);
   }
   ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(1, game_object);
   ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
   if ( *ff7_externals.menu_is_small_viewport_320_240_DC130C == 1 )
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_blend_0_graphics_object_DC1050, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_blend_0_graphics_object_DC1050, game_object);
   else
-    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_0_graphics_object_DC0FDC, game_object);
+    ff7_externals.engine_draw_graphics_object(*ff7_externals.menu_win_a_blend_0_graphics_object_DC0FDC, game_object);
   ff7_externals.engine_gfx_setviewport_sub_66067A(*ff7_externals.menu_viewport_x_DC105C, *ff7_externals.menu_viewport_y_DC1060, *ff7_externals.menu_viewport_width_DC1064, *ff7_externals.menu_viewport_view_DC1068, game_object);
 }
 

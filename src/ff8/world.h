@@ -15,4 +15,5 @@
 
 #pragma once
 
-void ff8_worldmap_model_depth_init();
+// World map fixes. Call once.
+void ff8_world_init();

@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <functional>
 #include <stack>
 #include <string>
 #include <vector>
@@ -56,11 +57,18 @@ public:
 			matchName(false)
 		{}
 		SoLoud::time offsetSeconds;
+		std::function<bool(SoLoud::time&)> getStartDelay;
 		SoLoud::time fadetime;
 		float targetVolume;
 		float relativeSpeed;
 		char format[12];
 		bool noIntro, sync, useNameAsFullPath, suppressOpeningSilence, matchName;
+	};
+
+	struct SynchronizedMusic
+	{
+		std::string name;
+		std::string remasteredArchivePath;
 	};
 
 	struct NxAudioEngineSFX
@@ -196,6 +204,7 @@ private:
 	void cleanOldAudioSources();
 	SoLoud::AudioSource* loadMusic(const char* name, bool useNameAsFullPath = false, const char* format = nullptr, bool suppressOpeningSilence = false);
 	void overloadPlayArgumentsFromConfig(char* name, uint32_t *id, MusicOptions *MusicOptions);
+	bool scheduleMusicStart(SoLoud::handle handle, const MusicOptions& options);
 	void backupMusic(int channelSource);
 	void restoreMusic(int channelDest, double stopTime = 0);
 	void resetMusicVolume(double time = 0);
@@ -259,7 +268,7 @@ public:
 	bool canPlayMusic(const char* name);
 	bool isMusicDisabled(const char* name);
 	bool playMusic(const char* name, uint32_t id, int channel, MusicOptions options = MusicOptions());
-	void playSynchronizedMusics(const std::vector<std::string>& names, uint32_t id, MusicOptions options = MusicOptions());
+	void playSynchronizedMusics(const std::vector<SynchronizedMusic>& musics, uint32_t id, MusicOptions options = MusicOptions());
 	void prioritizeMusicRestore(uint32_t id);
 	void stopMusic(double time = 0);
 	void stopMusic(int channel, double time = 0);

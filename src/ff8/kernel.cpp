@@ -15,6 +15,8 @@
 /****************************************************************************/
 
 #include "kernel.h"
+#include "kernel_magic.h"
+#include "kernel_ability.h"
 
 static constexpr uint32_t record_sizes[] = {
 	sizeof(ff8_kernel_battle_command),
@@ -74,4 +76,11 @@ std::span<const char> ff8_kernel_file::bytes(ff8_kernel_section section) const
 	uint32_t begin = header().section_offsets[index];
 	uint32_t end = index + 1 < static_cast<uint32_t>(ff8_kernel_section::count) ? header().section_offsets[index + 1] : size_;
 	return { data_ + begin, end - begin };
+}
+
+void ff8_kernel_init()
+{
+	// The magic hook also reads the item and battle command sections when kernel.bin loads
+	ff8_kernel_magic_init();
+	ff8_kernel_ability_init();
 }

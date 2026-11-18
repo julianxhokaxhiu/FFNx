@@ -1,0 +1,31 @@
+MSVC does not define __has_include_next and diagnoses its use even behind
+defined(__clang__) &&. Only evaluate it inside a Clang-only conditional,
+preserving both Clang's native header and MSVC's Interlocked fallback.
+
+diff --git a/include/compat/msvc/stdatomic.h b/include/compat/msvc/stdatomic.h
+--- a/include/compat/msvc/stdatomic.h
++++ b/include/compat/msvc/stdatomic.h
+@@ -35,7 +35,12 @@
+-#if defined(__clang__) && __has_include_next(<stdatomic.h>)
++#if defined(__clang__)
++#  if __has_include_next(<stdatomic.h>)
+    /* use the clang stdatomic.h with clang-cl*/
+ #  include_next <stdatomic.h>
+-#else /* ! stdatomic.h */
++#    define DAV1D_USE_CLANG_STDATOMIC_H
++#  endif
++#endif
++
++#ifndef DAV1D_USE_CLANG_STDATOMIC_H
+ 
+ #include <windows.h>
+ 
+@@ -74,6 +79,8 @@
+ #define atomic_fetch_add_explicit(p_a, inc, mo) atomic_fetch_add(p_a, inc)
+ 
+ #endif /* ! stdatomic.h */
++
++#undef DAV1D_USE_CLANG_STDATOMIC_H
+ 
+ #pragma warning(pop)
+ 

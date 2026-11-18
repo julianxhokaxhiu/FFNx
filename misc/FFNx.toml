@@ -199,8 +199,11 @@ external_audio_number_of_channels = 2
 # This flag will set the sample rate you want to use.
 # The number MUST be one of the known sample rates values ( 44100, 48000, etc. )
 # NOTE: 0 = Autodetect. It will use the sample rate set in your audio card and/or inherited through audio software enhancements suites.
+# Native-rate output is recommended. Explicit rates remain supported and are resampled when needed.
+# Output buffering is negotiated automatically using miniaudio's low-latency profile.
+# The selected audio API, rates, and buffering are logged at startup; enable trace_sfx for detailed backend diagnostics.
 # WARNING: This flag WILL impact the OVERALL external audio layer ( Music, SFX, Voice, Ambient, etc.)!
-external_audio_sample_rate = 44100
+external_audio_sample_rate = 0
 
 #[USE EXTERNAL SFX]
 # This flag will enable/disable the support of an enhanced audio layer to reproduce sounds in-game.

@@ -29,6 +29,7 @@
 #include <windows.h>
 #include <ddraw.h>
 #include <dinput.h>
+#include <dmusicc.h>
 
 #include "common_imports.h"
 #include "ff8/save_data.h"
@@ -1377,6 +1378,28 @@ struct SsigpuExecutionInstructionRect44 {
 
 // --------------- end of FF8 imports ---------------
 
+struct IDirectMusicSegment;
+struct IDirectMusicSegmentState;
+struct _DMUS_PMSG;
+
+// Native IDirectMusicPerformance COM prefix; method order must match the SDK.
+struct DMusic : IUnknown
+{
+	virtual HRESULT WINAPI Init(IDirectMusic**, IDirectSound*, HWND) = 0;
+	virtual HRESULT WINAPI PlaySegment(IDirectMusicSegment*, DWORD, int64_t, IDirectMusicSegmentState**) = 0;
+	virtual HRESULT WINAPI Stop(IDirectMusicSegment*, IDirectMusicSegmentState*, int32_t, DWORD) = 0;
+	virtual HRESULT WINAPI GetSegmentState(IDirectMusicSegmentState**, int32_t) = 0;
+	virtual HRESULT WINAPI SetPrepareTime(DWORD) = 0;
+	virtual HRESULT WINAPI GetPrepareTime(DWORD*) = 0;
+	virtual HRESULT WINAPI SetBumperLength(DWORD) = 0;
+	virtual HRESULT WINAPI GetBumperLength(DWORD*) = 0;
+	virtual HRESULT WINAPI SendPMsg(_DMUS_PMSG*) = 0;
+	virtual HRESULT WINAPI MusicToReferenceTime(int32_t, int64_t*) = 0;
+	virtual HRESULT WINAPI ReferenceToMusicTime(int64_t, int32_t*) = 0;
+	virtual HRESULT WINAPI IsPlaying(IDirectMusicSegment*, IDirectMusicSegmentState*) = 0;
+	virtual HRESULT WINAPI GetTime(int64_t*, int32_t*) = 0;
+};
+
 // memory addresses and function pointers from FF8.exe
 struct ff8_externals
 {
@@ -1655,6 +1678,7 @@ struct ff8_externals
 	uint32_t sub_53E6B0;
 	uint32_t sub_4023D0;
 	uint32_t sub_53C750;
+	uint32_t worldmap_no_fog_filter_polygons_in_block;
 	uint32_t sub_544630;
 	uint32_t sub_548080;
 	uint32_t sub_549E80;
@@ -1753,6 +1777,7 @@ struct ff8_externals
 	uint32_t load_midi_segment_from_id;
 	uint32_t play_midi_segments;
 	uint32_t load_and_play_midi_segment;
+	DMusic** dmusic_performance;
 	uint32_t stop_midi_segments;
 	uint32_t volume_update;
 	uint32_t volume_music_update;
@@ -1772,6 +1797,8 @@ struct ff8_externals
 	uint32_t sub_470250;
 	uint32_t *ssigpu_callbacks_1;
 	uint32_t *ssigpu_callbacks_2;
+	uint32_t *ssigpu_callbacks_3;
+	uint32_t *ssigpu_packet_in_pixels_dword_1CA89FC;
 	uint32_t sub_462AD0;
 	uint32_t sub_462DF0;
 	uint32_t sub_461220;
@@ -1858,8 +1885,6 @@ struct ff8_externals
 	uint32_t init_pause_menu;
 	int16_t *pause_menu_window_rect;
 	ff8_draw_menu_sprite_texture_infos *(*draw_text_sub_4A1020)(int, ff8_draw_menu_sprite_texture_infos *, int, int, const char *, int);
-	ff8_draw_menu_sprite_texture_infos *(*draw_window_frame_sub_4B6A60)(int, ff8_draw_menu_sprite_texture_infos *, const int16_t *, uint32_t);
-	ff8_draw_menu_sprite_texture_infos *(*draw_window_background_sub_4B6A80)(int, ff8_draw_menu_sprite_texture_infos *, const int16_t *, uint32_t, int);
 	uint32_t sub_49BB30;
 	uint32_t sub_49BAB0;
 	uint32_t sub_49B300;
@@ -1982,6 +2007,10 @@ struct ff8_externals
 	uint32_t sub_502380;
 	uint32_t battle_actor_sound;
 	uint32_t battle_actor_sound_3d;
+	uint32_t battle_actor_sound_pan;
+	int (*project_screen_position)(void *, int16_t *, int *, int *);
+	uint32_t field_footstep_sound;
+	uint32_t battle_status_countdown;
 	uint32_t (*battle_actor_sounds)[7];
 	uint32_t sub_50A790;
 	uint32_t sub_50B2A0;
@@ -2024,6 +2053,7 @@ struct ff8_externals
 	uint32_t battle_menu_draw_inline_command_list_sub_4BCCD0;
 	uint32_t battle_draw_window_box_sub_4A7510;
 	ff8_battle_ui_context **battle_ui_context_dword_1D6D490;
+	uint32_t (*submit_primitive_with_depth)(int *, uint32_t *, int, int, int, int);
 	void (*battle_compute_window_scale_rect_sub_4A7440)(int, int16_t *, int16_t *);
 	uint32_t *(*battle_emit_relative_draw_area_sub_4A73A0)(int *, uint32_t *, int16_t *);
 	uint32_t *(*battle_emit_full_draw_area_sub_4A7630)(int *, uint32_t *);
@@ -2035,7 +2065,6 @@ struct ff8_externals
 	uint32_t battle_pause_sub_4CD140;
 	uint32_t *is_alternative_pause_menu;
 	uint32_t *pause_menu_option_state;
-	void *battle_menu_state;
 	uint32_t battle_pause_window_sub_4CD350;
 	int16_t *battle_pause_window_rect;
 	uint32_t sub_4A7210;

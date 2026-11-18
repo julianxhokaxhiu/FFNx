@@ -95,42 +95,44 @@ namespace ff7::world
         };
 
         std::map<const indexed_primitive*, ModelLighting> model_lighting;
+        std::map<const indexed_primitive*, field::kawai::Vector> model_color_offsets;
+
+        int add_model_color(const bgra_color* color, hrc_data* model)
+        {
+            const auto result = ff7_externals.world_add_model_color(color, model);
+            if (!model) return result;
+            const field::kawai::Vector offset = {
+                std::round(color->r * 255), std::round(color->g * 255), std::round(color->b * 255)};
+            for (uint32_t i = 0; i < model->num_bones; ++i)
+            {
+                const auto& bone = model->bones[i];
+                if (!bone.rsd_array) continue;
+                for (uint32_t part = 0; part < bone.num_rsd; ++part)
+                {
+                    auto* rsd = bone.rsd_array[part].rsd_data;
+                    auto* set = rsd ? rsd->polygon_set : nullptr;
+                    if (!set || !set->light || !set->indexed_primitives) continue;
+                    for (uint32_t group = 0; group < set->numgroups; ++group)
+                    {
+                        auto* primitive = set->indexed_primitives[group];
+                        if (primitive) model_color_offsets[primitive] = offset;
+                    }
+                }
+            }
+            return result;
+        }
 
         void prepare_model_lighting(hrc_data* model, anim_header* animation)
         {
-            if (!model || !animation || !animation->num_frames || !animation->anim_frames || !model->bone_list ||
-                (animation->use_matrix_array && !animation->matrix_array))
-            {
-                ffnx_unexpected_once("Cannot prepare world model lighting: missing initial animation, matrices or skeleton\n");
-                return;
-            }
-            auto* frame = &animation->anim_frames[0];
-            const bool alternate = model->field_A4 && *model->field_A4;
-            auto root_animation = alternate ? ff7_externals._root_animation : ff7_externals.root_animation;
-            auto frame_animation = alternate ? ff7_externals._frame_animation : ff7_externals.frame_animation;
-            std::vector<matrix> stack(1);
-            if (animation->use_matrix_array) stack.back() = animation->matrix_array[0];
-            else root_animation(&stack.back(), frame, animation, model);
+            std::vector<matrix> pose;
+            if (!get_model_initial_pose(model, animation, pose)) return;
             list_node* node;
             LIST_FOR_EACH(node, model->bone_list)
             {
                 auto* entry = reinterpret_cast<bone_list_member*>(&node->object);
-                if (entry->bone_type == 2)
-                {
-                    stack.pop_back();
-                    continue;
-                }
                 if (entry->bone_type != 1) continue;
                 auto* bone = &model->bones[entry->bone_index];
-                vector3<float> zero{};
-                auto* rotation = entry->bone_index < animation->num_bones ? &frame->data[entry->bone_index] : &zero;
-                matrix local, posed;
-                if (animation->use_matrix_array)
-                    local = animation->matrix_array[entry->bone_index + 1];
-                else
-                    frame_animation(entry->bone_index, &local, rotation, frame, animation, bone, model);
-                multiply_matrix(&local, &stack.back(), &posed);
-                stack.push_back(posed);
+                const auto& posed = pose[entry->bone_index];
                 if (!bone->rsd_array) continue;
                 for (uint32_t part = 0; part < bone->num_rsd; ++part)
                 {
@@ -220,6 +222,7 @@ namespace ff7::world
     void forget_model_lighting(const indexed_primitive* primitive)
     {
         model_lighting.erase(primitive);
+        model_color_offsets.erase(primitive);
     }
 
     bool draw_model_with_psx_lighting(indexed_primitive* primitive, polygon_data* polygon, uint32_t clip)
@@ -233,9 +236,13 @@ namespace ff7::world
         if (lighting.light)
         {
             const auto tint = lighting.light->color;
+            const auto offset = model_color_offsets.find(primitive);
             for (size_t i = 0; i < vertices.size(); ++i)
             {
                 vertices[i].color.color = lighting.colors[i];
+                // World recoloring adds signed RGB offsets after the initial-pose lighting.
+                if (offset != model_color_offsets.end())
+                    vertices[i].color.color = field::kawai::add_color(vertices[i].color.color, offset->second);
                 if (lighting.light->flags & 4)
                 {
                     vertices[i].color.r = vertices[i].color.r * tint.r / 255;
@@ -466,6 +473,7 @@ namespace ff7::world
             replace_call_function((uint32_t)ff7_externals.world_update_terrain_lighting + 0x67, get_distance_to_light_point);
             replace_call_function(ff7_externals.world_draw_all_3d_model_74C6B0 + 0x46, draw_world_model);
             replace_call_function(ff7_externals.world_draw_all_3d_model_74C6B0 + 0x103, draw_world_model);
+            replace_call_function(ff7_externals.world_recolor_model + 0xA9, add_model_color);
             replace_call_function(ff7_externals.world_submit_draw_bg_meshes_75F68C + 0xEB3, calculate_terrain_lighting);
             replace_call_function(ff7_externals.world_submit_draw_bg_meshes_75F68C + 0xEDE, calculate_terrain_lighting);
             replace_call_function(ff7_externals.world_submit_draw_bg_meshes_75F68C + 0xF09, calculate_terrain_lighting);

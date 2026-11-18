@@ -121,9 +121,9 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->menu_fade)) defer = true;
 		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->blend_window_bg)) defer = true;
 
-		if(mode == MODE_FIELD)
+		if(mode == MODE_FIELD || mode == MODE_WORLDMAP)
 		{
-			// always z-sort vanilla messages
+			// Field and world share the dialog renderer; keep native windows ordered with external prompts.
 			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->window_bg)) force_defer = true;
 
 			// fix timer messages when window is normal

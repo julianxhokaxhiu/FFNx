@@ -1199,7 +1199,7 @@ ff8_draw_menu_sprite_texture_infos *ff8_fonts_parse_and_render_battle_texts_2(
     int16_t current_color
 ) {
     DWORD *aicon_sp1_data = ((DWORD*(*)())ff8_externals.get_icon_sp1_data)();
-    DWORD *battle_menu_state = (DWORD *)ff8_externals.battle_menu_state;
+    DWORD *battle_menu_state = (DWORD *)ff8_externals.battle_ui_context_dword_1D6D490;
 
     uint32_t v14 = *(DWORD *)((char *)aicon_sp1_data + uint16_t(aicon_sp1_data[*((uint16_t *)battle_menu_state + 34) + 1]));
     uint32_t field8 = (*battle_menu_state & 0xFF000000) | 0x808080 | (((v14 >> 26) & 2) << 24);

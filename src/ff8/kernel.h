@@ -906,3 +906,6 @@ private:
 	uint32_t size_;
 	bool valid_;
 };
+
+// kernel.bin extensions: more magic, abilities, items and battle commands. Call once.
+void ff8_kernel_init();

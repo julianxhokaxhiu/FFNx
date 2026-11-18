@@ -228,7 +228,7 @@ ff8_draw_menu_sprite_texture_infos *alternate_pause_battle(int a1, ff8_draw_menu
 
 	if (nxVibrationEngine.canRumble())
 	{
-		uint16_t keyon = *(uint16_t *)(*(int *)ff8_externals.battle_menu_state + 0x14);
+		uint16_t keyon = *(uint16_t *)((uint8_t *)*ff8_externals.battle_ui_context_dword_1D6D490 + 0x14);
 		uint8_t port = 0;
 		int vibrate_state = ((int(*)(uint8_t))ff8_externals.vibration_get_is_enabled)(port);
 

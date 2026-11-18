@@ -166,7 +166,10 @@ static uint16_t field_fade_screen()
 {
 	const uint16_t fade_type = ff7_externals.modules_global_object->fade_type;
 	const bool subtractive = fade_type == 2 || fade_type == 12 || (fade_type == 1 && !*field_system_fade);
-	field_subtractive_fade_color = 0;
+	const uint16_t field_id = *common_externals.current_field_id;
+	const bool keep_black_overlay = fade_type == 0 && field_subtractive_fade_field_id == field_id &&
+		(field_subtractive_fade_color & 0xFFFFFF) == 0xFFFFFF;
+	if (!keep_black_overlay) field_subtractive_fade_color = 0;
 	const uint16_t result = field_fade_screen_original();
 
 	if (subtractive)
@@ -175,9 +178,9 @@ static uint16_t field_fade_screen()
 		// NFADE supplies the subtraction color directly and interpolates RGB, not opacity.
 		field_subtractive_fade_color = ff7_subtractive_fade_color(fade.fade_r, fade.fade_g, fade.fade_b,
 			fade_type == 12 ? 255 : static_cast<int16_t>(fade.fade_adjustment), fade_type != 12);
-		field_subtractive_fade_field_id = *common_externals.current_field_id;
-		// Keep native timing and state changes, but suppress both PC tinting paths.
-		*field_final_fade_color = 0xFFFFFFFF;
+		field_subtractive_fade_field_id = field_id;
+		// Preserve the native black sentinel for MAPJUMP's already-faded handoff.
+		*field_final_fade_color = (field_subtractive_fade_color & 0xFFFFFF) == 0xFFFFFF ? 0xFF000000 : 0xFFFFFFFF;
 		field_fade_draw_flags[0] = 0;
 	}
 
@@ -251,7 +254,7 @@ void field_init()
 		// Proxy the window calculation formula so we can offset windows vertically
 		replace_call_function(common_externals.execute_opcode_table[0x50] + 0x174, field_calc_window_pos);
 
-		field_fade_screen_original = (uint16_t(*)())ff7_externals.field_fade_screen_sub_63B84B;
+		field_fade_screen_original = (uint16_t(*)())ff7_externals.field_handle_screen_fading;
 		field_draw_fade_original = (void(*)(ff7_game_obj*))get_relative_call(ff7_externals.field_draw_everything, 0x369);
 		field_final_fade_color = (uint32_t*)get_absolute_value(ff7_externals.field_calc_fade_color_sub_63AE66, 0x326);
 		field_fade_draw_flags = (uint32_t*)get_absolute_value((uint32_t)field_draw_fade_original, 0xB);

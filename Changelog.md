@@ -2,23 +2,45 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.25.2...master
 
+## Common
+
+- Audio: Reduce latency issues and introduce frequency autodetection ( https://github.com/julianxhokaxhiu/FFNx/issues/1075 )
+- Rendering: Vulkan now supports HDR10 rendering
+
 ## FF7
 
 - Core: Add support for the PSX Star Field loop in post-credits, instead of closing the game. Thanks to the https://github.com/Xeeynamo/ff7-decomp project for the PSX source.
 - Core: World rendering now matches the PSX edition of the game when run vanilla
 - Core: Fix KAWAI TRNSP behavior when using lighting on the GPU, instead of on the CPU, preventing a double lighting bug
+- Core: Fix model flickering after ordinary KAWAI LIGHT fades finish by settling both packet buffers without delaying scripts ( https://github.com/julianxhokaxhiu/FFNx/issues/1096 )
+- Core: Restore Cloud's PSX KAWAI LIGHT strobing during the Lifestream sequence by preserving authored fade steps and intentional packet-buffer color differences ( https://github.com/julianxhokaxhiu/FFNx/issues/1097 )
+- Core: Fix Universal Button Prompts rendering incorrectly in World game mode
+- Core: Fix Safer Sephiroth missing eyes and mouth in death animation ( https://github.com/julianxhokaxhiu/FFNx/issues/1057 )
+- Core: Fix field transitions and background rendering, for eg. Whirlwind Maze illusion ( https://github.com/julianxhokaxhiu/FFNx/issues/1103 )
 - Core: gltf animations no longer need one key per game frame; idles loop on their own and animation switches blend ( https://github.com/julianxhokaxhiu/FFNx/pull/1078 )
+- Renderer: Restore PSX-style field facial lighting and texture modulation across all `game_lighting` modes, including scripted colors and fades ( https://github.com/julianxhokaxhiu/FFNx/issues/1095 )
 - Cheats: Add support to skip credits using the Skip FMV cheat shortcut
 
 ## FF8
 
 - Core: Fix battle menu windows disappearing for a few frames while another window opens, like the Magic or Item list when choosing an ally target ( https://github.com/julianxhokaxhiu/FFNx/pull/1076 )
+- Core: Fix battle sounds playing almost all on the right and field footsteps jumping from one side to the other, they are panned from the screen position like on PSX ( https://github.com/julianxhokaxhiu/FFNx/pull/1084 )
+- Core: Fix Eden's summon showing the pit and the sky in flat blue for one frame: a triangle with a vertex far off screen covered the screen, the PS1 never draws it ( https://github.com/julianxhokaxhiu/FFNx/pull/1091 )
+- Core: Fix lightning and acid streams drawn as thin or crossed lines (Quezacotl, Breath, Electric Discharge, Gastric Juice, Electrocute, Acid, Saliva, Dissolving Acid, Mega Spark, Mega Pulse Cannon, X-ATM092, Ultimecia), they are as wide as on PSX ( https://github.com/julianxhokaxhiu/FFNx/pull/1085 )
 - Core: Fix Scan not saving scanned enemies in the vanilla savemap field when no loose scene.out is found ( https://github.com/julianxhokaxhiu/FFNx/issues/1077 )
+- Core: Fix the Doom countdown drawn lower than on PSX and overlapping the second status countdown above battle models ( https://github.com/julianxhokaxhiu/FFNx/pull/1086 )
 - Core: Fix the missing light on Cure, Cura, Potion and Hi-Potion, the missing swirl on Hypnotize, and the missing flash on Boko's ChocoBocle ( https://github.com/julianxhokaxhiu/FFNx/pull/1083 )
+- Core: Fix the missing sword slash on Gilgamesh's Masamune, the Eden sparkles drawn off screen and the long spikes Magic Summon throws across the screen ( https://github.com/julianxhokaxhiu/FFNx/pull/1088 )
+- Core: Fix the world map check that lifts the camera when terrain hides the player: it tested a point near the top-left corner of the screen instead of the player ( https://github.com/julianxhokaxhiu/FFNx/pull/1089 )
 - Direct mode: Add the chunk feature for the character and weapon battle files (dXcNNN.dat, dXwNNN.dat), see [Direct mode](docs/mods/direct_mode.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/1074 )
 - Renderer: Preserve PSX texture-page coordinates, fixing battle effects sampling past their image edges, including Tonberry's Doink bubble ( https://github.com/julianxhokaxhiu/FFNx/issues/1073 )
 - Renderer: Restore world-map UV precision automatically without affecting unrelated polygons. The `ff8_fix_uv_coords_precision` option is no longer needed and is ignored.
 - Renderer: Fix UV gemotry for Roads and Rail tracks in World
+- Renderer: Keep world-map rail textures aligned when rotating the camera or pausing, with or without texture mods ( https://github.com/julianxhokaxhiu/FFNx/issues/1100 )
+
+## FF8 Remastered
+
+- Core: Fix Garden Festival background music not playing ( https://github.com/julianxhokaxhiu/FFNx/issues/1094 )
 
 # 1.25.2
 

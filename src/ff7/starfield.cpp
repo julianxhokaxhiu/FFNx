@@ -280,8 +280,8 @@ void init(ff7_game_obj *game_object)
 {
     const auto dispatcher = reinterpret_cast<uint32_t>(game_object->engine_loop_obj.main_loop);
     const uint32_t credits_exit_address = get_absolute_value(dispatcher, 0x4DF);
-    if (get_absolute_value(dispatcher, 0x5DF) != credits_exit_address
-        || get_absolute_value(dispatcher, 0x5CA) != ff7_externals.credits_main_loop)
+    if (*reinterpret_cast<const uint32_t *>(dispatcher + 0x5DF) != credits_exit_address
+        || *reinterpret_cast<const uint32_t *>(dispatcher + 0x5CA) != ff7_externals.credits_main_loop)
     {
         ffnx_error("Post-credits starfield disabled: unexpected ending dispatcher hooks\n");
         return;

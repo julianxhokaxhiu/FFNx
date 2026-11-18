@@ -1,0 +1,50 @@
+/****************************************************************************/
+//    Copyright (C) 2026 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2026 HobbitDur                                          //
+//                                                                          //
+//    This file is part of FFNx                                             //
+//                                                                          //
+//    FFNx is free software: you can redistribute it and/or modify          //
+//    it under the terms of the GNU General Public License as published by  //
+//    the Free Software Foundation, either version 3 of the License         //
+//                                                                          //
+//    FFNx is distributed in the hope that it will be useful,               //
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of        //
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         //
+//    GNU General Public License for more details.                          //
+/****************************************************************************/
+
+// Game sound fixes
+
+#include "sound.h"
+
+#include "../ff8.h"
+#include "../patch.h"
+#include "../globals.h"
+
+#include <stdint.h>
+
+// Battle: screen pan -> projection. Field: footstep sound -> projection
+#define BATTLE_PAN_PROJECT 0x1D
+#define FIELD_FOOTSTEP_PROJECT 0x6D
+
+// Battle sounds and field footsteps are panned from the screen X of their source, but the PC GTE
+// returns it in eighths of a pixel where the PSX returned pixels:
+// - battle: pan = 96 * (x - 160) / 320 + 128, clamped to 80..175, so almost every sound plays on the right
+// - field footsteps: pan = x / 4 + 128, clamped to -512..508 first, so steps jump from one side to the other
+// The projection calls get the coordinates back in pixels, like the game's own divided-by-8 projection does.
+static int project_pixels(void *position, int16_t *sxy, int *p, int *flag)
+{
+	const int otz = ff8_externals.project_screen_position(position, sxy, p, flag);
+
+	sxy[0] = int16_t(sxy[0] >> 3);
+	sxy[1] = int16_t(sxy[1] >> 3);
+
+	return otz;
+}
+
+void ff8_sound_init()
+{
+	replace_call(ff8_externals.battle_actor_sound_pan + BATTLE_PAN_PROJECT, project_pixels);
+	replace_call(ff8_externals.field_footstep_sound + FIELD_FOOTSTEP_PROJECT, project_pixels);
+}

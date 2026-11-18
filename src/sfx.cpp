@@ -729,7 +729,7 @@ static void ff7_sfx_fix_volume_curve()
 
 	for (const auto address : lookup_addresses)
 	{
-		if (get_absolute_value(address, 0) != original_table)
+		if (*reinterpret_cast<const uint32_t *>(address) != original_table)
 		{
 			ffnx_error("%s: Unexpected SFX volume lookup at 0x%08X; volume curve fix not applied\n", __func__, address);
 			return;

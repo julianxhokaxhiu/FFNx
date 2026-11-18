@@ -172,13 +172,11 @@ void Renderer::setCommonUniforms()
     };
     if (uniform_log) ffnx_trace("%s: FSMoreMovieFlags XYZW(chroma location %f, reserved %f, reserved %f, reserved %f)\n", __func__, internalState.FSMoreMovieFlags[0], internalState.FSMoreMovieFlags[1], internalState.FSMoreMovieFlags[2], internalState.FSMoreMovieFlags[3]);
 
-    internalState.gameLightingFlags = {
-        (float)game_lighting,
-        NULL,
-        NULL,
-        NULL,
-    };
-    if (uniform_log) ffnx_trace("%s: gameLightingFlags XYZW(game_lighting %f, NULL, NULL, NULL)\n", __func__, internalState.gameLightingFlags[0]);
+    internalState.gameLightingFlags[0] = (float)game_lighting;
+    internalState.gameLightingFlags[1] = !ff8 && current_state.psx_field_facial ? 1.0f : 0.0f;
+    internalState.gameLightingFlags[3] = 0;
+    if (uniform_log) ffnx_trace("%s: gameLightingFlags XYZW(game_lighting %f, psxFieldFacial %f, useGameLighting %f, NULL)\n",
+        __func__, internalState.gameLightingFlags[0], internalState.gameLightingFlags[1], internalState.gameLightingFlags[2]);
 
     setUniform(RendererUniform::FS_ALPHA_FLAGS, internalState.FSAlphaFlags.data());
     setUniform(RendererUniform::FS_MISC_FLAGS, internalState.FSMiscFlags.data());
@@ -220,9 +218,9 @@ void Renderer::setTextureFlagsUniforms()
         (float)(internalState.texHandlers[RendererTextureSlot::TEX_NML].idx != bgfx::kInvalidHandle),
         (float)(internalState.texHandlers[RendererTextureSlot::TEX_PBR].idx != bgfx::kInvalidHandle),
         (float)(specularIblTexture.idx != bgfx::kInvalidHandle && diffuseIblTexture.idx != bgfx::kInvalidHandle && envBrdfTexture.idx != bgfx::kInvalidHandle),
-        NULL
+        (float)internalState.bIsExternalTexture
     };
-    if (uniform_log) ffnx_trace("%s: FSTexFlags XYZW(isNmlTextureLoaded %f, isPbrTextureLoaded %f, isIblTextureLoaded %f, NULL)\n", __func__, internalState.FSTexFlags[0], internalState.FSTexFlags[1], internalState.FSTexFlags[2]);
+    if (uniform_log) ffnx_trace("%s: FSTexFlags XYZW(isNmlTextureLoaded %f, isPbrTextureLoaded %f, isIblTextureLoaded %f, isExternalTexture %f)\n", __func__, internalState.FSTexFlags[0], internalState.FSTexFlags[1], internalState.FSTexFlags[2], internalState.FSTexFlags[3]);
 
     setUniform(RendererUniform::FS_TEX_FLAGS, internalState.FSTexFlags.data());
 }
@@ -2725,6 +2723,7 @@ void Renderer::setGameLightData(light_data* lightdata)
     {
         useGameLighting = false;
     }
+    internalState.gameLightingFlags[2] = useGameLighting ? 1.0f : 0.0f;
 
     if (useGameLighting)
     {
@@ -2818,5 +2817,16 @@ void Renderer::setGameLightData(light_data* lightdata)
         internalState.gameScriptedLightColor[0] = 1.0;
         internalState.gameScriptedLightColor[1] = 1.0;
         internalState.gameScriptedLightColor[2] = 1.0;
+    }
+    if (!ff8 && current_state.psx_field_facial)
+    {
+        for (size_t i = 0; i < 3; ++i)
+            internalState.gameScriptedLightColor[i] = current_state.psx_field_facial_filter[i];
+        if (current_state.kawai_effect.kind == ff7::field::kawai::Kind::color_offset)
+        {
+            for (size_t i = 0; i < 3; ++i)
+                internalState.kawaiColorOffset[i] = std::floor(current_state.kawai_effect.color[i]) / 255.0f;
+            internalState.kawaiColorOffset[3] = 1;
+        }
     }
 }
