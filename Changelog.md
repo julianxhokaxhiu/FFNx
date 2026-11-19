@@ -23,6 +23,7 @@
 
 ## FF8
 
+- Core: Add an option to run the battle effects (spells, GF summons, limit breaks, items, enemy attacks) from FFNx's own C++ code instead of the game's, off by default, see [Native battle effects](docs/ff8/battle_effects.md)
 - Core: Fix battle menu windows disappearing for a few frames while another window opens, like the Magic or Item list when choosing an ally target ( https://github.com/julianxhokaxhiu/FFNx/pull/1076 )
 - Core: Fix battle sounds playing almost all on the right and field footsteps jumping from one side to the other, they are panned from the screen position like on PSX ( https://github.com/julianxhokaxhiu/FFNx/pull/1084 )
 - Core: Fix Eden's summon showing the pit and the sky in flat blue for one frame: a triangle with a vertex far off screen covered the screen, the PS1 never draws it ( https://github.com/julianxhokaxhiu/FFNx/pull/1091 )

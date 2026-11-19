@@ -28,6 +28,7 @@
 #include "globals.h"
 #include "patch.h"
 #include "ff8/battle/effects.h"
+#include "ff8/battle/fx/fx_address.h"
 
 #include "log.h"
 
@@ -1241,6 +1242,9 @@ void ff8_find_externals()
 
 	common_externals.current_triangle_id = 0x0;
 	common_externals.field_game_moment = (WORD*)(ff8_externals.field_vars_stack_1CFE9B8 + 0x100); //0x1CFEAB8
+
+	// Native battle effects: the game addresses they use, found before any patch changes the game code
+	if (ff8_battle_fx_native) ff8fx::address_init();
 }
 
 void ff8_data()

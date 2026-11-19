@@ -24,6 +24,7 @@
 #include "battle/anim_set.h"
 #include "battle/ui.h"
 #include "battle/effects.h"
+#include "battle/fx/fx_port.h"
 
 void ff8_battle_init()
 {
@@ -37,4 +38,6 @@ void ff8_battle_init()
 	ff8_battle_anim_set_init();
 	ff8_battle_ui_init();
 	ff8_battle_effects_init();
+	// Battle effect code run from C++ (ff8_battle_fx_native), after the effect fixes above have read the game code
+	ff8fx::install();
 }

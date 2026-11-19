@@ -792,6 +792,24 @@ ff8_use_gamepad_icons = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff8_always_capture_input = false
 
+# Runs FFNx's C++ version of the battle effect code (GF summons, spells, enemy attacks)
+# instead of the game's own code. It draws the same frames as the game.
+# By default this is false
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff8_battle_fx_native = false
+
+# For testing ff8_battle_fx_native: runs the game's own code next to it on every effect tick,
+# keeps the game's result on any difference and logs it. Costs CPU time during effects.
+# By default this is false
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff8_battle_fx_verify = false
+
+# For testing ff8_battle_fx_verify: on the first difference of each effect, writes the compared
+# memory to ffnx_fx_dumps\*.bin and, for the first 3 of the session, a full memory dump (large).
+# By default this is false
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff8_battle_fx_dump = false
+
 # FPS Limiter
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This flag will overwrite the internal FPS limiter of the game.
