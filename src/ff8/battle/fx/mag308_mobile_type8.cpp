@@ -54,7 +54,7 @@ namespace mobile308
 	static constexpr game::Id COLOUR_Target = game::unk_250754C;
 	static const void *SOUND_Voice() { return (const void *)game_addr(game::unk_102590C); }
 	static const void *SOUND_Start() { return (const void *)game_addr(game::unk_1025908); }
-	static constexpr game::Id SCRIPTS[3] = { game::unk_102E5A0, game::unk_102E734, game::unk_102E834 };
+	static constexpr game::Id SCRIPTS[3] = { game::g_Mag308_BoneScripts, game::unk_102E734, game::unk_102E834 };
 	static const uint32_t MAIN = 0x1B3C;
 	static const uint32_t MORPH = 0x22A18;
 	static const uint32_t STREAM_STATE = 0x29D0, STREAM_DST = 0x2A18;

@@ -14905,7 +14905,7 @@ namespace ff8fx
 		inline constexpr Id TransformWorldCoordinateToProjectedSpace{ 9220 };
 		inline constexpr Id unk_1005E64{ 4841 };
 		inline constexpr Id unk_10168C0{ 14570 };
-		inline constexpr Id unk_101AA50{ 11082 };
+		inline constexpr Id g_Mag314_BoneScripts{ 11082 };
 		inline constexpr Id unk_101AA7C{ 11083 };
 		inline constexpr Id unk_101AAB0{ 11084 };
 		inline constexpr Id unk_101AADC{ 11085 };
@@ -14946,7 +14946,7 @@ namespace ff8fx
 		inline constexpr Id unk_10262F8{ 15458 };
 		inline constexpr Id unk_102A400{ 14574 };
 		inline constexpr Id unk_102E3A0{ 17926 };
-		inline constexpr Id unk_102E5A0{ 7605 };
+		inline constexpr Id g_Mag308_BoneScripts{ 7605 };
 		inline constexpr Id unk_102E734{ 7606 };
 		inline constexpr Id unk_102E834{ 7607 };
 		inline constexpr Id unk_102E94C{ 12836 };

@@ -18,6 +18,8 @@
 #include "fx_params.h"
 #include "fx_model_sweep.h"
 
+#include <windows.h>
+
 namespace ff8fx
 {
 namespace abadon314
@@ -51,7 +53,7 @@ namespace abadon314
 	static const uint32_t STREAM_STATE = 0x56A8, STREAM_DST = 0x56F0;
 	static const uint32_t ARENA_A = 0x56F0, ARENA_B = 0x156F0;
 	static const int16_t PAGE_MOVE = 0xD, CLUT_MOVE = 0x314;
-	static constexpr game::Id SCRIPTS[29] = { game::unk_101AA50, game::unk_101AAB0, game::unk_101AA7C, game::unk_101AADC, game::unk_101AB08, game::unk_101AB34, game::unk_101AB64, game::unk_101AB94, game::unk_101ABC0, game::unk_101ABEC, game::unk_101AC18, game::unk_101AC38, game::unk_101AC64, game::unk_101AC90, game::unk_101ACB0, game::unk_101ACDC, game::unk_101AD08, game::unk_101AD28, game::unk_101AD58, game::unk_101AD88, game::unk_101ADB4, game::unk_101ADE0, game::unk_101AE0C, game::unk_101AE2C, game::unk_101AE58, game::unk_101AE84, game::unk_101AEA4, game::unk_101AED0, game::unk_101AEFC };
+	static constexpr game::Id SCRIPTS[29] = { game::g_Mag314_BoneScripts, game::unk_101AAB0, game::unk_101AA7C, game::unk_101AADC, game::unk_101AB08, game::unk_101AB34, game::unk_101AB64, game::unk_101AB94, game::unk_101ABC0, game::unk_101ABEC, game::unk_101AC18, game::unk_101AC38, game::unk_101AC64, game::unk_101AC90, game::unk_101ACB0, game::unk_101ACDC, game::unk_101AD08, game::unk_101AD28, game::unk_101AD58, game::unk_101AD88, game::unk_101ADB4, game::unk_101ADE0, game::unk_101AE0C, game::unk_101AE2C, game::unk_101AE58, game::unk_101AE84, game::unk_101AEA4, game::unk_101AED0, game::unk_101AEFC };
 
 	inline uint32_t MagicTextureOff() { return fn<uint32_t (__cdecl *)()>(game_addr(game::Magic_TextureOFF_ToEAX1))(); }
 	inline void StreamLoad(int32_t id, uint32_t dst, int32_t kind) { fn<void (__cdecl *)(int32_t, uint32_t, int32_t)>(game_addr(game::Stream_QueueLoad))(id, dst, kind); }
@@ -1128,6 +1130,39 @@ namespace abadon314
 		if (r->counter > 0xE4) return StreamPending(1) ? TASK_END : 0;
 		r->counter++;
 		return 0;
+	}
+
+	// For the verifier: the shard sweep marks broken polygons (bit 0x80 of byte 0xF) inside the caster's model,
+	// so the model's polygon block is effect state. Same walk as ShardModel, every object.
+	void ModelPolyRegions(void (*add)(uint32_t addr, uint32_t size, const char *name))
+	{
+		uint8_t *ent = Caster();
+		if (!ent || IsBadReadPtr(ent + 0x64, 4)) return;
+		const uint8_t *model = *(const uint8_t *const *)(ent + 0x64);
+		if (!model || IsBadReadPtr(model + 4, 4)) return;
+		const uint8_t *base = *(const uint8_t *const *)(model + 4);
+		if (!base || IsBadReadPtr(base, 4)) return;
+		const uint32_t count = *(const uint32_t *)base;
+		if (count == 0 || count > 32 || IsBadReadPtr(base, 4 + count * 4)) return;
+		uint32_t end = 0;
+		for (uint32_t i = 0; i < count; i++)
+		{
+			const uint8_t *p = base + ((const uint32_t *)base)[1 + i];
+			if (IsBadReadPtr(p, 2)) return;
+			const int32_t groups = *(const int16_t *)p;
+			p += 2;
+			for (int32_t g = 0; g < groups; g++)
+			{
+				if (IsBadReadPtr(p, 4)) return;
+				p += 2;
+				p += *(const int16_t *)p * 6 + 2;
+			}
+			p = (const uint8_t *)(((uint32_t)p + 3) & ~3u);
+			if (IsBadReadPtr(p, 4)) return;
+			const uint32_t e = (uint32_t)(p + 0xC) + *(const uint16_t *)p * 0x10u + *(const uint16_t *)(p + 2) * 0x14u - (uint32_t)base;
+			if (e > end) end = e;
+		}
+		if (end && end <= 0x80000 && !IsBadReadPtr(base, end)) add((uint32_t)base, end, "Abadon model polygons");
 	}
 }
 

@@ -35,6 +35,8 @@ namespace ff8fx::mod
 		const char *name;
 		const Region *streams;
 		int nstreams;
+		// memory found through live pointers (e.g. a model the effect writes flags into), added every tick
+		void (*dyn_regions)(void (*add)(uint32_t addr, uint32_t size, const char *name)) = nullptr;
 	};
 
 	struct ExtSite { game::Id addr; int arity; const char *name; };

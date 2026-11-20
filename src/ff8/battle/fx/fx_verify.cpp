@@ -130,6 +130,29 @@ namespace
 	uint32_t magic_buffer() { return (uint32_t)((uint8_t *(__cdecl *)())game_addr(game::Magic_TextureOFF_ToEAX1))(); }
 	uint32_t magic_buffer_size() { return ((uint32_t(__cdecl *)())game_addr(game::sub_571B60))(); }
 
+	// Bone matrices of every battle entity (and its weapon): effects compose them in place
+	// (BS_ComputeBonesWorldMatrices, ComposeAffineTransform on the skeleton), so they are effect state.
+	void add_skeleton(const uint8_t *model, const char *name)
+	{
+		if (!model || IsBadReadPtr(model, 4)) return;
+		const uint8_t *skel = *(const uint8_t *const *)model;
+		if (!skel || IsBadReadPtr(skel, 1)) return;
+		const uint32_t size = 0x10 + skel[0] * 0x30u;
+		if (!IsBadReadPtr(skel, size)) add_entry((uint32_t)skel, size, K_REGION, name);
+	}
+
+	void add_skeletons()
+	{
+		const uint32_t SLOTS = 7, SLOT_SIZE = 0x9C;
+		for (uint32_t i = 0; i < SLOTS; i++)
+		{
+			const uint8_t *ent = (const uint8_t *)game_addr(game::BattleEntitySlotData) + i * SLOT_SIZE;
+			add_skeleton(*(const uint8_t *const *)(ent + 0x64), "entity skeleton");
+			const uint8_t *weapon = *(const uint8_t *const *)(ent + 0x78);
+			if (weapon && !IsBadReadPtr(weapon + 4, 4)) add_skeleton(*(const uint8_t *const *)(weapon + 4), "weapon skeleton");
+		}
+	}
+
 	bool build_entries(const mod::Module &m)
 	{
 		g_nent = 0; g_used = 0; g_pools_used = 0;
@@ -144,6 +167,7 @@ namespace
 		add_entry(game_addr(m.data_lo), game_addr(m.data_hi) - game_addr(m.data_lo), K_REGION, "module globals");
 		if (m.extra) add_entry(game_addr(m.extra), m.extra_size, K_REGION, "module extra cell");
 		for (int i = 0; i < m.nstreams; i++) add_entry(game_addr(m.streams[i].addr), m.streams[i].size, K_REGION, "module stream/cell");
+		if (m.dyn_regions) m.dyn_regions([](uint32_t addr, uint32_t size, const char *name) { add_entry(addr, size, K_REGION, name); });
 		uint32_t ot = *(uint32_t *)game_addr(mod::RENDER_LIST_BASE_PTR);
 		if (ot) add_entry(ot, mod::OT_SPAN_WORDS * 4, K_OT, "ordering table");
 		add_entry(game_addr(mod::SSIGPU_ARENA), mod::SSIGPU_ARENA_SIZE, K_ARENA, "SSIGPU execution arena");
@@ -154,6 +178,7 @@ namespace
 		if (scratch && !IsBadReadPtr((void *)scratch, mod::FIELD_ALLOC_SCRATCH))
 			add_entry(scratch, mod::FIELD_ALLOC_SCRATCH, K_REGION, "Field_Alloc scratch");
 		add_entry((uint32_t)crt_seed(), 4, K_REGION, "CRT rand seed");
+		add_skeletons();
 		for (int i = 0; i < g_nknown; i++) track_queue(g_known[i]);
 		return !g_incomplete;
 	}

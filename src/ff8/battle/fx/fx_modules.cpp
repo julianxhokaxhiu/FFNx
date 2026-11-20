@@ -18,6 +18,11 @@
 
 #include "fx_modules.h"
 
+namespace ff8fx::abadon314
+{
+	void ModelPolyRegions(void (*add)(uint32_t addr, uint32_t size, const char *name));
+}
+
 namespace ff8fx::mod
 {
 	static const Region streams_q116[] = { { game::unk_1298C68, 0x109FC }, { game::unk_12A9664, 0x4D9C } };
@@ -114,7 +119,7 @@ namespace ff8fx::mod
 	static const Region streams_a055[] = { { game::unk_15A4170, 0x9C0 }, { game::Effect_SharedCamMatrixSnapshot, 0x20 } };
 	static const Region streams_r060[] = { { game::unk_1797CC0, 0x9034 }, { game::unk_2793DA4, 0xD4 } };
 	static const Region streams_h063[] = { { game::SOME_CAMERA_Z_FACTOR, 0x20 } };
-	static const Region streams_t064[] = { { game::SOME_CAMERA_Z_FACTOR, 0x20 } };
+	static const Region streams_t064[] = { { game::SOME_CAMERA_Z_FACTOR, 0x20 }, { game::g_Mag064_BoneScripts, 0xA2E } };
 	static const Region streams_a065[] = { { game::unk_133ABC8, 0x158 } };
 	static const Region streams_g066[] = { { game::g066_Pool4Ptr, 8 }, { game::g_CamScript_OtherTrack, 0x162B }, { game::SOME_CAMERA_Z_FACTOR, 0x20 }, { game::g_BattleModel_ObjPacketCursor, 8 } };
 	static const Region streams_s068[] = { { game::unk_1591C4C, 0x180 }, { game::unk_1592034, 0x500 }, { game::NB_MESSAGE_TO_PRINT, 1 }, { game::TEXT_LAYER, 0xA4 }, { game::unk_1D2B558, 0x32 }, { game::unk_2795BD0, 4 }, { game::SCAN_TEXT_LINES, 0x30 } };
@@ -149,8 +154,8 @@ namespace ff8fx::mod
 	static const Region streams_u227[] = { { game::BATTLE_FILE_LOADING_STATE, 0x80 }, { game::unk_B8B9E4, 0xC }, { game::g_BattleModel_ObjPacketCursor, 8 } };
 	static const Region streams_g311[] = { { game::SOME_CAMERA_Z_FACTOR, 0x20 }, { game::BATTLE_FILE_LOADING_STATE, 0x80 }, { game::unk_B8B9E4, 0xC }, { game::g_BattleModel_ObjPacketCursor, 8 } };
 	static const Region streams_r316[] = { { game::SOME_CAMERA_Z_FACTOR, 0x20 } };
-	static const Region streams_a314[] = { { game::SOME_CAMERA_Z_FACTOR, 0x20 }, { game::unk_1DCD6E4, 0xC } };
-	static const Region streams_m308[] = { { game::SOME_CAMERA_Z_FACTOR, 0x20 }, { game::unk_1DCD6E4, 0xC } };
+	static const Region streams_a314[] = { { game::SOME_CAMERA_Z_FACTOR, 0x20 }, { game::unk_1DCD6E4, 0xC }, { game::g_Mag314_BoneScripts, 0x4CC } };
+	static const Region streams_m308[] = { { game::SOME_CAMERA_Z_FACTOR, 0x20 }, { game::unk_1DCD6E4, 0xC }, { game::g_Mag308_BoneScripts, 0x39E } };
 	static const Region streams_d320[] = { { game::SOME_CAMERA_Z_FACTOR, 0x20 }, { game::BATTLE_FILE_LOADING_STATE, 0x80 }, { game::unk_B8B9E4, 0xC }, { game::unk_FF12A8, 2 } };
 	static const Region streams_r303[] = { { game::SOME_CAMERA_Z_FACTOR, 0x20 }, { game::BATTLE_FILE_LOADING_STATE, 0x80 }, { game::unk_B8B9E4, 0xC }, { game::g_BattleModel_ObjPacketCursor, 8 } };
 	static const Region streams_s209[] = { { game::BATTLE_FILE_LOADING_STATE, 0x80 }, { game::unk_B8B9E4, 0xC }, { game::g_BattleModel_ObjPacketCursor, 8 }, { game::unk_209FAB8, 0x40000 }, { game::BATTLE_EFFECT_BONE_OFFSET, 0x20 }, { game::initialize_psxvram_is_done, 4 }, { game::CURRENT_BS_MODEL_PALETTE, 4 }, { game::CURRENT_BS_SHADOW_PALETTE, 4 } };
@@ -385,7 +390,7 @@ namespace ff8fx::mod
 		{ 55, game::g_AquaBreath_File, game::g_EveryonesGrudge_File, {}, 0, false, "Aqua Breath", streams_a055, 2 },
 		{ 60, game::g_RaijinStrike_File, game::unk_260705C, {}, 0, false, "Raijin attack 294", streams_r060, 2 },
 		{ 63, game::MAG_063_TexFile, game::g_Junk_TexFile, {}, 0, false, "Helix attack 361", streams_h063, 1 },
-		{ 64, game::g_Mag064_File, game::MAG_063_TexFile, {}, 0, false, "Ultimecia attack 353", streams_t064, 1 },
+		{ 64, game::g_Mag064_File, game::MAG_063_TexFile, {}, 0, false, "Ultimecia attack 353", streams_t064, 2 },
 		{ 65, game::unk_2544F60, game::g_Mag064_File, {}, 0, false, "Great Attractor", streams_a065, 1 },
 		{ 66, game::g066_Pool3Cursor, game::unk_24C91D0, {}, 0, false, "Griever death (Ultimecia)", streams_g066, 4 },
 		{ 68, game::unk_25FCDD8, game::unk_26005B4, {}, 0, false, "Scan (enemy)", streams_s068, 7 },
@@ -492,8 +497,8 @@ namespace ff8fx::mod
 		{ 324, game::MAG_324_TonberryKingDeath_KeptMatrix, game::unk_221BC68, {}, 0, false, "Tonberry King death (Tonberry King)", streams_t324, 4 },
 		{ 319, game::MAG_319_CounterAttack_TextureFile, game::MAG_318_StrongCounterAttack_TextureFile, {}, 0, false, "Counter-attack (Krysta)", streams_c319, 3 },
 		{ 316, game::MAG_316_RedGiant_TextureFile, game::MAG_314_Abadon_TextureFile, {}, 0, false, "effect 316 (attack 203, Red Giant)", streams_r316, 1 },
-		{ 314, game::MAG_314_Abadon_TextureFile, game::g_mag311_Caster, {}, 0, false, "effect 314 (attack 191, Abadon)", streams_a314, 2 },
-		{ 308, game::unk_25074D0, game::g304_CasterEntity, {}, 0, false, "effect 308 (attack 286, Mobile Type 8)", streams_m308, 2 },
+		{ 314, game::MAG_314_Abadon_TextureFile, game::g_mag311_Caster, {}, 0, false, "effect 314 (attack 191, Abadon)", streams_a314, 3, abadon314::ModelPolyRegions },
+		{ 308, game::unk_25074D0, game::g304_CasterEntity, {}, 0, false, "effect 308 (attack 286, Mobile Type 8)", streams_m308, 3 },
 		{ 320, game::unk_2505348, game::MAG_319_CounterAttack_TextureFile, {}, 0, false, "Dark Flare (Tiamat)", streams_d320, 4 },
 		{ 303, game::unk_25075D0, game::MAG_302_SnipeLaser_CasterEntity, {}, 0, false, "Remove mask (Sphinxaur)", streams_r303, 4 },
 		{ 209, game::unk_24F3618, game::MAG_200_NOMERCY_g_TrailBasePoints, {}, 0, false, "Sorceress spawn (attacks 319 / 327, c0m115 / c0m116 / c0m117)", streams_s209, 8 },
@@ -624,6 +629,7 @@ namespace ff8fx::mod
 		{ game::unk_1D971F0, 0xD0, "weapon animation slots" },
 		{ game::unk_1D99AB0, 0x20, "effect light/position" },
 		{ game::unk_1DCD6E0, 0x10, "streamed-file loader" },
+		{ game::BATTLE_FILE_LOADING_STATE, 4, "battle file loading state" },
 		{ game::GLOBAL_MEMORY_POOL, 4, "Field_Alloc pointer" },
 		{ game::g_Effect_SharedLcgSeed, 4, "effect LCG seed" },
 		{ game::g_Battle_ScreenFeedbackRequest, 4, "screen feedback request" },
