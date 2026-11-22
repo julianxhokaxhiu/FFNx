@@ -27,7 +27,7 @@
 // Kudos to https://katyscode.wordpress.com/2013/08/30/xinput-tutorial-part-1-adding-gamepad-support-to-your-windows-game/
 class Gamepad
 {
-private:
+  private:
     int cId;
     XINPUT_STATE state;
     XINPUT_VIBRATION vibration;
@@ -35,9 +35,13 @@ private:
     float deadzoneX;
     float deadzoneY;
 
-public:
-    Gamepad() : deadzoneX(0.05f), deadzoneY(0.02f) {}
-    Gamepad(float dzX, float dzY) : deadzoneX(dzX), deadzoneY(dzY) {}
+  public:
+    Gamepad() : deadzoneX(0.05f), deadzoneY(0.02f)
+    {
+    }
+    Gamepad(float dzX, float dzY) : deadzoneX(dzX), deadzoneY(dzY)
+    {
+    }
 
     float leftStickX;
     float leftStickY;
@@ -46,8 +50,8 @@ public:
     float leftTrigger;
     float rightTrigger;
 
-    int  GetPort() const;
-    XINPUT_GAMEPAD* GetState();
+    int GetPort() const;
+    XINPUT_GAMEPAD *GetState();
     const XINPUT_VIBRATION &GetVibrationState() const;
     bool CheckConnection();
     // Get state from remote device

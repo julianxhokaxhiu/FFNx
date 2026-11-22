@@ -20,20 +20,19 @@
 
 namespace ff8_battle_effects
 {
-	static const ribbon magic_ribbons[] = {
-		// Electrocute (Quistis) arcs, crawlers
-		{FF8BattleEffect::Electrocute, 0x10, {0x17, 0x42, 0x5A}, {RIBBON_CALL_STEP(0x5), RIBBON_ABS_STEP(0x57), RIBBON_ABS_STEP(0x191), RIBBON_CALL_STEP(0x20A), RIBBON_ABS_STEP(0x20), RIBBON_CALL_STEP(0x422)}},
-		{FF8BattleEffect::Electrocute, 0x10, {0xBA, 0xE5, 0xFD}, {RIBBON_CALL_STEP(0x5), RIBBON_ABS_STEP(0x57), RIBBON_ABS_STEP(0x191), RIBBON_CALL_STEP(0x79), RIBBON_CALL_STEP(0x63), RIBBON_ABS_STEP(0x56), RIBBON_CALL_STEP(0x174)}},
-		// Acid (Quistis) streams
-		{FF8BattleEffect::QuistisAcid, 0x10, {0x17, 0x42, 0x5A}, {RIBBON_CALL_STEP(0x5), RIBBON_ABS_STEP(0x4C), RIBBON_ABS_STEP(0xDB), RIBBON_CALL_STEP(0x12C), RIBBON_ABS_STEP(0x23), RIBBON_CALL_STEP(0x200)}}
-	};
+static const ribbon magic_ribbons[] = {
+    // Electrocute (Quistis) arcs, crawlers
+    {FF8BattleEffect::Electrocute, 0x10, {0x17, 0x42, 0x5A}, {RIBBON_CALL_STEP(0x5), RIBBON_ABS_STEP(0x57), RIBBON_ABS_STEP(0x191), RIBBON_CALL_STEP(0x20A), RIBBON_ABS_STEP(0x20), RIBBON_CALL_STEP(0x422)}},
+    {FF8BattleEffect::Electrocute, 0x10, {0xBA, 0xE5, 0xFD}, {RIBBON_CALL_STEP(0x5), RIBBON_ABS_STEP(0x57), RIBBON_ABS_STEP(0x191), RIBBON_CALL_STEP(0x79), RIBBON_CALL_STEP(0x63), RIBBON_ABS_STEP(0x56), RIBBON_CALL_STEP(0x174)}},
+    // Acid (Quistis) streams
+    {FF8BattleEffect::QuistisAcid, 0x10, {0x17, 0x42, 0x5A}, {RIBBON_CALL_STEP(0x5), RIBBON_ABS_STEP(0x4C), RIBBON_ABS_STEP(0xDB), RIBBON_CALL_STEP(0x12C), RIBBON_ABS_STEP(0x23), RIBBON_CALL_STEP(0x200)}}};
 
-	void patch_magic(const DWORD *effects, uint32_t cure_render)
-	{
-		// Cure and Cura: the light on the target
-		patch_overlay_render(cure_render);
-		patch_overlay_render(cura_overlay_render(effects[FF8BattleEffect::Cura]));
+void patch_magic(const DWORD *effects, uint32_t cure_render)
+{
+    // Cure and Cura: the light on the target
+    patch_overlay_render(cure_render);
+    patch_overlay_render(cura_overlay_render(effects[FF8BattleEffect::Cura]));
 
-		patch_ribbons(magic_ribbons, sizeof(magic_ribbons) / sizeof(magic_ribbons[0]));
-	}
+    patch_ribbons(magic_ribbons, sizeof(magic_ribbons) / sizeof(magic_ribbons[0]));
 }
+} // namespace ff8_battle_effects

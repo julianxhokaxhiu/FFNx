@@ -30,23 +30,23 @@
 
 class Metadata
 {
-private:
-	pugi::xml_document doc;
+  private:
+    pugi::xml_document doc;
 
-	std::string now;
-	std::string userID;
-	char userPath[260]{ 0 };
-	char savePath[260]{ 0 };
+    std::string now;
+    std::string userID;
+    char userPath[260]{0};
+    char savePath[260]{0};
 
-	void calcNow();
-	bool loadXml();
-	void saveXml();
-	bool updateSignature(pugi::xml_node savefile, const char* filename, bool current);
+    void calcNow();
+    bool loadXml();
+    void saveXml();
+    bool updateSignature(pugi::xml_node savefile, const char *filename, bool current);
 
-public:
-	void init();
-	void updateFF7(uint8_t save);
-	void updateFF8(uint8_t slot, uint8_t save);
+  public:
+    void init();
+    void updateFF7(uint8_t save);
+    void updateFF8(uint8_t slot, uint8_t save);
 };
 
 extern Metadata metadataPatcher;

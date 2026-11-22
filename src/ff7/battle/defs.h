@@ -25,23 +25,23 @@
 
 namespace ff7::battle
 {
-    // Camera
-    void camera_hook_init();
-    void update_battle_camera(short cameraScriptIndex);
-    void update_idle_battle_camera();
+// Camera
+void camera_hook_init();
+void update_battle_camera(short cameraScriptIndex);
+void update_idle_battle_camera();
 
-    // Animations
-    void animations_hook_init();
+// Animations
+void animations_hook_init();
 
-    // Battle
-    void battle_hook_init();
-    void magic_thread_start(void (*func)());
-    void load_battle_stage(int param_1, int battle_location_id, int **param_3);
-    void battle_sub_5C7F94(int param_1, int param_2);
-    void display_battle_action_text_sub_6D71FA(short command_id, short action_id);
-    int load_scene_bin_chunk(char *filename, int offset, int size, char **out_buffer, void (*callback)(void));
+// Battle
+void battle_hook_init();
+void magic_thread_start(void (*func)());
+void load_battle_stage(int param_1, int battle_location_id, int **param_3);
+void battle_sub_5C7F94(int param_1, int param_2);
+void display_battle_action_text_sub_6D71FA(short command_id, short action_id);
+int load_scene_bin_chunk(char *filename, int offset, int size, char **out_buffer, void (*callback)(void));
 
-    // Menu
-    void battle_menu_enter();
-    void draw_ui_graphics_objects_wrapper(int flag, int type);
-}
+// Menu
+void battle_menu_enter();
+void draw_ui_graphics_objects_wrapper(int flag, int type);
+} // namespace ff7::battle

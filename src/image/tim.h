@@ -26,14 +26,15 @@
 #include <vector>
 #include "../ff8.h"
 
-struct TimRect {
-	TimRect();
-	TimRect(uint32_t palIndex, uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2);
-	bool match(uint32_t x, uint32_t y) const;
-	bool isValid() const;
-	uint32_t palIndex;
-	uint32_t x1, y1;
-	uint32_t x2, y2;
+struct TimRect
+{
+    TimRect();
+    TimRect(uint32_t palIndex, uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2);
+    bool match(uint32_t x, uint32_t y) const;
+    bool isValid() const;
+    uint32_t palIndex;
+    uint32_t x1, y1;
+    uint32_t x2, y2;
 };
 
 int operator==(const TimRect &rectangle, const TimRect &other);
@@ -41,142 +42,151 @@ bool operator<(const TimRect &rectangle, const TimRect &other);
 
 inline uint32_t fromR5G5B5Color(uint16_t color, bool withAlpha = false)
 {
-	uint8_t r = color & 0x1F,
-		g = (color >> 5) & 0x1F,
-		b = (color >> 10) & 0x1F;
+    uint8_t r = color & 0x1F, g = (color >> 5) & 0x1F, b = (color >> 10) & 0x1F;
 
-	return ((color == 0 && withAlpha ? 0x00 : 0xffu) << 24) |
-		((((r << 3) + (r >> 2)) & 0xffu) << 16) |
-		((((g << 3) + (g >> 2)) & 0xffu) << 8) |
-		(((b << 3) + (b >> 2)) & 0xffu);
+    return ((color == 0 && withAlpha ? 0x00 : 0xffu) << 24) | ((((r << 3) + (r >> 2)) & 0xffu) << 16) | ((((g << 3) + (g >> 2)) & 0xffu) << 8) | (((b << 3) + (b >> 2)) & 0xffu);
 }
 
 class Tim;
 
-class PaletteDetectionStrategy {
-public:
-	PaletteDetectionStrategy(const Tim *const tim) : _tim(tim) {};
-	virtual bool isValid() const {
-		return true;
-	}
-	virtual uint32_t palOffset(uint16_t x, uint16_t y) const = 0;
-	virtual uint32_t palIndex() const = 0;
-protected:
-	const Tim *const _tim;
+class PaletteDetectionStrategy
+{
+  public:
+    PaletteDetectionStrategy(const Tim *const tim) : _tim(tim) {};
+    virtual bool isValid() const
+    {
+        return true;
+    }
+    virtual uint32_t palOffset(uint16_t x, uint16_t y) const = 0;
+    virtual uint32_t palIndex() const = 0;
+
+  protected:
+    const Tim *const _tim;
 };
 
 // One palette at (x, y)
-class PaletteDetectionStrategyFixed : public PaletteDetectionStrategy {
-public:
-	PaletteDetectionStrategyFixed(const Tim *const tim, uint16_t palX, uint16_t palY) :
-		PaletteDetectionStrategy(tim), _palX(palX), _palY(palY) {}
-	virtual uint32_t palOffset(uint16_t imgX, uint16_t imgY) const override;
-	virtual uint32_t palIndex() const override;
-private:
-	uint16_t _palX, _palY;
+class PaletteDetectionStrategyFixed : public PaletteDetectionStrategy
+{
+  public:
+    PaletteDetectionStrategyFixed(const Tim *const tim, uint16_t palX, uint16_t palY) : PaletteDetectionStrategy(tim), _palX(palX), _palY(palY)
+    {
+    }
+    virtual uint32_t palOffset(uint16_t imgX, uint16_t imgY) const override;
+    virtual uint32_t palIndex() const override;
+
+  private:
+    uint16_t _palX, _palY;
 };
 
 // A grid of fixed size cells, with one palette per cell
-class PaletteDetectionStrategyGrid : public PaletteDetectionStrategy {
-public:
-	enum Direction {
-		TopBottomLeftRight,
-		LeftRightTopBottom
-	};
-	PaletteDetectionStrategyGrid(const Tim *const tim, uint8_t cellCols, uint8_t cellRows, uint16_t colorsPerPal, uint8_t palColsPerRow);
-	virtual bool isValid() const override;
-	virtual uint32_t palOffset(uint16_t imgX, uint16_t imgY) const override;
-	virtual uint32_t palIndex() const override;
-private:
-	uint8_t _cellCols, _cellRows;
-	uint16_t _cellWidth, _cellHeight;
-	uint16_t _colorsPerPal;
-	uint8_t _palColsPerRow;
-	uint8_t _palCols;
+class PaletteDetectionStrategyGrid : public PaletteDetectionStrategy
+{
+  public:
+    enum Direction
+    {
+        TopBottomLeftRight,
+        LeftRightTopBottom
+    };
+    PaletteDetectionStrategyGrid(const Tim *const tim, uint8_t cellCols, uint8_t cellRows, uint16_t colorsPerPal, uint8_t palColsPerRow);
+    virtual bool isValid() const override;
+    virtual uint32_t palOffset(uint16_t imgX, uint16_t imgY) const override;
+    virtual uint32_t palIndex() const override;
+
+  private:
+    uint8_t _cellCols, _cellRows;
+    uint16_t _cellWidth, _cellHeight;
+    uint16_t _colorsPerPal;
+    uint8_t _palColsPerRow;
+    uint8_t _palCols;
 };
 
-class PaletteDetectionStrategyTrianglesAndQuads : public PaletteDetectionStrategy {
-public:
-	PaletteDetectionStrategyTrianglesAndQuads(const Tim *const tim, const std::vector<TimRect> &rectangles);
-	virtual uint32_t palOffset(uint16_t imgX, uint16_t imgY) const override;
-	virtual uint32_t palIndex() const override;
-private:
-	const std::vector<TimRect> &_rectangles;
+class PaletteDetectionStrategyTrianglesAndQuads : public PaletteDetectionStrategy
+{
+  public:
+    PaletteDetectionStrategyTrianglesAndQuads(const Tim *const tim, const std::vector<TimRect> &rectangles);
+    virtual uint32_t palOffset(uint16_t imgX, uint16_t imgY) const override;
+    virtual uint32_t palIndex() const override;
+
+  private:
+    const std::vector<TimRect> &_rectangles;
 };
 
-class Tim {
-	friend class PaletteDetectionStrategyFixed;
-	friend class PaletteDetectionStrategyGrid;
-	friend class PaletteDetectionStrategyTrianglesAndQuads;
-public:
-	enum Bpp {
-		Bpp4 = 0,
-		Bpp8 = 1,
-		Bpp16 = 2
-	};
+class Tim
+{
+    friend class PaletteDetectionStrategyFixed;
+    friend class PaletteDetectionStrategyGrid;
+    friend class PaletteDetectionStrategyTrianglesAndQuads;
 
-	Tim(Bpp bpp, const ff8_tim &tim, int lineSkip = 0);
-	uint16_t colorsPerPal() const;
-	inline Bpp bpp() const {
-		return _bpp;
-	}
-	inline uint16_t imageX() const {
-		return _tim.img_x;
-	}
-	inline uint16_t imageY() const {
-		return _tim.img_y;
-	}
-	inline uint16_t imageWidth() const {
-		return _tim.img_w / (4 >> int(_bpp));
-	}
-	inline uint16_t imageHeight() const {
-		return _tim.img_h;
-	}
-	inline uint8_t *imageData() const {
-		return _tim.img_data;
-	}
-	inline uint16_t paletteX() const {
-		return _tim.pal_x;
-	}
-	inline uint16_t paletteY() const {
-		return _tim.pal_y;
-	}
-	inline uint16_t paletteWidth() const {
-		return _tim.pal_w;
-	}
-	inline uint16_t paletteHeight() const {
-		return _tim.pal_h;
-	}
-	inline uint16_t *paletteData() const {
-		return _tim.pal_data;
-	}
-	bool save(const char *fileName, bool withAlpha = false) const;
-	bool save(const char *fileName, uint8_t paletteId, bool withAlpha = false) const;
-	bool save(const char *fileName, uint8_t palX, uint8_t palY, bool withAlpha = false) const;
-	bool saveMultiPaletteGrid(
-		const char *fileName, uint8_t cellCols, uint8_t cellRows, uint8_t colorsPerPal = 0, uint8_t palColsPerRow = 1,
-		bool withAlpha = false
-	) const;
-	bool saveMultiPaletteTrianglesAndQuads(
-		const char *fileName, const std::vector<TimRect> &rectangles,
-		bool withAlpha = false
-	) const;
-	bool toRGBA32(uint32_t *target, uint8_t palX = 0, uint8_t palY = 0, bool withAlpha = false) const;
-	bool toRGBA32MultiPaletteGrid(
-		uint32_t *target, uint8_t cellCols, uint8_t cellRows, uint8_t colorsPerPal = 0, uint8_t palColsPerRow = 1,
-		bool withAlpha = false
-	) const;
-	bool toRGBA32MultiPaletteTrianglesAndQuads(
-		uint32_t *target, const std::vector<TimRect> &rectangles,
-		bool withAlpha = false
-	) const;
-	Tim chunk(int x, int y, int w, int h);
-	static Tim fromLzsData(const uint8_t *uncompressed_data);
-	static Tim fromTimData(const uint8_t *data);
-private:
-	bool save(const char *fileName, PaletteDetectionStrategy *paletteDetectionStrategy, bool withAlpha, int forcePaletteId = -1) const;
-	bool toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionStrategy, bool withAlpha) const;
-	ff8_tim _tim;
-	Bpp _bpp;
-	int _lineSkip;
+  public:
+    enum Bpp
+    {
+        Bpp4 = 0,
+        Bpp8 = 1,
+        Bpp16 = 2
+    };
+
+    Tim(Bpp bpp, const ff8_tim &tim, int lineSkip = 0);
+    uint16_t colorsPerPal() const;
+    inline Bpp bpp() const
+    {
+        return _bpp;
+    }
+    inline uint16_t imageX() const
+    {
+        return _tim.img_x;
+    }
+    inline uint16_t imageY() const
+    {
+        return _tim.img_y;
+    }
+    inline uint16_t imageWidth() const
+    {
+        return _tim.img_w / (4 >> int(_bpp));
+    }
+    inline uint16_t imageHeight() const
+    {
+        return _tim.img_h;
+    }
+    inline uint8_t *imageData() const
+    {
+        return _tim.img_data;
+    }
+    inline uint16_t paletteX() const
+    {
+        return _tim.pal_x;
+    }
+    inline uint16_t paletteY() const
+    {
+        return _tim.pal_y;
+    }
+    inline uint16_t paletteWidth() const
+    {
+        return _tim.pal_w;
+    }
+    inline uint16_t paletteHeight() const
+    {
+        return _tim.pal_h;
+    }
+    inline uint16_t *paletteData() const
+    {
+        return _tim.pal_data;
+    }
+    bool save(const char *fileName, bool withAlpha = false) const;
+    bool save(const char *fileName, uint8_t paletteId, bool withAlpha = false) const;
+    bool save(const char *fileName, uint8_t palX, uint8_t palY, bool withAlpha = false) const;
+    bool saveMultiPaletteGrid(const char *fileName, uint8_t cellCols, uint8_t cellRows, uint8_t colorsPerPal = 0, uint8_t palColsPerRow = 1, bool withAlpha = false) const;
+    bool saveMultiPaletteTrianglesAndQuads(const char *fileName, const std::vector<TimRect> &rectangles, bool withAlpha = false) const;
+    bool toRGBA32(uint32_t *target, uint8_t palX = 0, uint8_t palY = 0, bool withAlpha = false) const;
+    bool toRGBA32MultiPaletteGrid(uint32_t *target, uint8_t cellCols, uint8_t cellRows, uint8_t colorsPerPal = 0, uint8_t palColsPerRow = 1, bool withAlpha = false) const;
+    bool toRGBA32MultiPaletteTrianglesAndQuads(uint32_t *target, const std::vector<TimRect> &rectangles, bool withAlpha = false) const;
+    Tim chunk(int x, int y, int w, int h);
+    static Tim fromLzsData(const uint8_t *uncompressed_data);
+    static Tim fromTimData(const uint8_t *data);
+
+  private:
+    bool save(const char *fileName, PaletteDetectionStrategy *paletteDetectionStrategy, bool withAlpha, int forcePaletteId = -1) const;
+    bool toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionStrategy, bool withAlpha) const;
+    ff8_tim _tim;
+    Bpp _bpp;
+    int _lineSkip;
 };

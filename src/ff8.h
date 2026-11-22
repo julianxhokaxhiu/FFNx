@@ -44,22 +44,22 @@ struct ff8_kernel_vanilla_data;
 // FF7 modules, unknowns are either unused or not relevant to rendering
 enum ff8_game_modes
 {
-	FF8_MODE_CREDITS = 0,
-	FF8_MODE_FIELD,
-	FF8_MODE_WORLDMAP,
-	FF8_MODE_SWIRL,
-	FF8_MODE_AFTER_BATTLE,
-	FF8_MODE_5,
-	FF8_MODE_MENU,
-	FF8_MODE_7,
-	FF8_MODE_CARDGAME, // And battle
-	FF8_MODE_9,
-	FF8_MODE_TUTO,
-	FF8_MODE_11,
-	FF8_MODE_INTRO,
-	FF8_MODE_100 = 100,
-	FF8_MODE_MAIN_MENU = 200,
-	FF8_MODE_BATTLE = 999
+    FF8_MODE_CREDITS = 0,
+    FF8_MODE_FIELD,
+    FF8_MODE_WORLDMAP,
+    FF8_MODE_SWIRL,
+    FF8_MODE_AFTER_BATTLE,
+    FF8_MODE_5,
+    FF8_MODE_MENU,
+    FF8_MODE_7,
+    FF8_MODE_CARDGAME, // And battle
+    FF8_MODE_9,
+    FF8_MODE_TUTO,
+    FF8_MODE_11,
+    FF8_MODE_INTRO,
+    FF8_MODE_100 = 100,
+    FF8_MODE_MAIN_MENU = 200,
+    FF8_MODE_BATTLE = 999
 };
 
 /*
@@ -76,154 +76,155 @@ enum ff8_game_modes
 
 struct wm_polygon_source
 {
-	WORD unknown1;
-	WORD unknown2;
-	WORD unknown3;
-	unsigned char u0;
-	unsigned char v0;
-	unsigned char u1;
-	unsigned char v1;
-	unsigned char u2;
-	unsigned char v2;
+    WORD unknown1;
+    WORD unknown2;
+    WORD unknown3;
+    unsigned char u0;
+    unsigned char v0;
+    unsigned char u1;
+    unsigned char v1;
+    unsigned char u2;
+    unsigned char v2;
 };
 
 struct ssigpu_packet52
 {
-	uint32_t unknown1;
-	unsigned char b0;
-	unsigned char g0;
-	unsigned char r0;
-	unsigned char command;
-	WORD y0;
-	WORD x0;
-	unsigned char v0;
-	unsigned char u0;
-	WORD clut;
-	unsigned char b1;
-	unsigned char g1;
-	unsigned char r1;
-	unsigned char unused1;
-	WORD y1;
-	WORD x1;
-	unsigned char v1;
-	unsigned char u1;
-	WORD texture;
-	unsigned char b2;
-	unsigned char g2;
-	unsigned char r2;
-	unsigned char unused2;
-	WORD y2;
-	WORD x2;
-	unsigned char v2;
-	unsigned char u2;
-	WORD unused3;
+    uint32_t unknown1;
+    unsigned char b0;
+    unsigned char g0;
+    unsigned char r0;
+    unsigned char command;
+    WORD y0;
+    WORD x0;
+    unsigned char v0;
+    unsigned char u0;
+    WORD clut;
+    unsigned char b1;
+    unsigned char g1;
+    unsigned char r1;
+    unsigned char unused1;
+    WORD y1;
+    WORD x1;
+    unsigned char v1;
+    unsigned char u1;
+    WORD texture;
+    unsigned char b2;
+    unsigned char g2;
+    unsigned char r2;
+    unsigned char unused2;
+    WORD y2;
+    WORD x2;
+    unsigned char v2;
+    unsigned char u2;
+    WORD unused3;
 };
 
 struct psxvram_rect
 {
-	WORD x;
-	WORD y;
-	WORD w;
-	WORD h;
+    WORD x;
+    WORD y;
+    WORD w;
+    WORD h;
 };
 
 struct sprite_viewport
 {
-	float width;
-	float height;
-	float field_8;
-	float field_C;
-	float scale_x;
-	float scale_y;
-	float offset_x;
-	float offset_y;
+    float width;
+    float height;
+    float field_8;
+    float field_C;
+    float scale_x;
+    float scale_y;
+    float offset_x;
+    float offset_y;
 };
 
 struct pak_pointers_entry
 {
-	uint32_t cam_offset;
-	uint32_t bik_offset;
-	uint32_t bik_lowres_offset;
-	uint32_t flag;
+    uint32_t cam_offset;
+    uint32_t bik_offset;
+    uint32_t bik_lowres_offset;
+    uint32_t flag;
 };
 
 struct struc_38
 {
-	uint32_t field_0;
-	uint32_t field_4;
-	uint32_t field_8;
-	uint32_t field_C;
-	uint32_t field_10;
-	uint32_t field_14;
-	uint32_t field_18;
-	uint32_t field_1C;
-	uint32_t field_20;
-	struct ff8_graphics_object *graphics_object;
+    uint32_t field_0;
+    uint32_t field_4;
+    uint32_t field_8;
+    uint32_t field_C;
+    uint32_t field_10;
+    uint32_t field_14;
+    uint32_t field_18;
+    uint32_t field_1C;
+    uint32_t field_20;
+    struct ff8_graphics_object *graphics_object;
 };
 
 struct ff8_file_fi_infos
 {
-	int size;
-	int pos;
-	int compression;
+    int size;
+    int pos;
+    int compression;
 };
 
 struct ff8_file_context
 {
-	int mode; // 0= _O_BINARY, 1= _O_TEXT, 2= _O_BINARY | _O_CREAT | _O_RDWR, 3= _O_BINARY | _O_CREAT | _O_TRUNC | _O_RDWR
-	int field_4;
-	char* field_8;
-	void (*filename_callback)(const char*, char*);
-	struct ff8_file_container* file_container;
+    int mode; // 0= _O_BINARY, 1= _O_TEXT, 2= _O_BINARY | _O_CREAT | _O_RDWR, 3= _O_BINARY | _O_CREAT | _O_TRUNC | _O_RDWR
+    int field_4;
+    char *field_8;
+    void (*filename_callback)(const char *, char *);
+    struct ff8_file_container *file_container;
 };
 
 struct ff8_file_fl
 {
-	int file_count;
-	char **filenames_pointers;
-	int filenames_data_size;
-	char* filenames_data;
-	int callback;
+    int file_count;
+    char **filenames_pointers;
+    int filenames_data_size;
+    char *filenames_data;
+    int callback;
 };
 
 struct ff8_file
 {
-	int is_open;
-	const char* filename;
-	int fd;
-	struct ff8_file_context file_context;
-	int field_20;
-	int current_pos;
-	struct ff8_file_fi_infos fi_infos;
-	struct ff8_file_container* file_container;
+    int is_open;
+    const char *filename;
+    int fd;
+    struct ff8_file_context file_context;
+    int field_20;
+    int current_pos;
+    struct ff8_file_fi_infos fi_infos;
+    struct ff8_file_container *file_container;
 };
 
 struct ff8_file_container
 {
-	int initialized;
-	int first_fi_info_position;
-	struct ff8_file* fs_disk_file_metadata;
-	struct ff8_file_fl* fl_infos;
-	struct ff8_file_fi_infos* fi_infos;
+    int initialized;
+    int first_fi_info_position;
+    struct ff8_file *fs_disk_file_metadata;
+    struct ff8_file_fl *fl_infos;
+    struct ff8_file_fi_infos *fi_infos;
 };
 
 struct ff8_indexed_vertices
 {
-	uint32_t field_0;
-	uint32_t field_4;
-	uint32_t count;
-	uint32_t vertexcount;
-	uint32_t field_10;
-	struct nvertex *vertices;
-	uint32_t indexcount;
-	uint32_t field_1C;
-	WORD *indices;
-	uint32_t field_24;
-	unsigned char *palettes;
-	struct ff8_graphics_object *graphics_object;
+    uint32_t field_0;
+    uint32_t field_4;
+    uint32_t count;
+    uint32_t vertexcount;
+    uint32_t field_10;
+    struct nvertex *vertices;
+    uint32_t indexcount;
+    uint32_t field_1C;
+    WORD *indices;
+    uint32_t field_24;
+    unsigned char *palettes;
+    struct ff8_graphics_object *graphics_object;
 };
 
-struct ff8_create_graphic_object {
+struct ff8_create_graphic_object
+{
     uint32_t flags;
     uint32_t field_4;
     uint32_t field_8;
@@ -261,540 +262,548 @@ struct ff8_create_graphic_object {
 
 struct ff8_vertex
 {
-	float x;
-	float y;
-	float z;
-	float field_C;
-	uint32_t color;
-	uint32_t color_mask;
-	float u;
-	float v;
+    float x;
+    float y;
+    float z;
+    float field_C;
+    uint32_t color;
+    uint32_t color_mask;
+    float u;
+    float v;
 };
 
 struct ff8_graphics_object
 {
-	uint32_t type;
-	uint32_t field_4;
-	uint32_t field_8;
-	uint32_t has_texture_set;
-	struct p_hundred *hundred_data;
-	struct matrix_set *matrix_set;
-	struct polygon_set *polygon_set;
-	uint32_t is_tim_header;
-	uint32_t field_20;
-	uint32_t field_24;
-	float u_offset;
-	float v_offset;
-	void *dx_sfx_2C;
-	void *tex_info_filename_and_more;
-	uint32_t field_38;
-	uint32_t vertices_per_shape;
-	uint32_t indices_per_shape;
-	uint32_t vertex_offset;
-	uint32_t index_offset;
-	uint32_t field_4C;
-	uint32_t field_50;
-	uint32_t field_54;
-	uint32_t field_58;
-	uint32_t field_5C;
-	uint32_t field_60;
-	uint32_t field_64;
-	uint32_t field_68;
-	uint32_t field_6C;
-	uint32_t field_70;
-	ff8_vertex *field_74;
-	uint32_t field_78;
-	uint32_t field_7C;
-	uint32_t field_80;
-	uint32_t field_84;
-	uint32_t field_88;
-	uint32_t field_8C;
-	struct ff8_indexed_vertices *indexed_vertices;
-	uint32_t field_94;
-	uint32_t field_98;
-	gfx_polysetrenderstate* setrenderstate;
-	gfx_draw_vertices* draw;
-	uint32_t use_matrix_pointer;
-	struct matrix* matrix_pointer;
-	struct matrix matrix;
+    uint32_t type;
+    uint32_t field_4;
+    uint32_t field_8;
+    uint32_t has_texture_set;
+    struct p_hundred *hundred_data;
+    struct matrix_set *matrix_set;
+    struct polygon_set *polygon_set;
+    uint32_t is_tim_header;
+    uint32_t field_20;
+    uint32_t field_24;
+    float u_offset;
+    float v_offset;
+    void *dx_sfx_2C;
+    void *tex_info_filename_and_more;
+    uint32_t field_38;
+    uint32_t vertices_per_shape;
+    uint32_t indices_per_shape;
+    uint32_t vertex_offset;
+    uint32_t index_offset;
+    uint32_t field_4C;
+    uint32_t field_50;
+    uint32_t field_54;
+    uint32_t field_58;
+    uint32_t field_5C;
+    uint32_t field_60;
+    uint32_t field_64;
+    uint32_t field_68;
+    uint32_t field_6C;
+    uint32_t field_70;
+    ff8_vertex *field_74;
+    uint32_t field_78;
+    uint32_t field_7C;
+    uint32_t field_80;
+    uint32_t field_84;
+    uint32_t field_88;
+    uint32_t field_8C;
+    struct ff8_indexed_vertices *indexed_vertices;
+    uint32_t field_94;
+    uint32_t field_98;
+    gfx_polysetrenderstate *setrenderstate;
+    gfx_draw_vertices *draw;
+    uint32_t use_matrix_pointer;
+    struct matrix *matrix_pointer;
+    struct matrix matrix;
 };
 
 struct ff8_light
 {
-	uint32_t flags;
-	uint32_t field_4;
-	struct struc_106 *color_1;
-	struct struc_106 *color_2;
-	struct struc_106 *color_3;
-	struct bgra_color global_light_color_abgr;
-	struct bgra_color global_light_color_abgr_norm;
-	uint32_t global_light_color_rgba;
-	struct matrix field_38;
-	struct matrix field_78;
-	struct matrix field_B8;
-	struct matrix field_F8;
-	uint32_t field_138;
-	struct matrix normal_matrix;
-	uint32_t field_17C;
-	uint32_t field_180;
-	uint32_t field_184;
-	uint32_t field_188;
-	uint32_t field_18C;
-	uint32_t field_190;
-	uint32_t field_194;
-	uint32_t field_198;
-	struct matrix *matrix_pointer;
-	uint32_t field_1A0;
-	uint32_t field_1A4[256];
-	uint32_t field_5A4;
-	bgra_color_ui8 color;
+    uint32_t flags;
+    uint32_t field_4;
+    struct struc_106 *color_1;
+    struct struc_106 *color_2;
+    struct struc_106 *color_3;
+    struct bgra_color global_light_color_abgr;
+    struct bgra_color global_light_color_abgr_norm;
+    uint32_t global_light_color_rgba;
+    struct matrix field_38;
+    struct matrix field_78;
+    struct matrix field_B8;
+    struct matrix field_F8;
+    uint32_t field_138;
+    struct matrix normal_matrix;
+    uint32_t field_17C;
+    uint32_t field_180;
+    uint32_t field_184;
+    uint32_t field_188;
+    uint32_t field_18C;
+    uint32_t field_190;
+    uint32_t field_194;
+    uint32_t field_198;
+    struct matrix *matrix_pointer;
+    uint32_t field_1A0;
+    uint32_t field_1A4[256];
+    uint32_t field_5A4;
+    bgra_color_ui8 color;
 };
 
 struct ff8_polygon_set
 {
-	uint32_t field_0;
-	uint32_t field_4;
-	uint32_t field_8;
-	uint32_t field_C;
-	uint32_t field_10;
-	uint32_t numgroups;
-	struct struc_49 field_14;
-	uint32_t field_2C;
-	struct polygon_data *polygon_data;
-	struct p_hundred *hundred_data;
-	uint32_t per_group_hundreds;
-	struct p_hundred **hundred_data_group_array;
-	struct matrix_set *matrix_set;
-	uint32_t field_44;
-	uint32_t field_48;
-	void *execute_buffers;			// IDirect3DExecuteBuffer **
-	struct indexed_primitive **indexed_primitives;
-	uint32_t field_54;
-	uint32_t field_58;
-	struct p_group *polygon_group_array;
-	// unknown up to 0xB0
+    uint32_t field_0;
+    uint32_t field_4;
+    uint32_t field_8;
+    uint32_t field_C;
+    uint32_t field_10;
+    uint32_t numgroups;
+    struct struc_49 field_14;
+    uint32_t field_2C;
+    struct polygon_data *polygon_data;
+    struct p_hundred *hundred_data;
+    uint32_t per_group_hundreds;
+    struct p_hundred **hundred_data_group_array;
+    struct matrix_set *matrix_set;
+    uint32_t field_44;
+    uint32_t field_48;
+    void *execute_buffers; // IDirect3DExecuteBuffer **
+    struct indexed_primitive **indexed_primitives;
+    uint32_t field_54;
+    uint32_t field_58;
+    struct p_group *polygon_group_array;
+    // unknown up to 0xB0
 };
 
 struct ff8_tex_header
 {
-	uint32_t version;
-	uint32_t field_4;
-	uint32_t color_key;
-	uint32_t field_C;
-	uint32_t field_10;
-	union
-	{
-		struct
-		{
-			uint32_t minbitspercolor;
-			uint32_t maxbitspercolor;
-			uint32_t minalphabits;
-			uint32_t maxalphabits;
-		} v1_1;
+    uint32_t version;
+    uint32_t field_4;
+    uint32_t color_key;
+    uint32_t field_C;
+    uint32_t field_10;
+    union {
+        struct
+        {
+            uint32_t minbitspercolor;
+            uint32_t maxbitspercolor;
+            uint32_t minalphabits;
+            uint32_t maxalphabits;
+        } v1_1;
 
-		struct
-		{
-			uint32_t x;
-			uint32_t y;
-			uint32_t w;
-			uint32_t h;
-		} fb_tex;
-	};
-	union
-	{
-		struct
-		{
-			uint32_t minbitsperpixel;
-			uint32_t maxbitsperpixel;
-		} v1_2;
+        struct
+        {
+            uint32_t x;
+            uint32_t y;
+            uint32_t w;
+            uint32_t h;
+        } fb_tex;
+    };
+    union {
+        struct
+        {
+            uint32_t minbitsperpixel;
+            uint32_t maxbitsperpixel;
+        } v1_2;
 
-		struct
-		{
-			char *psx_name;
-			char *pc_name;
-		} file;
-	};
-	uint32_t field_2C;
-	uint32_t palettes;					// ?
-	uint32_t palette_entries;			// ?
-	uint32_t bpp;
-	struct texture_format tex_format;
-	uint32_t use_palette_colorkey;
-	char *palette_colorkey;
-	uint32_t reference_alpha;
-	uint32_t blend_mode;
-	uint32_t field_CC;
-	uint32_t palette_index;
-	uint32_t field_D4;
-	unsigned char *image_data;
-	unsigned char *old_palette_data;
-	uint32_t field_DC; // field_E0 in reality
-	uint32_t field_E0; // field_E4 in reality
-	uint32_t *vram_positions;
-	uint32_t y;
+        struct
+        {
+            char *psx_name;
+            char *pc_name;
+        } file;
+    };
+    uint32_t field_2C;
+    uint32_t palettes;        // ?
+    uint32_t palette_entries; // ?
+    uint32_t bpp;
+    struct texture_format tex_format;
+    uint32_t use_palette_colorkey;
+    char *palette_colorkey;
+    uint32_t reference_alpha;
+    uint32_t blend_mode;
+    uint32_t field_CC;
+    uint32_t palette_index;
+    uint32_t field_D4;
+    unsigned char *image_data;
+    unsigned char *old_palette_data;
+    uint32_t field_DC; // field_E0 in reality
+    uint32_t field_E0; // field_E4 in reality
+    uint32_t *vram_positions;
+    uint32_t y;
 };
 
 struct ff8_texture_set
 {
-	union
-	{
-		struct
-		{
-			void *ddsurface1;
-			void *d3d2texture1;
-			void *ddsurface2;
-			void *d3d2texture2;
-		} d3d;
+    union {
+        struct
+        {
+            void *ddsurface1;
+            void *d3d2texture1;
+            void *ddsurface2;
+            void *d3d2texture2;
+        } d3d;
 
-		struct
-		{
-			uint32_t external;
-			struct gl_texture_set *gl_set;
-			uint32_t width;
-			uint32_t height;
-		} ogl;
-	};
+        struct
+        {
+            uint32_t external;
+            struct gl_texture_set *gl_set;
+            uint32_t width;
+            uint32_t height;
+        } ogl;
+    };
 
-	uint32_t field_10;
-	uint32_t field_14;
-	uint32_t refcount;
-	uint32_t field_1C;
-	uint32_t field_20;
-	uint32_t field_24;
-	uint32_t field_28;
-	uint32_t field_2C;
-	uint32_t field_30;
-	uint32_t field_34;
-	uint32_t field_38;
-	uint32_t field_3C;
-	uint32_t field_40;
-	uint32_t field_44;
-	uint32_t field_48;
-	uint32_t field_4C;
-	uint32_t field_50;
-	uint32_t field_54;
-	uint32_t field_58;
-	uint32_t field_5C;
-	uint32_t field_60;
-	uint32_t field_64;
-	uint32_t field_68;
-	uint32_t field_6C;
-	uint32_t field_70;
-	uint32_t field_74;
-	uint32_t field_78;
-	uint32_t dummy1[5];
-	uint32_t *texturehandle;
-	struct texture_format *texture_format;
-	struct tex_header *tex_header;
-	uint32_t palette_index;
-	struct palette *palette;
-	uint32_t field_90;
-	uint32_t field_94;
-	uint32_t field_98;
-	uint32_t field_9C;
+    uint32_t field_10;
+    uint32_t field_14;
+    uint32_t refcount;
+    uint32_t field_1C;
+    uint32_t field_20;
+    uint32_t field_24;
+    uint32_t field_28;
+    uint32_t field_2C;
+    uint32_t field_30;
+    uint32_t field_34;
+    uint32_t field_38;
+    uint32_t field_3C;
+    uint32_t field_40;
+    uint32_t field_44;
+    uint32_t field_48;
+    uint32_t field_4C;
+    uint32_t field_50;
+    uint32_t field_54;
+    uint32_t field_58;
+    uint32_t field_5C;
+    uint32_t field_60;
+    uint32_t field_64;
+    uint32_t field_68;
+    uint32_t field_6C;
+    uint32_t field_70;
+    uint32_t field_74;
+    uint32_t field_78;
+    uint32_t dummy1[5];
+    uint32_t *texturehandle;
+    struct texture_format *texture_format;
+    struct tex_header *tex_header;
+    uint32_t palette_index;
+    struct palette *palette;
+    uint32_t field_90;
+    uint32_t field_94;
+    uint32_t field_98;
+    uint32_t field_9C;
 };
 
-struct struc_color_texture {
-		uint32_t field_0;
-		uint8_t r;
-		uint8_t g;
-		uint8_t b;
-		uint8_t _padding;
-		int16_t x;
-		int16_t y;
-		int16_t w;
-		int16_t h;
+struct struc_color_texture
+{
+    uint32_t field_0;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t _padding;
+    int16_t x;
+    int16_t y;
+    int16_t w;
+    int16_t h;
 };
 
 struct texture_page
 {
-	uint32_t field_0;
-	uint32_t x;
-	uint32_t y;
-	uint32_t width;
-	uint32_t height;
-	uint32_t color_key;
-	float u;
-	float v;
-	uint32_t field_20;
-	struct ff8_graphics_object *tri_gfxobj;
-	struct ff8_graphics_object *quad_gfxobj;
-	struct ff8_graphics_object *noblend_tri_gfxobj;
-	struct ff8_graphics_object *noblend_quad_gfxobj;
-	struct ff8_graphics_object *avg_tri_gfxobj;
-	struct ff8_graphics_object *avg_quad_gfxobj;
-	struct ff8_graphics_object *add_tri_gfxobj;
-	struct ff8_graphics_object *add_quad_gfxobj;
-	struct ff8_graphics_object *sub_tri_gfxobj;
-	struct ff8_graphics_object *sub_quad_gfxobj;
-	struct ff8_graphics_object *mode3_tri_gfxobj;
-	struct ff8_graphics_object *mode3_quad_gfxobj;
-	struct ff8_tex_header *tex_header;
-	char *image_data;
-	struct ff8_tex_header* sub_tex_header;
-	char* sub_image_data;
+    uint32_t field_0;
+    uint32_t x;
+    uint32_t y;
+    uint32_t width;
+    uint32_t height;
+    uint32_t color_key;
+    float u;
+    float v;
+    uint32_t field_20;
+    struct ff8_graphics_object *tri_gfxobj;
+    struct ff8_graphics_object *quad_gfxobj;
+    struct ff8_graphics_object *noblend_tri_gfxobj;
+    struct ff8_graphics_object *noblend_quad_gfxobj;
+    struct ff8_graphics_object *avg_tri_gfxobj;
+    struct ff8_graphics_object *avg_quad_gfxobj;
+    struct ff8_graphics_object *add_tri_gfxobj;
+    struct ff8_graphics_object *add_quad_gfxobj;
+    struct ff8_graphics_object *sub_tri_gfxobj;
+    struct ff8_graphics_object *sub_quad_gfxobj;
+    struct ff8_graphics_object *mode3_tri_gfxobj;
+    struct ff8_graphics_object *mode3_quad_gfxobj;
+    struct ff8_tex_header *tex_header;
+    char *image_data;
+    struct ff8_tex_header *sub_tex_header;
+    char *sub_image_data;
 };
 
 struct struc_50
 {
-	uint32_t initialized;
-	struct texture_page texture_page[8];
-	uint32_t texture_page_enabled;
-	uint32_t field_328;
-	uint32_t vram_needs_reload;
-	uint32_t palette_index;
-	char dummy[256];
-	uint32_t vram_x;
-	uint32_t vram_y;
-	uint32_t vram_width;
-	uint32_t vram_height;
-	uint16_t *vram_palette_data;
-	uint16_t vram_palette_pos; // 10-bit | 6-bit
-	uint16_t padding;
+    uint32_t initialized;
+    struct texture_page texture_page[8];
+    uint32_t texture_page_enabled;
+    uint32_t field_328;
+    uint32_t vram_needs_reload;
+    uint32_t palette_index;
+    char dummy[256];
+    uint32_t vram_x;
+    uint32_t vram_y;
+    uint32_t vram_width;
+    uint32_t vram_height;
+    uint16_t *vram_palette_data;
+    uint16_t vram_palette_pos; // 10-bit | 6-bit
+    uint16_t padding;
 };
 
 struct struc_51
 {
-	struct struc_50 struc_50_array[32];
+    struct struc_50 struc_50_array[32];
 };
 
 struct ff8_tim
 {
-	uint16_t img_x;
-	uint16_t img_y;
-	uint16_t img_w;
-	uint16_t img_h;
-	uint8_t *img_data;
-	uint16_t pal_x;
-	uint16_t pal_y;
-	uint16_t pal_w;
-	uint16_t pal_h;
-	uint16_t *pal_data;
+    uint16_t img_x;
+    uint16_t img_y;
+    uint16_t img_w;
+    uint16_t img_h;
+    uint8_t *img_data;
+    uint16_t pal_x;
+    uint16_t pal_y;
+    uint16_t pal_w;
+    uint16_t pal_h;
+    uint16_t *pal_data;
 };
 
 struct ff8_camdata
 {
-	// EYE
-	int16_t eye_x;
-	int16_t eye_y;
-	int16_t eye_z;
-	// TARGET
-	int16_t target_x;
-	int16_t target_y;
-	int16_t target_z;
-	// UP
-	int16_t up_x;
-	int16_t up_y;
-	int16_t up_z;
-	// FILLER?
-	int16_t padding;
-	// POSITION
-	int32_t pos_x;
-	int32_t pos_y;
-	int32_t pos_z;
-	// PAN
-	int16_t pan_x;
-	int16_t pan_y;
-	// ZOOM
-	int16_t zoom;
-	// FILLER?
-	int16_t padding2;
-	// CONTROL
-	uint8_t flag;
-	// MARKER 'END'
-	uint8_t end[3];
+    // EYE
+    int16_t eye_x;
+    int16_t eye_y;
+    int16_t eye_z;
+    // TARGET
+    int16_t target_x;
+    int16_t target_y;
+    int16_t target_z;
+    // UP
+    int16_t up_x;
+    int16_t up_y;
+    int16_t up_z;
+    // FILLER?
+    int16_t padding;
+    // POSITION
+    int32_t pos_x;
+    int32_t pos_y;
+    int32_t pos_z;
+    // PAN
+    int16_t pan_x;
+    int16_t pan_y;
+    // ZOOM
+    int16_t zoom;
+    // FILLER?
+    int16_t padding2;
+    // CONTROL
+    uint8_t flag;
+    // MARKER 'END'
+    uint8_t end[3];
 };
 
 struct ff8_movie_obj
 {
-	WORD movie_current_frame;
-	WORD movie_total_frames;
-	uint32_t movie_surface_height;
-	void *bink_struct;
-	struct ff8_camdata *camdata_start;
-	unsigned char camdata_buffer[312320];
-	unsigned char movie_surface_desc[0x7C];
-	void *movie_back_surface;
-	uint32_t movie_surface_x;
-	struct ff8_camdata *camdata_pointer;
-	uint32_t movie_surface_y;
-	void *movie_dd_surface;
-	struct ff8_game_obj *movie_game_object;
-	uint32_t movie_intro_pak;
-	uint32_t movie_is_playing;
-	uint32_t field_4C4AC;
-	uint32_t field_4C4B0;
-	uint32_t field_4C4B4;
-	uint32_t movie_resolution;
-	HANDLE movie_file_handle;
-	uint32_t bink_copy_flags;
+    WORD movie_current_frame;
+    WORD movie_total_frames;
+    uint32_t movie_surface_height;
+    void *bink_struct;
+    struct ff8_camdata *camdata_start;
+    unsigned char camdata_buffer[312320];
+    unsigned char movie_surface_desc[0x7C];
+    void *movie_back_surface;
+    uint32_t movie_surface_x;
+    struct ff8_camdata *camdata_pointer;
+    uint32_t movie_surface_y;
+    void *movie_dd_surface;
+    struct ff8_game_obj *movie_game_object;
+    uint32_t movie_intro_pak;
+    uint32_t movie_is_playing;
+    uint32_t field_4C4AC;
+    uint32_t field_4C4B0;
+    uint32_t field_4C4B4;
+    uint32_t movie_resolution;
+    HANDLE movie_file_handle;
+    uint32_t bink_copy_flags;
 };
 
 struct ff8_win_obj
 {
-	uint32_t x;
-	uint32_t y;
-	char *text_data1;
-	char *text_data2;
-	uint16_t field_10;
-	uint16_t field_12;
-	uint16_t field_14;
-	uint8_t field_16;
-	uint8_t current_color;
-	uint8_t win_id;
-	uint8_t field_19;
-	uint16_t mode1;
-	int16_t open_close_transition;
-	int16_t field_1E;
-	uint8_t text_data1_offset;
-	uint8_t field_21;
-	uint8_t text_data1_line;
-	uint8_t field_23;
-	uint32_t state;
-	uint8_t field_28;
-	uint8_t first_question;
-	uint8_t last_question;
-	uint8_t current_choice_question;
-	uint8_t field_2C;
-	uint8_t field_2D;
-	uint8_t field_2E;
-	uint8_t icon_id;
-	uint16_t field_30;
-	uint16_t field_32;
-	uint32_t callback1;
-	uint32_t callback2;
+    uint32_t x;
+    uint32_t y;
+    char *text_data1;
+    char *text_data2;
+    uint16_t field_10;
+    uint16_t field_12;
+    uint16_t field_14;
+    uint8_t field_16;
+    uint8_t current_color;
+    uint8_t win_id;
+    uint8_t field_19;
+    uint16_t mode1;
+    int16_t open_close_transition;
+    int16_t field_1E;
+    uint8_t text_data1_offset;
+    uint8_t field_21;
+    uint8_t text_data1_line;
+    uint8_t field_23;
+    uint32_t state;
+    uint8_t field_28;
+    uint8_t first_question;
+    uint8_t last_question;
+    uint8_t current_choice_question;
+    uint8_t field_2C;
+    uint8_t field_2D;
+    uint8_t field_2E;
+    uint8_t icon_id;
+    uint16_t field_30;
+    uint16_t field_32;
+    uint32_t callback1;
+    uint32_t callback2;
 };
 
-struct ff8_gamepad_vibration_state_entry {
-	uint8_t analog_disabled;
-	uint8_t analog_flags;
-	int16_t keyscan;
-	uint8_t analog_rx;
-	uint8_t analog_ry;
-	uint8_t analog_lx;
-	uint8_t analog_ly;
-	int16_t field_8;
-	int16_t field_A;
-	int16_t field_C;
-	int16_t field_E;
-	int16_t keyon;
-	int16_t keyscan_invert;
+struct ff8_gamepad_vibration_state_entry
+{
+    uint8_t analog_disabled;
+    uint8_t analog_flags;
+    int16_t keyscan;
+    uint8_t analog_rx;
+    uint8_t analog_ry;
+    uint8_t analog_lx;
+    uint8_t analog_ly;
+    int16_t field_8;
+    int16_t field_A;
+    int16_t field_C;
+    int16_t field_E;
+    int16_t keyon;
+    int16_t keyscan_invert;
 };
 
-struct ff8_gamepad_vibration_state {
-	uint8_t field_0;
-	uint8_t field_1;
-	uint8_t field_2;
-	uint8_t field_3;
-	uint16_t field_4;
-	uint8_t right_motor_speed;
-	uint8_t left_motor_speed;
-	uint8_t field_8;
-	uint8_t field_9;
-	uint8_t vibration_active;
-	uint8_t vibration_capable;
-	uint8_t field_C[4];
-	uint8_t field_10[4];
-	uint32_t field_14;
-	uint8_t entries_offset;
-	uint8_t field_19;
-	uint8_t field_1A;
-	uint8_t vibrate_option_enabled;
-	ff8_gamepad_vibration_state_entry entries[8];
-	uint32_t field_BC;
-	uint16_t field_C0;
-	uint8_t port_id;
-	uint8_t gamepad_options; // is_enabled (1-bit) | u40 | u20 | u10 | u8 | analog sensitivity (1 to 4, 3-bits)
+struct ff8_gamepad_vibration_state
+{
+    uint8_t field_0;
+    uint8_t field_1;
+    uint8_t field_2;
+    uint8_t field_3;
+    uint16_t field_4;
+    uint8_t right_motor_speed;
+    uint8_t left_motor_speed;
+    uint8_t field_8;
+    uint8_t field_9;
+    uint8_t vibration_active;
+    uint8_t vibration_capable;
+    uint8_t field_C[4];
+    uint8_t field_10[4];
+    uint32_t field_14;
+    uint8_t entries_offset;
+    uint8_t field_19;
+    uint8_t field_1A;
+    uint8_t vibrate_option_enabled;
+    ff8_gamepad_vibration_state_entry entries[8];
+    uint32_t field_BC;
+    uint16_t field_C0;
+    uint8_t port_id;
+    uint8_t gamepad_options; // is_enabled (1-bit) | u40 | u20 | u10 | u8 | analog sensitivity (1 to 4, 3-bits)
 };
 
-struct ff8_driver_input_state {
-	ff8_gamepad_vibration_state_entry entry;
-	uint32_t field_14;
-	uint32_t field_18;
-	uint32_t field_1C;
-	uint32_t field_20;
+struct ff8_driver_input_state
+{
+    ff8_gamepad_vibration_state_entry entry;
+    uint32_t field_14;
+    uint32_t field_18;
+    uint32_t field_1C;
+    uint32_t field_20;
 };
 
-struct ff8_gamepad_state {
-	ff8_gamepad_vibration_state state_by_port[2];
-	ff8_driver_input_state driver_state_by_port[2];
+struct ff8_gamepad_state
+{
+    ff8_gamepad_vibration_state state_by_port[2];
+    ff8_driver_input_state driver_state_by_port[2];
 };
 
 struct ff8_vibrate_motor_struc
 {
-	uint8_t *data_start;
-	uint8_t *data_end;
-	int16_t counter;
-	uint16_t data_size;
-	uint8_t enabled;
-	uint8_t padding_D;
-	uint8_t padding_E;
-	uint8_t padding_F;
+    uint8_t *data_start;
+    uint8_t *data_end;
+    int16_t counter;
+    uint16_t data_size;
+    uint8_t enabled;
+    uint8_t padding_D;
+    uint8_t padding_E;
+    uint8_t padding_F;
 };
 
 struct ff8_vibrate_struc
 {
-	ff8_vibrate_motor_struc sub_struc_left;
-	ff8_vibrate_motor_struc sub_struc_right;
-	uint16_t field_20;
-	uint8_t intensity;
-	uint8_t field_23;
+    ff8_vibrate_motor_struc sub_struc_left;
+    ff8_vibrate_motor_struc sub_struc_right;
+    uint16_t field_20;
+    uint8_t intensity;
+    uint8_t field_23;
 };
 
-struct ff8_menu_config_input {
-	int16_t text_id_name;
-	uint16_t text_id_value1;
-	uint16_t text_id_value2;
-	uint16_t type;
-	uint16_t mask;
-	uint16_t value;
-	void(*callback_change_state)();
+struct ff8_menu_config_input
+{
+    int16_t text_id_name;
+    uint16_t text_id_value1;
+    uint16_t text_id_value2;
+    uint16_t type;
+    uint16_t mask;
+    uint16_t value;
+    void (*callback_change_state)();
 };
 
-struct ff8_menu_config_input_keymap {
-	uint8_t field_0;
-	uint8_t field_1;
-	uint8_t field_2;
-	uint8_t field_3;
-	uint8_t text_id;
-	uint8_t padd_5;
-	uint8_t padd_6;
-	uint8_t padd_7;
+struct ff8_menu_config_input_keymap
+{
+    uint8_t field_0;
+    uint8_t field_1;
+    uint8_t field_2;
+    uint8_t field_3;
+    uint8_t text_id;
+    uint8_t padd_5;
+    uint8_t padd_6;
+    uint8_t padd_7;
 };
 
 // Menu task running menu_config_controller and menu_config_render
-struct ff8_menu_config_task {
-	uint8_t gap1[16];
-	uint16_t state; // field_10, 3 while the cursor is in the list
-	uint8_t gap2[22];
-	int8_t row; // field_28, cursor position in menu_config_input_desc
-	uint8_t gap3[79];
+struct ff8_menu_config_task
+{
+    uint8_t gap1[16];
+    uint16_t state; // field_10, 3 while the cursor is in the list
+    uint8_t gap2[22];
+    int8_t row; // field_28, cursor position in menu_config_input_desc
+    uint8_t gap3[79];
 };
 
-struct ff8_menu_save_task {
-	uint8_t gap1[16];
-	uint16_t state;
-	uint8_t gap2[44];
-	uint16_t progress;
-	uint8_t gap3[14];
-	uint8_t scan_index;
+struct ff8_menu_save_task
+{
+    uint8_t gap1[16];
+    uint16_t state;
+    uint8_t gap2[44];
+    uint16_t progress;
+    uint8_t gap3[14];
+    uint8_t scan_index;
 };
 
-struct ff8_draw_menu_sprite_texture_infos_short {
-	uint32_t texID; // 2 bits = depth | 2 bits = blend | 1 bit = draw | 4 bits = textureID
-	uint32_t color;
-	uint16_t x; // field_8
-	uint16_t y;
-	uint8_t u; // field_C
-	uint8_t v;
-	uint16_t palID; // 6 bits = ??? | 4 bits = PaletteID | 6 bits = ???
-	int16_t w; // field_10
-	int16_t h;
+struct ff8_draw_menu_sprite_texture_infos_short
+{
+    uint32_t texID; // 2 bits = depth | 2 bits = blend | 1 bit = draw | 4 bits = textureID
+    uint32_t color;
+    uint16_t x; // field_8
+    uint16_t y;
+    uint8_t u; // field_C
+    uint8_t v;
+    uint16_t palID; // 6 bits = ??? | 4 bits = PaletteID | 6 bits = ???
+    int16_t w;      // field_10
+    int16_t h;
 };
 
-struct ff8_draw_menu_sprite_texture_infos {
-	uint32_t command;
-	ff8_draw_menu_sprite_texture_infos_short inner;
+struct ff8_draw_menu_sprite_texture_infos
+{
+    uint32_t command;
+    ff8_draw_menu_sprite_texture_infos_short inner;
 };
 
 struct ff8_font
@@ -829,7 +838,8 @@ struct ff8_font
     ff8_graphics_object *graphics_object54;
 };
 
-struct struc_kernel_sysfont {
+struct struc_kernel_sysfont
+{
     uint8_t x_field_0;
     uint8_t pal_id_field_1;
     uint16_t uv_field_2;
@@ -837,543 +847,563 @@ struct struc_kernel_sysfont {
 
 struct ff8_audio_fmt
 {
-	uint32_t length;
-	uint32_t offset;
-	uint8_t loop;
-	uint8_t count;
-	uint8_t unk1;
-	uint8_t unk2;
-	uint32_t loop_start;
-	uint32_t loop_end;
-	LPWAVEFORMATEX wave_format;
+    uint32_t length;
+    uint32_t offset;
+    uint8_t loop;
+    uint8_t count;
+    uint8_t unk1;
+    uint8_t unk2;
+    uint32_t loop_start;
+    uint32_t loop_end;
+    LPWAVEFORMATEX wave_format;
 };
 
 struct ff8_game_obj
 {
-	uint32_t do_quit;
-	uint32_t dc_horzres;
-	uint32_t dc_vertres;
-	uint32_t dc_bitspixel;
-	uint32_t field_10;
-	uint32_t field_14;
-	uint32_t field_18;
-	uint32_t field_1C;
-	uint32_t field_20;
-	uint32_t field_24;
-	uint32_t field_28;
-	uint32_t field_2C;
-	double countspersecond;
-	time_t _countspersecond;
-	uint32_t field_40;
-	uint32_t field_44;
-	double fps;
-	uint32_t tsc;
-	uint32_t field_54;					// tsc high bits?
-	HINSTANCE hinstance;
-	HWND hwnd;
-	uint32_t field_60;
-	uint32_t field_64;
-	uint32_t field_68;
-	uint32_t field_6C;
-	uint32_t field_70;
-	void *dddevice;
-	void *dd2interface;
-	void *front_surface[3];
-	DDSURFACEDESC front_surface_desc[3];
-	uint32_t field_1CC;
-	uint32_t field_1D0;
-	IDirectDrawClipper* dd_clipper;
-	uint32_t field_1D8;
-	DDSURFACEDESC d3d_surfacedesc;
-	void *dd_interface;
-	uint32_t field_24C;
-	DDSURFACEDESC dd_surfacedesc;
-	struct list *d3ddev_list;
-	void *d3dinterface;
-	void *surface_d3ddev;			// IDirect3DDevice
-	struct list *textureformat_list;
-	void *d3ddev_struct;
-	void *d3dviewport;
-	void *d3dmaterial;
-	uint32_t field_2D8;
-	void *d3d2interface;
-	uint32_t dummy1[0xD];
-	void *d3d2device;
-	void *d3dviewport2;
-	uint32_t dummy2[0x6];
-	struct list *list_2E8;
-	struct polygon_set *polygon_set_2EC;
-	struct polygon_set *polygon_set_2F0;
-	struct stack *matrix_stack1;
-	struct stack *matrix_stack2;
-	struct matrix *camera_matrix;
-	struct graphics_instance *graphics_instance;
-	uint32_t field_304;
-	uint32_t field_308;
-	uint32_t field_30C;
-	uint32_t field_310;
-	uint32_t field_314;
-	uint32_t field_318;
-	uint32_t field_31C;
-	uint32_t field_320;
-	D3DDEVICEDESC d3d_halcaps;
-	D3DDEVICEDESC d3d_helcaps;
-	DDCAPS_DX5 halcaps;
-	DDCAPS_DX5 helcaps;
-	uint32_t dummy3[0xD];
-	uint32_t field_794;
-	uint32_t field_798;
-	struct texture_format surface_tex_format;
-	uint32_t in_scene;
-	struct p_hundred *hundred_array[5];
-	void *applog_debug1;
-	uint32_t applog_debug2;
-	void *dxdbg_file;
-	uint32_t field_840;
-	uint32_t field_844;
-	uint32_t _res_x;
-	uint32_t _res_y;
-	uint32_t _res_w;
-	uint32_t _res_h;
-	uint32_t field_858;
-	uint32_t field_85C;
-	uint32_t field_860;
-	uint32_t field_864;
-	uint32_t field_868;
-	uint32_t field_86C;
-	uint32_t field_870;
-	uint32_t field_874;
-	uint32_t field_878;
-	uint32_t field_87C;
-	uint32_t field_880;
-	uint32_t field_884;
-	uint32_t field_888;
-	uint32_t field_88C;
-	struct matrix matrix_890;
-	struct matrix matrix_8D0;
-	void *dx_sfx_something;
-	struct list *tex_list_pointer;
-	struct stack *stack_918;
-	uint32_t field_91C;
-	void *_3d2d_something;
-	uint32_t field_924;
-	uint32_t field_928;
-	uint32_t field_92C;
-	uint32_t field_930;
-	uint32_t dummy4[0x30];
-	struct gfx_driver *gfx_driver;
-	void *_3dobject_pool;
-	uint32_t field_93C;
-	struct p_hundred *current_hundred;
-	struct struc_81 *field_944;
-	uint32_t field_948;
-	uint32_t field_94C;
-	uint32_t field_950;
-	uint32_t window_width;
-	uint32_t window_height;
-	uint32_t colordepth;
-	uint32_t field_960;
-	uint32_t is_fullscreen;
-	uint32_t field_968;
-	uint32_t no_hardware;
-	uint32_t field_970;
-	uint32_t show_cursor;
-	uint32_t colorkey;
-	uint32_t field_97C;
-	uint32_t field_980;
-	uint32_t d3d2_flag;
-	uint32_t field_988;
-	uint32_t field_98C;
-	uint32_t field_990;
-	uint32_t field_994;
-	uint32_t matrix_stack_size;
-	uint32_t field_99C;
-	uint32_t field_9A0;
-	uint32_t field_9A4;
-	uint32_t field_9A8;
-	uint32_t field_9AC;
-	uint32_t random_seed;
-	char *window_title;
-	char *window_class;
-	uint32_t use_custom_wndclass;
-	WNDCLASSA wndclass_struct;
-	uint32_t use_custom_dwStyle;
-	DWORD dwStyle;
-	struct main_obj engine_loop_obj;
-	struct main_obj game_loop_obj;
-	void *wm_activate;
-	uint32_t field_A2C;
-	uint32_t field_A30;
-	uint32_t field_A34;
-	uint32_t field_A38;
-	uint32_t field_A3C;
-	uint32_t field_A40;
-	uint32_t field_A44;
-	uint32_t field_A48;
-	uint32_t field_A4C;
-	uint32_t field_A50;
-	uint32_t gfx_reset;
-	uint32_t field_A58;
-	uint32_t field_A5C;
-	uint32_t dummy5[2];
-	uint32_t current_gfx_driver;
-	uint32_t field_A64;
-	uint32_t field_A68;
-	uint32_t field_A6C;
-	uint32_t field_A70;
-	uint32_t field_A74;
-	uint32_t field_A78;
-	void *gfx_driver_data;
-	uint32_t field_A80;
-	uint32_t field_A84;
-	void *create_gfx_driver;
-	uint32_t field_BD4;
-	uint32_t field_BD8;
-	uint32_t field_BDC;
-	uint32_t field_BE0;
-	uint32_t field_BE4;
-	uint32_t field_BE8;
-	uint32_t no_8bit_textures;
-	uint32_t field_BF0;
-	uint32_t tnt_fix;
-	uint32_t field_BF8;
-	uint32_t field_BFC;
-	uint32_t field_C00;
-	uint32_t field_C04;
-	uint32_t field_C08;
-	uint32_t field_C0C;
+    uint32_t do_quit;
+    uint32_t dc_horzres;
+    uint32_t dc_vertres;
+    uint32_t dc_bitspixel;
+    uint32_t field_10;
+    uint32_t field_14;
+    uint32_t field_18;
+    uint32_t field_1C;
+    uint32_t field_20;
+    uint32_t field_24;
+    uint32_t field_28;
+    uint32_t field_2C;
+    double countspersecond;
+    time_t _countspersecond;
+    uint32_t field_40;
+    uint32_t field_44;
+    double fps;
+    uint32_t tsc;
+    uint32_t field_54; // tsc high bits?
+    HINSTANCE hinstance;
+    HWND hwnd;
+    uint32_t field_60;
+    uint32_t field_64;
+    uint32_t field_68;
+    uint32_t field_6C;
+    uint32_t field_70;
+    void *dddevice;
+    void *dd2interface;
+    void *front_surface[3];
+    DDSURFACEDESC front_surface_desc[3];
+    uint32_t field_1CC;
+    uint32_t field_1D0;
+    IDirectDrawClipper *dd_clipper;
+    uint32_t field_1D8;
+    DDSURFACEDESC d3d_surfacedesc;
+    void *dd_interface;
+    uint32_t field_24C;
+    DDSURFACEDESC dd_surfacedesc;
+    struct list *d3ddev_list;
+    void *d3dinterface;
+    void *surface_d3ddev; // IDirect3DDevice
+    struct list *textureformat_list;
+    void *d3ddev_struct;
+    void *d3dviewport;
+    void *d3dmaterial;
+    uint32_t field_2D8;
+    void *d3d2interface;
+    uint32_t dummy1[0xD];
+    void *d3d2device;
+    void *d3dviewport2;
+    uint32_t dummy2[0x6];
+    struct list *list_2E8;
+    struct polygon_set *polygon_set_2EC;
+    struct polygon_set *polygon_set_2F0;
+    struct stack *matrix_stack1;
+    struct stack *matrix_stack2;
+    struct matrix *camera_matrix;
+    struct graphics_instance *graphics_instance;
+    uint32_t field_304;
+    uint32_t field_308;
+    uint32_t field_30C;
+    uint32_t field_310;
+    uint32_t field_314;
+    uint32_t field_318;
+    uint32_t field_31C;
+    uint32_t field_320;
+    D3DDEVICEDESC d3d_halcaps;
+    D3DDEVICEDESC d3d_helcaps;
+    DDCAPS_DX5 halcaps;
+    DDCAPS_DX5 helcaps;
+    uint32_t dummy3[0xD];
+    uint32_t field_794;
+    uint32_t field_798;
+    struct texture_format surface_tex_format;
+    uint32_t in_scene;
+    struct p_hundred *hundred_array[5];
+    void *applog_debug1;
+    uint32_t applog_debug2;
+    void *dxdbg_file;
+    uint32_t field_840;
+    uint32_t field_844;
+    uint32_t _res_x;
+    uint32_t _res_y;
+    uint32_t _res_w;
+    uint32_t _res_h;
+    uint32_t field_858;
+    uint32_t field_85C;
+    uint32_t field_860;
+    uint32_t field_864;
+    uint32_t field_868;
+    uint32_t field_86C;
+    uint32_t field_870;
+    uint32_t field_874;
+    uint32_t field_878;
+    uint32_t field_87C;
+    uint32_t field_880;
+    uint32_t field_884;
+    uint32_t field_888;
+    uint32_t field_88C;
+    struct matrix matrix_890;
+    struct matrix matrix_8D0;
+    void *dx_sfx_something;
+    struct list *tex_list_pointer;
+    struct stack *stack_918;
+    uint32_t field_91C;
+    void *_3d2d_something;
+    uint32_t field_924;
+    uint32_t field_928;
+    uint32_t field_92C;
+    uint32_t field_930;
+    uint32_t dummy4[0x30];
+    struct gfx_driver *gfx_driver;
+    void *_3dobject_pool;
+    uint32_t field_93C;
+    struct p_hundred *current_hundred;
+    struct struc_81 *field_944;
+    uint32_t field_948;
+    uint32_t field_94C;
+    uint32_t field_950;
+    uint32_t window_width;
+    uint32_t window_height;
+    uint32_t colordepth;
+    uint32_t field_960;
+    uint32_t is_fullscreen;
+    uint32_t field_968;
+    uint32_t no_hardware;
+    uint32_t field_970;
+    uint32_t show_cursor;
+    uint32_t colorkey;
+    uint32_t field_97C;
+    uint32_t field_980;
+    uint32_t d3d2_flag;
+    uint32_t field_988;
+    uint32_t field_98C;
+    uint32_t field_990;
+    uint32_t field_994;
+    uint32_t matrix_stack_size;
+    uint32_t field_99C;
+    uint32_t field_9A0;
+    uint32_t field_9A4;
+    uint32_t field_9A8;
+    uint32_t field_9AC;
+    uint32_t random_seed;
+    char *window_title;
+    char *window_class;
+    uint32_t use_custom_wndclass;
+    WNDCLASSA wndclass_struct;
+    uint32_t use_custom_dwStyle;
+    DWORD dwStyle;
+    struct main_obj engine_loop_obj;
+    struct main_obj game_loop_obj;
+    void *wm_activate;
+    uint32_t field_A2C;
+    uint32_t field_A30;
+    uint32_t field_A34;
+    uint32_t field_A38;
+    uint32_t field_A3C;
+    uint32_t field_A40;
+    uint32_t field_A44;
+    uint32_t field_A48;
+    uint32_t field_A4C;
+    uint32_t field_A50;
+    uint32_t gfx_reset;
+    uint32_t field_A58;
+    uint32_t field_A5C;
+    uint32_t dummy5[2];
+    uint32_t current_gfx_driver;
+    uint32_t field_A64;
+    uint32_t field_A68;
+    uint32_t field_A6C;
+    uint32_t field_A70;
+    uint32_t field_A74;
+    uint32_t field_A78;
+    void *gfx_driver_data;
+    uint32_t field_A80;
+    uint32_t field_A84;
+    void *create_gfx_driver;
+    uint32_t field_BD4;
+    uint32_t field_BD8;
+    uint32_t field_BDC;
+    uint32_t field_BE0;
+    uint32_t field_BE4;
+    uint32_t field_BE8;
+    uint32_t no_8bit_textures;
+    uint32_t field_BF0;
+    uint32_t tnt_fix;
+    uint32_t field_BF8;
+    uint32_t field_BFC;
+    uint32_t field_C00;
+    uint32_t field_C04;
+    uint32_t field_C08;
+    uint32_t field_C0C;
 };
 
 struct ff8_gfx_driver
 {
-	gfx_init *init;
-	gfx_cleanup *cleanup;
-	gfx_lock *lock;
-	gfx_unlock *unlock;
-	gfx_flip *flip;
-	gfx_clear *clear;
-	gfx_clear_all *clear_all;
-	gfx_setviewport *setviewport;
-	gfx_setbg *setbg;
-	uint32_t field_24;
-	struct bgra_color field_28;			// ?
-	uint32_t field_38;
-	uint32_t field_3C;
-	gfx_prepare_polygon_set *prepare_polygon_set;
-	gfx_load_group *load_group;
-	gfx_setmatrix *setmatrix;
-	gfx_unload_texture *unload_texture;
-	gfx_load_texture *load_texture;
-	void *field_54;
-	void *field_58;
-	void *field_5C;
-	void *field_60;
-	gfx_palette_changed *palette_changed;
-	gfx_write_palette *write_palette;
-	gfx_blendmode *blendmode;
-	gfx_light_polygon_set *light_polygon_set;
-	gfx_field_64 *field_64;
-	gfx_setrenderstate *setrenderstate;
-	gfx_setrenderstate *_setrenderstate;
-	gfx_setrenderstate *__setrenderstate;
-	gfx_field_74 *field_74;
-	gfx_field_78 *field_78;
-	void *field__84;
-	void *field_88;
-	gfx_draw_deferred *draw_deferred;
-	gfx_field_80 *field_80;
-	gfx_field_84 *field_84;
-	gfx_begin_scene *begin_scene;
-	gfx_end_scene *end_scene;
-	gfx_field_90 *field_90;
-	gfx_polysetrenderstate *setrenderstate_flat2D;
-	gfx_polysetrenderstate *setrenderstate_smooth2D;
-	gfx_polysetrenderstate *setrenderstate_textured2D;
-	gfx_polysetrenderstate *setrenderstate_paletted2D;
-	gfx_polysetrenderstate *_setrenderstate_paletted2D;
-	gfx_draw_vertices *draw_flat2D;
-	gfx_draw_vertices *draw_smooth2D;
-	gfx_draw_vertices *draw_textured2D;
-	gfx_draw_vertices *draw_paletted2D;
-	gfx_polysetrenderstate *setrenderstate_flat3D;
-	gfx_polysetrenderstate *setrenderstate_smooth3D;
-	gfx_polysetrenderstate *setrenderstate_textured3D;
-	gfx_polysetrenderstate *setrenderstate_paletted3D;
-	gfx_polysetrenderstate *_setrenderstate_paletted3D;
-	gfx_draw_vertices *draw_flat3D;
-	gfx_draw_vertices *draw_smooth3D;
-	gfx_draw_vertices *draw_textured3D;
-	gfx_draw_vertices *draw_paletted3D;
-	gfx_polysetrenderstate *setrenderstate_flatlines;
-	gfx_polysetrenderstate *setrenderstate_smoothlines;
-	gfx_draw_vertices *draw_flatlines;
-	gfx_draw_vertices *draw_smoothlines;
-	gfx_field_EC *field_EC;
+    gfx_init *init;
+    gfx_cleanup *cleanup;
+    gfx_lock *lock;
+    gfx_unlock *unlock;
+    gfx_flip *flip;
+    gfx_clear *clear;
+    gfx_clear_all *clear_all;
+    gfx_setviewport *setviewport;
+    gfx_setbg *setbg;
+    uint32_t field_24;
+    struct bgra_color field_28; // ?
+    uint32_t field_38;
+    uint32_t field_3C;
+    gfx_prepare_polygon_set *prepare_polygon_set;
+    gfx_load_group *load_group;
+    gfx_setmatrix *setmatrix;
+    gfx_unload_texture *unload_texture;
+    gfx_load_texture *load_texture;
+    void *field_54;
+    void *field_58;
+    void *field_5C;
+    void *field_60;
+    gfx_palette_changed *palette_changed;
+    gfx_write_palette *write_palette;
+    gfx_blendmode *blendmode;
+    gfx_light_polygon_set *light_polygon_set;
+    gfx_field_64 *field_64;
+    gfx_setrenderstate *setrenderstate;
+    gfx_setrenderstate *_setrenderstate;
+    gfx_setrenderstate *__setrenderstate;
+    gfx_field_74 *field_74;
+    gfx_field_78 *field_78;
+    void *field__84;
+    void *field_88;
+    gfx_draw_deferred *draw_deferred;
+    gfx_field_80 *field_80;
+    gfx_field_84 *field_84;
+    gfx_begin_scene *begin_scene;
+    gfx_end_scene *end_scene;
+    gfx_field_90 *field_90;
+    gfx_polysetrenderstate *setrenderstate_flat2D;
+    gfx_polysetrenderstate *setrenderstate_smooth2D;
+    gfx_polysetrenderstate *setrenderstate_textured2D;
+    gfx_polysetrenderstate *setrenderstate_paletted2D;
+    gfx_polysetrenderstate *_setrenderstate_paletted2D;
+    gfx_draw_vertices *draw_flat2D;
+    gfx_draw_vertices *draw_smooth2D;
+    gfx_draw_vertices *draw_textured2D;
+    gfx_draw_vertices *draw_paletted2D;
+    gfx_polysetrenderstate *setrenderstate_flat3D;
+    gfx_polysetrenderstate *setrenderstate_smooth3D;
+    gfx_polysetrenderstate *setrenderstate_textured3D;
+    gfx_polysetrenderstate *setrenderstate_paletted3D;
+    gfx_polysetrenderstate *_setrenderstate_paletted3D;
+    gfx_draw_vertices *draw_flat3D;
+    gfx_draw_vertices *draw_smooth3D;
+    gfx_draw_vertices *draw_textured3D;
+    gfx_draw_vertices *draw_paletted3D;
+    gfx_polysetrenderstate *setrenderstate_flatlines;
+    gfx_polysetrenderstate *setrenderstate_smoothlines;
+    gfx_draw_vertices *draw_flatlines;
+    gfx_draw_vertices *draw_smoothlines;
+    gfx_field_EC *field_EC;
 };
 
-struct ff8_field_state_common {
-	uint8_t stack_data[0x140];
-	uint32_t return_value;
-	uint32_t field_144;
-	uint32_t field_148;
-	uint32_t field_14c;
-	uint32_t field_150;
-	uint32_t field_154;
-	uint32_t field_158;
-	uint32_t field_15c;
-	uint32_t execution_flags; // bgdraw: 0x10, bganime/rbganime: 0x980 (0x800: animation ongoing)
-	uint32_t field_164;
-	uint32_t field_168;
-	uint32_t field_16c;
-	uint32_t field_170;
-	uint8_t field_174; // has anim?
-	uint8_t field_175; // has anim mask?
-	uint16_t current_instruction_position; // field_176
-	uint32_t field_178;
-	uint32_t field_17c;
-	uint32_t field_180;
-	uint8_t stack_current_position; // field_184
-	uint8_t field_185;
-	uint8_t field_186;
-	uint8_t field_187;
+struct ff8_field_state_common
+{
+    uint8_t stack_data[0x140];
+    uint32_t return_value;
+    uint32_t field_144;
+    uint32_t field_148;
+    uint32_t field_14c;
+    uint32_t field_150;
+    uint32_t field_154;
+    uint32_t field_158;
+    uint32_t field_15c;
+    uint32_t execution_flags; // bgdraw: 0x10, bganime/rbganime: 0x980 (0x800: animation ongoing)
+    uint32_t field_164;
+    uint32_t field_168;
+    uint32_t field_16c;
+    uint32_t field_170;
+    uint8_t field_174;                     // has anim?
+    uint8_t field_175;                     // has anim mask?
+    uint16_t current_instruction_position; // field_176
+    uint32_t field_178;
+    uint32_t field_17c;
+    uint32_t field_180;
+    uint8_t stack_current_position; // field_184
+    uint8_t field_185;
+    uint8_t field_186;
+    uint8_t field_187;
 };
 
-struct ff8_field_state_background {
-	ff8_field_state_common common;
-	uint16_t bgstate; // field_188, set to -1 if off
-	uint16_t field_18a;
-	uint16_t bgparam_anim_start; // field_18c
-	uint16_t bgparam_anim_end; // field_18e
-	uint16_t bgparam_anim_speed1; // field_190
-	uint16_t bgparam_anim_speed2; // field_192
-	uint16_t bgparam_anim_flags; // field_194
-	uint16_t field_196;
-	uint32_t field_198;
-	uint16_t bgshadeloop_remember_stack_pointer; // field_19c
-	uint16_t bgshade_add_value; // field_19e
-	uint16_t field_1a0; // bgshadeloop
-	uint16_t field_1a2; // bgshadeloop
-	uint8_t field_1a4; // bgshadeloop
-	uint8_t field_1a5; // bgshadeloop
-	uint8_t field_1a6; // bgshadeloop
-	uint8_t bgshade_color1r; // field_1a7
-	uint8_t bgshade_color1g; // field_1a8
-	uint8_t bgshade_color1b; // field_1a9
-	uint8_t bgshade_color2r; // field_1aa
-	uint8_t bgshade_color2g; // field_1ab
-	uint8_t bgshade_color2b; // field_1ac
-	uint8_t bgshade_color1r_2; // field_1ad
-	uint8_t bgshade_color1g_2; // field_1ae
-	uint8_t bgshade_color1b_2; // field_1af
-	uint8_t bgshade_color2r_2; // field_1b0
-	uint8_t bgshade_color2g_2; // field_1b1
-	uint8_t bgshade_color2b_2; // field_1b2
-	uint8_t field_1b3;
+struct ff8_field_state_background
+{
+    ff8_field_state_common common;
+    uint16_t bgstate; // field_188, set to -1 if off
+    uint16_t field_18a;
+    uint16_t bgparam_anim_start;  // field_18c
+    uint16_t bgparam_anim_end;    // field_18e
+    uint16_t bgparam_anim_speed1; // field_190
+    uint16_t bgparam_anim_speed2; // field_192
+    uint16_t bgparam_anim_flags;  // field_194
+    uint16_t field_196;
+    uint32_t field_198;
+    uint16_t bgshadeloop_remember_stack_pointer; // field_19c
+    uint16_t bgshade_add_value;                  // field_19e
+    uint16_t field_1a0;                          // bgshadeloop
+    uint16_t field_1a2;                          // bgshadeloop
+    uint8_t field_1a4;                           // bgshadeloop
+    uint8_t field_1a5;                           // bgshadeloop
+    uint8_t field_1a6;                           // bgshadeloop
+    uint8_t bgshade_color1r;                     // field_1a7
+    uint8_t bgshade_color1g;                     // field_1a8
+    uint8_t bgshade_color1b;                     // field_1a9
+    uint8_t bgshade_color2r;                     // field_1aa
+    uint8_t bgshade_color2g;                     // field_1ab
+    uint8_t bgshade_color2b;                     // field_1ac
+    uint8_t bgshade_color1r_2;                   // field_1ad
+    uint8_t bgshade_color1g_2;                   // field_1ae
+    uint8_t bgshade_color1b_2;                   // field_1af
+    uint8_t bgshade_color2r_2;                   // field_1b0
+    uint8_t bgshade_color2g_2;                   // field_1b1
+    uint8_t bgshade_color2b_2;                   // field_1b2
+    uint8_t field_1b3;
 };
 
-struct ff8_field_state_other {
-	ff8_field_state_common common;
-	uint8_t gap1[8];
-	int32_t position_x; // field_190, 12-bit fraction
-	int32_t position_y; // field_194
-	int32_t position_z; // field_198
-	uint8_t gap1a[94];
-	uint16_t current_triangle_id;
-	uint8_t gap1b[28];
-	int16_t model_id;
-	uint8_t gap2[39];
-	uint8_t direction; // field_241
-	uint8_t gap2a[7];
-	uint8_t pushonoff;
-	uint8_t gap3;
-	uint8_t talkonoff;
-	uint8_t throughonoff;
-	uint8_t gap4[2];
-	uint8_t baseanim1;
-	uint8_t baseanim2;
-	uint8_t baseanim3;
-	uint8_t ladderanim1;
-	uint8_t ladderanim2;
-	uint8_t ladderanim3;
-	uint8_t setpc;
-	uint8_t model_index; // field_256, in dword_1DCB340
-	uint8_t setgeta;
-	uint8_t gap6[12];
+struct ff8_field_state_other
+{
+    ff8_field_state_common common;
+    uint8_t gap1[8];
+    int32_t position_x; // field_190, 12-bit fraction
+    int32_t position_y; // field_194
+    int32_t position_z; // field_198
+    uint8_t gap1a[94];
+    uint16_t current_triangle_id;
+    uint8_t gap1b[28];
+    int16_t model_id;
+    uint8_t gap2[39];
+    uint8_t direction; // field_241
+    uint8_t gap2a[7];
+    uint8_t pushonoff;
+    uint8_t gap3;
+    uint8_t talkonoff;
+    uint8_t throughonoff;
+    uint8_t gap4[2];
+    uint8_t baseanim1;
+    uint8_t baseanim2;
+    uint8_t baseanim3;
+    uint8_t ladderanim1;
+    uint8_t ladderanim2;
+    uint8_t ladderanim3;
+    uint8_t setpc;
+    uint8_t model_index; // field_256, in dword_1DCB340
+    uint8_t setgeta;
+    uint8_t gap6[12];
 };
 
 // What dword_1DCB340 points to, one per field model
-struct ff8_field_model_data {
-	uint8_t gap1[8];
-	void *animation; // field_8, frames of the current animation
-	uint8_t gap2[70];
-	int16_t animation_frame; // field_52, 4-bit fraction
+struct ff8_field_model_data
+{
+    uint8_t gap1[8];
+    void *animation; // field_8, frames of the current animation
+    uint8_t gap2[70];
+    int16_t animation_frame; // field_52, 4-bit fraction
 };
 
 // Set by FADEIN, FADEOUT, DCOLADD..., stepped and drawn by field_fade_sub_47B980
-struct ff8_field_fade {
-	int16_t mode;
-	int16_t value; // fade level, or frame for TCOLADD and FCOLADD
-	int16_t speed; // fade step, or frame count for TCOLADD and FCOLADD
-	int16_t color[3];
-	int16_t color_from[3];
-	int16_t color_to[3];
+struct ff8_field_fade
+{
+    int16_t mode;
+    int16_t value; // fade level, or frame for TCOLADD and FCOLADD
+    int16_t speed; // fade step, or frame count for TCOLADD and FCOLADD
+    int16_t color[3];
+    int16_t color_from[3];
+    int16_t color_to[3];
 };
 
-struct ff8_gf_ability_entry {
-	uint8_t id;
-	uint8_t slot;
-	uint8_t state;
-	uint8_t group;
-	uint8_t required_ap;
-	uint8_t earned_ap;
-	uint8_t unused[2];
+struct ff8_gf_ability_entry
+{
+    uint8_t id;
+    uint8_t slot;
+    uint8_t state;
+    uint8_t group;
+    uint8_t required_ap;
+    uint8_t earned_ap;
+    uint8_t unused[2];
 };
 
 // One held spell of a battle character: id and how many are stocked.
-struct ff8_field_magic_slot {
-	uint8_t id;
-	uint8_t amount;
-	uint8_t unk[3];
+struct ff8_field_magic_slot
+{
+    uint8_t id;
+    uint8_t amount;
+    uint8_t unk[3];
 };
 
-struct ff8_character_command_slot {
-	uint8_t command_id;
-	uint8_t menu_flags;
-	uint8_t target_info;
-	uint8_t flags;
+struct ff8_character_command_slot
+{
+    uint8_t command_id;
+    uint8_t menu_flags;
+    uint8_t target_info;
+    uint8_t flags;
 };
 
-struct ff8_char_computed_stats {
-	// The head of the record is the command being set up for this character,
-	// written by linkedStockFieldCharData. Offsets past curr_hp are unchanged.
-	uint8_t battle_command_id;         // 10 = Stock
-	uint8_t command_menu_flags;        // copied from the kernel battle command
-	uint8_t command_target_info;       // copied from the kernel battle command
-	uint8_t stock_flags;               // bit0 targets KO'd, bit1 cannot stock more
-	uint8_t unk_04;
-	uint8_t magic_status_window_flags; // copied from the magic entry
-	uint8_t magic_target_info;         // copied from the magic entry
-	uint8_t stock_target_type;         // 0 magic, 1 revive, 2 GF
-	uint8_t unk_08[22];
-	ff8_character_command_slot commands[4]; // +0x1E: Attack/Mug and equipped commands
-	ff8_character_command_slot limit_command; // +0x2E
-	uint8_t unk_32[80];
-	ff8_field_magic_slot magic[32];    // +0x82: the spells this character holds
-	uint8_t unk_122[80];
-	uint16_t curr_hp;
-	uint16_t max_hp;
-	uint8_t unk2[66];
-	uint8_t stat_multiplier;
-	uint8_t unk3[23];
+struct ff8_char_computed_stats
+{
+    // The head of the record is the command being set up for this character,
+    // written by linkedStockFieldCharData. Offsets past curr_hp are unchanged.
+    uint8_t battle_command_id;   // 10 = Stock
+    uint8_t command_menu_flags;  // copied from the kernel battle command
+    uint8_t command_target_info; // copied from the kernel battle command
+    uint8_t stock_flags;         // bit0 targets KO'd, bit1 cannot stock more
+    uint8_t unk_04;
+    uint8_t magic_status_window_flags; // copied from the magic entry
+    uint8_t magic_target_info;         // copied from the magic entry
+    uint8_t stock_target_type;         // 0 magic, 1 revive, 2 GF
+    uint8_t unk_08[22];
+    ff8_character_command_slot commands[4];   // +0x1E: Attack/Mug and equipped commands
+    ff8_character_command_slot limit_command; // +0x2E
+    uint8_t unk_32[80];
+    ff8_field_magic_slot magic[32]; // +0x82: the spells this character holds
+    uint8_t unk_122[80];
+    uint16_t curr_hp;
+    uint16_t max_hp;
+    uint8_t unk2[66];
+    uint8_t stat_multiplier;
+    uint8_t unk3[23];
 };
 
 // Battle camera track: this header, the camera script, then the keyframe collection
-struct ff8_battle_camera_track_header {
-	uint16_t pointer_count; // always 2
-	uint16_t script_offset; // always 8
-	uint16_t keyframes_offset;
-	uint16_t size;
+struct ff8_battle_camera_track_header
+{
+    uint16_t pointer_count; // always 2
+    uint16_t script_offset; // always 8
+    uint16_t keyframes_offset;
+    uint16_t size;
 };
 
-struct ff8_battle_magic_cast_context {
-	uint8_t attacker_slot;
-	uint8_t flags; // bit0: the effect must not move the camera
-	uint16_t target_slot_mask;
-	void *action_data;
-	uint8_t sequence_mode;
-	uint8_t done_flag;
-	uint8_t sequence_submode;
-	uint8_t unk_0B;
+struct ff8_battle_magic_cast_context
+{
+    uint8_t attacker_slot;
+    uint8_t flags; // bit0: the effect must not move the camera
+    uint16_t target_slot_mask;
+    void *action_data;
+    uint8_t sequence_mode;
+    uint8_t done_flag;
+    uint8_t sequence_submode;
+    uint8_t unk_0B;
 };
 
 // AnimSeq state of a battle model
-struct ff8_battle_anim_sequence_state {
-	uint8_t current_sequence;
-	uint8_t delay;
-	uint8_t base_sequence;
-	uint8_t next_sequence;
-	uint8_t unk_04[0x0E];
-	uint16_t saved_base_sequence;
+struct ff8_battle_anim_sequence_state
+{
+    uint8_t current_sequence;
+    uint8_t delay;
+    uint8_t base_sequence;
+    uint8_t next_sequence;
+    uint8_t unk_04[0x0E];
+    uint16_t saved_base_sequence;
 };
 
 // Battle model slot (0x9C bytes, one per battle entity)
-struct ff8_battle_entity_state {
-	uint8_t entity_flags;
-	uint8_t status_flags;
-	uint16_t combat_flags; // 0x08: an external anim set is bound
-	uint8_t com_id; // below 0x10: party character
-	uint8_t unk_05[0x5B];
-	uint8_t anim_header[0x0C];
-	uint8_t anim_cmd[0x08];
-	ff8_battle_anim_sequence_state *sequence_state;
-	void *weapon_anim_header;
-	uint8_t unk_7C[0x20];
+struct ff8_battle_entity_state
+{
+    uint8_t entity_flags;
+    uint8_t status_flags;
+    uint16_t combat_flags; // 0x08: an external anim set is bound
+    uint8_t com_id;        // below 0x10: party character
+    uint8_t unk_05[0x5B];
+    uint8_t anim_header[0x0C];
+    uint8_t anim_cmd[0x08];
+    ff8_battle_anim_sequence_state *sequence_state;
+    void *weapon_anim_header;
+    uint8_t unk_7C[0x20];
 };
 
 // Sections a model uses, the anim set bind block holds one per pool (body, then weapon)
-struct ff8_battle_com_file_data {
-	void *skeleton;
-	void *geometry;
-	void *animations;
-	void *sequences;
+struct ff8_battle_com_file_data
+{
+    void *skeleton;
+    void *geometry;
+    void *animations;
+    void *sequences;
 };
 
 // Battle menu drawing context shared by the window and text helpers
-struct ff8_battle_ui_context {
-	uint32_t color;
-	uint8_t unknown_04[0x1F];
-	uint8_t window_border_flags;
-	uint8_t unknown_24[0x10];
-	int16_t window_rect[4];
-	int16_t scaled_window_rect[4];
-	uint16_t icon_id;
-	uint16_t icon_palette;
+struct ff8_battle_ui_context
+{
+    uint32_t color;
+    uint8_t unknown_04[0x1F];
+    uint8_t window_border_flags;
+    uint8_t unknown_24[0x10];
+    int16_t window_rect[4];
+    int16_t scaled_window_rect[4];
+    uint16_t icon_id;
+    uint16_t icon_palette;
 };
 
-struct ff8_menu_callback {
-	void (*func)(int);
-	uint32_t field_4;
+struct ff8_menu_callback
+{
+    void (*func)(int);
+    uint32_t field_4;
 };
 
-struct TexCoord {
-	uint8_t u, v;
+struct TexCoord
+{
+    uint8_t u, v;
 };
 
-struct SsigpuExecutionInstructionTriangle52 {
-	uint32_t field_0;
-	uint8_t r, g, b, func_id;
-	uint32_t vertex_a;
-	TexCoord tex_coord_a;
-	uint16_t tex_pos_x6_y9;
-	uint32_t field_10;
-	uint32_t vertex_b;
-	TexCoord tex_coord_b;
-	uint16_t tex_header;
-	uint32_t field_1C;
-	uint32_t vertex_c;
-	TexCoord tex_coord_c;
-	uint16_t field_26;
+struct SsigpuExecutionInstructionTriangle52
+{
+    uint32_t field_0;
+    uint8_t r, g, b, func_id;
+    uint32_t vertex_a;
+    TexCoord tex_coord_a;
+    uint16_t tex_pos_x6_y9;
+    uint32_t field_10;
+    uint32_t vertex_b;
+    TexCoord tex_coord_b;
+    uint16_t tex_header;
+    uint32_t field_1C;
+    uint32_t vertex_c;
+    TexCoord tex_coord_c;
+    uint16_t field_26;
 };
 
-struct SsigpuExecutionInstructionTriangle36 {
-	uint32_t field_0;
-	uint8_t r, g, b, func_id;
-	uint32_t vertex_a;
-	TexCoord tex_coord_a;
-	uint16_t tex_pos_x6_y9;
-	uint32_t vertex_b;
-	TexCoord tex_coord_b;
-	uint16_t tex_header;
-	uint32_t vertex_c;
-	TexCoord tex_coord_c;
-	uint16_t alpha;
+struct SsigpuExecutionInstructionTriangle36
+{
+    uint32_t field_0;
+    uint8_t r, g, b, func_id;
+    uint32_t vertex_a;
+    TexCoord tex_coord_a;
+    uint16_t tex_pos_x6_y9;
+    uint32_t vertex_b;
+    TexCoord tex_coord_b;
+    uint16_t tex_header;
+    uint32_t vertex_c;
+    TexCoord tex_coord_c;
+    uint16_t alpha;
 };
 
-struct SsigpuExecutionInstructionRect44 {
-	SsigpuExecutionInstructionTriangle36 parent;
-	uint32_t vertex_d;
-	TexCoord tex_coord_d;
-	uint16_t field26;
+struct SsigpuExecutionInstructionRect44
+{
+    SsigpuExecutionInstructionTriangle36 parent;
+    uint32_t vertex_d;
+    TexCoord tex_coord_d;
+    uint16_t field26;
 };
 
 // --------------- end of FF8 imports ---------------
@@ -1385,856 +1415,856 @@ struct _DMUS_PMSG;
 // Native IDirectMusicPerformance COM prefix; method order must match the SDK.
 struct DMusic : IUnknown
 {
-	virtual HRESULT WINAPI Init(IDirectMusic**, IDirectSound*, HWND) = 0;
-	virtual HRESULT WINAPI PlaySegment(IDirectMusicSegment*, DWORD, int64_t, IDirectMusicSegmentState**) = 0;
-	virtual HRESULT WINAPI Stop(IDirectMusicSegment*, IDirectMusicSegmentState*, int32_t, DWORD) = 0;
-	virtual HRESULT WINAPI GetSegmentState(IDirectMusicSegmentState**, int32_t) = 0;
-	virtual HRESULT WINAPI SetPrepareTime(DWORD) = 0;
-	virtual HRESULT WINAPI GetPrepareTime(DWORD*) = 0;
-	virtual HRESULT WINAPI SetBumperLength(DWORD) = 0;
-	virtual HRESULT WINAPI GetBumperLength(DWORD*) = 0;
-	virtual HRESULT WINAPI SendPMsg(_DMUS_PMSG*) = 0;
-	virtual HRESULT WINAPI MusicToReferenceTime(int32_t, int64_t*) = 0;
-	virtual HRESULT WINAPI ReferenceToMusicTime(int64_t, int32_t*) = 0;
-	virtual HRESULT WINAPI IsPlaying(IDirectMusicSegment*, IDirectMusicSegmentState*) = 0;
-	virtual HRESULT WINAPI GetTime(int64_t*, int32_t*) = 0;
+    virtual HRESULT WINAPI Init(IDirectMusic **, IDirectSound *, HWND) = 0;
+    virtual HRESULT WINAPI PlaySegment(IDirectMusicSegment *, DWORD, int64_t, IDirectMusicSegmentState **) = 0;
+    virtual HRESULT WINAPI Stop(IDirectMusicSegment *, IDirectMusicSegmentState *, int32_t, DWORD) = 0;
+    virtual HRESULT WINAPI GetSegmentState(IDirectMusicSegmentState **, int32_t) = 0;
+    virtual HRESULT WINAPI SetPrepareTime(DWORD) = 0;
+    virtual HRESULT WINAPI GetPrepareTime(DWORD *) = 0;
+    virtual HRESULT WINAPI SetBumperLength(DWORD) = 0;
+    virtual HRESULT WINAPI GetBumperLength(DWORD *) = 0;
+    virtual HRESULT WINAPI SendPMsg(_DMUS_PMSG *) = 0;
+    virtual HRESULT WINAPI MusicToReferenceTime(int32_t, int64_t *) = 0;
+    virtual HRESULT WINAPI ReferenceToMusicTime(int64_t, int32_t *) = 0;
+    virtual HRESULT WINAPI IsPlaying(IDirectMusicSegment *, IDirectMusicSegmentState *) = 0;
+    virtual HRESULT WINAPI GetTime(int64_t *, int32_t *) = 0;
 };
 
 // memory addresses and function pointers from FF8.exe
 struct ff8_externals
 {
-	struct ff8_font **fonts;
-	struct ff8_font **icons;
-	uint32_t movie_hack1;
-	uint32_t movie_hack2;
-	uint32_t swirl_sub_56D390;
-	uint32_t swirl_zoom_transition;
-	uint32_t nvidia_half_pixel_fix_double;
-	uint32_t nvidia_half_pixel_fix_float;
-	struct sprite_viewport *sprite_viewport; // 0xB86D40
-	struct sprite_viewport *menu_viewport; // 0xB86DA0
-	uint32_t main_loop; // 0x4706B0
-	uint32_t sub_47CCB0;
-	uint32_t sub_534640;
-	uint32_t sub_4972A0;
-	uint32_t load_fonts;
-	uint32_t load_icons;
-	uint32_t sub_497F20;
-	uint32_t cdcheck_main_loop;
-	uint32_t cdcheck_sub_52F9E0;
-	uint32_t main_entry;
-	uint8_t *config_worldmap_fog_disabled;
-	uint8_t *config_worldmap_color_anim_disabled;
-	uint8_t *config_worldmap_textured_anim_disabled;
-	uint32_t init_config;
-	uint32_t (*reg_get_data_drive)(char*, DWORD);
-	void (*set_game_paths)(int, char *, const char *);
-	int (*reg_get_midiguid)(LPBYTE);
-	BOOL (*reg_set_midiguid)(const BYTE *);
-	int (*reg_get_graphics)();
-	uint32_t (*sm_pc_read)(char*,void*);
-	uint32_t get_disk_number;
-	char* disk_data_path;
-	const char *app_path;
-	const char *data_drive_path;
-	uint32_t swirl_enter;
-	uint32_t swirl_main_loop;
-	int32_t *swirl_viewport_x;
-	int32_t *swirl_viewport_y;
-	int32_t *swirl_viewport_width;
-	int32_t *swirl_viewport_height;
-	uint32_t sub_460B60;
-	uint32_t field_main_loop;
-	uint32_t field_main_exit;
-	uint32_t psxvram_texture_pages_free;
-	uint32_t psxvram_texture_page_free;
-	uint32_t psxvram_texture_page_tex_header_free;
-	uint32_t engine_set_init_time;
-	uint32_t sub_4672C0;
-	uint32_t sub_471F70;
-	uint32_t field_fade_transition_sub_472990;
-	uint32_t update_game_time_sub_4701B0;
-	int (*is_paused_sub_49F510)();
-	uint32_t sub_45CDD0;
-	uint32_t sub_4767B0;
-	uint32_t (*ctrl_keyboard_actions)();
-	uint32_t get_key_state;
-	byte **keyboard_state;
-	uint32_t sub_533C30;
-	uint32_t model_vertices_scale_sub_45FE10;
-	uint16_t *camera_zoom_dword_1CA92E4;
-	int16_t *word_1CA92DE;
-	int *dword_1CA8A50;
-	int *dword_1CA92F8;
-	int16_t *dword_1CA8A10;
-	int *dword_1CA9290;
-	float *flt_1CA9234;
-	int *dword_1CA8A30;
-	uint32_t sub_4789A0;
-	uint32_t field_shake_sub_4765C0;
-	uint32_t field_scroll_sub_475E60;
-	uint32_t field_fade_sub_47B980;
-	uint32_t field_draw_shadows_sub_472F20;
-	ff8_field_fade *field_fade;
-	uint32_t *field_keys_pressed;
-	char (*sub_47CA90)();
-	uint32_t field_update_seed_level_52B140;
-	uint32_t field_update_rinoa_limit_breaks_52B320;
-	uint32_t battle_trigger_field;
-	uint32_t battle_trigger_worldmap;
-	uint32_t _load_texture;
-	void (*free_graphics_object)(ff8_graphics_object *);
-	uint32_t sub_4076B6;
-	uint32_t sub_41AC34;
-	uint32_t load_texture_data;
-	uint32_t pubintro_init;
-	uint32_t sub_467C00;
-	uint32_t sub_468810;
-	uint32_t dinput_get_input_device_capabilities_number_of_buttons;
-	uint8_t (*get_command_key)(int, int, int);
-	uint32_t sub_468BD0;
-	uint32_t pubintro_cleanup;
-	uint32_t pubintro_cleanup_textures;
-	uint32_t pubintro_cleanup_textures_menu;
-	uint32_t pubintro_enter_main;
-	uint32_t pubintro_exit;
-	uint32_t pubintro_main_loop;
-	uint32_t credits_enter;
-	uint32_t credits_main_loop;
-	uint32_t go_to_main_menu_main_loop;
-	uint32_t main_menu_enter;
-	uint32_t main_menu_main_loop;
-	uint32_t menu_enter;
-	DWORD* credits_loop_state;
-	DWORD* credits_counter;
-	DWORD* credits_current_image_global_counter_start;
-	DWORD* credits_current_step_image;
-	uint32_t sub_470630;
-	uint32_t dd_d3d_start;
-	uint32_t create_d3d_gfx_driver;
-	uint32_t d3d_init;
-	uint32_t sub_40BFEB;
-	uint32_t tim2tex;
-	uint32_t sub_41BC76;
-	uint32_t d3d_load_texture;
-	uint32_t sub_559910;
-	uint32_t swirl_wipe_init;
-	uint32_t swirl_wipe_draw;
-	uint32_t swirl_allocate_quads;
-	uint32_t swirl_sub_56D1D0;
-	uint32_t load_credits_image;
-	void (*input_fill_keystate)();
-	int (*input_get_keyscan)(int, int);
-	uint32_t sub_52FE80;
-	uint32_t sub_45D610;
-	uint32_t sub_45D080;
-	uint32_t sub_464BD0;
-	uint32_t sub_4653B0;
-	uint32_t sub_497380;
-	uint32_t sub_4B3410;
-	uint32_t sub_4B3310;
-	uint32_t sub_4B3140;
-	uint32_t sub_4BDB30;
-	ff8_menu_callback *menu_callbacks;
-	char (*menu_use_items_sub_4F81F0)(int);
-	uint32_t menu_cards_render;
-	uint32_t sub_534AD0;
-	uint8_t **card_texts_off_B96504;
-	uint32_t sub_4EFC00;
-	uint32_t sub_4EFCD0;
-	uint32_t menu_config_controller;
-	uint32_t menu_config_render;
-	uint32_t menu_config_render_submenu;
-	ff8_menu_config_input *menu_config_input_desc;
-	ff8_menu_config_input_keymap *menu_config_input_desc_keymap;
-	uint32_t menu_config_render_list_sub_4EEB70;
-	int (*get_text_width_sub_4A0F80)(const char *);
-	uint16_t *menu_config_input_count;
-	void (*menu_play_sound_sub_4B92A0)(int);
-	uint32_t menu_junkshop_sub_4EA890;
-	uint32_t menu_shop_sub_4EBE40;
-	uint32_t main_menu_render_sub_4E5550;
-	uint32_t main_menu_controller;
-	uint32_t sub_4C2FF0;
-	uint32_t menu_23_render_sub_4D58A0;
-	uint32_t menu_23_controller_sub_4D4D30;
-	uint32_t font_parse_and_render_menu_2_sub_4A1200;
-	uint32_t sub_403E00;
-	uint32_t menu_chocobo_world_controller;
-	uint32_t create_save_file_sub_4C6E50;
-	uint32_t create_save_chocobo_world_file_sub_4C6620;
-	void (*menu_chocobo_sub_4FF8F0)();
-	void (*menu_shop_update_gil_and_items_4EB9F0)(int);
-	int (*add_item_to_player_sub_47ED00)(int, char);
-	void (*update_seed_exp_4C30E0)(int);
-	int (*sub_4ABC40)(int, int);
-	int (*sub_4EA770)(int, uint32_t);
-	uint32_t* menu_data_1D76A9C;
-	std::span<uint8_t> menu_shop_staged_items_1D8D058;
-	uint32_t get_text_data;
-	uint32_t sub_4BE4D0;
-	uint32_t sub_4BECC0;
-	uint32_t (*get_character_width)(uint32_t);
-	struct ff8_graphics_object **swirl_texture1;
-	uint32_t sub_48D0A0;
-	uint32_t open_lzs_image;
-	uint32_t (*credits_open_file)(char *, char *);
-	uint32_t upload_psx_vram;
-	uint32_t copy_psx_vram_part;
-	void (*sub_464850)(uint32_t, uint32_t, uint32_t, uint32_t);
-	uint8_t *psxvram_buffer;
-	struct struc_51 *psx_texture_pages; // One per bpp (bpp 4, 8 and 16)
-	uint32_t read_field_data;
-	uint32_t upload_mim_file;
-	uint32_t upload_pmp_file;
-	uint32_t field_filename_concat_extension;
-	char *field_filename;
-	int (*field_scripts_init)(int, int, int, int);
-	uint8_t *field_state_background_count;
-	ff8_field_state_background **field_state_backgrounds;
-	uint8_t *field_state_other_count;
-	ff8_field_state_other **field_state_others;
-	uint32_t load_field_models;
-	uint32_t chara_one_read_file;
-	uint32_t chara_one_seek_file;
-	uint32_t chara_one_set_data_start;
-	uint8_t **chara_one_data_start;
-	uint32_t chara_one_upload_texture;
-	uint32_t worldmap_main_loop;
-	uint32_t worldmap_enter_main;
-	uint32_t worldmap_sub_53F310;
-	char **worldmap_wmset_path;
-	uint32_t worldmap_sub_53F310_call_24D;
-	uint32_t worldmap_sub_53F310_call_2A9;
-	uint32_t worldmap_sub_53F310_call_30D;
-	uint32_t worldmap_sub_53F310_call_330;
-	uint32_t worldmap_sub_53F310_call_366;
-	uint32_t worldmap_sub_53F310_call_3B5;
-	uint32_t worldmap_sub_53F310_loc_53F7EE;
-	uint32_t worldmap_wmset_set_pointers_sub_542DA0;
-	uint32_t worldmap_sub_541970_upload_tim;
-	uint32_t worldmap_sub_548020;
-	uint32_t worldmap_sub_5531F0;
-	uint32_t worldmap_sub_554AA0;
-	uint32_t worldmap_sub_554AA0_call_C2;
-	uint32_t worldmap_alter_uv_sub_553B40;
-	uint32_t worldmap_sub_545E20;
-	uint32_t worldmap_chara_one;
-	uint32_t wm_chara_one_push_polygons_sub_6528D0;
-	uint32_t dword_24FEE48;
-	int32_t (*open_file_world)(const char*, int32_t, uint32_t, void *);
-	uint32_t open_file_world_sub_52D670_texl_call1;
-	uint32_t open_file_world_sub_52D670_texl_call2;
-	uint32_t upload_psxvram_texl_pal_call1;
-	uint32_t upload_psxvram_texl_pal_call2;
-	uint32_t **worldmap_section17_position;
-	uint32_t **worldmap_section18_position;
-	uint32_t **worldmap_section38_position;
-	uint32_t **worldmap_section39_position;
-	uint32_t **worldmap_section40_position;
-	uint32_t **worldmap_section41_position;
-	uint32_t **worldmap_section42_position;
-	uint32_t (*worldmap_prepare_tim_for_upload)(uint8_t *, ff8_tim *);
-	uint32_t engine_eval_process_input;
-	void (*engine_eval_keyboard_gamepad_input)();
-	uint32_t engine_eval_is_button_pressed;
-	uint32_t *engine_input_confirmed_buttons;
-	uint32_t *engine_input_valid_buttons;
-	void (*has_keyboard_gamepad_input)();
-	uint32_t dinput_update_gamepad_status;
-	LPDIRECTINPUTDEVICE8A dinput_gamepad_device;
-	LPDIJOYSTATE2 dinput_gamepad_state;
-	uint32_t dinput_init_gamepad;
-	DWORD* engine_mapped_buttons;
-	uint32_t draw_movie_frame;
-	struct ff8_movie_obj *movie_object;
-	char **disc_pak_filenames;
-	pak_pointers_entry **disc_pak_offsets;
-	int (*sub_5304B0)();
-	uint32_t *enable_framelimiter;
-	unsigned char *byte_1CE4907;
-	unsigned char *byte_1CE4901;
-	unsigned char *byte_1CE490D;
-	uint32_t sub_45B310;
-	uint32_t sub_45B460;
-	uint32_t ssigpu_init;
-	uint32_t *sub_blending_capability;
-	uint32_t *d3dcaps;
-	uint32_t loc_460BB0;
-	float *psx_floats1;
-	void (*create_graphics_object_info_structure)(int, ff8_create_graphic_object *);
-	uint32_t sub_53BB90;
-	uint32_t worldmap_cull_blocks_sub_53D3C0;
-	uint32_t worldmap_fog_filter_polygons_in_block_1;
-	uint32_t worldmap_polygon_condition_2045C8C;
-	uint32_t worldmap_has_polygon_condition_2045C90;
-	uint32_t worldmap_sub_45DF20;
-	uint32_t sub_45E3A0;
-	uint32_t worldmap_fog_filter_polygons_in_block_2;
-	uint32_t worldmap_fog_filter_polygons_fallback;
-	uint32_t sub_461E00;
-	uint32_t dword_1CA8848;
-	uint32_t sub_53E2A0;
-	uint32_t sub_53E6B0;
-	uint32_t sub_4023D0;
-	uint32_t sub_53C750;
-	uint32_t worldmap_no_fog_filter_polygons_in_block;
-	uint32_t sub_544630;
-	uint32_t sub_548080;
-	uint32_t sub_549E80;
-	uint32_t sub_546100;
-	uint32_t sub_54A0D0;
-	uint32_t sub_54D7E0;
-	uint32_t sub_54FDA0;
-	uint32_t worldmap_with_fog_sub_53FAC0;
-	void (*set_drawpoint_state_521D90)(uint8_t, char);
-	char* worldmap_windows_idx_map;
-	int (*world_dialog_assign_text_sub_543790)(int,int,char*);
-	int (*world_dialog_question_assign_text_sub_5438D0)(int, int, char*, int, int, int, uint8_t);
-	uint32_t sub_543CB0;
-	uint32_t sub_5484B0;
-	uint32_t sub_54A230;
-	uint32_t worldmap_update_steps_sub_6519D0;
-	uint32_t worldmap_update_seed_level_651C10;
-	uint32_t sub_54E9B0;
-	uint32_t sub_550070;
-	int (*sub_541C80)(WORD*);
-	uint32_t worldmap_input_update_sub_559240;
-	uint32_t sub_554940;
-	uint32_t sub_554940_call_130;
-	uint32_t sub_541AE0;
-	uint32_t sub_554BC0;
-	uint32_t sub_557140;
-	uint32_t sub_54B460;
-	uint32_t sub_558D70;
-	uint32_t sub_545EA0;
-	uint32_t sub_545F10;
-	uint32_t sub_465720;
-	uint32_t sm_battle_sound;
-	uint32_t outputdebugstringa;
-	uint32_t sdmusicplay;
-	uint32_t(*sd_music_play)(uint32_t, char*, uint32_t);
-	uint32_t sd_music_play_at;
-	uint32_t* current_music_ids;
-	uint32_t sub_46B800;
-	uint32_t stop_music;
-	uint32_t set_midi_volume;
-	BOOL (*dmusicperf_set_volume_sub_46C6F0)(uint32_t, int32_t);
-	BOOL (*dmusicperf_set_master_volume_sub_46F530)(int32_t);
-	uint32_t sub_46C050;
-	uint32_t sub_501B60;
-	uint32_t pause_music_and_sfx;
-	uint32_t restart_music_and_sfx;
-	uint32_t directsound_create_secondary_buffer;
-	uint32_t start;
-	uint32_t battle_enter;
-	uint32_t battle_main_loop;
-	void (*show_vram_window)();
-	void (*refresh_vram_window)();
-	char* music_path;
-	uint32_t opcode_effectplay2;
-	uint32_t opcode_mes;
-	uint32_t opcode_ames;
-	uint32_t opcode_amesw;
-	int (*opcode_keyon)(void*);
-	uint32_t opcode_ramesw;
-	uint32_t opcode_ask;
-	uint32_t opcode_aask;
-	uint32_t opcode_messync;
-	uint32_t opcode_winclose;
-	uint32_t opcode_mesmode;
-	uint32_t opcode_movie;
-	uint32_t opcode_moviesync;
-	uint32_t opcode_spuready;
-	uint32_t opcode_show;
-	uint32_t opcode_movieready;
-	uint32_t opcode_setvibrate;
-	uint32_t opcode_musicload;
-	uint32_t opcode_crossmusic;
-	uint32_t opcode_dualmusic;
-	uint32_t opcode_choicemusic;
-	uint32_t opcode_musicvoltrans;
-	uint32_t opcode_musicvolfade;
-	uint32_t opcode_musicskip;
-	uint32_t opcode_musicvolsync;
-	uint32_t opcode_getmusicoffset;
-	uint32_t opcode_drawpoint;
-	int (*opcode_cardgame)(int);
-	uint32_t opcode_battle;
-	uint32_t opcode_tuto;
-	uint32_t opcode_mapjump;
-	uint32_t opcode_pshm_w;
-	int (*opcode_popm_w)(void*, int);
-	int (*opcode_popm_b)(void*, int);
-	uint32_t opcode_menuname;
-	int (*opcode_addgil)(void*);
-	int (*opcode_addseedlevel)(void*);
-	uint8_t* cardgame_deck_id_1DCD7AD;
-	BYTE* current_tutorial_id;
-	uint32_t dmusic_segment_connect_to_dls;
-	uint32_t choice_music;
-	uint32_t load_midi_segment;
-	uint32_t load_midi_segment_from_id;
-	uint32_t play_midi_segments;
-	uint32_t load_and_play_midi_segment;
-	DMusic** dmusic_performance;
-	uint32_t stop_midi_segments;
-	uint32_t volume_update;
-	uint32_t volume_music_update;
-	uint32_t music_load;
-	uint32_t play_wav;
-	uint32_t (*load_cdrom)();
-	uint32_t load_cdrom_call;
-	uint32_t (*play_cdrom)(uint32_t, uint32_t, uint32_t);
-	uint32_t play_cdrom_call;
-	uint32_t (*stop_cdrom)();
-	uint32_t stop_cdrom_field_call;
-	uint32_t stop_cdrom_cleanup_call;
-	savemap_ff8_field_h** savemap_field;
-	savemap_ff8* savemap;
-	int32_t (*check_game_is_paused)(int32_t);
-	DWORD* is_game_paused;
-	uint32_t sub_470250;
-	uint32_t *ssigpu_callbacks_1;
-	uint32_t *ssigpu_callbacks_2;
-	uint32_t *ssigpu_callbacks_3;
-	uint32_t *ssigpu_packet_in_pixels_dword_1CA89FC;
-	uint32_t sub_462AD0;
-	uint32_t sub_462DF0;
-	uint32_t sub_461220;
-	uint32_t ssigpu_tx_select_2_sub_465CE0;
-	uint32_t write_palette_texture_set_sub_466190;
-	uint32_t read_vram_palette_sub_467370;
-	uint32_t write_palette_to_driver_sub_467310;
-	int (*sub_464F70)(struc_50 *, texture_page *, int, int, int, int, int, int, int, uint8_t *);
-	void(*read_vram_1)(uint8_t *, int, uint8_t *, int, signed int, int, int);
-	void(*read_vram_2_paletted)(uint8_t *, int, uint8_t *, int, signed int, int, int, uint16_t *);
-	void(*read_vram_3_paletted)(uint8_t *, uint8_t *, signed int, int, int, uint16_t *);
-	uint32_t sub_464DB0;
-	uint32_t sub_4649A0;
-	char *archive_path_prefix;
-	char *archive_path_prefix_menu;
-	char *archive_path_prefix_battle;
-	char *archive_path_prefix_field;
-	char *archive_path_prefix_world;
-	int(*fs_archive_search_filename)(const char *, ff8_file_fi_infos *, const ff8_file_container *);
-	int(*ff8_fs_archive_search_filename2)(const char *, ff8_file_fi_infos *, const ff8_file_container *);
-	char *(*fs_archive_get_fl_filepath)(int, const ff8_file_fl *);
-	uint32_t _open;
-	int(*_sopen)(const char*, int, int, ...);
-	uint32_t fopen;
-	FILE *(*_fsopen)(const char*, const char*, int);
-	int (*_lseek)(int,long,int);
-	int (*_lseek_lk)(int,long,int);
-	unsigned int *_io_fd_number;
-	int *_io_known_fds;
-	void (*_lock_fhandle)(int);
-	int (*_unlock_fhandle)(int);
-	int* (*_errno)();
-	unsigned long* (*__doserrno)();
-	int (*_read)(int,void*,unsigned int);
-	unsigned int (*_read_lk)(int,LPVOID,DWORD);
-	uint32_t open_and_write_to_archive;
-	uint32_t write_to_archive;
-	int (*_write)(int,void*,unsigned int);
-	int (*_write_lk)(int,LPVOID,DWORD);
-	int (*_close)(int);
-	int (*_close_lk)(int);
-	__int32 (*_filelength)(int);
-	uint32_t input_init;
-	uint32_t ff8input_cfg_read;
-	uint32_t ff8input_cfg_reset;
-	char *(*strcpy_with_malloc)(const char *);
-	uint32_t moriya_filesystem_open;
-	uint32_t moriya_filesystem_seek;
-	uint32_t moriya_filesystem_read;
-	uint32_t moriya_filesystem_close;
-	uint32_t moriya_filesystem_archives_lookup;
-	uint32_t read_or_uncompress_fs_data;
-	uint32_t lzs_uncompress;
-	void(*free_file_container)(ff8_file_container *);
-	ff8_file_container*(*archive_open)(char*,char*,char*);
-	uint32_t archive_open_fi;
-	uint32_t archive_open_fi_2;
-	uint8_t*(*open_read_close_file)(ff8_file_context*,int,int32_t*,const char*);
-	void(*sub_archive_get_filename)(const char*,char*);
-	char *temp_fs_path_cache;
-	uint32_t field_get_dialog_string;
-	uint32_t set_window_object;
-	ff8_win_obj *windows;
-	BYTE* field_dialog_current_choice;
-	uint32_t sub_470440;
-	uint32_t sub_49ACD0;
-	uint32_t sub_4974B0;
-	uint32_t convert_ascii_to_ff8enc_sub_4A2F20;
-	uint32_t sub_4A0880;
-	uint32_t sub_4A09A0;
-	uint32_t sub_49FC10;
-	uint32_t sub_4A0C00;
-	uint32_t *dword_1D2B808;
-	char(*show_dialog)(int32_t, uint32_t, int16_t);
-	int(*pause_menu_with_vibration)(int);
-	uint32_t ff8_draw_icon_or_key1;
-	uint32_t ff8_draw_icon_or_key2;
-	uint32_t ff8_draw_icon_or_key3;
-	uint32_t ff8_draw_icon_or_key4;
-	uint32_t ff8_draw_icon_or_key5;
-	uint32_t ff8_draw_icon_or_key6;
-	uint8_t *battle_boost_cross_icon_display_1D76604;
-	int(*pause_menu)(int);
-	uint32_t init_pause_menu;
-	int16_t *pause_menu_window_rect;
-	ff8_draw_menu_sprite_texture_infos *(*draw_text_sub_4A1020)(int, ff8_draw_menu_sprite_texture_infos *, int, int, const char *, int);
-	uint32_t sub_49BB30;
-	uint32_t sub_49BAB0;
-	uint32_t sub_49B300;
-	uint32_t get_icon_sp1_data;
-	uint32_t draw_controller_or_keyboard_icons;
-	uint32_t get_vibration_capability;
-	uint32_t vibration_apply;
-	uint32_t vibration_set_is_enabled;
-	uint32_t vibration_get_is_enabled;
-	int(*get_keyon)(int, int);
-	uint32_t set_vibration;
-	ff8_gamepad_state *gamepad_states;
-	ff8_vibrate_struc *vibration_objects;
-	uint32_t vibration_clear_intensity;
-	uint8_t *vibrate_data_world;
-	uint32_t open_battle_vibrate_vib;
-	uint8_t **vibrate_data_main;
-	uint8_t **vibrate_data_battle;
-	uint8_t *vibrate_data_field;
-	uint32_t sub_537F30;
-	uint32_t sub_5391B0;
-	uint32_t sub_534560;
-	uint32_t sub_536C30;
-	uint32_t cardgame_func_534340;
-	uint32_t cargame_func_535C90;
-	int(*cardgame_func_534BC0)();
-	uint32_t sub_536CB0;
-	uint8_t **card_texts_off_B96968;
-	uint32_t sub_536C80;
-	uint32_t sub_5366D0;
-	uint32_t sub_539500;
-	uint32_t *cardgame_funcs;
-	uint8_t *cardgame_tim_texture_intro;
-	uint8_t *cardgame_tim_texture_game;
-	uint8_t *cardgame_tim_texture_cards;
-	uint8_t *cardgame_tim_texture_icons;
-	uint8_t *cardgame_tim_texture_font;
-	uint32_t* is_card_game;
-	uint32_t cardgame_add_card_to_squall_534840;
-	uint32_t cardgame_sub_536DE0;
-	uint32_t cardgame_sub_537110;
-	uint32_t cardgame_update_card_with_location_5347F0;
-	int (*cardgame_sub_535D00)(void*);
-	uint32_t sfx_play_to_current_playing_channel;
-	uint32_t sfx_unload_all;
-	uint32_t sfx_pause_all;
-	uint32_t sfx_resume_all;
-	uint32_t sfx_stop_all2;
-	uint32_t sfx_stop_all;
-	void(*sfx_set_master_volume)(uint32_t);
-	int(*sfx_get_master_volume)();
-	uint32_t sfx_set_volume;
-	uint32_t sfx_current_channel_is_playing;
-	uint32_t sfx_is_playing;
-	uint32_t sfx_set_panning;
-	uint16_t *sfx_sound_count;
-	uint32_t sfx_initialize_audio_data;
-	ff8_audio_fmt **sfx_audio_fmt;
-	uint32_t manage_time_engine_sub_569971;
-	int (*enable_rdtsc_sub_40AA00)(int enable);
-	uint32_t loc_47D490;
-	uint32_t sub_500870;
-	uint32_t sub_500C00;
-	uint32_t sub_500CC0;
-	uint32_t battle_link_task_failed_call;
-	uint32_t sub_5099D0;
-	int16_t (*world_calc_zoom_sub_50F900)(int16_t *, int16_t **, uint32_t **);
-	uint32_t sub_506C90;
-	uint32_t sub_506CF0;
-	uint32_t sub_5084B0;
-	uint32_t battle_open_file_wrapper;
-	uint32_t battle_open_file;
-	char **battle_filenames;
-	uint32_t battle_monster_file_load_call_site; // BattleFile_CharacterLoad call inside battle_monster_dat_loader (+0x240), hooked to unlock c0m144-199 (see ff8_data.cpp / ff8/battle/monsters.cpp).
-	uint32_t battle_load_textures_sub_500900;
-	uint32_t loc_5005A0;
-	uint32_t battle_upload_texture_to_vram;
-	uint32_t sub_485460;
-	uint32_t sub_485610;
-	uint32_t battle_pick_random_action_sub_483940;
-	uint32_t sub_48D1A0;
-	uint32_t sub_4AD7D0;
-	uint32_t sub_4AD8D0;
-	uint32_t sub_4AB4F0;
-	uint32_t sub_4AB190;
-	uint32_t sub_4A84E0;
-	uint32_t sub_4AD400;
-	uint32_t sub_4BB840;
-	uint32_t battle_check_won_sub_486500;
-	void(*battle_sub_494D40)();
-	uint32_t battle_sub_4877F0;
-	uint32_t battle_sub_48D200;
-	uint32_t battle_ai_opcode_sub_487DF0;
-	int (*battle_get_draw_magic_amount_48FD20)(int, int, int);
-	void(*update_tutorial_info_4AD170)(int);
-	uint32_t sub_48B7E0;
-	uint32_t reset_parse_chara_sub_495530;
-	void(*sub_4954B0)(int);
-	uint32_t compute_char_stats_sub_495960;
-	int(*compute_char_max_hp_496310)(int, int);
-	int(*get_char_level_4961D0)(int, int);
-	std::span<ff8_char_computed_stats> char_comp_stats_1CFF000;
-	BYTE* battle_current_active_character_id;
-	BYTE* battle_new_active_character_id;
-	WORD* global_battle_encounter_id_1CFF6E0;
-	WORD* battle_encounter_id;
-	BYTE* battle_result_state_1CFF6E7; // 2: escaped, 4: won, 1-3: other type, 5: unknown
-	uint32_t sub_4AB450;
-	uint32_t battle_get_monster_name_sub_495100;
-	uint32_t sub_4AA920;
-	uint32_t battle_get_actor_name_sub_47EAF0;
-	BYTE** battle_char_struct_dword_1D27B10;
-	BYTE* byte_1CFF1C3;
-	char* unk_1CFDC70;
-	char* unk_1CFDC7C;
-	char* unk_1CFF84C;
-	struct ff8_kernel_vanilla_data *kernel;
-	DWORD* battle_current_actor_talking;
-	int (*battle_text_task_sub_5009B0)(int);
-	uint32_t sub_502380;
-	uint32_t battle_actor_sound;
-	uint32_t battle_actor_sound_3d;
-	uint32_t battle_actor_sound_pan;
-	int (*project_screen_position)(void *, int16_t *, int *, int *);
-	uint32_t field_footstep_sound;
-	uint32_t battle_status_countdown;
-	uint32_t (*battle_actor_sounds)[7];
-	uint32_t sub_50A790;
-	uint32_t sub_50B2A0;
-	uint32_t sub_502670; // embedded pointer read out of sub_502380 ("push offset ...")
-	uint32_t battle_entity_task_dispatch_sub_507080; // maps a battle entity id to its task function; called from sub_502670
-	uint32_t battle_character_dat_loader;
-	uint32_t battle_character_dat_loader_alt;
-	uint32_t battle_monster_dat_loader; // sub_507120, the entity task for monsters; embedded pointer read out of the dispatcher
-	uint32_t battle_load_file_sub_508480; // generic "load battle file by index" wrapper, the monster loader's file-load call target (see monsters.cpp)
-	uint32_t battle_enemy_scanned_read_operand;  // disp32 of the ATTACK_TYPE_SCAN "already scanned?" test (see monsters.cpp)
-	uint32_t battle_enemy_scanned_write_operand; // disp32 of the "mark this com_id scanned" or (see monsters.cpp)
-	uint32_t scan_get_camera_row;
-	uint32_t scan2_get_camera_row;
-	uint32_t sub_50A9A0;
-	uint32_t battle_read_effect_sub_50AF20;
-	DWORD* func_off_battle_effects_C81774;
-	int (*battle_process_effect_scripts)();
-	int* battle_magic_id;
-	uint32_t battle_magic_effect_start_call; // where sub_50A9A0 calls the loaded effect
-	uint32_t battle_play_camera_animation_sub_5099A0;
-	uint32_t battle_set_camera_track_sub_509970;
-	uint32_t battle_bind_anim_set_sub_5022C0;
-	uint32_t battle_set_com_file_data_sub_502270;
-	uint32_t battle_exit_sub_4868C0;
-	uint32_t sub_571870;
-	DWORD* func_off_battle_effect_textures_50AF93;
-	uint32_t get_battle_effect_buffer_sub_571B50;
-	uint32_t get_battle_effect_buffer_size_sub_571B60;
-	uint32_t init_battle_effect_buffer_sub_571B80;
-	uint32_t sub_6C3640;
-	uint32_t sub_6C3760;
-	uint8_t **vibrate_data_summon_quezacotl;
-	uint32_t load_magic_data_sub_571B80;
-	uint32_t load_magic_data_sub_5718E0;
-	uint32_t load_magic_data_sub_571900;
-	uint32_t sub_47D890;
-	uint32_t sub_505DF0;
-	uint32_t sub_4A94D0;
-	uint32_t sub_4BCBE0;
-	uint32_t battle_menu_draw_inline_command_list_sub_4BCCD0;
-	uint32_t battle_draw_window_box_sub_4A7510;
-	ff8_battle_ui_context **battle_ui_context_dword_1D6D490;
-	uint32_t (*submit_primitive_with_depth)(int *, uint32_t *, int, int, int, int);
-	void (*battle_compute_window_scale_rect_sub_4A7440)(int, int16_t *, int16_t *);
-	uint32_t *(*battle_emit_relative_draw_area_sub_4A73A0)(int *, uint32_t *, int16_t *);
-	uint32_t *(*battle_emit_full_draw_area_sub_4A7630)(int *, uint32_t *);
-	uint32_t *(*battle_draw_icon_sub_4B77C0)(int *, uint32_t *, int, int, int, uint32_t, int);
-	uint32_t *(*battle_draw_window_background_sub_4B6A60)(int *, uint32_t *, int16_t *, uint32_t);
-	uint32_t *(*battle_draw_window_border_sub_4B6A80)(int *, uint32_t *, int16_t *, uint32_t, uint32_t);
-	void (*battle_register_window_overlap_sub_4B1660)(int16_t *);
-	uint32_t sub_4C8B10;
-	uint32_t battle_pause_sub_4CD140;
-	uint32_t *is_alternative_pause_menu;
-	uint32_t *pause_menu_option_state;
-	uint32_t battle_pause_window_sub_4CD350;
-	int16_t *battle_pause_window_rect;
-	uint32_t sub_4A7210;
-	uint32_t sub_B586F0;
-	uint32_t sub_B64B80;
-	DWORD* leviathan_funcs_B64C3C;
-	uint32_t mag_data_palette_sub_B66560;
-	DWORD** effect_struct_27973EC;
-	uint8_t** mag_data_dword_2798A68;
-	DWORD** effect_struct_2797624;
-	uint32_t sub_B63230;
-	uint32_t mag_data_texture_sub_B66560;
-	BYTE** dword_27973E8;
-	uint32_t battle_set_action_upload_raw_palette_sub_B666F0;
-	uint32_t battle_set_action_upload_raw_palette_sub_B66400;
-	uint32_t sub_84D110;
-	uint32_t sub_84D1F0;
-	uint32_t sub_84D230;
-	uint32_t sub_84D2C0;
-	uint32_t sub_84D4B0;
-	uint32_t sub_84F2A0;
-	uint32_t sub_84F860;
-	uint32_t sub_84F8D0;
-	uint32_t scan_get_text_sub_B687C0;
-	uint32_t battle_entities_1D27BCB;
-	uint32_t scan_text_data;
-	uint32_t scan_text_positions;
-	uint32_t fps_limiter;
-	uint32_t menu_main_loop;
-	uint64_t *menu_timestamp;
-	double *menu_frame_time;
-	double *time_volume_change_related_1A78BE0;
-	uint32_t field_vars_stack_1CFE9B8;
-	uint32_t get_card_name;
-	uint32_t card_name_positions;
-	uint32_t drawpoint_messages;
-	int(*opcode_drawpoint_sub_4A0850)(int, int);
-	uint32_t enable_gf_sub_47E480;
-	uint32_t battle_menu_loop_4A2690;
-	uint32_t battle_menu_sub_4A6660;
-	uint32_t battle_menu_sub_4A3D20;
-	uint32_t battle_menu_sub_4A3EE0;
-	uint32_t battle_menu_sub_4A4950;
-	uint32_t battle_menu_sub_4A5800;
-	int(*battle_menu_add_exp_and_stat_bonus_496CB0)(int, uint16_t);
-	byte* character_data_1CFE74C;
-	uint32_t battle_sub_485160;
-	uint32_t battle_sub_48FE20;
-	uint32_t battle_sub_494410;
-	void (*battle_sub_494AF0)(int, int, int, int);
-	uint32_t engine_reset_viewport_sub_4972D0;
-	uint32_t engine_setviewport_sub_45B4C0;
-	void* (*engine_setviewport_sub_41E070)(int, int, int, int, void*);
-	uint32_t *dword_B7CE28;
-	uint32_t *flag_d3d_renderer_related_dword_1CCFD94;
-	int32_t *ssigpu_viewport_x_dword_1CA89D8;
-	int32_t *ssigpu_viewport_y_dword_1CA89DC;
-	int32_t *ssigpu_viewport_width_dword_B7CBF8;
-	int32_t *ssigpu_viewport_height_dword_B7CBFC;
-	int32_t *current_viewport_x_dword_1A7764C;
-	int32_t *current_viewport_y_dword_1A77648;
-	int32_t *current_viewport_width_dword_1A77654;
-	int32_t *current_viewport_height_dword_1A77650;
-	void **dword_1DCB340;
-	uint32_t set_render_to_vram_current_screen_flag_before_battle;
-	uint32_t sub_472B30;
-	uint32_t sub_530810;
-	uint32_t sub_533CD0;
-	uint32_t sub_530C30;
-	void (*field_push_mch_vertices_rect_sub_533A90)(int, uint16_t *, int, int);
-	void (*set_current_triangle_sub_45E160)(int, int, int);
-	void (*calc_model_triangle_condition_sub_45EE10)();
-	int *dword_1DC6314;
-	int32_t *calc_model_poly_condition_result_dword_1CA8A70;
-	ff8_file_container* (*get_file_container_sub_51B410)(const char*);
-	uint32_t *config_highres_font_multiplier;
-	uint8_t *config_use_highres_font;
-	void **dword_1D2A284;
-	uint32_t *dword_1D2A288;
-	uint32_t engine_draw_2D_texture_sub_4980C0;
-	void (*graphics_setrendererstate_draw_sub_4178D7)(ff8_graphics_object *, ff8_game_obj *);
-	uint32_t sub_4B3690;
-	uint32_t sub_4B3710;
-	uint32_t sub_49C910;
-	uint32_t sub_49D6F0;
-	uint32_t menu_4_render_sub_4D3A60;
-	uint32_t menu_4_controller_sub_4D2A00;
-	uint32_t sub_4D41B0;
-	uint32_t sub_4BF490;
-	uint32_t sub_4A3530;
-	uint32_t sub_4A3400;
-	uint32_t sub_49C5F0;
-	uint32_t sub_4B87A0;
-	ff8_font **dword_1D2B0C0;
-	uint32_t sub_472A50;
-	uint32_t sub_47D2A0;
-	uint32_t tdw_set_sub_49F600;
-	uint32_t syfont_set_kernel_bin_pointers_sub_49F640;
-	uint32_t kernel_bin_get_section_sub_47EC70;
-	struc_kernel_sysfont *kernel_bin_sysfont;
-	uint32_t sub_4B9A40;
-	void(*tdw_malloc_sub_4B98F0)(int*,int**,unsigned int*);
-	uint32_t load_file_in_memory_sub_4B96C0;
-	int(*open_file_menu_sub_4B9530)(void*,char*);
-	size_t(*write_tdw_tmp_sub_4B9640)(void*,LPCSTR,size_t);
-	uint32_t sub_4A0EC0;
-	uint32_t font_text_size_calculation_sub_4A0D10;
-	uint16_t *word_B86D84;
-	uint32_t sub_4A2DF0;
-	uint32_t sub_4B73F0;
-	uint32_t *dword_1D2B100;
-	uint32_t render_text_field_sub_4A1570;
-	uint32_t sub_49B0B0;
-	uint32_t dword_1D76608;
-	uint32_t sub_49AB40;
-	uint32_t dword_1D7660C;
-	uint32_t sub_4B8AC0;
-	uint32_t sub_4B8B30;
-	uint32_t sub_4B75B0;
-	uint32_t sub_49AB60;
-	uint32_t sub_49B0D0;
-	uint32_t dword_1D2B514;
-	uint32_t parse_battle_texts1_sub_4A7250;
-	uint32_t sub_49B080;
-	uint32_t sub_4B1B00;
-	uint32_t battle_menu_hud_renderer_sub_4B1740;
-	uint32_t sub_4B0F10;
-	uint32_t sub_4B0C00;
-	uint32_t parse_and_render_battle_texts_hud_sub_4B0A90;
-	uint32_t sub_537A30;
-	uint32_t sub_56EC80;
-	uint32_t sub_56F5E0;
-	uint32_t render_save_entry_sub_4E6020;
-	uint32_t draw_icons_sub_49F850;
-	uint32_t sub_4BE100;
-	uint32_t menu_draw_text_sub_4BDE30;
-	uint32_t word_1D77148;
-	uint32_t word_1D76AC6;
-	uint32_t menu_name_selection_render_sub_4E7170;
-	uint32_t menu_name_selection_controller_sub_4E6990;
-	uint32_t sub_4BD690;
-	uint32_t sub_495EF0;
-	uint32_t sub_4BE610;
-	uint32_t sub_4BDAC0;
-	uint32_t sub_4E7470;
-	uint32_t sub_4BDD60;
-	uint32_t sub_4D3E40;
-	uint32_t sub_4DA230;
-	uint32_t menu_junction_render;
-	uint32_t menu_junction_controller;
-	uint32_t sub_4E1A90;
-	uint32_t dword_209D070;
-	uint32_t dword_209D048;
-	uint32_t dword_209D058;
-	uint32_t byte_209CFD8;
-	uint32_t sub_534950;
-	uint32_t sub_417E52;
-	uint32_t sub_499C20;
-	uint32_t sub_49AB80;
-	uint32_t sub_4E2B50;
-	uint32_t sub_4C08D0;
-	uint32_t sub_4BF520;
-	uint32_t sub_4C0020;
-	uint32_t menu_calc_font_size_sub_4BFFC0;
-	uint32_t sub_4BD6E0;
+    struct ff8_font **fonts;
+    struct ff8_font **icons;
+    uint32_t movie_hack1;
+    uint32_t movie_hack2;
+    uint32_t swirl_sub_56D390;
+    uint32_t swirl_zoom_transition;
+    uint32_t nvidia_half_pixel_fix_double;
+    uint32_t nvidia_half_pixel_fix_float;
+    struct sprite_viewport *sprite_viewport; // 0xB86D40
+    struct sprite_viewport *menu_viewport;   // 0xB86DA0
+    uint32_t main_loop;                      // 0x4706B0
+    uint32_t sub_47CCB0;
+    uint32_t sub_534640;
+    uint32_t sub_4972A0;
+    uint32_t load_fonts;
+    uint32_t load_icons;
+    uint32_t sub_497F20;
+    uint32_t cdcheck_main_loop;
+    uint32_t cdcheck_sub_52F9E0;
+    uint32_t main_entry;
+    uint8_t *config_worldmap_fog_disabled;
+    uint8_t *config_worldmap_color_anim_disabled;
+    uint8_t *config_worldmap_textured_anim_disabled;
+    uint32_t init_config;
+    uint32_t (*reg_get_data_drive)(char *, DWORD);
+    void (*set_game_paths)(int, char *, const char *);
+    int (*reg_get_midiguid)(LPBYTE);
+    BOOL (*reg_set_midiguid)(const BYTE *);
+    int (*reg_get_graphics)();
+    uint32_t (*sm_pc_read)(char *, void *);
+    uint32_t get_disk_number;
+    char *disk_data_path;
+    const char *app_path;
+    const char *data_drive_path;
+    uint32_t swirl_enter;
+    uint32_t swirl_main_loop;
+    int32_t *swirl_viewport_x;
+    int32_t *swirl_viewport_y;
+    int32_t *swirl_viewport_width;
+    int32_t *swirl_viewport_height;
+    uint32_t sub_460B60;
+    uint32_t field_main_loop;
+    uint32_t field_main_exit;
+    uint32_t psxvram_texture_pages_free;
+    uint32_t psxvram_texture_page_free;
+    uint32_t psxvram_texture_page_tex_header_free;
+    uint32_t engine_set_init_time;
+    uint32_t sub_4672C0;
+    uint32_t sub_471F70;
+    uint32_t field_fade_transition_sub_472990;
+    uint32_t update_game_time_sub_4701B0;
+    int (*is_paused_sub_49F510)();
+    uint32_t sub_45CDD0;
+    uint32_t sub_4767B0;
+    uint32_t (*ctrl_keyboard_actions)();
+    uint32_t get_key_state;
+    byte **keyboard_state;
+    uint32_t sub_533C30;
+    uint32_t model_vertices_scale_sub_45FE10;
+    uint16_t *camera_zoom_dword_1CA92E4;
+    int16_t *word_1CA92DE;
+    int *dword_1CA8A50;
+    int *dword_1CA92F8;
+    int16_t *dword_1CA8A10;
+    int *dword_1CA9290;
+    float *flt_1CA9234;
+    int *dword_1CA8A30;
+    uint32_t sub_4789A0;
+    uint32_t field_shake_sub_4765C0;
+    uint32_t field_scroll_sub_475E60;
+    uint32_t field_fade_sub_47B980;
+    uint32_t field_draw_shadows_sub_472F20;
+    ff8_field_fade *field_fade;
+    uint32_t *field_keys_pressed;
+    char (*sub_47CA90)();
+    uint32_t field_update_seed_level_52B140;
+    uint32_t field_update_rinoa_limit_breaks_52B320;
+    uint32_t battle_trigger_field;
+    uint32_t battle_trigger_worldmap;
+    uint32_t _load_texture;
+    void (*free_graphics_object)(ff8_graphics_object *);
+    uint32_t sub_4076B6;
+    uint32_t sub_41AC34;
+    uint32_t load_texture_data;
+    uint32_t pubintro_init;
+    uint32_t sub_467C00;
+    uint32_t sub_468810;
+    uint32_t dinput_get_input_device_capabilities_number_of_buttons;
+    uint8_t (*get_command_key)(int, int, int);
+    uint32_t sub_468BD0;
+    uint32_t pubintro_cleanup;
+    uint32_t pubintro_cleanup_textures;
+    uint32_t pubintro_cleanup_textures_menu;
+    uint32_t pubintro_enter_main;
+    uint32_t pubintro_exit;
+    uint32_t pubintro_main_loop;
+    uint32_t credits_enter;
+    uint32_t credits_main_loop;
+    uint32_t go_to_main_menu_main_loop;
+    uint32_t main_menu_enter;
+    uint32_t main_menu_main_loop;
+    uint32_t menu_enter;
+    DWORD *credits_loop_state;
+    DWORD *credits_counter;
+    DWORD *credits_current_image_global_counter_start;
+    DWORD *credits_current_step_image;
+    uint32_t sub_470630;
+    uint32_t dd_d3d_start;
+    uint32_t create_d3d_gfx_driver;
+    uint32_t d3d_init;
+    uint32_t sub_40BFEB;
+    uint32_t tim2tex;
+    uint32_t sub_41BC76;
+    uint32_t d3d_load_texture;
+    uint32_t sub_559910;
+    uint32_t swirl_wipe_init;
+    uint32_t swirl_wipe_draw;
+    uint32_t swirl_allocate_quads;
+    uint32_t swirl_sub_56D1D0;
+    uint32_t load_credits_image;
+    void (*input_fill_keystate)();
+    int (*input_get_keyscan)(int, int);
+    uint32_t sub_52FE80;
+    uint32_t sub_45D610;
+    uint32_t sub_45D080;
+    uint32_t sub_464BD0;
+    uint32_t sub_4653B0;
+    uint32_t sub_497380;
+    uint32_t sub_4B3410;
+    uint32_t sub_4B3310;
+    uint32_t sub_4B3140;
+    uint32_t sub_4BDB30;
+    ff8_menu_callback *menu_callbacks;
+    char (*menu_use_items_sub_4F81F0)(int);
+    uint32_t menu_cards_render;
+    uint32_t sub_534AD0;
+    uint8_t **card_texts_off_B96504;
+    uint32_t sub_4EFC00;
+    uint32_t sub_4EFCD0;
+    uint32_t menu_config_controller;
+    uint32_t menu_config_render;
+    uint32_t menu_config_render_submenu;
+    ff8_menu_config_input *menu_config_input_desc;
+    ff8_menu_config_input_keymap *menu_config_input_desc_keymap;
+    uint32_t menu_config_render_list_sub_4EEB70;
+    int (*get_text_width_sub_4A0F80)(const char *);
+    uint16_t *menu_config_input_count;
+    void (*menu_play_sound_sub_4B92A0)(int);
+    uint32_t menu_junkshop_sub_4EA890;
+    uint32_t menu_shop_sub_4EBE40;
+    uint32_t main_menu_render_sub_4E5550;
+    uint32_t main_menu_controller;
+    uint32_t sub_4C2FF0;
+    uint32_t menu_23_render_sub_4D58A0;
+    uint32_t menu_23_controller_sub_4D4D30;
+    uint32_t font_parse_and_render_menu_2_sub_4A1200;
+    uint32_t sub_403E00;
+    uint32_t menu_chocobo_world_controller;
+    uint32_t create_save_file_sub_4C6E50;
+    uint32_t create_save_chocobo_world_file_sub_4C6620;
+    void (*menu_chocobo_sub_4FF8F0)();
+    void (*menu_shop_update_gil_and_items_4EB9F0)(int);
+    int (*add_item_to_player_sub_47ED00)(int, char);
+    void (*update_seed_exp_4C30E0)(int);
+    int (*sub_4ABC40)(int, int);
+    int (*sub_4EA770)(int, uint32_t);
+    uint32_t *menu_data_1D76A9C;
+    std::span<uint8_t> menu_shop_staged_items_1D8D058;
+    uint32_t get_text_data;
+    uint32_t sub_4BE4D0;
+    uint32_t sub_4BECC0;
+    uint32_t (*get_character_width)(uint32_t);
+    struct ff8_graphics_object **swirl_texture1;
+    uint32_t sub_48D0A0;
+    uint32_t open_lzs_image;
+    uint32_t (*credits_open_file)(char *, char *);
+    uint32_t upload_psx_vram;
+    uint32_t copy_psx_vram_part;
+    void (*sub_464850)(uint32_t, uint32_t, uint32_t, uint32_t);
+    uint8_t *psxvram_buffer;
+    struct struc_51 *psx_texture_pages; // One per bpp (bpp 4, 8 and 16)
+    uint32_t read_field_data;
+    uint32_t upload_mim_file;
+    uint32_t upload_pmp_file;
+    uint32_t field_filename_concat_extension;
+    char *field_filename;
+    int (*field_scripts_init)(int, int, int, int);
+    uint8_t *field_state_background_count;
+    ff8_field_state_background **field_state_backgrounds;
+    uint8_t *field_state_other_count;
+    ff8_field_state_other **field_state_others;
+    uint32_t load_field_models;
+    uint32_t chara_one_read_file;
+    uint32_t chara_one_seek_file;
+    uint32_t chara_one_set_data_start;
+    uint8_t **chara_one_data_start;
+    uint32_t chara_one_upload_texture;
+    uint32_t worldmap_main_loop;
+    uint32_t worldmap_enter_main;
+    uint32_t worldmap_sub_53F310;
+    char **worldmap_wmset_path;
+    uint32_t worldmap_sub_53F310_call_24D;
+    uint32_t worldmap_sub_53F310_call_2A9;
+    uint32_t worldmap_sub_53F310_call_30D;
+    uint32_t worldmap_sub_53F310_call_330;
+    uint32_t worldmap_sub_53F310_call_366;
+    uint32_t worldmap_sub_53F310_call_3B5;
+    uint32_t worldmap_sub_53F310_loc_53F7EE;
+    uint32_t worldmap_wmset_set_pointers_sub_542DA0;
+    uint32_t worldmap_sub_541970_upload_tim;
+    uint32_t worldmap_sub_548020;
+    uint32_t worldmap_sub_5531F0;
+    uint32_t worldmap_sub_554AA0;
+    uint32_t worldmap_sub_554AA0_call_C2;
+    uint32_t worldmap_alter_uv_sub_553B40;
+    uint32_t worldmap_sub_545E20;
+    uint32_t worldmap_chara_one;
+    uint32_t wm_chara_one_push_polygons_sub_6528D0;
+    uint32_t dword_24FEE48;
+    int32_t (*open_file_world)(const char *, int32_t, uint32_t, void *);
+    uint32_t open_file_world_sub_52D670_texl_call1;
+    uint32_t open_file_world_sub_52D670_texl_call2;
+    uint32_t upload_psxvram_texl_pal_call1;
+    uint32_t upload_psxvram_texl_pal_call2;
+    uint32_t **worldmap_section17_position;
+    uint32_t **worldmap_section18_position;
+    uint32_t **worldmap_section38_position;
+    uint32_t **worldmap_section39_position;
+    uint32_t **worldmap_section40_position;
+    uint32_t **worldmap_section41_position;
+    uint32_t **worldmap_section42_position;
+    uint32_t (*worldmap_prepare_tim_for_upload)(uint8_t *, ff8_tim *);
+    uint32_t engine_eval_process_input;
+    void (*engine_eval_keyboard_gamepad_input)();
+    uint32_t engine_eval_is_button_pressed;
+    uint32_t *engine_input_confirmed_buttons;
+    uint32_t *engine_input_valid_buttons;
+    void (*has_keyboard_gamepad_input)();
+    uint32_t dinput_update_gamepad_status;
+    LPDIRECTINPUTDEVICE8A dinput_gamepad_device;
+    LPDIJOYSTATE2 dinput_gamepad_state;
+    uint32_t dinput_init_gamepad;
+    DWORD *engine_mapped_buttons;
+    uint32_t draw_movie_frame;
+    struct ff8_movie_obj *movie_object;
+    char **disc_pak_filenames;
+    pak_pointers_entry **disc_pak_offsets;
+    int (*sub_5304B0)();
+    uint32_t *enable_framelimiter;
+    unsigned char *byte_1CE4907;
+    unsigned char *byte_1CE4901;
+    unsigned char *byte_1CE490D;
+    uint32_t sub_45B310;
+    uint32_t sub_45B460;
+    uint32_t ssigpu_init;
+    uint32_t *sub_blending_capability;
+    uint32_t *d3dcaps;
+    uint32_t loc_460BB0;
+    float *psx_floats1;
+    void (*create_graphics_object_info_structure)(int, ff8_create_graphic_object *);
+    uint32_t sub_53BB90;
+    uint32_t worldmap_cull_blocks_sub_53D3C0;
+    uint32_t worldmap_fog_filter_polygons_in_block_1;
+    uint32_t worldmap_polygon_condition_2045C8C;
+    uint32_t worldmap_has_polygon_condition_2045C90;
+    uint32_t worldmap_sub_45DF20;
+    uint32_t sub_45E3A0;
+    uint32_t worldmap_fog_filter_polygons_in_block_2;
+    uint32_t worldmap_fog_filter_polygons_fallback;
+    uint32_t sub_461E00;
+    uint32_t dword_1CA8848;
+    uint32_t sub_53E2A0;
+    uint32_t sub_53E6B0;
+    uint32_t sub_4023D0;
+    uint32_t sub_53C750;
+    uint32_t worldmap_no_fog_filter_polygons_in_block;
+    uint32_t sub_544630;
+    uint32_t sub_548080;
+    uint32_t sub_549E80;
+    uint32_t sub_546100;
+    uint32_t sub_54A0D0;
+    uint32_t sub_54D7E0;
+    uint32_t sub_54FDA0;
+    uint32_t worldmap_with_fog_sub_53FAC0;
+    void (*set_drawpoint_state_521D90)(uint8_t, char);
+    char *worldmap_windows_idx_map;
+    int (*world_dialog_assign_text_sub_543790)(int, int, char *);
+    int (*world_dialog_question_assign_text_sub_5438D0)(int, int, char *, int, int, int, uint8_t);
+    uint32_t sub_543CB0;
+    uint32_t sub_5484B0;
+    uint32_t sub_54A230;
+    uint32_t worldmap_update_steps_sub_6519D0;
+    uint32_t worldmap_update_seed_level_651C10;
+    uint32_t sub_54E9B0;
+    uint32_t sub_550070;
+    int (*sub_541C80)(WORD *);
+    uint32_t worldmap_input_update_sub_559240;
+    uint32_t sub_554940;
+    uint32_t sub_554940_call_130;
+    uint32_t sub_541AE0;
+    uint32_t sub_554BC0;
+    uint32_t sub_557140;
+    uint32_t sub_54B460;
+    uint32_t sub_558D70;
+    uint32_t sub_545EA0;
+    uint32_t sub_545F10;
+    uint32_t sub_465720;
+    uint32_t sm_battle_sound;
+    uint32_t outputdebugstringa;
+    uint32_t sdmusicplay;
+    uint32_t (*sd_music_play)(uint32_t, char *, uint32_t);
+    uint32_t sd_music_play_at;
+    uint32_t *current_music_ids;
+    uint32_t sub_46B800;
+    uint32_t stop_music;
+    uint32_t set_midi_volume;
+    BOOL (*dmusicperf_set_volume_sub_46C6F0)(uint32_t, int32_t);
+    BOOL (*dmusicperf_set_master_volume_sub_46F530)(int32_t);
+    uint32_t sub_46C050;
+    uint32_t sub_501B60;
+    uint32_t pause_music_and_sfx;
+    uint32_t restart_music_and_sfx;
+    uint32_t directsound_create_secondary_buffer;
+    uint32_t start;
+    uint32_t battle_enter;
+    uint32_t battle_main_loop;
+    void (*show_vram_window)();
+    void (*refresh_vram_window)();
+    char *music_path;
+    uint32_t opcode_effectplay2;
+    uint32_t opcode_mes;
+    uint32_t opcode_ames;
+    uint32_t opcode_amesw;
+    int (*opcode_keyon)(void *);
+    uint32_t opcode_ramesw;
+    uint32_t opcode_ask;
+    uint32_t opcode_aask;
+    uint32_t opcode_messync;
+    uint32_t opcode_winclose;
+    uint32_t opcode_mesmode;
+    uint32_t opcode_movie;
+    uint32_t opcode_moviesync;
+    uint32_t opcode_spuready;
+    uint32_t opcode_show;
+    uint32_t opcode_movieready;
+    uint32_t opcode_setvibrate;
+    uint32_t opcode_musicload;
+    uint32_t opcode_crossmusic;
+    uint32_t opcode_dualmusic;
+    uint32_t opcode_choicemusic;
+    uint32_t opcode_musicvoltrans;
+    uint32_t opcode_musicvolfade;
+    uint32_t opcode_musicskip;
+    uint32_t opcode_musicvolsync;
+    uint32_t opcode_getmusicoffset;
+    uint32_t opcode_drawpoint;
+    int (*opcode_cardgame)(int);
+    uint32_t opcode_battle;
+    uint32_t opcode_tuto;
+    uint32_t opcode_mapjump;
+    uint32_t opcode_pshm_w;
+    int (*opcode_popm_w)(void *, int);
+    int (*opcode_popm_b)(void *, int);
+    uint32_t opcode_menuname;
+    int (*opcode_addgil)(void *);
+    int (*opcode_addseedlevel)(void *);
+    uint8_t *cardgame_deck_id_1DCD7AD;
+    BYTE *current_tutorial_id;
+    uint32_t dmusic_segment_connect_to_dls;
+    uint32_t choice_music;
+    uint32_t load_midi_segment;
+    uint32_t load_midi_segment_from_id;
+    uint32_t play_midi_segments;
+    uint32_t load_and_play_midi_segment;
+    DMusic **dmusic_performance;
+    uint32_t stop_midi_segments;
+    uint32_t volume_update;
+    uint32_t volume_music_update;
+    uint32_t music_load;
+    uint32_t play_wav;
+    uint32_t (*load_cdrom)();
+    uint32_t load_cdrom_call;
+    uint32_t (*play_cdrom)(uint32_t, uint32_t, uint32_t);
+    uint32_t play_cdrom_call;
+    uint32_t (*stop_cdrom)();
+    uint32_t stop_cdrom_field_call;
+    uint32_t stop_cdrom_cleanup_call;
+    savemap_ff8_field_h **savemap_field;
+    savemap_ff8 *savemap;
+    int32_t (*check_game_is_paused)(int32_t);
+    DWORD *is_game_paused;
+    uint32_t sub_470250;
+    uint32_t *ssigpu_callbacks_1;
+    uint32_t *ssigpu_callbacks_2;
+    uint32_t *ssigpu_callbacks_3;
+    uint32_t *ssigpu_packet_in_pixels_dword_1CA89FC;
+    uint32_t sub_462AD0;
+    uint32_t sub_462DF0;
+    uint32_t sub_461220;
+    uint32_t ssigpu_tx_select_2_sub_465CE0;
+    uint32_t write_palette_texture_set_sub_466190;
+    uint32_t read_vram_palette_sub_467370;
+    uint32_t write_palette_to_driver_sub_467310;
+    int (*sub_464F70)(struc_50 *, texture_page *, int, int, int, int, int, int, int, uint8_t *);
+    void (*read_vram_1)(uint8_t *, int, uint8_t *, int, signed int, int, int);
+    void (*read_vram_2_paletted)(uint8_t *, int, uint8_t *, int, signed int, int, int, uint16_t *);
+    void (*read_vram_3_paletted)(uint8_t *, uint8_t *, signed int, int, int, uint16_t *);
+    uint32_t sub_464DB0;
+    uint32_t sub_4649A0;
+    char *archive_path_prefix;
+    char *archive_path_prefix_menu;
+    char *archive_path_prefix_battle;
+    char *archive_path_prefix_field;
+    char *archive_path_prefix_world;
+    int (*fs_archive_search_filename)(const char *, ff8_file_fi_infos *, const ff8_file_container *);
+    int (*ff8_fs_archive_search_filename2)(const char *, ff8_file_fi_infos *, const ff8_file_container *);
+    char *(*fs_archive_get_fl_filepath)(int, const ff8_file_fl *);
+    uint32_t _open;
+    int (*_sopen)(const char *, int, int, ...);
+    uint32_t fopen;
+    FILE *(*_fsopen)(const char *, const char *, int);
+    int (*_lseek)(int, long, int);
+    int (*_lseek_lk)(int, long, int);
+    unsigned int *_io_fd_number;
+    int *_io_known_fds;
+    void (*_lock_fhandle)(int);
+    int (*_unlock_fhandle)(int);
+    int *(*_errno)();
+    unsigned long *(*__doserrno)();
+    int (*_read)(int, void *, unsigned int);
+    unsigned int (*_read_lk)(int, LPVOID, DWORD);
+    uint32_t open_and_write_to_archive;
+    uint32_t write_to_archive;
+    int (*_write)(int, void *, unsigned int);
+    int (*_write_lk)(int, LPVOID, DWORD);
+    int (*_close)(int);
+    int (*_close_lk)(int);
+    __int32 (*_filelength)(int);
+    uint32_t input_init;
+    uint32_t ff8input_cfg_read;
+    uint32_t ff8input_cfg_reset;
+    char *(*strcpy_with_malloc)(const char *);
+    uint32_t moriya_filesystem_open;
+    uint32_t moriya_filesystem_seek;
+    uint32_t moriya_filesystem_read;
+    uint32_t moriya_filesystem_close;
+    uint32_t moriya_filesystem_archives_lookup;
+    uint32_t read_or_uncompress_fs_data;
+    uint32_t lzs_uncompress;
+    void (*free_file_container)(ff8_file_container *);
+    ff8_file_container *(*archive_open)(char *, char *, char *);
+    uint32_t archive_open_fi;
+    uint32_t archive_open_fi_2;
+    uint8_t *(*open_read_close_file)(ff8_file_context *, int, int32_t *, const char *);
+    void (*sub_archive_get_filename)(const char *, char *);
+    char *temp_fs_path_cache;
+    uint32_t field_get_dialog_string;
+    uint32_t set_window_object;
+    ff8_win_obj *windows;
+    BYTE *field_dialog_current_choice;
+    uint32_t sub_470440;
+    uint32_t sub_49ACD0;
+    uint32_t sub_4974B0;
+    uint32_t convert_ascii_to_ff8enc_sub_4A2F20;
+    uint32_t sub_4A0880;
+    uint32_t sub_4A09A0;
+    uint32_t sub_49FC10;
+    uint32_t sub_4A0C00;
+    uint32_t *dword_1D2B808;
+    char (*show_dialog)(int32_t, uint32_t, int16_t);
+    int (*pause_menu_with_vibration)(int);
+    uint32_t ff8_draw_icon_or_key1;
+    uint32_t ff8_draw_icon_or_key2;
+    uint32_t ff8_draw_icon_or_key3;
+    uint32_t ff8_draw_icon_or_key4;
+    uint32_t ff8_draw_icon_or_key5;
+    uint32_t ff8_draw_icon_or_key6;
+    uint8_t *battle_boost_cross_icon_display_1D76604;
+    int (*pause_menu)(int);
+    uint32_t init_pause_menu;
+    int16_t *pause_menu_window_rect;
+    ff8_draw_menu_sprite_texture_infos *(*draw_text_sub_4A1020)(int, ff8_draw_menu_sprite_texture_infos *, int, int, const char *, int);
+    uint32_t sub_49BB30;
+    uint32_t sub_49BAB0;
+    uint32_t sub_49B300;
+    uint32_t get_icon_sp1_data;
+    uint32_t draw_controller_or_keyboard_icons;
+    uint32_t get_vibration_capability;
+    uint32_t vibration_apply;
+    uint32_t vibration_set_is_enabled;
+    uint32_t vibration_get_is_enabled;
+    int (*get_keyon)(int, int);
+    uint32_t set_vibration;
+    ff8_gamepad_state *gamepad_states;
+    ff8_vibrate_struc *vibration_objects;
+    uint32_t vibration_clear_intensity;
+    uint8_t *vibrate_data_world;
+    uint32_t open_battle_vibrate_vib;
+    uint8_t **vibrate_data_main;
+    uint8_t **vibrate_data_battle;
+    uint8_t *vibrate_data_field;
+    uint32_t sub_537F30;
+    uint32_t sub_5391B0;
+    uint32_t sub_534560;
+    uint32_t sub_536C30;
+    uint32_t cardgame_func_534340;
+    uint32_t cargame_func_535C90;
+    int (*cardgame_func_534BC0)();
+    uint32_t sub_536CB0;
+    uint8_t **card_texts_off_B96968;
+    uint32_t sub_536C80;
+    uint32_t sub_5366D0;
+    uint32_t sub_539500;
+    uint32_t *cardgame_funcs;
+    uint8_t *cardgame_tim_texture_intro;
+    uint8_t *cardgame_tim_texture_game;
+    uint8_t *cardgame_tim_texture_cards;
+    uint8_t *cardgame_tim_texture_icons;
+    uint8_t *cardgame_tim_texture_font;
+    uint32_t *is_card_game;
+    uint32_t cardgame_add_card_to_squall_534840;
+    uint32_t cardgame_sub_536DE0;
+    uint32_t cardgame_sub_537110;
+    uint32_t cardgame_update_card_with_location_5347F0;
+    int (*cardgame_sub_535D00)(void *);
+    uint32_t sfx_play_to_current_playing_channel;
+    uint32_t sfx_unload_all;
+    uint32_t sfx_pause_all;
+    uint32_t sfx_resume_all;
+    uint32_t sfx_stop_all2;
+    uint32_t sfx_stop_all;
+    void (*sfx_set_master_volume)(uint32_t);
+    int (*sfx_get_master_volume)();
+    uint32_t sfx_set_volume;
+    uint32_t sfx_current_channel_is_playing;
+    uint32_t sfx_is_playing;
+    uint32_t sfx_set_panning;
+    uint16_t *sfx_sound_count;
+    uint32_t sfx_initialize_audio_data;
+    ff8_audio_fmt **sfx_audio_fmt;
+    uint32_t manage_time_engine_sub_569971;
+    int (*enable_rdtsc_sub_40AA00)(int enable);
+    uint32_t loc_47D490;
+    uint32_t sub_500870;
+    uint32_t sub_500C00;
+    uint32_t sub_500CC0;
+    uint32_t battle_link_task_failed_call;
+    uint32_t sub_5099D0;
+    int16_t (*world_calc_zoom_sub_50F900)(int16_t *, int16_t **, uint32_t **);
+    uint32_t sub_506C90;
+    uint32_t sub_506CF0;
+    uint32_t sub_5084B0;
+    uint32_t battle_open_file_wrapper;
+    uint32_t battle_open_file;
+    char **battle_filenames;
+    uint32_t battle_monster_file_load_call_site; // BattleFile_CharacterLoad call inside battle_monster_dat_loader (+0x240), hooked to unlock c0m144-199 (see ff8_data.cpp / ff8/battle/monsters.cpp).
+    uint32_t battle_load_textures_sub_500900;
+    uint32_t loc_5005A0;
+    uint32_t battle_upload_texture_to_vram;
+    uint32_t sub_485460;
+    uint32_t sub_485610;
+    uint32_t battle_pick_random_action_sub_483940;
+    uint32_t sub_48D1A0;
+    uint32_t sub_4AD7D0;
+    uint32_t sub_4AD8D0;
+    uint32_t sub_4AB4F0;
+    uint32_t sub_4AB190;
+    uint32_t sub_4A84E0;
+    uint32_t sub_4AD400;
+    uint32_t sub_4BB840;
+    uint32_t battle_check_won_sub_486500;
+    void (*battle_sub_494D40)();
+    uint32_t battle_sub_4877F0;
+    uint32_t battle_sub_48D200;
+    uint32_t battle_ai_opcode_sub_487DF0;
+    int (*battle_get_draw_magic_amount_48FD20)(int, int, int);
+    void (*update_tutorial_info_4AD170)(int);
+    uint32_t sub_48B7E0;
+    uint32_t reset_parse_chara_sub_495530;
+    void (*sub_4954B0)(int);
+    uint32_t compute_char_stats_sub_495960;
+    int (*compute_char_max_hp_496310)(int, int);
+    int (*get_char_level_4961D0)(int, int);
+    std::span<ff8_char_computed_stats> char_comp_stats_1CFF000;
+    BYTE *battle_current_active_character_id;
+    BYTE *battle_new_active_character_id;
+    WORD *global_battle_encounter_id_1CFF6E0;
+    WORD *battle_encounter_id;
+    BYTE *battle_result_state_1CFF6E7; // 2: escaped, 4: won, 1-3: other type, 5: unknown
+    uint32_t sub_4AB450;
+    uint32_t battle_get_monster_name_sub_495100;
+    uint32_t sub_4AA920;
+    uint32_t battle_get_actor_name_sub_47EAF0;
+    BYTE **battle_char_struct_dword_1D27B10;
+    BYTE *byte_1CFF1C3;
+    char *unk_1CFDC70;
+    char *unk_1CFDC7C;
+    char *unk_1CFF84C;
+    struct ff8_kernel_vanilla_data *kernel;
+    DWORD *battle_current_actor_talking;
+    int (*battle_text_task_sub_5009B0)(int);
+    uint32_t sub_502380;
+    uint32_t battle_actor_sound;
+    uint32_t battle_actor_sound_3d;
+    uint32_t battle_actor_sound_pan;
+    int (*project_screen_position)(void *, int16_t *, int *, int *);
+    uint32_t field_footstep_sound;
+    uint32_t battle_status_countdown;
+    uint32_t (*battle_actor_sounds)[7];
+    uint32_t sub_50A790;
+    uint32_t sub_50B2A0;
+    uint32_t sub_502670;                             // embedded pointer read out of sub_502380 ("push offset ...")
+    uint32_t battle_entity_task_dispatch_sub_507080; // maps a battle entity id to its task function; called from sub_502670
+    uint32_t battle_character_dat_loader;
+    uint32_t battle_character_dat_loader_alt;
+    uint32_t battle_monster_dat_loader;          // sub_507120, the entity task for monsters; embedded pointer read out of the dispatcher
+    uint32_t battle_load_file_sub_508480;        // generic "load battle file by index" wrapper, the monster loader's file-load call target (see monsters.cpp)
+    uint32_t battle_enemy_scanned_read_operand;  // disp32 of the ATTACK_TYPE_SCAN "already scanned?" test (see monsters.cpp)
+    uint32_t battle_enemy_scanned_write_operand; // disp32 of the "mark this com_id scanned" or (see monsters.cpp)
+    uint32_t scan_get_camera_row;
+    uint32_t scan2_get_camera_row;
+    uint32_t sub_50A9A0;
+    uint32_t battle_read_effect_sub_50AF20;
+    DWORD *func_off_battle_effects_C81774;
+    int (*battle_process_effect_scripts)();
+    int *battle_magic_id;
+    uint32_t battle_magic_effect_start_call; // where sub_50A9A0 calls the loaded effect
+    uint32_t battle_play_camera_animation_sub_5099A0;
+    uint32_t battle_set_camera_track_sub_509970;
+    uint32_t battle_bind_anim_set_sub_5022C0;
+    uint32_t battle_set_com_file_data_sub_502270;
+    uint32_t battle_exit_sub_4868C0;
+    uint32_t sub_571870;
+    DWORD *func_off_battle_effect_textures_50AF93;
+    uint32_t get_battle_effect_buffer_sub_571B50;
+    uint32_t get_battle_effect_buffer_size_sub_571B60;
+    uint32_t init_battle_effect_buffer_sub_571B80;
+    uint32_t sub_6C3640;
+    uint32_t sub_6C3760;
+    uint8_t **vibrate_data_summon_quezacotl;
+    uint32_t load_magic_data_sub_571B80;
+    uint32_t load_magic_data_sub_5718E0;
+    uint32_t load_magic_data_sub_571900;
+    uint32_t sub_47D890;
+    uint32_t sub_505DF0;
+    uint32_t sub_4A94D0;
+    uint32_t sub_4BCBE0;
+    uint32_t battle_menu_draw_inline_command_list_sub_4BCCD0;
+    uint32_t battle_draw_window_box_sub_4A7510;
+    ff8_battle_ui_context **battle_ui_context_dword_1D6D490;
+    uint32_t (*submit_primitive_with_depth)(int *, uint32_t *, int, int, int, int);
+    void (*battle_compute_window_scale_rect_sub_4A7440)(int, int16_t *, int16_t *);
+    uint32_t *(*battle_emit_relative_draw_area_sub_4A73A0)(int *, uint32_t *, int16_t *);
+    uint32_t *(*battle_emit_full_draw_area_sub_4A7630)(int *, uint32_t *);
+    uint32_t *(*battle_draw_icon_sub_4B77C0)(int *, uint32_t *, int, int, int, uint32_t, int);
+    uint32_t *(*battle_draw_window_background_sub_4B6A60)(int *, uint32_t *, int16_t *, uint32_t);
+    uint32_t *(*battle_draw_window_border_sub_4B6A80)(int *, uint32_t *, int16_t *, uint32_t, uint32_t);
+    void (*battle_register_window_overlap_sub_4B1660)(int16_t *);
+    uint32_t sub_4C8B10;
+    uint32_t battle_pause_sub_4CD140;
+    uint32_t *is_alternative_pause_menu;
+    uint32_t *pause_menu_option_state;
+    uint32_t battle_pause_window_sub_4CD350;
+    int16_t *battle_pause_window_rect;
+    uint32_t sub_4A7210;
+    uint32_t sub_B586F0;
+    uint32_t sub_B64B80;
+    DWORD *leviathan_funcs_B64C3C;
+    uint32_t mag_data_palette_sub_B66560;
+    DWORD **effect_struct_27973EC;
+    uint8_t **mag_data_dword_2798A68;
+    DWORD **effect_struct_2797624;
+    uint32_t sub_B63230;
+    uint32_t mag_data_texture_sub_B66560;
+    BYTE **dword_27973E8;
+    uint32_t battle_set_action_upload_raw_palette_sub_B666F0;
+    uint32_t battle_set_action_upload_raw_palette_sub_B66400;
+    uint32_t sub_84D110;
+    uint32_t sub_84D1F0;
+    uint32_t sub_84D230;
+    uint32_t sub_84D2C0;
+    uint32_t sub_84D4B0;
+    uint32_t sub_84F2A0;
+    uint32_t sub_84F860;
+    uint32_t sub_84F8D0;
+    uint32_t scan_get_text_sub_B687C0;
+    uint32_t battle_entities_1D27BCB;
+    uint32_t scan_text_data;
+    uint32_t scan_text_positions;
+    uint32_t fps_limiter;
+    uint32_t menu_main_loop;
+    uint64_t *menu_timestamp;
+    double *menu_frame_time;
+    double *time_volume_change_related_1A78BE0;
+    uint32_t field_vars_stack_1CFE9B8;
+    uint32_t get_card_name;
+    uint32_t card_name_positions;
+    uint32_t drawpoint_messages;
+    int (*opcode_drawpoint_sub_4A0850)(int, int);
+    uint32_t enable_gf_sub_47E480;
+    uint32_t battle_menu_loop_4A2690;
+    uint32_t battle_menu_sub_4A6660;
+    uint32_t battle_menu_sub_4A3D20;
+    uint32_t battle_menu_sub_4A3EE0;
+    uint32_t battle_menu_sub_4A4950;
+    uint32_t battle_menu_sub_4A5800;
+    int (*battle_menu_add_exp_and_stat_bonus_496CB0)(int, uint16_t);
+    byte *character_data_1CFE74C;
+    uint32_t battle_sub_485160;
+    uint32_t battle_sub_48FE20;
+    uint32_t battle_sub_494410;
+    void (*battle_sub_494AF0)(int, int, int, int);
+    uint32_t engine_reset_viewport_sub_4972D0;
+    uint32_t engine_setviewport_sub_45B4C0;
+    void *(*engine_setviewport_sub_41E070)(int, int, int, int, void *);
+    uint32_t *dword_B7CE28;
+    uint32_t *flag_d3d_renderer_related_dword_1CCFD94;
+    int32_t *ssigpu_viewport_x_dword_1CA89D8;
+    int32_t *ssigpu_viewport_y_dword_1CA89DC;
+    int32_t *ssigpu_viewport_width_dword_B7CBF8;
+    int32_t *ssigpu_viewport_height_dword_B7CBFC;
+    int32_t *current_viewport_x_dword_1A7764C;
+    int32_t *current_viewport_y_dword_1A77648;
+    int32_t *current_viewport_width_dword_1A77654;
+    int32_t *current_viewport_height_dword_1A77650;
+    void **dword_1DCB340;
+    uint32_t set_render_to_vram_current_screen_flag_before_battle;
+    uint32_t sub_472B30;
+    uint32_t sub_530810;
+    uint32_t sub_533CD0;
+    uint32_t sub_530C30;
+    void (*field_push_mch_vertices_rect_sub_533A90)(int, uint16_t *, int, int);
+    void (*set_current_triangle_sub_45E160)(int, int, int);
+    void (*calc_model_triangle_condition_sub_45EE10)();
+    int *dword_1DC6314;
+    int32_t *calc_model_poly_condition_result_dword_1CA8A70;
+    ff8_file_container *(*get_file_container_sub_51B410)(const char *);
+    uint32_t *config_highres_font_multiplier;
+    uint8_t *config_use_highres_font;
+    void **dword_1D2A284;
+    uint32_t *dword_1D2A288;
+    uint32_t engine_draw_2D_texture_sub_4980C0;
+    void (*graphics_setrendererstate_draw_sub_4178D7)(ff8_graphics_object *, ff8_game_obj *);
+    uint32_t sub_4B3690;
+    uint32_t sub_4B3710;
+    uint32_t sub_49C910;
+    uint32_t sub_49D6F0;
+    uint32_t menu_4_render_sub_4D3A60;
+    uint32_t menu_4_controller_sub_4D2A00;
+    uint32_t sub_4D41B0;
+    uint32_t sub_4BF490;
+    uint32_t sub_4A3530;
+    uint32_t sub_4A3400;
+    uint32_t sub_49C5F0;
+    uint32_t sub_4B87A0;
+    ff8_font **dword_1D2B0C0;
+    uint32_t sub_472A50;
+    uint32_t sub_47D2A0;
+    uint32_t tdw_set_sub_49F600;
+    uint32_t syfont_set_kernel_bin_pointers_sub_49F640;
+    uint32_t kernel_bin_get_section_sub_47EC70;
+    struc_kernel_sysfont *kernel_bin_sysfont;
+    uint32_t sub_4B9A40;
+    void (*tdw_malloc_sub_4B98F0)(int *, int **, unsigned int *);
+    uint32_t load_file_in_memory_sub_4B96C0;
+    int (*open_file_menu_sub_4B9530)(void *, char *);
+    size_t (*write_tdw_tmp_sub_4B9640)(void *, LPCSTR, size_t);
+    uint32_t sub_4A0EC0;
+    uint32_t font_text_size_calculation_sub_4A0D10;
+    uint16_t *word_B86D84;
+    uint32_t sub_4A2DF0;
+    uint32_t sub_4B73F0;
+    uint32_t *dword_1D2B100;
+    uint32_t render_text_field_sub_4A1570;
+    uint32_t sub_49B0B0;
+    uint32_t dword_1D76608;
+    uint32_t sub_49AB40;
+    uint32_t dword_1D7660C;
+    uint32_t sub_4B8AC0;
+    uint32_t sub_4B8B30;
+    uint32_t sub_4B75B0;
+    uint32_t sub_49AB60;
+    uint32_t sub_49B0D0;
+    uint32_t dword_1D2B514;
+    uint32_t parse_battle_texts1_sub_4A7250;
+    uint32_t sub_49B080;
+    uint32_t sub_4B1B00;
+    uint32_t battle_menu_hud_renderer_sub_4B1740;
+    uint32_t sub_4B0F10;
+    uint32_t sub_4B0C00;
+    uint32_t parse_and_render_battle_texts_hud_sub_4B0A90;
+    uint32_t sub_537A30;
+    uint32_t sub_56EC80;
+    uint32_t sub_56F5E0;
+    uint32_t render_save_entry_sub_4E6020;
+    uint32_t draw_icons_sub_49F850;
+    uint32_t sub_4BE100;
+    uint32_t menu_draw_text_sub_4BDE30;
+    uint32_t word_1D77148;
+    uint32_t word_1D76AC6;
+    uint32_t menu_name_selection_render_sub_4E7170;
+    uint32_t menu_name_selection_controller_sub_4E6990;
+    uint32_t sub_4BD690;
+    uint32_t sub_495EF0;
+    uint32_t sub_4BE610;
+    uint32_t sub_4BDAC0;
+    uint32_t sub_4E7470;
+    uint32_t sub_4BDD60;
+    uint32_t sub_4D3E40;
+    uint32_t sub_4DA230;
+    uint32_t menu_junction_render;
+    uint32_t menu_junction_controller;
+    uint32_t sub_4E1A90;
+    uint32_t dword_209D070;
+    uint32_t dword_209D048;
+    uint32_t dword_209D058;
+    uint32_t byte_209CFD8;
+    uint32_t sub_534950;
+    uint32_t sub_417E52;
+    uint32_t sub_499C20;
+    uint32_t sub_49AB80;
+    uint32_t sub_4E2B50;
+    uint32_t sub_4C08D0;
+    uint32_t sub_4BF520;
+    uint32_t sub_4C0020;
+    uint32_t menu_calc_font_size_sub_4BFFC0;
+    uint32_t sub_4BD6E0;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);
 void ff8_unload_texture(struct ff8_texture_set *texture_set);
 void ff8_init_hooks(struct game_obj *_game_object);
-struct ff8_gfx_driver *ff8_load_driver(void* game_object);
+struct ff8_gfx_driver *ff8_load_driver(void *game_object);
 LPDIJOYSTATE2 ff8_update_gamepad_status();
 bool ff8_skip_movies();

@@ -41,8 +41,7 @@ bool Metadata::loadXml()
     {
         DWORD attributes = GetFileAttributesA(savePath);
         DWORD error = GetLastError();
-        missing = attributes == INVALID_FILE_ATTRIBUTES &&
-            (error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND);
+        missing = attributes == INVALID_FILE_ATTRIBUTES && (error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND);
     }
     if (!result && !missing)
     {
@@ -86,11 +85,11 @@ void Metadata::saveXml()
     }
 }
 
-bool Metadata::updateSignature(pugi::xml_node savefile, const char* filename, bool current)
+bool Metadata::updateSignature(pugi::xml_node savefile, const char *filename, bool current)
 {
     std::string path = std::string(userPath) + "\\" + filename;
     std::vector<unsigned char> data;
-    FILE* file = fopen(path.c_str(), "rb");
+    FILE *file = fopen(path.c_str(), "rb");
     bool exists = file != nullptr;
     if (file)
     {
@@ -127,7 +126,8 @@ bool Metadata::updateSignature(pugi::xml_node savefile, const char* filename, bo
     data.insert(data.end(), userID.begin(), userID.end());
     std::string md5 = md5_hash(data.data(), data.size());
     auto signature = savefile.child("signature");
-    if (!signature) signature = savefile.append_child("signature");
+    if (!signature)
+        signature = savefile.append_child("signature");
     signature.text().set(md5.c_str());
 
     if (exists || current)
@@ -140,9 +140,7 @@ bool Metadata::updateSignature(pugi::xml_node savefile, const char* filename, bo
 
 void Metadata::calcNow()
 {
-    std::chrono::milliseconds nowMS = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-    );
+    std::chrono::milliseconds nowMS = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
 
     now = std::to_string(nowMS.count());
 }
@@ -170,7 +168,8 @@ void Metadata::updateFF7(uint8_t save)
         ffnx_error("Metadata: invalid FF7 save number %u\n", save);
         return;
     }
-    if (!loadXml()) return;
+    if (!loadXml())
+        return;
 
     calcNow();
     auto gamestatus = doc.child("gamestatus");
@@ -193,7 +192,8 @@ void Metadata::updateFF7(uint8_t save)
         {
             char filename[32];
             sprintf(filename, "save%02i.ff7", block - 1);
-            if (!updateSignature(savefiles, filename, block == save + 1)) return;
+            if (!updateSignature(savefiles, filename, block == save + 1))
+                return;
         }
     }
 
@@ -207,7 +207,8 @@ void Metadata::updateFF8(uint8_t slot, uint8_t save)
         ffnx_error("Metadata: invalid FF8 slot %u save number %u\n", slot, save);
         return;
     }
-    if (!loadXml()) return;
+    if (!loadXml())
+        return;
 
     calcNow();
     auto gamestatus = doc.child("gamestatus");
@@ -215,12 +216,7 @@ void Metadata::updateFF8(uint8_t slot, uint8_t save)
     {
         for (int number = 1; number <= 30; ++number)
         {
-            auto savefile = gamestatus.find_child([card, number](pugi::xml_node node)
-            {
-                return strcmp(node.name(), "savefile") == 0 &&
-                    strcmp(node.attribute("type").value(), "ff8") == 0 &&
-                    node.attribute("slot").as_int() == card && node.attribute("num").as_int() == number;
-            });
+            auto savefile = gamestatus.find_child([card, number](pugi::xml_node node) { return strcmp(node.name(), "savefile") == 0 && strcmp(node.attribute("type").value(), "ff8") == 0 && node.attribute("slot").as_int() == card && node.attribute("num").as_int() == number; });
             if (!savefile)
             {
                 savefile = gamestatus.append_child("savefile");
@@ -228,13 +224,15 @@ void Metadata::updateFF8(uint8_t slot, uint8_t save)
                 savefile.append_attribute("type") = "ff8";
                 savefile.append_attribute("slot") = card;
             }
-            if (!savefile.child("timestamp")) savefile.append_child("timestamp");
+            if (!savefile.child("timestamp"))
+                savefile.append_child("timestamp");
             bool current = card == slot && number == save;
             if (current || !savefile.child("signature") || savefile.child("signature").text().empty())
             {
                 char filename[32];
                 sprintf(filename, "slot%d_save%02i.ff8", card, number);
-                if (!updateSignature(savefile, filename, current)) return;
+                if (!updateSignature(savefile, filename, current))
+                    return;
             }
         }
     }
@@ -245,10 +243,12 @@ void Metadata::updateFF8(uint8_t slot, uint8_t save)
         choco = gamestatus.append_child("savefile");
         choco.append_attribute("type") = "choco";
     }
-    if (!choco.child("timestamp")) choco.append_child("timestamp");
+    if (!choco.child("timestamp"))
+        choco.append_child("timestamp");
     if (slot > 2 || !choco.child("signature") || choco.child("signature").text().empty())
     {
-        if (!updateSignature(choco, "chocorpg.ff8", slot > 2)) return;
+        if (!updateSignature(choco, "chocorpg.ff8", slot > 2))
+            return;
     }
 
     saveXml();

@@ -45,54 +45,56 @@ static_assert(offsetof(ff8_battle_ui_context, icon_id) == 0x44);
 // on an ally target. A fully open window now ends with a full screen draw area, so its content is drawn first.
 static uint32_t *ff8_battle_draw_window_box(int *ot, uint32_t *prim, int open_scale, int icon_id)
 {
-	ff8_battle_ui_context *context = *ff8_externals.battle_ui_context_dword_1D6D490;
-	int16_t *window_rect = context->window_rect;
-	int16_t *scaled_window_rect = context->scaled_window_rect;
-	uint32_t border_flags = context->window_border_flags;
+    ff8_battle_ui_context *context = *ff8_externals.battle_ui_context_dword_1D6D490;
+    int16_t *window_rect = context->window_rect;
+    int16_t *scaled_window_rect = context->scaled_window_rect;
+    uint32_t border_flags = context->window_border_flags;
 
-	ff8_externals.battle_compute_window_scale_rect_sub_4A7440(open_scale, window_rect, scaled_window_rect);
+    ff8_externals.battle_compute_window_scale_rect_sub_4A7440(open_scale, window_rect, scaled_window_rect);
 
-	if (open_scale < FF8_BATTLE_WINDOW_FULLY_OPEN)
-	{
-		int16_t width = scaled_window_rect[2], height = scaled_window_rect[3];
+    if (open_scale < FF8_BATTLE_WINDOW_FULLY_OPEN)
+    {
+        int16_t width = scaled_window_rect[2], height = scaled_window_rect[3];
 
-		scaled_window_rect[2] -= 2;
-		scaled_window_rect[3] -= 2;
-		prim = ff8_externals.battle_emit_relative_draw_area_sub_4A73A0(ot, prim, scaled_window_rect);
-		scaled_window_rect[2] = width;
-		scaled_window_rect[3] = height;
-	}
+        scaled_window_rect[2] -= 2;
+        scaled_window_rect[3] -= 2;
+        prim = ff8_externals.battle_emit_relative_draw_area_sub_4A73A0(ot, prim, scaled_window_rect);
+        scaled_window_rect[2] = width;
+        scaled_window_rect[3] = height;
+    }
 
-	if (icon_id)
-	{
-		context = *ff8_externals.battle_ui_context_dword_1D6D490;
-		context->icon_palette = 0;
-		context->icon_id = uint16_t(icon_id);
-		prim = ff8_externals.battle_draw_icon_sub_4B77C0(ot, prim, uint16_t(icon_id), window_rect[0], window_rect[1], context->color, context->icon_palette);
-	}
+    if (icon_id)
+    {
+        context = *ff8_externals.battle_ui_context_dword_1D6D490;
+        context->icon_palette = 0;
+        context->icon_id = uint16_t(icon_id);
+        prim = ff8_externals.battle_draw_icon_sub_4B77C0(ot, prim, uint16_t(icon_id), window_rect[0], window_rect[1], context->color, context->icon_palette);
+    }
 
-	prim = ff8_externals.battle_draw_window_background_sub_4B6A60(ot, prim, scaled_window_rect, (*ff8_externals.battle_ui_context_dword_1D6D490)->color);
-	prim = ff8_externals.battle_draw_window_border_sub_4B6A80(ot, prim, window_rect, (*ff8_externals.battle_ui_context_dword_1D6D490)->color, border_flags);
+    prim = ff8_externals.battle_draw_window_background_sub_4B6A60(ot, prim, scaled_window_rect, (*ff8_externals.battle_ui_context_dword_1D6D490)->color);
+    prim = ff8_externals.battle_draw_window_border_sub_4B6A80(ot, prim, window_rect, (*ff8_externals.battle_ui_context_dword_1D6D490)->color, border_flags);
 
-	if (open_scale < FF8_BATTLE_WINDOW_FULLY_OPEN) prim = ff8_externals.battle_emit_relative_draw_area_sub_4A73A0(ot, prim, scaled_window_rect);
-	else prim = ff8_externals.battle_emit_full_draw_area_sub_4A7630(ot, prim);
+    if (open_scale < FF8_BATTLE_WINDOW_FULLY_OPEN)
+        prim = ff8_externals.battle_emit_relative_draw_area_sub_4A73A0(ot, prim, scaled_window_rect);
+    else
+        prim = ff8_externals.battle_emit_full_draw_area_sub_4A7630(ot, prim);
 
-	ff8_externals.battle_register_window_overlap_sub_4B1660((*ff8_externals.battle_ui_context_dword_1D6D490)->scaled_window_rect);
+    ff8_externals.battle_register_window_overlap_sub_4B1660((*ff8_externals.battle_ui_context_dword_1D6D490)->scaled_window_rect);
 
-	return prim;
+    return prim;
 }
 
 void ff8_battle_ui_init()
 {
-	// Menu windows kept on screen while another window opens
-	replace_function(ff8_externals.battle_draw_window_box_sub_4A7510, ff8_battle_draw_window_box);
+    // Menu windows kept on screen while another window opens
+    replace_function(ff8_externals.battle_draw_window_box_sub_4A7510, ff8_battle_draw_window_box);
 
-	// The status countdown numbers (Doom, and the second counter drawn above it) are placed from the model's screen
-	// position, raised by 8 between the two counters. The PC GTE gives that position in eighths of a pixel and the
-	// number drawing turns it into pixels, but the 8 was left in PSX pixels: both counters overlapped, 1 pixel apart.
-	patch_code_byte(ff8_externals.battle_status_countdown + COUNTDOWN_FIRST_RAISE, uint8_t(-8 * 8));
-	patch_code_byte(ff8_externals.battle_status_countdown + COUNTDOWN_SECOND_RAISE, uint8_t(-8 * 8));
+    // The status countdown numbers (Doom, and the second counter drawn above it) are placed from the model's screen
+    // position, raised by 8 between the two counters. The PC GTE gives that position in eighths of a pixel and the
+    // number drawing turns it into pixels, but the 8 was left in PSX pixels: both counters overlapped, 1 pixel apart.
+    patch_code_byte(ff8_externals.battle_status_countdown + COUNTDOWN_FIRST_RAISE, uint8_t(-8 * 8));
+    patch_code_byte(ff8_externals.battle_status_countdown + COUNTDOWN_SECOND_RAISE, uint8_t(-8 * 8));
 
-	// Show "Has nothing" instead of "[Card]" when a monster has no drawable magic
-	patch_code_byte(ff8_externals.battle_get_monster_name_sub_495100 + CARD_SUFFIX_TEXT_ID, NOTHING_TO_DRAW_TEXT_ID);
+    // Show "Has nothing" instead of "[Card]" when a monster has no drawable magic
+    patch_code_byte(ff8_externals.battle_get_monster_name_sub_495100 + CARD_SUFFIX_TEXT_ID, NOTHING_TO_DRAW_TEXT_ID);
 }

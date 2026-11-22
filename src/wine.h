@@ -24,20 +24,23 @@
 
 #include <windows.h>
 
-typedef const char* (*WineVersionFunction)();
-inline const char* GetWineVersion() {
+typedef const char *(*WineVersionFunction)();
+inline const char *GetWineVersion()
+{
     HMODULE hModule = LoadLibraryA("ntdll.dll");
-    if (!hModule) {
+    if (!hModule)
+    {
         return "Wine is not detected.";
     }
 
     WineVersionFunction wine_get_version = (WineVersionFunction)GetProcAddress(hModule, "wine_get_version");
-    if (!wine_get_version) {
+    if (!wine_get_version)
+    {
         FreeLibrary(hModule);
         return "Wine is not detected.";
     }
 
-    const char* version = wine_get_version();
+    const char *version = wine_get_version();
     FreeLibrary(hModule);
     return version;
 }

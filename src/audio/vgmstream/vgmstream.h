@@ -26,7 +26,8 @@
 #include <stdint.h>
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
 #include <libvgmstream/vgmstream.h>
@@ -37,38 +38,39 @@ extern "C" {
 
 namespace SoLoud
 {
-	class VGMStream : public AudioSource
-	{
-		static VGMSTREAM* init_vgmstream_with_extension(const char* aFilename, const char* ext);
-		result finishLoad();
-	public:
-		VGMSTREAM* mStream;
-		unsigned int mSampleCount;
-		unsigned int mLoopEndSample;
+class VGMStream : public AudioSource
+{
+    static VGMSTREAM *init_vgmstream_with_extension(const char *aFilename, const char *ext);
+    result finishLoad();
 
-		sample_t* mData;
+  public:
+    VGMSTREAM *mStream;
+    unsigned int mSampleCount;
+    unsigned int mLoopEndSample;
 
-		VGMStream();
-		virtual ~VGMStream();
-		result load(const char* aFilename, const char* ext = nullptr);
-		result loadWavFromArchive(const char* filename, uint32_t offset, uint32_t length,
-			std::span<const uint8_t> format, uint32_t loopStart = 0, uint32_t loopEnd = 0);
+    sample_t *mData;
 
-		virtual AudioSourceInstance* createInstance();
-		time getLength();
-	};
+    VGMStream();
+    virtual ~VGMStream();
+    result load(const char *aFilename, const char *ext = nullptr);
+    result loadWavFromArchive(const char *filename, uint32_t offset, uint32_t length, std::span<const uint8_t> format, uint32_t loopStart = 0, uint32_t loopEnd = 0);
 
-	class VGMStreamInstance : public AudioSourceInstance
-	{
-		sample_t* mStreamBuffer;
-		VGMStream* mParent;
-		unsigned int mOffset;
-	public:
-		VGMStreamInstance(VGMStream* aParent);
-		virtual ~VGMStreamInstance();
-		virtual unsigned int getAudio(float* aBuffer, unsigned int aSamplesToRead, unsigned int aBufferSize);
-		virtual result rewind();
-		virtual result seek(double aSeconds, float *mScratch, unsigned int mScratchSize);
-		virtual bool hasEnded();
-	};
+    virtual AudioSourceInstance *createInstance();
+    time getLength();
 };
+
+class VGMStreamInstance : public AudioSourceInstance
+{
+    sample_t *mStreamBuffer;
+    VGMStream *mParent;
+    unsigned int mOffset;
+
+  public:
+    VGMStreamInstance(VGMStream *aParent);
+    virtual ~VGMStreamInstance();
+    virtual unsigned int getAudio(float *aBuffer, unsigned int aSamplesToRead, unsigned int aBufferSize);
+    virtual result rewind();
+    virtual result seek(double aSeconds, float *mScratch, unsigned int mScratchSize);
+    virtual bool hasEnded();
+};
+}; // namespace SoLoud

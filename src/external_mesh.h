@@ -48,7 +48,7 @@ struct Shape
     std::vector<uint32_t> indices;
     vector3<float> min;
     vector3<float> max;
-    Material* pMaterial = nullptr;
+    Material *pMaterial = nullptr;
     bool isDoubleSided = false;
 };
 
@@ -87,31 +87,32 @@ struct Animation
 
 class ExternalMesh
 {
-public:
-    bool importExternalMeshGltfFile(char* file_path, char* tex_path, bool isZUp = false);
-    uint32_t fillExternalMeshVertexBuffer(struct nvertex* inVertex, struct vector3<float>* normals, struct vector4<float>* joints, struct vector4<float>* weights, uint32_t inCount);
-    uint32_t fillExternalMeshIndexBuffer(uint32_t* inIndex, uint32_t inCount);
+  public:
+    bool importExternalMeshGltfFile(char *file_path, char *tex_path, bool isZUp = false);
+    uint32_t fillExternalMeshVertexBuffer(struct nvertex *inVertex, struct vector3<float> *normals, struct vector4<float> *joints, struct vector4<float> *weights, uint32_t inCount);
+    uint32_t fillExternalMeshIndexBuffer(uint32_t *inIndex, uint32_t inCount);
     void updateExternalMeshBuffers();
     void bindField3dVertexBuffer(uint32_t offset, uint32_t inCount);
     void bindField3dIndexBuffer(uint32_t offset, uint32_t inCount);
     void clearExternalMesh3dBuffers();
     void unloadExternalMesh();
-    bool getRootMotionMatrix(const std::string& animName, int frame, float translationScale, struct matrix* outMatrix);
+    bool getRootMotionMatrix(const std::string &animName, int frame, float translationScale, struct matrix *outMatrix);
 
     std::vector<Shape> shapes;
-	std::map<std::string, Material> materials;
+    std::map<std::string, Material> materials;
     std::vector<Skin> skins;
     std::map<std::string, Animation> animations;
 
     // Animations already reported as using the gltf root motion (trace_loaders)
     std::set<std::string> rootMotionChecked;
-private:
-    void loadConfig(const std::string& path);
+
+  private:
+    void loadConfig(const std::string &path);
 
     int getTextureCount(std::string tex_name);
     int getFrameInterval(std::string tex_name);
 
-private:
+  private:
     // Config
     toml::parse_result config;
 

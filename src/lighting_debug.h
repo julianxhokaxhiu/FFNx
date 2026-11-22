@@ -15,4 +15,4 @@
 
 #pragma once
 
-void lighting_debug(bool* isOpen);
+void lighting_debug(bool *isOpen);

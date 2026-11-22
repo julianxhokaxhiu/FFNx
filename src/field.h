@@ -27,26 +27,23 @@
 void field_init();
 void field_debug(bool *isOpen);
 
-template<typename T>
-T* get_field_parameter_address(int id)
+template <typename T> T *get_field_parameter_address(int id)
 {
-	byte* scriptPtr = *ff7_externals.field_script_ptr;
-	return (T*)(&scriptPtr[ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] + id + 1]);
+    byte *scriptPtr = *ff7_externals.field_script_ptr;
+    return (T *)(&scriptPtr[ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] + id + 1]);
 }
 
-template<typename T>
-T get_field_parameter(int id)
+template <typename T> T get_field_parameter(int id)
 {
-	return *get_field_parameter_address<T>(id);
+    return *get_field_parameter_address<T>(id);
 }
 
-template<typename T>
-void set_field_parameter(int id, T value)
+template <typename T> void set_field_parameter(int id, T value)
 {
-	byte* scriptPtr = *ff7_externals.field_script_ptr;
-	*(T*)(&scriptPtr[ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] + id + 1]) = value;
+    byte *scriptPtr = *ff7_externals.field_script_ptr;
+    *(T *)(&scriptPtr[ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] + id + 1]) = value;
 }
 
 byte get_field_bank_value(int16_t bank);
 
-byte* get_level_data_pointer();
+byte *get_level_data_pointer();

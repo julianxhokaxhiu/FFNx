@@ -24,15 +24,15 @@
 
 int ff7_dsound_create(HWND hwnd, LPGUID guid)
 {
-  return 1; // Allow the engine to think everything went well
+    return 1; // Allow the engine to think everything went well
 }
 
 void ff7_dsound_release()
 {
-  // Just do nothing
+    // Just do nothing
 }
 
 int ff7_dsound_createsoundbuffer(const WAVEFORMATEX *waveFormatEx)
 {
-  return 1; // Allow the engine to think everything went well
+    return 1; // Allow the engine to think everything went well
 }

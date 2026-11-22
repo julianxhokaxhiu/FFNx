@@ -55,12 +55,12 @@ struct KeyPair
 
 class Widescreen
 {
-public:
+  public:
     void init();
     void initParamsFromConfig();
     void initMovieParamsFromConfig(char *name);
 
-    const field_camera_range& getCameraRange();
+    const field_camera_range &getCameraRange();
     int getHorizontalOffset();
     int getVerticalOffset();
     bool isResetVerticalPos();
@@ -73,11 +73,11 @@ public:
 
     void zoomBackground();
 
-private:
+  private:
     void loadConfig();
     void loadMovieConfig();
 
-private:
+  private:
     // Config
     toml::parse_result config;
     toml::parse_result movie_config;
@@ -94,7 +94,7 @@ private:
     WIDESCREEN_MODE widescreen_movie_mode = WM_DISABLED;
 };
 
-inline const field_camera_range& Widescreen::getCameraRange()
+inline const field_camera_range &Widescreen::getCameraRange()
 {
     return camera_range;
 }
@@ -126,8 +126,9 @@ inline bool Widescreen::isScriptedVerticalClipEnabled()
 
 inline WIDESCREEN_MODE Widescreen::getMode()
 {
-    struct game_mode* mode = getmode_cached();
-    if (mode->driver_mode != MODE_FIELD) return WM_DISABLED;
+    struct game_mode *mode = getmode_cached();
+    if (mode->driver_mode != MODE_FIELD)
+        return WM_DISABLED;
 
     return widescreen_mode;
 }

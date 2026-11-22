@@ -29,77 +29,79 @@
 
 namespace ff7::world
 {
-    enum world_camera_viewtype
-    {
-        TOP_DOWN_VIEW = 0,
-        FRONT_VIEW = 2,
-        HIGHWIND_VIEW = 3
-    };
+enum world_camera_viewtype
+{
+    TOP_DOWN_VIEW = 0,
+    FRONT_VIEW = 2,
+    HIGHWIND_VIEW = 3
+};
 
-    void update_world_camera_front(int current_key_input, int prev_key_input);
-    void update_world_camera_rotation_y();
+void update_world_camera_front(int current_key_input, int prev_key_input);
+void update_world_camera_rotation_y();
 
-    class WorldCamera
-    {
-        public:
-            WorldCamera() = default;
-            ~WorldCamera() = default;
+class WorldCamera
+{
+  public:
+    WorldCamera() = default;
+    ~WorldCamera() = default;
 
-            void setRotationSpeed(float rotX, float rotY, float rotZ);
-            vector3<float> getRotationSpeed();
-            void setZoomSpeed(float speed);
-            float getZoomSpeed();
-            float getMaxZoomDist();
-            void reset();
-            float getRotationOffsetX();
-            float getRotationOffsetY();
-            void requestResetCameraRotation(bool value);
-            bool isResetCameraRotationRequested();
-        public:
-            vector3<float> targetRotation = { -135.0f, 0.0, 0.0 };
-            vector3<float> localTargetRotation = { -135.0f, 0.0, 0.0 };
-            vector3<float> rotationOffset = { -135.0f, 0.0, 0.0 };
-            float zoomOffset = 10000.0f;
-            const float minZoomDist = 2000.0f;
-        private:
-            vector3<float> rotationSpeed = { 0.0, 0.0, 0.0 };
-            float zoomSpeed = 0.0f;
+    void setRotationSpeed(float rotX, float rotY, float rotZ);
+    vector3<float> getRotationSpeed();
+    void setZoomSpeed(float speed);
+    float getZoomSpeed();
+    float getMaxZoomDist();
+    void reset();
+    float getRotationOffsetX();
+    float getRotationOffsetY();
+    void requestResetCameraRotation(bool value);
+    bool isResetCameraRotationRequested();
 
-            const float minVerticalAngle = 5.0f;
-            const float maxVerticalAngle = 85.0f;
+  public:
+    vector3<float> targetRotation = {-135.0f, 0.0, 0.0};
+    vector3<float> localTargetRotation = {-135.0f, 0.0, 0.0};
+    vector3<float> rotationOffset = {-135.0f, 0.0, 0.0};
+    float zoomOffset = 10000.0f;
+    const float minZoomDist = 2000.0f;
 
-            bool isResetCameraRotation = false;
-    };
+  private:
+    vector3<float> rotationSpeed = {0.0, 0.0, 0.0};
+    float zoomSpeed = 0.0f;
 
-    inline vector3<float> WorldCamera::getRotationSpeed()
-    {
-        return rotationSpeed;
-    }
+    const float minVerticalAngle = 5.0f;
+    const float maxVerticalAngle = 85.0f;
 
-    inline float WorldCamera::getZoomSpeed()
-    {
-        return zoomSpeed;
-    }
+    bool isResetCameraRotation = false;
+};
 
-    inline float  WorldCamera::getRotationOffsetX()
-    {
-        return rotationOffset.x;
-    }
-
-    inline float  WorldCamera::getRotationOffsetY()
-    {
-        return rotationOffset.y;
-    }
-
-    inline void WorldCamera::requestResetCameraRotation(bool value)
-    {
-        isResetCameraRotation = value;
-    }
-
-    inline bool WorldCamera::isResetCameraRotationRequested()
-    {
-        return isResetCameraRotation;
-    }
-
-    extern WorldCamera camera;
+inline vector3<float> WorldCamera::getRotationSpeed()
+{
+    return rotationSpeed;
 }
+
+inline float WorldCamera::getZoomSpeed()
+{
+    return zoomSpeed;
+}
+
+inline float WorldCamera::getRotationOffsetX()
+{
+    return rotationOffset.x;
+}
+
+inline float WorldCamera::getRotationOffsetY()
+{
+    return rotationOffset.y;
+}
+
+inline void WorldCamera::requestResetCameraRotation(bool value)
+{
+    isResetCameraRotation = value;
+}
+
+inline bool WorldCamera::isResetCameraRotationRequested()
+{
+    return isResetCameraRotation;
+}
+
+extern WorldCamera camera;
+} // namespace ff7::world

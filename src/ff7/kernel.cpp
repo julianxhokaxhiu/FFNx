@@ -31,64 +31,68 @@ uint32_t kernel2_section_counter;
 
 void kernel2_reset_counters()
 {
-	uint32_t i;
+    uint32_t i;
 
-	if(trace_all) ffnx_trace("kernel2 reset\n");
+    if (trace_all)
+        ffnx_trace("kernel2 reset\n");
 
-	for(i = 0; i < kernel2_section_counter; i++) external_free(kernel2_sections[i]);
+    for (i = 0; i < kernel2_section_counter; i++)
+        external_free(kernel2_sections[i]);
 
-	kernel2_section_counter = 0;
+    kernel2_section_counter = 0;
 }
 
 char *kernel2_add_section(uint32_t size)
 {
-	char *ret = (char*)external_malloc(size);
+    char *ret = (char *)external_malloc(size);
 
-	if(trace_all) ffnx_trace("kernel2 add section %i (%i)\n", kernel2_section_counter, size);
+    if (trace_all)
+        ffnx_trace("kernel2 add section %i (%i)\n", kernel2_section_counter, size);
 
-	kernel2_sections[kernel2_section_counter++] = ret;
+    kernel2_sections[kernel2_section_counter++] = ret;
 
-	return ret;
+    return ret;
 }
 
 char *kernel2_get_text(uint32_t section_base, uint32_t string_id, uint32_t section_offset)
 {
-	char *section = kernel2_sections[section_base + section_offset];
+    char *section = kernel2_sections[section_base + section_offset];
 
-	if(trace_all) ffnx_trace("kernel2 get text (%i+%i:%i)\n", section_base, section_offset, string_id);
+    if (trace_all)
+        ffnx_trace("kernel2 get text (%i+%i:%i)\n", section_base, section_offset, string_id);
 
-	return &section[((WORD *)section)[string_id]];
+    return &section[((WORD *)section)[string_id]];
 }
 
 // ENGINE
 
 void ff7_load_kernel2_wrapper(char *filename)
 {
-  ff7_externals.kernel_load_kernel2(filename);
+    ff7_externals.kernel_load_kernel2(filename);
 
-	char chunk_file[1024]{0};
-	uint32_t chunk_size = 0;
-	FILE* fd;
+    char chunk_file[1024]{0};
+    uint32_t chunk_size = 0;
+    FILE *fd;
 
-	for (int n = 0; n < FF7_KERNEL_NUM_SECTIONS; n++)
-	{
-		_snprintf(chunk_file, sizeof(chunk_file), "%s/%s/kernel/kernel.bin.chunk.%i", basedir, direct_mode_path.c_str(), n+1);
+    for (int n = 0; n < FF7_KERNEL_NUM_SECTIONS; n++)
+    {
+        _snprintf(chunk_file, sizeof(chunk_file), "%s/%s/kernel/kernel.bin.chunk.%i", basedir, direct_mode_path.c_str(), n + 1);
 
-		if ((fd = fopen(chunk_file, "rb")) != NULL)
-		{
-			fseek(fd, 0L, SEEK_END);
-			chunk_size = ftell(fd);
-			fseek(fd, 0L, SEEK_SET);
+        if ((fd = fopen(chunk_file, "rb")) != NULL)
+        {
+            fseek(fd, 0L, SEEK_END);
+            chunk_size = ftell(fd);
+            fseek(fd, 0L, SEEK_SET);
 
-			if (0 <= n && n <= 8)
-				fread(ff7_externals.kernel_1to9_sections[n], sizeof(byte), chunk_size, fd);
-			else
-				fread(kernel2_sections[n-9], sizeof(byte), chunk_size, fd);
+            if (0 <= n && n <= 8)
+                fread(ff7_externals.kernel_1to9_sections[n], sizeof(byte), chunk_size, fd);
+            else
+                fread(kernel2_sections[n - 9], sizeof(byte), chunk_size, fd);
 
-			ffnx_trace("%s: kernel section %i overridden with %s\n", __func__, n+1, chunk_file);
-			fclose(fd);
-		}
-		else if (trace_direct)
-			ffnx_trace("%s: could not find %s\n", __func__, chunk_file);
-	}
+            ffnx_trace("%s: kernel section %i overridden with %s\n", __func__, n + 1, chunk_file);
+            fclose(fd);
+        }
+        else if (trace_direct)
+            ffnx_trace("%s: could not find %s\n", __func__, chunk_file);
+    }
 }

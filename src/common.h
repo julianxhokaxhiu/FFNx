@@ -34,24 +34,24 @@
 #endif
 
 // all known OFFICIAL versions of FF7 & FF8 released for the PC
-#define VERSION_FF7_102_US          1
-#define VERSION_FF7_102_FR          2
-#define VERSION_FF7_102_DE          3
-#define VERSION_FF7_102_SP          4
-#define VERSION_FF8_12_US           5
-#define VERSION_FF8_12_US_NV        6
-#define VERSION_FF8_12_FR           7
-#define VERSION_FF8_12_FR_NV        8
-#define VERSION_FF8_12_DE           9
-#define VERSION_FF8_12_DE_NV       10
-#define VERSION_FF8_12_SP          11
-#define VERSION_FF8_12_SP_NV       12
-#define VERSION_FF8_12_IT          13
-#define VERSION_FF8_12_IT_NV       14
-#define VERSION_FF8_12_US_EIDOS    15
+#define VERSION_FF7_102_US 1
+#define VERSION_FF7_102_FR 2
+#define VERSION_FF7_102_DE 3
+#define VERSION_FF7_102_SP 4
+#define VERSION_FF8_12_US 5
+#define VERSION_FF8_12_US_NV 6
+#define VERSION_FF8_12_FR 7
+#define VERSION_FF8_12_FR_NV 8
+#define VERSION_FF8_12_DE 9
+#define VERSION_FF8_12_DE_NV 10
+#define VERSION_FF8_12_SP 11
+#define VERSION_FF8_12_SP_NV 12
+#define VERSION_FF8_12_IT 13
+#define VERSION_FF8_12_IT_NV 14
+#define VERSION_FF8_12_US_EIDOS 15
 #define VERSION_FF8_12_US_EIDOS_NV 16
-#define VERSION_FF8_12_JP          17
-#define VERSION_FF8_12_JP_NV       18
+#define VERSION_FF8_12_JP 17
+#define VERSION_FF8_12_JP_NV 18
 
 // Steam app id of FF7 & FF8
 #define FF7_APPID 39140
@@ -69,56 +69,56 @@
 // FF8 does not support BLUE text!
 enum
 {
-	TEXTCOLOR_GRAY,
-	TEXTCOLOR_BLUE,
-	TEXTCOLOR_RED,
-	TEXTCOLOR_PINK,
-	TEXTCOLOR_GREEN,
-	TEXTCOLOR_LIGHT_BLUE,
-	TEXTCOLOR_YELLOW,
-	TEXTCOLOR_WHITE,
-	NUM_TEXTCOLORS
+    TEXTCOLOR_GRAY,
+    TEXTCOLOR_BLUE,
+    TEXTCOLOR_RED,
+    TEXTCOLOR_PINK,
+    TEXTCOLOR_GREEN,
+    TEXTCOLOR_LIGHT_BLUE,
+    TEXTCOLOR_YELLOW,
+    TEXTCOLOR_WHITE,
+    NUM_TEXTCOLORS
 };
 
 enum game_modes
 {
-	MODE_FIELD = 0,
-	MODE_BATTLE,
-	MODE_WORLDMAP,
-	MODE_MENU,
-	MODE_HIGHWAY,
-	MODE_CHOCOBO,
-	MODE_SNOWBOARD,
-	MODE_CONDOR,
-	MODE_SUBMARINE,
-	MODE_COASTER,
-	MODE_CDCHECK,
-	MODE_EXIT,
-	MODE_SWIRL,
-	MODE_GAMEOVER,
-	MODE_ENDINGMOVIE,
-	MODE_CREDITS,
-	MODE_INTRO,
-	MODE_CARDGAME,
-	MODE_UNKNOWN,
-	MODE_AFTER_BATTLE,
-	MODE_MAIN_MENU,
+    MODE_FIELD = 0,
+    MODE_BATTLE,
+    MODE_WORLDMAP,
+    MODE_MENU,
+    MODE_HIGHWAY,
+    MODE_CHOCOBO,
+    MODE_SNOWBOARD,
+    MODE_CONDOR,
+    MODE_SUBMARINE,
+    MODE_COASTER,
+    MODE_CDCHECK,
+    MODE_EXIT,
+    MODE_SWIRL,
+    MODE_GAMEOVER,
+    MODE_ENDINGMOVIE,
+    MODE_CREDITS,
+    MODE_INTRO,
+    MODE_CARDGAME,
+    MODE_UNKNOWN,
+    MODE_AFTER_BATTLE,
+    MODE_MAIN_MENU,
 };
 
 enum AspectRatioMode
 {
-	AR_ORIGINAL = 0,
-	AR_STRETCH,
-	AR_WIDESCREEN_16X9,
-	AR_WIDESCREEN_16X10,
-	AR_COUNT
+    AR_ORIGINAL = 0,
+    AR_STRETCH,
+    AR_WIDESCREEN_16X9,
+    AR_WIDESCREEN_16X10,
+    AR_COUNT
 };
 
 enum GamepadAnalogueIntent
 {
-	INTENT_NONE,
-	INTENT_WALK,
-	INTENT_RUN
+    INTENT_NONE,
+    INTENT_WALK,
+    INTENT_RUN
 };
 
 // popup lifetime in frames
@@ -129,23 +129,23 @@ enum GamepadAnalogueIntent
 
 struct game_mode
 {
-	uint32_t mode;
-	char *name;
-	uint32_t driver_mode;
-	uint32_t trace;
-	uint32_t main_loop;
+    uint32_t mode;
+    char *name;
+    uint32_t driver_mode;
+    uint32_t trace;
+    uint32_t main_loop;
 };
 
 struct light_data
 {
-	bgra_color global_light_color;
-	vector3<float> light_dir_1;
-	bgra_color light_color_1;
-	vector3<float> light_dir_2;
-	bgra_color light_color_2;
-	vector3<float> light_dir_3;
-	bgra_color light_color_3;
-	bgra_color scripted_light_color;
+    bgra_color global_light_color;
+    vector3<float> light_dir_1;
+    bgra_color light_color_1;
+    vector3<float> light_dir_2;
+    bgra_color light_color_2;
+    vector3<float> light_dir_3;
+    bgra_color light_color_3;
+    bgra_color scripted_light_color;
 };
 
 gfx_init common_init;
@@ -195,109 +195,109 @@ gfx_field_EC common_field_EC;
 
 struct common_externals
 {
-	WORD *_mode;
-	WORD *_previous_mode;
-	uint32_t dinput_hack1;
-	gfx_load_group *generic_load_group;
-	gfx_light_polygon_set *generic_light_polygon_set;
-	void *(*assert_free)(void *, const char *, uint32_t);
-	void *(*assert_malloc)(uint32_t, const char *, uint32_t);
-	void *(*assert_calloc)(uint32_t, uint32_t, const char *, uint32_t);
-	IDirectSound **directsound;
-	uint32_t directsound_create;
-	uint32_t directsound_createsoundbuffer;
-	uint32_t directsound_release;
-	struct palette *(*create_palette_for_tex)(uint32_t, struct tex_header *, struct texture_set *);
-	struct game_obj *(*get_game_object)();
-	struct texture_format *(*create_texture_format)();
-	void (*add_texture_format)(struct texture_format *, struct game_obj *);
-	void (*make_pixelformat)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, struct texture_format *);
-	struct texture_set *(*create_texture_set)();
-	uint32_t debug_print;
-	uint32_t debug_print2;
-	uint32_t prepare_movie;
-	uint32_t release_movie_objects;
-	uint32_t start_movie;
-	uint32_t update_movie_sample;
-	uint32_t stop_movie;
-	uint32_t get_movie_frame;
-	struct tex_header *(*create_tex_header)();
-	uint64_t (*get_time)(uint64_t*);
-	uint64_t (*diff_time)(uint64_t*,uint64_t*,uint64_t*);
-	uint32_t midi_init;
-	uint32_t midi_cleanup;
-	uint32_t wav_cleanup;
-	char *(*get_midi_name)(uint32_t);
-	uint32_t use_midi;
-	uint32_t play_midi;
-	uint32_t play_wav;
-	uint32_t stop_midi;
-	uint32_t stop_wav;
-	uint32_t cross_fade_midi;
-	uint32_t pause_midi;
-	uint32_t pause_wav;
-	uint32_t restart_midi;
-	uint32_t restart_wav;
-	uint32_t midi_status;
-	DWORD* master_midi_volume;
-	uint32_t set_master_midi_volume;
-	uint32_t set_midi_volume;
-	uint32_t set_midi_volume_trans;
-	uint32_t set_midi_volume_fade;
-	uint32_t set_midi_tempo;
-	uint32_t remember_midi_playing_time;
-	int (*draw_graphics_object)(int n_shape, graphics_object *graphics_object);
-	char *font_info;
-	uint32_t build_dialog_window;
-	uint32_t write_file;
-	uint32_t close_file;
-	uint32_t open_file;
-	uint32_t read_file;
-	uint32_t __read_file;
-	uint32_t get_filesize;
-	uint32_t tell_file;
-	uint32_t seek_file;
-	void *(*alloc_read_file)(uint32_t, uint32_t, struct file *);
-	void *(*alloc_get_file)(struct file_context *, uint32_t *, char *);
-	void (*destroy_tex)(struct tex_header *);
-	uint32_t destroy_tex_header;
-	uint32_t start;
-	uint32_t winmain;
-	uint32_t load_tex_file;
-	uint32_t directsound_buffer_flags_1;
-	uint32_t sfx_init;
-	uint32_t sfx_cleanup;
-	uint32_t sfx_load;
-	uint32_t sfx_unload;
-	uint32_t sfx_pause;
-	uint32_t sfx_resume;
-	uint32_t sfx_stop;
-	uint32_t sfx_release;
-	uint32_t (*play_sfx)(uint32_t);
-	uint32_t (*play_sfx_effects)(byte, uint32_t, uint32_t, uint32_t, uint32_t);
-	uint32_t play_sfx_on_channel;
-	uint32_t (*set_sfx_volume_on_channel)(uint32_t, uint32_t);
-	uint32_t (*set_sfx_volume_trans_on_channel)(uint32_t, uint32_t, uint32_t);
-	uint32_t (*set_sfx_panning_on_channel)(uint32_t, uint32_t);
-	uint32_t (*set_sfx_panning_trans_on_channel)(uint32_t, uint32_t, uint32_t);
-	uint32_t (*set_sfx_frequency_on_channel)(uint32_t, uint32_t);
-	uint32_t (*set_sfx_frequency_trans_on_channel)(uint32_t, uint32_t, uint32_t);
-	uint32_t *master_sfx_volume;
-	int32_t* dsound_volume_table;
-	IDirectInputDeviceA **keyboard_device;
-	uint32_t get_keyboard_state;
-	uint32_t *keyboard_connected;
-	int (*dinput_acquire_keyboard)();
-	uint32_t create_window;
-	WNDPROC engine_wndproc;
-	uint32_t* execute_opcode_table;
-	uint32_t update_field_entities;
-	WORD* current_field_id;
-	char* current_field_name;
-	WORD* previous_field_id;
-	uint32_t update_entities_call;
-	int16_t* current_triangle_id;
-	WORD* field_game_moment;
+    WORD *_mode;
+    WORD *_previous_mode;
+    uint32_t dinput_hack1;
+    gfx_load_group *generic_load_group;
+    gfx_light_polygon_set *generic_light_polygon_set;
+    void *(*assert_free)(void *, const char *, uint32_t);
+    void *(*assert_malloc)(uint32_t, const char *, uint32_t);
+    void *(*assert_calloc)(uint32_t, uint32_t, const char *, uint32_t);
+    IDirectSound **directsound;
+    uint32_t directsound_create;
+    uint32_t directsound_createsoundbuffer;
+    uint32_t directsound_release;
+    struct palette *(*create_palette_for_tex)(uint32_t, struct tex_header *, struct texture_set *);
+    struct game_obj *(*get_game_object)();
+    struct texture_format *(*create_texture_format)();
+    void (*add_texture_format)(struct texture_format *, struct game_obj *);
+    void (*make_pixelformat)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, struct texture_format *);
+    struct texture_set *(*create_texture_set)();
+    uint32_t debug_print;
+    uint32_t debug_print2;
+    uint32_t prepare_movie;
+    uint32_t release_movie_objects;
+    uint32_t start_movie;
+    uint32_t update_movie_sample;
+    uint32_t stop_movie;
+    uint32_t get_movie_frame;
+    struct tex_header *(*create_tex_header)();
+    uint64_t (*get_time)(uint64_t *);
+    uint64_t (*diff_time)(uint64_t *, uint64_t *, uint64_t *);
+    uint32_t midi_init;
+    uint32_t midi_cleanup;
+    uint32_t wav_cleanup;
+    char *(*get_midi_name)(uint32_t);
+    uint32_t use_midi;
+    uint32_t play_midi;
+    uint32_t play_wav;
+    uint32_t stop_midi;
+    uint32_t stop_wav;
+    uint32_t cross_fade_midi;
+    uint32_t pause_midi;
+    uint32_t pause_wav;
+    uint32_t restart_midi;
+    uint32_t restart_wav;
+    uint32_t midi_status;
+    DWORD *master_midi_volume;
+    uint32_t set_master_midi_volume;
+    uint32_t set_midi_volume;
+    uint32_t set_midi_volume_trans;
+    uint32_t set_midi_volume_fade;
+    uint32_t set_midi_tempo;
+    uint32_t remember_midi_playing_time;
+    int (*draw_graphics_object)(int n_shape, graphics_object *graphics_object);
+    char *font_info;
+    uint32_t build_dialog_window;
+    uint32_t write_file;
+    uint32_t close_file;
+    uint32_t open_file;
+    uint32_t read_file;
+    uint32_t __read_file;
+    uint32_t get_filesize;
+    uint32_t tell_file;
+    uint32_t seek_file;
+    void *(*alloc_read_file)(uint32_t, uint32_t, struct file *);
+    void *(*alloc_get_file)(struct file_context *, uint32_t *, char *);
+    void (*destroy_tex)(struct tex_header *);
+    uint32_t destroy_tex_header;
+    uint32_t start;
+    uint32_t winmain;
+    uint32_t load_tex_file;
+    uint32_t directsound_buffer_flags_1;
+    uint32_t sfx_init;
+    uint32_t sfx_cleanup;
+    uint32_t sfx_load;
+    uint32_t sfx_unload;
+    uint32_t sfx_pause;
+    uint32_t sfx_resume;
+    uint32_t sfx_stop;
+    uint32_t sfx_release;
+    uint32_t (*play_sfx)(uint32_t);
+    uint32_t (*play_sfx_effects)(byte, uint32_t, uint32_t, uint32_t, uint32_t);
+    uint32_t play_sfx_on_channel;
+    uint32_t (*set_sfx_volume_on_channel)(uint32_t, uint32_t);
+    uint32_t (*set_sfx_volume_trans_on_channel)(uint32_t, uint32_t, uint32_t);
+    uint32_t (*set_sfx_panning_on_channel)(uint32_t, uint32_t);
+    uint32_t (*set_sfx_panning_trans_on_channel)(uint32_t, uint32_t, uint32_t);
+    uint32_t (*set_sfx_frequency_on_channel)(uint32_t, uint32_t);
+    uint32_t (*set_sfx_frequency_trans_on_channel)(uint32_t, uint32_t, uint32_t);
+    uint32_t *master_sfx_volume;
+    int32_t *dsound_volume_table;
+    IDirectInputDeviceA **keyboard_device;
+    uint32_t get_keyboard_state;
+    uint32_t *keyboard_connected;
+    int (*dinput_acquire_keyboard)();
+    uint32_t create_window;
+    WNDPROC engine_wndproc;
+    uint32_t *execute_opcode_table;
+    uint32_t update_field_entities;
+    WORD *current_field_id;
+    char *current_field_name;
+    WORD *previous_field_id;
+    uint32_t update_entities_call;
+    int16_t *current_triangle_id;
+    WORD *field_game_moment;
 };
 
 // heap allocation wrappers
@@ -332,7 +332,11 @@ void *driver_realloc(void *ptr, uint32_t size);
 // profiling routines
 #ifdef PROFILE
 #define PROFILE_START() qpc_get_time(&profile_start)
-#define PROFILE_END() { qpc_get_time(&profile_end); profile_total += profile_end - profile_start; }
+#define PROFILE_END()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  \
+    {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  \
+        qpc_get_time(&profile_end);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    \
+        profile_total += profile_end - profile_start;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  \
+    }
 
 extern time_t profile_start;
 extern time_t profile_end;
@@ -341,19 +345,19 @@ extern time_t profile_total;
 
 struct driver_stats
 {
-	uint32_t texture_count;
-	uint32_t external_textures;
-	uint32_t ext_cache_size;
-	uint32_t texture_reloads;
-	uint32_t palette_writes;
-	uint32_t palette_changes;
-	uint32_t vertex_count;
-	uint32_t deferred;
-	time_t timer;
+    uint32_t texture_count;
+    uint32_t external_textures;
+    uint32_t ext_cache_size;
+    uint32_t texture_reloads;
+    uint32_t palette_writes;
+    uint32_t palette_changes;
+    uint32_t vertex_count;
+    uint32_t deferred;
+    time_t timer;
 };
 
 time_t qpc_get_time(time_t *dest);
-time_t qpc_diff_time(time_t* t1, time_t* t2, time_t* out);
+time_t qpc_diff_time(time_t *t1, time_t *t2, time_t *out);
 uint32_t get_version();
 struct game_mode *getmode();
 struct game_mode *getmode_cached();
@@ -367,14 +371,15 @@ void concat_lang_str(PCHAR buffer);
 void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile);
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
-void ffnx_inject_driver(struct game_obj* game_object);
+    void ffnx_inject_driver(struct game_obj *game_object);
 
 #if defined(__cplusplus)
 }
 #endif
 
-bool drawFFNxLogoFrame(struct game_obj* game_object);
+bool drawFFNxLogoFrame(struct game_obj *game_object);
 void stopDrawFFNxLogo();

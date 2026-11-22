@@ -33,125 +33,127 @@ struct polygon_data;
 
 namespace ff7::world
 {
-    bool is_terrain_graphics_object(const graphics_object* object);
-    bool is_loading_terrain_texture();
-    void buildPSXWorldMipmaps(uint8_t* destination, const uint8_t* source, uint32_t width, uint32_t height);
-    bool is_sky_dithering_enabled();
-    void forget_model_lighting(const indexed_primitive* primitive);
-    bool draw_model_with_psx_lighting(indexed_primitive* primitive, polygon_data* polygon, uint32_t clip);
+bool is_terrain_graphics_object(const graphics_object *object);
+bool is_loading_terrain_texture();
+void buildPSXWorldMipmaps(uint8_t *destination, const uint8_t *source, uint32_t width, uint32_t height);
+bool is_sky_dithering_enabled();
+void forget_model_lighting(const indexed_primitive *primitive);
+bool draw_model_with_psx_lighting(indexed_primitive *primitive, polygon_data *polygon, uint32_t clip);
 
-    enum input_key
-    {
-        L2 = 1,
-        R2 = 2,
-        L1 = 4,
-        R1 = 8,
-        TRIANGLE = 16,
-        CIRCLE = 32,
-        CROSS = 64,
-        SQUARE = 128,
-        SELECT = 256,
-        UNK1 = 512,
-        UNK2 = 1024,
-        START = 2048,
-        UP = 4096,
-        RIGHT = 8192,
-        DOWN = 16384,
-        LEFT = 32768,
-        ANY_DIRECTIONAL_KEY = UP | RIGHT | DOWN | LEFT
-    };
+enum input_key
+{
+    L2 = 1,
+    R2 = 2,
+    L1 = 4,
+    R1 = 8,
+    TRIANGLE = 16,
+    CIRCLE = 32,
+    CROSS = 64,
+    SQUARE = 128,
+    SELECT = 256,
+    UNK1 = 512,
+    UNK2 = 1024,
+    START = 2048,
+    UP = 4096,
+    RIGHT = 8192,
+    DOWN = 16384,
+    LEFT = 32768,
+    ANY_DIRECTIONAL_KEY = UP | RIGHT | DOWN | LEFT
+};
 
-    enum map_type {
-        OVERWORLD = 0,
-        UNDERWATER = 2,
-        SNOWSTORM = 3
-    };
+enum map_type
+{
+    OVERWORLD = 0,
+    UNDERWATER = 2,
+    SNOWSTORM = 3
+};
 
-    enum model_type {
-        CLOUD = 0,
-        TIFA,
-        CID,
-        HIGHWIND,
-        WILD_CHOCOBO,
-        TINY_BRONCO ,
-        BUGGY,
-        JUNON_CANNON,
-        CARGO_SHIP,
-        HIGHWIND_PROPELLERS,
-        DIAMOND_WEAPON,
-        ULTIMATE_WEAPON,
-        FORT_CONDOR,
-        SUBMARINE,
-        GOLD_SAUCER,
-        ROCKET_TOWN_ROCKET,
-        ROCKET_TOWN_LAUNCH_PAD,
-        SUNKEN_GELNIKA,
-        UNDERWATER_REACTOR,
-        CHOCOBO,
-        MIDGAR_CANNON,
-        MODEL_UNK1,
-        MODEL_UNK2,
-        MODEL_UNK3,
-        NORTH_CRATER_BARRIER,
-        ANCIENT_FOREST,
-        KEY_ANCIENTS,
-        MODEL_UNK4,
-        RED_SUBMARINE,
-        RUBY_WEAPON,
-        EMERALD_WEAPON
-    };
+enum model_type
+{
+    CLOUD = 0,
+    TIFA,
+    CID,
+    HIGHWIND,
+    WILD_CHOCOBO,
+    TINY_BRONCO,
+    BUGGY,
+    JUNON_CANNON,
+    CARGO_SHIP,
+    HIGHWIND_PROPELLERS,
+    DIAMOND_WEAPON,
+    ULTIMATE_WEAPON,
+    FORT_CONDOR,
+    SUBMARINE,
+    GOLD_SAUCER,
+    ROCKET_TOWN_ROCKET,
+    ROCKET_TOWN_LAUNCH_PAD,
+    SUNKEN_GELNIKA,
+    UNDERWATER_REACTOR,
+    CHOCOBO,
+    MIDGAR_CANNON,
+    MODEL_UNK1,
+    MODEL_UNK2,
+    MODEL_UNK3,
+    NORTH_CRATER_BARRIER,
+    ANCIENT_FOREST,
+    KEY_ANCIENTS,
+    MODEL_UNK4,
+    RED_SUBMARINE,
+    RUBY_WEAPON,
+    EMERALD_WEAPON
+};
 
-    constexpr int INVALID_DIRECTION = 9999;
+constexpr int INVALID_DIRECTION = 9999;
 
-    class World
-    {
-    public:
-        const vector3<float>& GetJoystickDirection();
-        void SetJoystickDirection(const vector3<float>& dir);
+class World
+{
+  public:
+    const vector3<float> &GetJoystickDirection();
+    void SetJoystickDirection(const vector3<float> &dir);
 
-        float GetRightTrigger();
-        void SetRightTrigger(float value);
+    float GetRightTrigger();
+    void SetRightTrigger(float value);
 
-        float GetLeftTrigger();
-        void SetLeftTrigger(float value);
+    float GetLeftTrigger();
+    void SetLeftTrigger(float value);
 
-    private:
-        vector3<float> joyDir = {0.0f, 0.0f, 0.0f};
-        float rightTrigger = 0.0f;
-        float leftTrigger = 0.0f;
-    };
+  private:
+    vector3<float> joyDir = {0.0f, 0.0f, 0.0f};
+    float rightTrigger = 0.0f;
+    float leftTrigger = 0.0f;
+};
 
-    inline const vector3<float>& World::GetJoystickDirection()
-    {
-        return joyDir;
-    }
-
-    inline void World::SetJoystickDirection(const vector3<float>& dir)
-    {
-        joyDir = dir;
-    }
-
-    inline float World::GetRightTrigger()
-    {
-        return rightTrigger;
-    }
-
-    inline void World::SetRightTrigger(float value)
-    {
-        rightTrigger = value;
-    }
-
-    inline float World::GetLeftTrigger()
-    {
-        return leftTrigger;
-    }
-
-    inline void World::SetLeftTrigger(float value)
-    {
-        leftTrigger = value;
-    }
-
-    extern World world;
-
-    int get_player_movement_speed(int model_id);
+inline const vector3<float> &World::GetJoystickDirection()
+{
+    return joyDir;
 }
+
+inline void World::SetJoystickDirection(const vector3<float> &dir)
+{
+    joyDir = dir;
+}
+
+inline float World::GetRightTrigger()
+{
+    return rightTrigger;
+}
+
+inline void World::SetRightTrigger(float value)
+{
+    rightTrigger = value;
+}
+
+inline float World::GetLeftTrigger()
+{
+    return leftTrigger;
+}
+
+inline void World::SetLeftTrigger(float value)
+{
+    leftTrigger = value;
+}
+
+extern World world;
+
+int get_player_movement_speed(int model_id);
+} // namespace ff7::world

@@ -31,35 +31,39 @@
 
 namespace ff7::battle
 {
-    void battle_menu_enter()
+void battle_menu_enter()
+{
+    *ff7_externals.g_do_render_menu = 0;
+    battle_depth_clear();
+
+    if (enable_time_cycle)
+        newRenderer.setTimeFilterEnabled(false);
+}
+
+void battle_depth_clear()
+{
+    if (gl_defer_battle_depth_clear())
+        return;
+
+    newRenderer.clearDepthBuffer();
+}
+
+void delay_battle_target_pointer_animation_type()
+{
+    if (frame_counter % battle_frame_multiplier == 0)
     {
-        *ff7_externals.g_do_render_menu = 0;
-        battle_depth_clear();
-
-        if (enable_time_cycle) newRenderer.setTimeFilterEnabled(false);
-    }
-
-    void battle_depth_clear()
-    {
-        if(gl_defer_battle_depth_clear()) return;
-
-        newRenderer.clearDepthBuffer();
-    }
-
-    void delay_battle_target_pointer_animation_type()
-    {
-        if(frame_counter % battle_frame_multiplier == 0)
-        {
-            (*ff7_externals.targeting_actor_id_DC3C98)++;
-        }
-    }
-
-    void draw_ui_graphics_objects_wrapper(int flag, int type)
-    {
-        if (enable_time_cycle) newRenderer.setTimeFilterEnabled(false);
-
-        ff7_externals.battle_draw_call_42908C(flag, type);
-
-        if (enable_time_cycle) newRenderer.setTimeFilterEnabled(true);
+        (*ff7_externals.targeting_actor_id_DC3C98)++;
     }
 }
+
+void draw_ui_graphics_objects_wrapper(int flag, int type)
+{
+    if (enable_time_cycle)
+        newRenderer.setTimeFilterEnabled(false);
+
+    ff7_externals.battle_draw_call_42908C(flag, type);
+
+    if (enable_time_cycle)
+        newRenderer.setTimeFilterEnabled(true);
+}
+} // namespace ff7::battle

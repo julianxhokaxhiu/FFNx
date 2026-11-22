@@ -29,12 +29,11 @@ struct nvertex;
 
 enum class FF8WorldMapStrip
 {
-	None,
-	Road,
-	Rail
+    None,
+    Road,
+    Rail
 };
 
 void uv_patch_init();
 // Rail positions must be unprojected source geometry; roads retain their draw-time texel adjustment.
-bool ff8_worldmap_adjust_strip_uvs(const nvertex *vertices, uint32_t vertexcount,
-	const uint16_t *indices, uint32_t count, FF8WorldMapStrip strip, std::vector<nvertex> &adjusted);
+bool ff8_worldmap_adjust_strip_uvs(const nvertex *vertices, uint32_t vertexcount, const uint16_t *indices, uint32_t count, FF8WorldMapStrip strip, std::vector<nvertex> &adjusted);

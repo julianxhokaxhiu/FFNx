@@ -23,18 +23,18 @@ cmake_minimum_required(VERSION 4.2)
 cmake_policy(SET CMP0091 NEW)
 
 if(NOT DEFINED CMAKE_BUILD_TYPE)
-  message(FATAL_ERROR "CMAKE_BUILD_TYPE must be set to continue building with cmake. \nExample: Add -DCMAKE_BUILD_TYPE=Release to your cmake command line.")
+  message(
+    FATAL_ERROR "CMAKE_BUILD_TYPE must be set to continue building with cmake. \nExample: Add -DCMAKE_BUILD_TYPE=Release to your cmake command line.")
 endif()
-if (NOT DEFINED _DLL_VERSION OR NOT _DLL_VERSION)
+if(NOT DEFINED _DLL_VERSION OR NOT _DLL_VERSION)
   message(FATAL_ERROR "_DLL_VERSION must be set to continue building with cmake. \nExample: Add -D_DLL_VERSION=devel to your cmake command line.")
-endif ()
+endif()
 
 set(VCPKG_DISABLE_COMPILER_TRACKING 1)
 set(VCPKG_INSTALL_OPTIONS "--clean-after-build" "--allow-unsupported")
 
 set(CMAKE_SHARED_LINKER_FLAGS
-  "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:MSVCRT /NODEFAULTLIB:MSVCRTD /DEBUG:FULL /FORCE:MULTIPLE /IGNORE:4006,4075,4099,4217"
-)
+    "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:MSVCRT /NODEFAULTLIB:MSVCRTD /DEBUG:FULL /FORCE:MULTIPLE /IGNORE:4006,4075,4099,4217")
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
@@ -115,14 +115,8 @@ set(CHOCO_RELEASE_NAME "FFNx-Choco")
 file(GLOB_RECURSE choco_source_files "${CMAKE_SOURCE_DIR}/choco/*.cpp")
 add_library(${CHOCO_RELEASE_NAME} SHARED ${choco_source_files} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 add_dependencies(${CHOCO_RELEASE_NAME} fmt)
-target_include_directories(
-  ${CHOCO_RELEASE_NAME}
-  PRIVATE "${CMAKE_SOURCE_DIR}/choco"
-)
-target_link_libraries(
-  ${CHOCO_RELEASE_NAME}
-  shlwapi
-)
+target_include_directories(${CHOCO_RELEASE_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/choco")
+target_link_libraries(${CHOCO_RELEASE_NAME} shlwapi)
 target_compile_options(
   ${CHOCO_RELEASE_NAME}
   PRIVATE /DVERSION="${_DLL_VERSION}"
@@ -132,24 +126,20 @@ target_compile_options(
   PRIVATE /Zc:__cplusplus
   PRIVATE /Zc:preprocessor
   PRIVATE /Qpar
-  PRIVATE /MP
-)
-target_compile_features(${CHOCO_RELEASE_NAME}
-  PRIVATE cxx_std_20
-)
-target_link_options(${CHOCO_RELEASE_NAME} PRIVATE /PDBALTPATH:${CHOCO_RELEASE_NAME}.pdb PRIVATE /DEF:${CMAKE_SOURCE_DIR}/misc/${CHOCO_RELEASE_NAME}.def)
+  PRIVATE /MP)
+target_compile_features(${CHOCO_RELEASE_NAME} PRIVATE cxx_std_20)
+target_link_options(
+  ${CHOCO_RELEASE_NAME}
+  PRIVATE /PDBALTPATH:${CHOCO_RELEASE_NAME}.pdb
+  PRIVATE /DEF:${CMAKE_SOURCE_DIR}/misc/${CHOCO_RELEASE_NAME}.def)
 
 # Include all the source code files
 file(GLOB_RECURSE source_files CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/*.cpp")
 
 configure_file(misc/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/version.rc @ONLY)
 
-cmrc_add_resource_library(
-  ${RELEASE_NAME}-resources
-  ALIAS ${RELEASE_NAME}::rc
-  NAMESPACE ${RELEASE_NAME}
-  ${CMAKE_CURRENT_SOURCE_DIR}/.logo/logo_nobg.png
-)
+cmrc_add_resource_library(${RELEASE_NAME}-resources ALIAS ${RELEASE_NAME}::rc NAMESPACE ${RELEASE_NAME}
+                          ${CMAKE_CURRENT_SOURCE_DIR}/.logo/logo_nobg.png)
 
 add_library(${RELEASE_NAME} SHARED ${source_files} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 ffnx_setup_steamworks(${RELEASE_NAME})
@@ -164,12 +154,8 @@ target_include_directories(
   PRIVATE ${OPENPSF_INCLUDE_DIRS}
   PRIVATE ${SOLOUD_INCLUDE_DIRS}
   PRIVATE ${STACKWALKER_INCLUDE_DIRS}
-  PRIVATE ${VGMSTREAM_INCLUDE_DIRS}
-)
-target_link_directories(
-  ${RELEASE_NAME}
-  PRIVATE ${FFMPEG_LIBRARY_DIRS}
-)
+  PRIVATE ${VGMSTREAM_INCLUDE_DIRS})
+target_link_directories(${RELEASE_NAME} PRIVATE ${FFMPEG_LIBRARY_DIRS})
 target_link_libraries(
   ${RELEASE_NAME}
   ${RELEASE_NAME}::rc
@@ -206,8 +192,7 @@ target_link_libraries(
   ${FFMPEG_LIBRARIES}
   ${OPENPSF_LIBRARIES}
   ${SOLOUD_LIBRARIES}
-  ${VGMSTREAM_LIBRARIES}
-)
+  ${VGMSTREAM_LIBRARIES})
 target_compile_options(
   ${RELEASE_NAME}
   PRIVATE /DBX_CONFIG_DEBUG=1
@@ -219,25 +204,31 @@ target_compile_options(
   PRIVATE /Zc:__cplusplus
   PRIVATE /Zc:preprocessor
   PRIVATE /Qpar
-  PRIVATE /MP
-)
+  PRIVATE /MP)
 if(PATCH_COLLECT_DUPLICATES)
-  target_compile_definitions(${RELEASE_NAME}
-    PRIVATE PATCH_COLLECT_DUPLICATES
-  )
+  target_compile_definitions(${RELEASE_NAME} PRIVATE PATCH_COLLECT_DUPLICATES)
 endif()
-target_compile_features(${RELEASE_NAME}
-  PRIVATE cxx_std_20
-)
+target_compile_features(${RELEASE_NAME} PRIVATE cxx_std_20)
 target_link_options(
   ${RELEASE_NAME}
   PRIVATE /PDBALTPATH:${RELEASE_NAME}.pdb
   PRIVATE /DEF:${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.def
-  PRIVATE /MANIFESTDEPENDENCY:"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'"
+  PRIVATE
+    /MANIFESTDEPENDENCY:"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'"
 )
 
 # SHADER COMPILATION
-set(FFNX_SHADERS "FFNx" "FFNx.lighting" "FFNx.shadowmap" "FFNx.field.shadow" "FFNx.overlay" "FFNx.post" "FFNx.post.ntscj" "FFNx.blit" "FFNx.yuvmovie" "FFNx.yuvmovie.truecolor")
+set(FFNX_SHADERS
+    "FFNx"
+    "FFNx.lighting"
+    "FFNx.shadowmap"
+    "FFNx.field.shadow"
+    "FFNx.overlay"
+    "FFNx.post"
+    "FFNx.post.ntscj"
+    "FFNx.blit"
+    "FFNx.yuvmovie"
+    "FFNx.yuvmovie.truecolor")
 # The 3D vertex shaders also get a skinned variant (smooth shaded only), built from the same source with
 # SMOOTH_SKINNING defined, so ordinary draws carry no bone data
 set(FFNX_SKINNED_SHADERS "FFNx" "FFNx.lighting" "FFNx.shadowmap")
@@ -248,7 +239,8 @@ add_custom_command(
   TARGET ${RELEASE_NAME}
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E make_directory "${SHADER_OUTPUT_DIR}"
-  COMMAND ${CMAKE_COMMAND}
+  COMMAND
+    ${CMAKE_COMMAND}
     "-DSHADERC=${SHADERC_EXECUTABLE}"
     "-DSHADER_INCLUDE_DIR=${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/include"
     "-DSHADER_SOURCE_DIR=${CMAKE_SOURCE_DIR}/misc"
@@ -259,126 +251,101 @@ add_custom_command(
     "-DBGFX_SHADERC_OPENGL_FLAGS=${BGFX_SHADERC_OPENGL_FLAGS}"
     "-DBGFX_SHADERC_VULKAN_FLAGS=${BGFX_SHADERC_VULKAN_FLAGS}"
     "-DBGFX_SHADERC_DIRECT3D_FLAGS=${BGFX_SHADERC_DIRECT3D_FLAGS}"
-    -P ${CMAKE_SOURCE_DIR}/.cmake/compile_shaders.cmake
-  VERBATIM
-)
+    -P
+    ${CMAKE_SOURCE_DIR}/.cmake/compile_shaders.cmake
+  VERBATIM)
 
 # List .gitkeep files to remove them on INSTALL
-FILE(GLOB_RECURSE HEXT_GIT_KEEP_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/misc/ ${CMAKE_CURRENT_SOURCE_DIR}/misc/hext/ff8/**/.gitkeep)
-LIST(TRANSFORM HEXT_GIT_KEEP_FILES PREPEND ${CMAKE_BINARY_DIR}/bin/)
+file(GLOB_RECURSE HEXT_GIT_KEEP_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/misc/ ${CMAKE_CURRENT_SOURCE_DIR}/misc/hext/ff8/**/.gitkeep)
+list(TRANSFORM HEXT_GIT_KEEP_FILES PREPEND ${CMAKE_BINARY_DIR}/bin/)
 
 # INSTALL
 add_custom_command(
   TARGET ${RELEASE_NAME}
   POST_BUILD
-  COMMAND echo Preparing ${RELEASE_NAME} ${_DLL_VERSION} release...
-  # ensure bin directory exists
-  COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/bin
-  # License
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/COPYING.TXT
-          ${CMAKE_BINARY_DIR}/bin
-  # .dll
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${RELEASE_NAME}.dll
-          ${CMAKE_BINARY_DIR}/bin
-  # choco .dll
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${CHOCO_RELEASE_NAME}.dll
-          ${CMAKE_BINARY_DIR}/bin
-  # rename choco .dll to AF4DN.P
-  COMMAND ${CMAKE_COMMAND} -E rename
-          ${CMAKE_BINARY_DIR}/bin/${CHOCO_RELEASE_NAME}.dll
-          ${CMAKE_BINARY_DIR}/bin/AF4DN.P
-  # .pdb
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${RELEASE_NAME}.pdb
-          ${CMAKE_BINARY_DIR}/bin
-  # .toml
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.toml
-          ${CMAKE_BINARY_DIR}/bin
-  # multibyte .toml
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.multibyte.toml
-          ${CMAKE_BINARY_DIR}/bin/data/${RELEASE_NAME}.multibyte.toml
-  # FF7.reg
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/FF7.reg
-          ${CMAKE_BINARY_DIR}/bin
-  # FF8.reg
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/FF8.reg
-          ${CMAKE_BINARY_DIR}/bin
-  # hext
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/hext
-          ${CMAKE_BINARY_DIR}/bin/hext
-  COMMAND ${CMAKE_COMMAND} -E rm ${HEXT_GIT_KEEP_FILES}
-
-  # ambient .toml
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.ambient.toml
-          ${CMAKE_BINARY_DIR}/bin/ambient/config.toml
-  # lighting .toml
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.lighting.toml
-          ${CMAKE_BINARY_DIR}/bin/lighting/config.toml
-  # SFX .toml
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.SFX.toml
-          ${CMAKE_BINARY_DIR}/bin/sfx/config.toml
-  # Music .toml
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.music.toml
-          ${CMAKE_BINARY_DIR}/bin/music/vgmstream/config.toml
-  # Voice .toml
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.voice.toml
-          ${CMAKE_BINARY_DIR}/bin/voice/config.toml
-  # Vibrate field .toml
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.vibrate.ff8.field.toml
-          ${CMAKE_BINARY_DIR}/bin/vibrate/ff8/field.toml
-  # Vibrate world .toml
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.vibrate.ff8.world.toml
-          ${CMAKE_BINARY_DIR}/bin/vibrate/ff8/world.toml
-  # Vibrate battle .toml
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.vibrate.ff8.battle.toml
-          ${CMAKE_BINARY_DIR}/bin/vibrate/ff8/battle.toml
-  # time cycle .toml
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.time.toml
-          ${CMAKE_BINARY_DIR}/bin/time/config.toml
-  # Gamut LUTS
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_ntscj_to_srgb.png
-          ${CMAKE_BINARY_DIR}/bin/shaders
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_inverse_ntscj_to_srgb.png
-          ${CMAKE_BINARY_DIR}/bin/shaders
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_inverse_ntscj_to_smptec.png
-          ${CMAKE_BINARY_DIR}/bin/shaders
-
-)
+  COMMAND
+    echo Preparing ${RELEASE_NAME} ${_DLL_VERSION} release...
+    # ensure bin directory exists
+  COMMAND
+    ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/bin
+    # License
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/COPYING.TXT ${CMAKE_BINARY_DIR}/bin
+    # .dll
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${RELEASE_NAME}.dll ${CMAKE_BINARY_DIR}/bin
+    # choco .dll
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${CHOCO_RELEASE_NAME}.dll ${CMAKE_BINARY_DIR}/bin
+    # rename choco .dll to AF4DN.P
+  COMMAND
+    ${CMAKE_COMMAND} -E rename ${CMAKE_BINARY_DIR}/bin/${CHOCO_RELEASE_NAME}.dll ${CMAKE_BINARY_DIR}/bin/AF4DN.P
+    # .pdb
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${RELEASE_NAME}.pdb ${CMAKE_BINARY_DIR}/bin
+    # .toml
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.toml ${CMAKE_BINARY_DIR}/bin
+    # multibyte .toml
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.multibyte.toml
+    ${CMAKE_BINARY_DIR}/bin/data/${RELEASE_NAME}.multibyte.toml
+    # FF7.reg
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/misc/FF7.reg ${CMAKE_BINARY_DIR}/bin
+    # FF8.reg
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/misc/FF8.reg ${CMAKE_BINARY_DIR}/bin
+    # hext
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/misc/hext ${CMAKE_BINARY_DIR}/bin/hext
+  COMMAND
+    ${CMAKE_COMMAND} -E rm ${HEXT_GIT_KEEP_FILES}
+    # ambient .toml
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.ambient.toml ${CMAKE_BINARY_DIR}/bin/ambient/config.toml
+    # lighting .toml
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.lighting.toml ${CMAKE_BINARY_DIR}/bin/lighting/config.toml
+    # SFX .toml
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.SFX.toml ${CMAKE_BINARY_DIR}/bin/sfx/config.toml
+    # Music .toml
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.music.toml ${CMAKE_BINARY_DIR}/bin/music/vgmstream/config.toml
+    # Voice .toml
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.voice.toml ${CMAKE_BINARY_DIR}/bin/voice/config.toml
+    # Vibrate field .toml
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.vibrate.ff8.field.toml ${CMAKE_BINARY_DIR}/bin/vibrate/ff8/field.toml
+    # Vibrate world .toml
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.vibrate.ff8.world.toml ${CMAKE_BINARY_DIR}/bin/vibrate/ff8/world.toml
+    # Vibrate battle .toml
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.vibrate.ff8.battle.toml ${CMAKE_BINARY_DIR}/bin/vibrate/ff8/battle.toml
+    # time cycle .toml
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.time.toml ${CMAKE_BINARY_DIR}/bin/time/config.toml
+    # Gamut LUTS
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_ntscj_to_srgb.png ${CMAKE_BINARY_DIR}/bin/shaders
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_inverse_ntscj_to_srgb.png ${CMAKE_BINARY_DIR}/bin/shaders
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_inverse_ntscj_to_smptec.png ${CMAKE_BINARY_DIR}/bin/shaders)
 
 # CPU INFO
 add_custom_command(
   TARGET ${CHOCO_RELEASE_NAME}
   PRE_BUILD
-  # Get CPU info
+    # Get CPU info
   COMMAND
     ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/cpuinfo/cpu-info
-  # Get CPU ISA supported instructions
-  COMMAND
-    ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/cpuinfo/isa-info
-)
+    # Get CPU ISA supported instructions
+  COMMAND ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/cpuinfo/isa-info)
 
 # Copy FFNx release to FF7 1998 game path if installed
-cmake_host_system_information(RESULT FF7_1998_GAME_PATH QUERY WINDOWS_REGISTRY "HKLM/SOFTWARE/Square Soft, Inc./Final Fantasy VII" VALUE "AppPath" ERROR_VARIABLE FF7_KEY_QUERY_RES)
+cmake_host_system_information(
+  RESULT FF7_1998_GAME_PATH
+  QUERY WINDOWS_REGISTRY "HKLM/SOFTWARE/Square Soft, Inc./Final Fantasy VII" VALUE "AppPath" ERROR_VARIABLE FF7_KEY_QUERY_RES)
 if("${FF7_KEY_QUERY_RES}" STREQUAL "")
   cmake_path(CONVERT "${FF7_1998_GAME_PATH}" TO_CMAKE_PATH_LIST FF7_1998_GAME_PATH)
   # Ensure FFNx.toml exists so the copy on build does not error on fresh installs
@@ -389,27 +356,31 @@ if("${FF7_KEY_QUERY_RES}" STREQUAL "")
   add_custom_command(
     TARGET ${RELEASE_NAME}
     POST_BUILD
-    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF7_1998_GAME_PATH}...
-    # Preserve the current FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF7_1998_GAME_PATH}/FFNx.toml
-            ${FF7_1998_GAME_PATH}/FFNx.toml.bak
-    # Copy all dist files
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_BINARY_DIR}/bin
-            ${FF7_1998_GAME_PATH}
-    # Delete the new copied FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E remove
-            ${FF7_1998_GAME_PATH}/FFNx.toml
-    # Bring back the existing FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF7_1998_GAME_PATH}/FFNx.toml.bak
-            ${FF7_1998_GAME_PATH}/FFNx.toml
-  )
+    COMMAND
+      echo
+      Copying
+      ${RELEASE_NAME}
+      ${_DLL_VERSION}
+      release
+      to
+      ${FF7_1998_GAME_PATH}...
+      # Preserve the current FFNx.toml
+    COMMAND
+      ${CMAKE_COMMAND} -E rename ${FF7_1998_GAME_PATH}/FFNx.toml ${FF7_1998_GAME_PATH}/FFNx.toml.bak
+      # Copy all dist files
+    COMMAND
+      ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${FF7_1998_GAME_PATH}
+      # Delete the new copied FFNx.toml
+    COMMAND
+      ${CMAKE_COMMAND} -E remove ${FF7_1998_GAME_PATH}/FFNx.toml
+      # Bring back the existing FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename ${FF7_1998_GAME_PATH}/FFNx.toml.bak ${FF7_1998_GAME_PATH}/FFNx.toml)
 endif()
 
 # Copy FFNx release to FF8 2000 game path if installed
-cmake_host_system_information(RESULT FF8_2000_GAME_PATH QUERY WINDOWS_REGISTRY "HKLM/SOFTWARE/Square Soft, Inc/FINAL FANTASY VIII/1.00" VALUE "AppPath" ERROR_VARIABLE FF8_KEY_QUERY_RES)
+cmake_host_system_information(
+  RESULT FF8_2000_GAME_PATH
+  QUERY WINDOWS_REGISTRY "HKLM/SOFTWARE/Square Soft, Inc/FINAL FANTASY VIII/1.00" VALUE "AppPath" ERROR_VARIABLE FF8_KEY_QUERY_RES)
 if("${FF8_KEY_QUERY_RES}" STREQUAL "")
   cmake_path(CONVERT "${FF8_2000_GAME_PATH}" TO_CMAKE_PATH_LIST FF8_2000_GAME_PATH)
   # Ensure FFNx.toml exists so the copy on build does not error on fresh installs
@@ -420,39 +391,38 @@ if("${FF8_KEY_QUERY_RES}" STREQUAL "")
   add_custom_command(
     TARGET ${RELEASE_NAME}
     POST_BUILD
-    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF8_2000_GAME_PATH}...
-    # Preserve the current FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF8_2000_GAME_PATH}/FFNx.toml
-            ${FF8_2000_GAME_PATH}/FFNx.toml.bak
-    # Copy all dist files
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_BINARY_DIR}/bin
-            ${FF8_2000_GAME_PATH}
-    # Delete previous eax.dll
-    COMMAND ${CMAKE_COMMAND} -E remove
-            ${FF8_2000_GAME_PATH}/eax.dll
-    # Rename FFNx.dll to eax.dll
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF8_2000_GAME_PATH}/FFNx.dll
-            ${FF8_2000_GAME_PATH}/eax.dll
-    # Delete the new copied FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E remove
-            ${FF8_2000_GAME_PATH}/FFNx.toml
-    # Bring back the existing FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF8_2000_GAME_PATH}/FFNx.toml.bak
-            ${FF8_2000_GAME_PATH}/FFNx.toml
-  )
+    COMMAND
+      echo
+      Copying
+      ${RELEASE_NAME}
+      ${_DLL_VERSION}
+      release
+      to
+      ${FF8_2000_GAME_PATH}...
+      # Preserve the current FFNx.toml
+    COMMAND
+      ${CMAKE_COMMAND} -E rename ${FF8_2000_GAME_PATH}/FFNx.toml ${FF8_2000_GAME_PATH}/FFNx.toml.bak
+      # Copy all dist files
+    COMMAND
+      ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${FF8_2000_GAME_PATH}
+      # Delete previous eax.dll
+    COMMAND
+      ${CMAKE_COMMAND} -E remove ${FF8_2000_GAME_PATH}/eax.dll
+      # Rename FFNx.dll to eax.dll
+    COMMAND
+      ${CMAKE_COMMAND} -E rename ${FF8_2000_GAME_PATH}/FFNx.dll ${FF8_2000_GAME_PATH}/eax.dll
+      # Delete the new copied FFNx.toml
+    COMMAND
+      ${CMAKE_COMMAND} -E remove ${FF8_2000_GAME_PATH}/FFNx.toml
+      # Bring back the existing FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename ${FF8_2000_GAME_PATH}/FFNx.toml.bak ${FF8_2000_GAME_PATH}/FFNx.toml)
 endif()
 
 # Copy FFNx release to FF7 Steam game path if installed
 execute_process(
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindSteamGamePath 39140
   OUTPUT_VARIABLE FF7_STEAM_GAME_PATH
-  ERROR_VARIABLE FF7_STEAM_ERROR
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+  ERROR_VARIABLE FF7_STEAM_ERROR OUTPUT_STRIP_TRAILING_WHITESPACE)
 if(NOT "${FF7_STEAM_GAME_PATH}" STREQUAL "")
   cmake_path(CONVERT "${FF7_STEAM_GAME_PATH}" TO_CMAKE_PATH_LIST FF7_STEAM_GAME_PATH)
   # Ensure FFNx.toml exists so the copy on build does not error on fresh installs
@@ -463,39 +433,38 @@ if(NOT "${FF7_STEAM_GAME_PATH}" STREQUAL "")
   add_custom_command(
     TARGET ${RELEASE_NAME}
     POST_BUILD
-    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF7_STEAM_GAME_PATH}...
-    # Preserve the current FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF7_STEAM_GAME_PATH}/FFNx.toml
-            ${FF7_STEAM_GAME_PATH}/FFNx.toml.bak
-    # Copy all dist files
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_BINARY_DIR}/bin
-            ${FF7_STEAM_GAME_PATH}
-    # Delete previous AF3DN.P
-    COMMAND ${CMAKE_COMMAND} -E remove
-            ${FF7_STEAM_GAME_PATH}/AF3DN.P
-    # Rename FFNx.dll to AF3DN.P
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF7_STEAM_GAME_PATH}/FFNx.dll
-            ${FF7_STEAM_GAME_PATH}/AF3DN.P
-    # Delete the new copied FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E remove
-            ${FF7_STEAM_GAME_PATH}/FFNx.toml
-    # Bring back the existing FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF7_STEAM_GAME_PATH}/FFNx.toml.bak
-            ${FF7_STEAM_GAME_PATH}/FFNx.toml
-  )
+    COMMAND
+      echo
+      Copying
+      ${RELEASE_NAME}
+      ${_DLL_VERSION}
+      release
+      to
+      ${FF7_STEAM_GAME_PATH}...
+      # Preserve the current FFNx.toml
+    COMMAND
+      ${CMAKE_COMMAND} -E rename ${FF7_STEAM_GAME_PATH}/FFNx.toml ${FF7_STEAM_GAME_PATH}/FFNx.toml.bak
+      # Copy all dist files
+    COMMAND
+      ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${FF7_STEAM_GAME_PATH}
+      # Delete previous AF3DN.P
+    COMMAND
+      ${CMAKE_COMMAND} -E remove ${FF7_STEAM_GAME_PATH}/AF3DN.P
+      # Rename FFNx.dll to AF3DN.P
+    COMMAND
+      ${CMAKE_COMMAND} -E rename ${FF7_STEAM_GAME_PATH}/FFNx.dll ${FF7_STEAM_GAME_PATH}/AF3DN.P
+      # Delete the new copied FFNx.toml
+    COMMAND
+      ${CMAKE_COMMAND} -E remove ${FF7_STEAM_GAME_PATH}/FFNx.toml
+      # Bring back the existing FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename ${FF7_STEAM_GAME_PATH}/FFNx.toml.bak ${FF7_STEAM_GAME_PATH}/FFNx.toml)
 endif()
 
 # Copy FFNx release to FF8 Steam game path if installed
 execute_process(
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindSteamGamePath 39150
   OUTPUT_VARIABLE FF8_STEAM_GAME_PATH
-  ERROR_VARIABLE FF8_STEAM_ERROR
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+  ERROR_VARIABLE FF8_STEAM_ERROR OUTPUT_STRIP_TRAILING_WHITESPACE)
 if(NOT "${FF8_STEAM_GAME_PATH}" STREQUAL "")
   cmake_path(CONVERT "${FF8_STEAM_GAME_PATH}" TO_CMAKE_PATH_LIST FF8_STEAM_GAME_PATH)
   # Ensure FFNx.toml exists so the copy on build does not error on fresh installs
@@ -506,46 +475,43 @@ if(NOT "${FF8_STEAM_GAME_PATH}" STREQUAL "")
   add_custom_command(
     TARGET ${RELEASE_NAME}
     POST_BUILD
-    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF8_STEAM_GAME_PATH}...
-    # Preserve the current FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF8_STEAM_GAME_PATH}/FFNx.toml
-            ${FF8_STEAM_GAME_PATH}/FFNx.toml.bak
-    # Copy all dist files
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_BINARY_DIR}/bin
-            ${FF8_STEAM_GAME_PATH}
-    # Delete previous AF3DN.P
-    COMMAND ${CMAKE_COMMAND} -E remove
-            ${FF8_STEAM_GAME_PATH}/AF3DN.P
-    # Rename FFNx.dll to AF3DN.P
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF8_STEAM_GAME_PATH}/FFNx.dll
-            ${FF8_STEAM_GAME_PATH}/AF3DN.P
-    # Delete the new copied FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E remove
-            ${FF8_STEAM_GAME_PATH}/FFNx.toml
-    # Bring back the existing FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF8_STEAM_GAME_PATH}/FFNx.toml.bak
-            ${FF8_STEAM_GAME_PATH}/FFNx.toml
-  )
+    COMMAND
+      echo
+      Copying
+      ${RELEASE_NAME}
+      ${_DLL_VERSION}
+      release
+      to
+      ${FF8_STEAM_GAME_PATH}...
+      # Preserve the current FFNx.toml
+    COMMAND
+      ${CMAKE_COMMAND} -E rename ${FF8_STEAM_GAME_PATH}/FFNx.toml ${FF8_STEAM_GAME_PATH}/FFNx.toml.bak
+      # Copy all dist files
+    COMMAND
+      ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${FF8_STEAM_GAME_PATH}
+      # Delete previous AF3DN.P
+    COMMAND
+      ${CMAKE_COMMAND} -E remove ${FF8_STEAM_GAME_PATH}/AF3DN.P
+      # Rename FFNx.dll to AF3DN.P
+    COMMAND
+      ${CMAKE_COMMAND} -E rename ${FF8_STEAM_GAME_PATH}/FFNx.dll ${FF8_STEAM_GAME_PATH}/AF3DN.P
+      # Delete the new copied FFNx.toml
+    COMMAND
+      ${CMAKE_COMMAND} -E remove ${FF8_STEAM_GAME_PATH}/FFNx.toml
+      # Bring back the existing FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename ${FF8_STEAM_GAME_PATH}/FFNx.toml.bak ${FF8_STEAM_GAME_PATH}/FFNx.toml)
 endif()
 
 # Copy FFNx release to FF7 2026 Rerelease Steam/GOG game path if installed
 execute_process(
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindSteamGamePath 3837340
   OUTPUT_VARIABLE FF7_2026_RERELEASE_GAME_PATH
-  ERROR_VARIABLE FF7_STEAM_RERELEASE_ERROR
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+  ERROR_VARIABLE FF7_STEAM_RERELEASE_ERROR OUTPUT_STRIP_TRAILING_WHITESPACE)
 if("${FF7_2026_RERELEASE_GAME_PATH}" STREQUAL "")
   execute_process(
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindGOGGamePath 1698970154
     OUTPUT_VARIABLE FF7_2026_RERELEASE_GAME_PATH
-    ERROR_VARIABLE FF7_STEAM_RERELEASE_ERROR
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
+    ERROR_VARIABLE FF7_STEAM_RERELEASE_ERROR OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif()
 if(NOT "${FF7_2026_RERELEASE_GAME_PATH}" STREQUAL "")
   cmake_path(CONVERT "${FF7_2026_RERELEASE_GAME_PATH}" TO_CMAKE_PATH_LIST FF7_2026_RERELEASE_GAME_PATH)
@@ -558,46 +524,43 @@ if(NOT "${FF7_2026_RERELEASE_GAME_PATH}" STREQUAL "")
   add_custom_command(
     TARGET ${RELEASE_NAME}
     POST_BUILD
-    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF7_2026_RERELEASE_GAME_PATH}...
-    # Preserve the current FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.toml
-            ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.toml.bak
-    # Copy all dist files
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_BINARY_DIR}/bin
-            ${FF7_2026_RERELEASE_GAME_PATH}
-    # Delete previous AF3DN.P
-    COMMAND ${CMAKE_COMMAND} -E remove
-            ${FF7_2026_RERELEASE_GAME_PATH}/AF3DN.P
-    # Rename FFNx.dll to AF3DN.P
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.dll
-            ${FF7_2026_RERELEASE_GAME_PATH}/AF3DN.P
-    # Delete the new copied FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E remove
-            ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.toml
-    # Bring back the existing FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.toml.bak
-            ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.toml
-  )
+    COMMAND
+      echo
+      Copying
+      ${RELEASE_NAME}
+      ${_DLL_VERSION}
+      release
+      to
+      ${FF7_2026_RERELEASE_GAME_PATH}...
+      # Preserve the current FFNx.toml
+    COMMAND
+      ${CMAKE_COMMAND} -E rename ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.toml ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.toml.bak
+      # Copy all dist files
+    COMMAND
+      ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${FF7_2026_RERELEASE_GAME_PATH}
+      # Delete previous AF3DN.P
+    COMMAND
+      ${CMAKE_COMMAND} -E remove ${FF7_2026_RERELEASE_GAME_PATH}/AF3DN.P
+      # Rename FFNx.dll to AF3DN.P
+    COMMAND
+      ${CMAKE_COMMAND} -E rename ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.dll ${FF7_2026_RERELEASE_GAME_PATH}/AF3DN.P
+      # Delete the new copied FFNx.toml
+    COMMAND
+      ${CMAKE_COMMAND} -E remove ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.toml
+      # Bring back the existing FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.toml.bak ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.toml)
 endif()
 
 # Copy FFNx release to FF8 Remastered Steam/GOG game path if installed
 execute_process(
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindSteamGamePath 1026680
   OUTPUT_VARIABLE FF8_REMASTERED_GAME_PATH
-  ERROR_VARIABLE FF8_REMASTERED_ERROR
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+  ERROR_VARIABLE FF8_REMASTERED_ERROR OUTPUT_STRIP_TRAILING_WHITESPACE)
 if("${FF8_REMASTERED_GAME_PATH}" STREQUAL "")
   execute_process(
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindGOGGamePath 1086370078
     OUTPUT_VARIABLE FF8_REMASTERED_GAME_PATH
-    ERROR_VARIABLE FF8_REMASTERED_ERROR
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
+    ERROR_VARIABLE FF8_REMASTERED_ERROR OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif()
 if(NOT "${FF8_REMASTERED_GAME_PATH}" STREQUAL "")
   cmake_path(CONVERT "${FF8_REMASTERED_GAME_PATH}" TO_CMAKE_PATH_LIST FF8_REMASTERED_GAME_PATH)
@@ -609,28 +572,29 @@ if(NOT "${FF8_REMASTERED_GAME_PATH}" STREQUAL "")
   add_custom_command(
     TARGET ${RELEASE_NAME}
     POST_BUILD
-    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF8_REMASTERED_GAME_PATH}...
-    # Preserve the current FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF8_REMASTERED_GAME_PATH}/FFNx.toml
-            ${FF8_REMASTERED_GAME_PATH}/FFNx.toml.bak
-    # Copy all dist files
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_BINARY_DIR}/bin
-            ${FF8_REMASTERED_GAME_PATH}
-    # Delete previous eax.dll
-    COMMAND ${CMAKE_COMMAND} -E remove
-            ${FF8_REMASTERED_GAME_PATH}/eax.dll
-    # Rename FFNx.dll to eax.dll
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF8_REMASTERED_GAME_PATH}/FFNx.dll
-            ${FF8_REMASTERED_GAME_PATH}/eax.dll
-    # Delete the new copied FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E remove
-            ${FF8_REMASTERED_GAME_PATH}/FFNx.toml
-    # Bring back the existing FFNx.toml
-    COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF8_REMASTERED_GAME_PATH}/FFNx.toml.bak
-            ${FF8_REMASTERED_GAME_PATH}/FFNx.toml
-  )
+    COMMAND
+      echo
+      Copying
+      ${RELEASE_NAME}
+      ${_DLL_VERSION}
+      release
+      to
+      ${FF8_REMASTERED_GAME_PATH}...
+      # Preserve the current FFNx.toml
+    COMMAND
+      ${CMAKE_COMMAND} -E rename ${FF8_REMASTERED_GAME_PATH}/FFNx.toml ${FF8_REMASTERED_GAME_PATH}/FFNx.toml.bak
+      # Copy all dist files
+    COMMAND
+      ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/bin ${FF8_REMASTERED_GAME_PATH}
+      # Delete previous eax.dll
+    COMMAND
+      ${CMAKE_COMMAND} -E remove ${FF8_REMASTERED_GAME_PATH}/eax.dll
+      # Rename FFNx.dll to eax.dll
+    COMMAND
+      ${CMAKE_COMMAND} -E rename ${FF8_REMASTERED_GAME_PATH}/FFNx.dll ${FF8_REMASTERED_GAME_PATH}/eax.dll
+      # Delete the new copied FFNx.toml
+    COMMAND
+      ${CMAKE_COMMAND} -E remove ${FF8_REMASTERED_GAME_PATH}/FFNx.toml
+      # Bring back the existing FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename ${FF8_REMASTERED_GAME_PATH}/FFNx.toml.bak ${FF8_REMASTERED_GAME_PATH}/FFNx.toml)
 endif()

@@ -32,261 +32,264 @@
 
 NxVibrationEngine nxVibrationEngine;
 
-NxVibrationEngine::NxVibrationEngine() :
-	_leftMotorStopTimeFrame(0),
-	_left(0), _right(0),
-	_currentLeft(0), _currentRight(0)
+NxVibrationEngine::NxVibrationEngine() : _leftMotorStopTimeFrame(0), _left(0), _right(0), _currentLeft(0), _currentRight(0)
 {
 }
 
 NxVibrationEngine::~NxVibrationEngine()
 {
-	for (auto data: _vibrateData) {
-		delete[] data.second;
-	}
+    for (auto data : _vibrateData)
+    {
+        delete[] data.second;
+    }
 }
 
 void NxVibrationEngine::setLeftMotorValue(uint8_t force)
 {
-	if (trace_all || trace_gamepad) ffnx_trace("NxVibrationEngine::%s force=%d\n", __func__, force);
+    if (trace_all || trace_gamepad)
+        ffnx_trace("NxVibrationEngine::%s force=%d\n", __func__, force);
 
-	if (force > 0)
-	{
-		if (use_sdl_gamepad)
-			_leftMotorStopTimeFrame = (sdlgamepad.GetPort() > 0) ? frame_counter + LEFT_MOTOR_DURATION_FRAMES : 0;
-		else
-			_leftMotorStopTimeFrame = xinput_connected ? frame_counter + LEFT_MOTOR_DURATION_FRAMES : 0;
-		_left = force;
-	}
+    if (force > 0)
+    {
+        if (use_sdl_gamepad)
+            _leftMotorStopTimeFrame = (sdlgamepad.GetPort() > 0) ? frame_counter + LEFT_MOTOR_DURATION_FRAMES : 0;
+        else
+            _leftMotorStopTimeFrame = xinput_connected ? frame_counter + LEFT_MOTOR_DURATION_FRAMES : 0;
+        _left = force;
+    }
 }
 
 void NxVibrationEngine::setRightMotorValue(uint8_t force)
 {
-	if (trace_all || trace_gamepad) ffnx_trace("NxVibrationEngine::%s force=%d\n", __func__, force);
+    if (trace_all || trace_gamepad)
+        ffnx_trace("NxVibrationEngine::%s force=%d\n", __func__, force);
 
-	_right = force;
+    _right = force;
 }
 
 void NxVibrationEngine::stopAll()
 {
-	if (trace_all || trace_gamepad) ffnx_trace("NxVibrationEngine::%s\n", __func__);
+    if (trace_all || trace_gamepad)
+        ffnx_trace("NxVibrationEngine::%s\n", __func__);
 
-	_leftMotorStopTimeFrame = 0;
-	_left = 0;
-	_right = 0;
+    _leftMotorStopTimeFrame = 0;
+    _left = 0;
+    _right = 0;
 
-	rumbleUpdate();
+    rumbleUpdate();
 }
 
 bool NxVibrationEngine::hasChanged() const
 {
-	return _currentLeft != _left || _currentRight != _right;
+    return _currentLeft != _left || _currentRight != _right;
 }
 
 void NxVibrationEngine::updateLeftMotorValue()
 {
-	if (use_sdl_gamepad)
-	{
-		if (sdlgamepad.GetPort() > 0 && _leftMotorStopTimeFrame > 0 && frame_counter > _leftMotorStopTimeFrame)
-		{
-			if (trace_all || trace_gamepad) ffnx_trace("NxVibrationEngine::%s stop\n", __func__);
-			_leftMotorStopTimeFrame = 0;
-			_left = 0;
-		}
-		else if (sdlgamepad.GetPort() <= 0)
-		{
-			_leftMotorStopTimeFrame = 0;
-		}
-	}
-	else if (xinput_connected && _leftMotorStopTimeFrame > 0 && frame_counter > _leftMotorStopTimeFrame)
-	{
-		if (trace_all || trace_gamepad) ffnx_trace("NxVibrationEngine::%s stop\n", __func__);
-		_leftMotorStopTimeFrame = 0;
-		_left = 0;
-	}
-	else if (!xinput_connected)
-	{
-		_leftMotorStopTimeFrame = 0;
-	}
+    if (use_sdl_gamepad)
+    {
+        if (sdlgamepad.GetPort() > 0 && _leftMotorStopTimeFrame > 0 && frame_counter > _leftMotorStopTimeFrame)
+        {
+            if (trace_all || trace_gamepad)
+                ffnx_trace("NxVibrationEngine::%s stop\n", __func__);
+            _leftMotorStopTimeFrame = 0;
+            _left = 0;
+        }
+        else if (sdlgamepad.GetPort() <= 0)
+        {
+            _leftMotorStopTimeFrame = 0;
+        }
+    }
+    else if (xinput_connected && _leftMotorStopTimeFrame > 0 && frame_counter > _leftMotorStopTimeFrame)
+    {
+        if (trace_all || trace_gamepad)
+            ffnx_trace("NxVibrationEngine::%s stop\n", __func__);
+        _leftMotorStopTimeFrame = 0;
+        _left = 0;
+    }
+    else if (!xinput_connected)
+    {
+        _leftMotorStopTimeFrame = 0;
+    }
 }
 
 bool NxVibrationEngine::rumbleUpdate()
 {
-	updateLeftMotorValue();
+    updateLeftMotorValue();
 
-	if (! hasChanged())
-	{
-		return false;
-	}
+    if (!hasChanged())
+    {
+        return false;
+    }
 
-	if (trace_all || trace_gamepad) ffnx_trace("NxVibrationEngine::%s left=%d right=%d\n", __func__, _left, _right);
+    if (trace_all || trace_gamepad)
+        ffnx_trace("NxVibrationEngine::%s left=%d right=%d\n", __func__, _left, _right);
 
-	DWORD maxVibration;
-	if (use_sdl_gamepad)
-		maxVibration = UINT16_MAX;
-	else if (xinput_connected)
-		maxVibration = UINT16_MAX;
-	else
-		maxVibration = joystick.GetMaxVibration();
+    DWORD maxVibration;
+    if (use_sdl_gamepad)
+        maxVibration = UINT16_MAX;
+    else if (xinput_connected)
+        maxVibration = UINT16_MAX;
+    else
+        maxVibration = joystick.GetMaxVibration();
 
-	DWORD left = _left * maxVibration / LEFT_MOTOR_MAX_VALUE;
-	DWORD right = _right * maxVibration / RIGHT_MOTOR_MAX_VALUE;
+    DWORD left = _left * maxVibration / LEFT_MOTOR_MAX_VALUE;
+    DWORD right = _right * maxVibration / RIGHT_MOTOR_MAX_VALUE;
 
-	if (left > maxVibration) {
-		left = maxVibration;
-	}
-	if (right > maxVibration) {
-		right = maxVibration;
-	}
+    if (left > maxVibration)
+    {
+        left = maxVibration;
+    }
+    if (right > maxVibration)
+    {
+        right = maxVibration;
+    }
 
-	if (use_sdl_gamepad)
-	{
-		sdlgamepad.Vibrate(left, right);
-	}
-	else if (xinput_connected)
-	{
-		gamepad.Vibrate(left, right);
-	}
-	else
-	{
-		joystick.Vibrate(left, right);
-	}
+    if (use_sdl_gamepad)
+    {
+        sdlgamepad.Vibrate(left, right);
+    }
+    else if (xinput_connected)
+    {
+        gamepad.Vibrate(left, right);
+    }
+    else
+    {
+        joystick.Vibrate(left, right);
+    }
 
-	_currentLeft = _left;
-	_currentRight = _right;
+    _currentLeft = _left;
+    _currentRight = _right;
 
-	return true;
+    return true;
 }
 
 bool NxVibrationEngine::canRumble() const
 {
-	if (use_sdl_gamepad)
-	{
-		return sdlgamepad.GetPort() > 0 && sdlgamepad.HasRumble();
-	}
-	else if (xinput_connected)
-	{
-		return gamepad.GetPort() > 0;
-	}
-	else
-	{
-		return joystick.CheckConnection() && joystick.HasForceFeedback();
-	}
+    if (use_sdl_gamepad)
+    {
+        return sdlgamepad.GetPort() > 0 && sdlgamepad.HasRumble();
+    }
+    else if (xinput_connected)
+    {
+        return gamepad.GetPort() > 0;
+    }
+    else
+    {
+        return joystick.CheckConnection() && joystick.HasForceFeedback();
+    }
 }
 
 uint8_t *NxVibrationEngine::createVibrateDataFromConfig(const toml::parse_result &config)
 {
-	char sectionName[6] = "";
-	uint32_t header[64] = {};
-	std::vector<uint16_t> executionData;
+    char sectionName[6] = "";
+    uint32_t header[64] = {};
+    std::vector<uint16_t> executionData;
 
-	for (int set = 0; set < 64; ++set)
-	{
-		snprintf(sectionName, sizeof(sectionName), "set%d", set);
-		const toml::array *leftMotor = config[sectionName]["left_motor"].as_array();
-		const toml::array *rightMotor = config[sectionName]["right_motor"].as_array();
-		if (leftMotor && rightMotor
-			&& (leftMotor->empty() || leftMotor->is_homogeneous(toml::node_type::array))
-			&& (rightMotor->empty() || rightMotor->is_homogeneous(toml::node_type::array))
-		) {
-			header[set] = sizeof(header) + executionData.size() * sizeof(uint16_t);
+    for (int set = 0; set < 64; ++set)
+    {
+        snprintf(sectionName, sizeof(sectionName), "set%d", set);
+        const toml::array *leftMotor = config[sectionName]["left_motor"].as_array();
+        const toml::array *rightMotor = config[sectionName]["right_motor"].as_array();
+        if (leftMotor && rightMotor && (leftMotor->empty() || leftMotor->is_homogeneous(toml::node_type::array)) && (rightMotor->empty() || rightMotor->is_homogeneous(toml::node_type::array)))
+        {
+            header[set] = sizeof(header) + executionData.size() * sizeof(uint16_t);
 
-			uint16_t leftSize = leftMotor->empty() ? 0 : (leftMotor->size() + 1) * 2,
-				rightSize = rightMotor->empty() ? 0 : (rightMotor->size() + 1) * 2;
-			executionData.push_back(leftSize);
-			executionData.push_back(rightSize);
+            uint16_t leftSize = leftMotor->empty() ? 0 : (leftMotor->size() + 1) * 2, rightSize = rightMotor->empty() ? 0 : (rightMotor->size() + 1) * 2;
+            executionData.push_back(leftSize);
+            executionData.push_back(rightSize);
 
-			for (const toml::node& elem: *leftMotor)
-			{
-				const toml::array *values = elem.as_array();
+            for (const toml::node &elem : *leftMotor)
+            {
+                const toml::array *values = elem.as_array();
 
-				if (values && values->is_homogeneous(toml::node_type::integer) && values->size() == 2)
-				{
-					executionData.push_back(
-						(((*values)[1].value_or(0) & 0xFF) << 8) | ((*values)[0].value_or(0) & 0xFF)
-					);
-				}
-				else
-				{
-					ffnx_warning("NxVibrationEngine::%s: Invalid values in section %s/left_motor\n", __func__, sectionName);
-				}
-			}
+                if (values && values->is_homogeneous(toml::node_type::integer) && values->size() == 2)
+                {
+                    executionData.push_back((((*values)[1].value_or(0) & 0xFF) << 8) | ((*values)[0].value_or(0) & 0xFF));
+                }
+                else
+                {
+                    ffnx_warning("NxVibrationEngine::%s: Invalid values in section %s/left_motor\n", __func__, sectionName);
+                }
+            }
 
-			if (leftSize > 0) {
-				// End of sequence
-				executionData.push_back(0xFF00);
-			}
+            if (leftSize > 0)
+            {
+                // End of sequence
+                executionData.push_back(0xFF00);
+            }
 
-			for (const toml::node& elem: *rightMotor)
-			{
-				const toml::array *values = elem.as_array();
+            for (const toml::node &elem : *rightMotor)
+            {
+                const toml::array *values = elem.as_array();
 
-				if (values && values->is_homogeneous(toml::node_type::integer) && values->size() == 2)
-				{
-					executionData.push_back(
-						(((*values)[1].value_or(0) & 0xFF) << 8) | ((*values)[0].value_or(0) & 0xFF)
-					);
-				}
-				else
-				{
-					ffnx_warning("NxVibrationEngine::%s: Invalid values in section %s/right_motor\n", __func__, sectionName);
-				}
-			}
+                if (values && values->is_homogeneous(toml::node_type::integer) && values->size() == 2)
+                {
+                    executionData.push_back((((*values)[1].value_or(0) & 0xFF) << 8) | ((*values)[0].value_or(0) & 0xFF));
+                }
+                else
+                {
+                    ffnx_warning("NxVibrationEngine::%s: Invalid values in section %s/right_motor\n", __func__, sectionName);
+                }
+            }
 
-			if (rightSize > 0) {
-				// End of sequence
-				executionData.push_back(0xFF00);
-			}
-		}
-		else if (config[sectionName])
-		{
-			ffnx_warning("NxVibrationEngine::%s: Missing or invalid left_motor or right_motor in section %s\n", __func__, sectionName);
-		}
-	}
+            if (rightSize > 0)
+            {
+                // End of sequence
+                executionData.push_back(0xFF00);
+            }
+        }
+        else if (config[sectionName])
+        {
+            ffnx_warning("NxVibrationEngine::%s: Missing or invalid left_motor or right_motor in section %s\n", __func__, sectionName);
+        }
+    }
 
-	if (executionData.empty())
-	{
-		return nullptr;
-	}
+    if (executionData.empty())
+    {
+        return nullptr;
+    }
 
-	uint8_t *data = new uint8_t[sizeof(header) + executionData.size() * sizeof(uint16_t)];
+    uint8_t *data = new uint8_t[sizeof(header) + executionData.size() * sizeof(uint16_t)];
 
-	memcpy(data, header, sizeof(header));
-	memcpy(data + sizeof(header), executionData.data(), executionData.size() * sizeof(uint16_t));
+    memcpy(data, header, sizeof(header));
+    memcpy(data + sizeof(header), executionData.data(), executionData.size() * sizeof(uint16_t));
 
-	return data;
+    return data;
 }
 
 const uint8_t *NxVibrationEngine::vibrateDataOverride(const char *name)
 {
-	char fullpath[MAX_PATH];
-	snprintf(fullpath, sizeof(fullpath), "%s/%s/%s.toml", basedir, external_vibrate_path.c_str(), name);
+    char fullpath[MAX_PATH];
+    snprintf(fullpath, sizeof(fullpath), "%s/%s/%s.toml", basedir, external_vibrate_path.c_str(), name);
 
-	if (trace_all || trace_gamepad) ffnx_trace("NxVibrationEngine::%s: looking for %s\n", __func__, fullpath);
+    if (trace_all || trace_gamepad)
+        ffnx_trace("NxVibrationEngine::%s: looking for %s\n", __func__, fullpath);
 
-	std::string nameStr(name);
+    std::string nameStr(name);
 
-	if (_vibrateData.contains(nameStr))
-	{
-		return _vibrateData[nameStr];
-	}
+    if (_vibrateData.contains(nameStr))
+    {
+        return _vibrateData[nameStr];
+    }
 
-	try
-	{
-		toml::parse_result result = toml::parse_file(fullpath);
-		uint8_t *data = createVibrateDataFromConfig(result);
-		if (data != nullptr)
-		{
-			if (trace_all || trace_gamepad) ffnx_trace("NxVibrationEngine::%s: data created\n", __func__, fullpath);
-			_vibrateData[nameStr] = data;
-		}
+    try
+    {
+        toml::parse_result result = toml::parse_file(fullpath);
+        uint8_t *data = createVibrateDataFromConfig(result);
+        if (data != nullptr)
+        {
+            if (trace_all || trace_gamepad)
+                ffnx_trace("NxVibrationEngine::%s: data created\n", __func__, fullpath);
+            _vibrateData[nameStr] = data;
+        }
 
-		return data;
-	}
-	catch (const toml::parse_error &err)
-	{
-		return nullptr;
-	}
+        return data;
+    }
+    catch (const toml::parse_error &err)
+    {
+        return nullptr;
+    }
 
-	return nullptr;
+    return nullptr;
 }

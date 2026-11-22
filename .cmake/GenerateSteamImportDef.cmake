@@ -9,8 +9,7 @@ execute_process(
   COMMAND "${DUMPBIN}" /NOLOGO /EXPORTS "${STEAM_API_DLL}"
   RESULT_VARIABLE dumpbin_result
   OUTPUT_VARIABLE dumpbin_output
-  ERROR_VARIABLE dumpbin_error
-)
+  ERROR_VARIABLE dumpbin_error)
 if(NOT "${dumpbin_result}" STREQUAL "0")
   message(FATAL_ERROR "Failed to read Steam API DLL exports: ${dumpbin_error}")
 endif()

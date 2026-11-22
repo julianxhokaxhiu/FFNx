@@ -30,28 +30,28 @@
 
 class FFNxStackWalker : public StackWalker
 {
-public:
-    FFNxStackWalker(bool muted = false) : StackWalker(), _baseAddress(0), _size(0), _muted(muted) {}
-    DWORD64 getBaseAddress() const {
+  public:
+    FFNxStackWalker(bool muted = false) : StackWalker(), _baseAddress(0), _size(0), _muted(muted)
+    {
+    }
+    DWORD64 getBaseAddress() const
+    {
         return _baseAddress;
     }
-    DWORD getSize() const {
+    DWORD getSize() const
+    {
         return _size;
     }
-protected:
-    virtual void OnLoadModule(LPCSTR img, LPCSTR mod, DWORD64 baseAddr,
-        DWORD size, DWORD result, LPCSTR symType, LPCSTR pdbName,
-        ULONGLONG fileVersion
-    )
+
+  protected:
+    virtual void OnLoadModule(LPCSTR img, LPCSTR mod, DWORD64 baseAddr, DWORD size, DWORD result, LPCSTR symType, LPCSTR pdbName, ULONGLONG fileVersion)
     {
         if (_baseAddress == 0 && _size == 0)
         {
             _baseAddress = baseAddr;
             _size = size;
         }
-        StackWalker::OnLoadModule(
-            img, mod, baseAddr, size, result, symType, pdbName, fileVersion
-        );
+        StackWalker::OnLoadModule(img, mod, baseAddr, size, result, symType, pdbName, fileVersion);
     }
 
     virtual void OnDbgHelpErr(LPCSTR szFuncName, DWORD gle, DWORD64 addr)
@@ -61,12 +61,13 @@ protected:
 
     virtual void OnOutput(LPCSTR szText)
     {
-        if (! _muted)
+        if (!_muted)
         {
             ffnx_trace(szText);
         }
     }
-private:
+
+  private:
     DWORD64 _baseAddress;
     DWORD _size;
     bool _muted;

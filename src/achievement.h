@@ -35,10 +35,7 @@
 #include "ff8/save_data.h"
 #include "steam.h"
 
-#define _ACH_ID(id)           \
-    {                         \
-        id, #id, "", "", 0, 0 \
-    }
+#define _ACH_ID(id) {id, #id, "", "", 0, 0}
 
 struct achievement
 {
@@ -52,17 +49,17 @@ struct achievement
 
 class SteamManager
 {
-private:
-    int appID;                                          // Our current AppID
-    std::vector<achievement> achievementList;           // Achievements data
-    int nAchievements;                                  // The number of Achievements
-    bool isInitialized;                                 // Are Steam stats and achievements ready for use?
-    std::unordered_map<std::string, int> stats;         // Steam stats used by the game
+  private:
+    int appID;                                  // Our current AppID
+    std::vector<achievement> achievementList;   // Achievements data
+    int nAchievements;                          // The number of Achievements
+    bool isInitialized;                         // Are Steam stats and achievements ready for use?
+    std::unordered_map<std::string, int> stats; // Steam stats used by the game
 
     bool checkStatsAvailability();
     void loadStatsAndAchievements();
 
-public:
+  public:
     SteamManager(const achievement *achievements, int nAchievements, std::vector<std::string> statsNameVec = {});
     ~SteamManager() = default;
 
@@ -80,7 +77,7 @@ public:
 
 class SteamAchievementsFF7
 {
-private:
+  private:
     enum Achievements2013
     {
         DEATH_OF_AERITH = 0,
@@ -156,76 +153,10 @@ private:
     };
 
     static inline const achievement ACHIEVEMENTS_2013[] = {
-        _ACH_ID(DEATH_OF_AERITH),
-        _ACH_ID(SHINRA_ANNIHILATED),
-        _ACH_ID(END_OF_GAME),
-        _ACH_ID(GET_99999999_GILS),
-        _ACH_ID(GET_LEVEL_99_WITH_A_CHAR),
-        _ACH_ID(GET_FOURTH_CLOUD_LAST_LIMIT),
-        _ACH_ID(GET_FOURTH_BARRET_LAST_LIMIT),
-        _ACH_ID(GET_FOURTH_TIFA_LAST_LIMIT),
-        _ACH_ID(GET_FOURTH_AERITH_LAST_LIMIT),
-        _ACH_ID(GET_FOURTH_REDXIII_LAST_LIMIT),
-        _ACH_ID(GET_FOURTH_YUFFIE_LAST_LIMIT),
-        _ACH_ID(GET_FOURTH_CAITSITH_LAST_LIMIT),
-        _ACH_ID(GET_FOURTH_VINCENT_LAST_LIMIT),
-        _ACH_ID(GET_FOURTH_CID_LAST_LIMIT),
-        _ACH_ID(GET_MATERIA_KOTR),
-        _ACH_ID(LEVEL_UP_MATERIA_LVL5),
-        _ACH_ID(GET_MATERIA_BAHAMUT_ZERO),
-        _ACH_ID(BEAT_ULTIMATE_WEAPON),
-        _ACH_ID(BEAT_DIAMOND_WEAPON),
-        _ACH_ID(BEAT_RUBY_WEAPON),
-        _ACH_ID(BEAT_EMERALD_WEAPON),
-        _ACH_ID(GET_VINCENT_IN_TEAM),
-        _ACH_ID(GET_YUFFIE_IN_TEAM),
-        _ACH_ID(MASTER_ALL_MATERIA),
-        _ACH_ID(GET_GOLD_CHOCOBO),
-        _ACH_ID(WON_1ST_BATTLE),
-        _ACH_ID(USE_1ST_LIMIT_CLOUD),
-        _ACH_ID(USE_1ST_LIMIT_BARRET),
-        _ACH_ID(USE_1ST_LIMIT_TIFA),
-        _ACH_ID(USE_1ST_LIMIT_AERITH),
-        _ACH_ID(USE_1ST_LIMIT_REDXIII),
-        _ACH_ID(USE_1ST_LIMIT_YUFFIE),
-        _ACH_ID(USE_1ST_LIMIT_CAITSITH),
-        _ACH_ID(USE_1ST_LIMIT_VINCENT),
-        _ACH_ID(USE_1ST_LIMIT_CID),
-        _ACH_ID(FIGHT_IN_BATTLE_SQUARE),
+        _ACH_ID(DEATH_OF_AERITH),     _ACH_ID(SHINRA_ANNIHILATED), _ACH_ID(END_OF_GAME),        _ACH_ID(GET_99999999_GILS), _ACH_ID(GET_LEVEL_99_WITH_A_CHAR), _ACH_ID(GET_FOURTH_CLOUD_LAST_LIMIT), _ACH_ID(GET_FOURTH_BARRET_LAST_LIMIT), _ACH_ID(GET_FOURTH_TIFA_LAST_LIMIT), _ACH_ID(GET_FOURTH_AERITH_LAST_LIMIT), _ACH_ID(GET_FOURTH_REDXIII_LAST_LIMIT), _ACH_ID(GET_FOURTH_YUFFIE_LAST_LIMIT), _ACH_ID(GET_FOURTH_CAITSITH_LAST_LIMIT), _ACH_ID(GET_FOURTH_VINCENT_LAST_LIMIT), _ACH_ID(GET_FOURTH_CID_LAST_LIMIT), _ACH_ID(GET_MATERIA_KOTR),       _ACH_ID(LEVEL_UP_MATERIA_LVL5), _ACH_ID(GET_MATERIA_BAHAMUT_ZERO), _ACH_ID(BEAT_ULTIMATE_WEAPON), _ACH_ID(BEAT_DIAMOND_WEAPON), _ACH_ID(BEAT_RUBY_WEAPON), _ACH_ID(BEAT_EMERALD_WEAPON),
+        _ACH_ID(GET_VINCENT_IN_TEAM), _ACH_ID(GET_YUFFIE_IN_TEAM), _ACH_ID(MASTER_ALL_MATERIA), _ACH_ID(GET_GOLD_CHOCOBO),  _ACH_ID(WON_1ST_BATTLE),           _ACH_ID(USE_1ST_LIMIT_CLOUD),         _ACH_ID(USE_1ST_LIMIT_BARRET),         _ACH_ID(USE_1ST_LIMIT_TIFA),         _ACH_ID(USE_1ST_LIMIT_AERITH),         _ACH_ID(USE_1ST_LIMIT_REDXIII),         _ACH_ID(USE_1ST_LIMIT_YUFFIE),         _ACH_ID(USE_1ST_LIMIT_CAITSITH),         _ACH_ID(USE_1ST_LIMIT_VINCENT),         _ACH_ID(USE_1ST_LIMIT_CID),         _ACH_ID(FIGHT_IN_BATTLE_SQUARE),
     };
-    static inline const achievement ACHIEVEMENTS_RE_RELEASE[] = {
-        _ACH_ID(A01_FirstBattle),
-        _ACH_ID(A02_Braver),
-        _ACH_ID(A03_DonCorneo),
-        _ACH_ID(A04_Summon),
-        _ACH_ID(A05_MasterMateria),
-        _ACH_ID(A06_Bromance),
-        _ACH_ID(A07_Chocochampion),
-        _ACH_ID(A08_CorelAngel),
-        _ACH_ID(A09_Yuffie),
-        _ACH_ID(A10_Vincent),
-        _ACH_ID(A11_Leviathan),
-        _ACH_ID(A12_Bahamut),
-        _ACH_ID(A13_FaillureIsAnOption),
-        _ACH_ID(A14_MasterOfGil),
-        _ACH_ID(A15_TopLevel),
-        _ACH_ID(A16_BahamutZero),
-        _ACH_ID(A17_KnightsOfTheRound),
-        _ACH_ID(A18_Omnislash),
-        _ACH_ID(A19_Catastrophe),
-        _ACH_ID(A20_FinalHeaven),
-        _ACH_ID(A21_GreatGospel),
-        _ACH_ID(A22_CosmoMemory),
-        _ACH_ID(A23_AllCreation),
-        _ACH_ID(A24_Slots),
-        _ACH_ID(A25_Chaos),
-        _ACH_ID(A26_Highwind),
-        _ACH_ID(A27_FinishFF7),
-        _ACH_ID(A28_MasterInvocation),
-        _ACH_ID(A29_DiamondWeapon),
-        _ACH_ID(A30_RubyWeapon),
-        _ACH_ID(A31_EmeraldWeapon)
-    };
+    static inline const achievement ACHIEVEMENTS_RE_RELEASE[] = {_ACH_ID(A01_FirstBattle), _ACH_ID(A02_Braver), _ACH_ID(A03_DonCorneo), _ACH_ID(A04_Summon), _ACH_ID(A05_MasterMateria), _ACH_ID(A06_Bromance), _ACH_ID(A07_Chocochampion), _ACH_ID(A08_CorelAngel), _ACH_ID(A09_Yuffie), _ACH_ID(A10_Vincent), _ACH_ID(A11_Leviathan), _ACH_ID(A12_Bahamut), _ACH_ID(A13_FaillureIsAnOption), _ACH_ID(A14_MasterOfGil), _ACH_ID(A15_TopLevel), _ACH_ID(A16_BahamutZero), _ACH_ID(A17_KnightsOfTheRound), _ACH_ID(A18_Omnislash), _ACH_ID(A19_Catastrophe), _ACH_ID(A20_FinalHeaven), _ACH_ID(A21_GreatGospel), _ACH_ID(A22_CosmoMemory), _ACH_ID(A23_AllCreation), _ACH_ID(A24_Slots), _ACH_ID(A25_Chaos), _ACH_ID(A26_Highwind), _ACH_ID(A27_FinishFF7), _ACH_ID(A28_MasterInvocation), _ACH_ID(A29_DiamondWeapon), _ACH_ID(A30_RubyWeapon), _ACH_ID(A31_EmeraldWeapon)};
 
     static inline constexpr int N_CHARACTERS = 9;
     static inline constexpr int N_TYPE_MATERIA = 91;
@@ -295,7 +226,7 @@ private:
     bool isMateriaMastered(uint32_t materia);
     bool isAllMateriaMastered(const std::array<bool, N_TYPE_MATERIA> masteredMateriaList);
 
-public:
+  public:
     SteamAchievementsFF7(boolean isFF72013Release);
     ~SteamAchievementsFF7() = default;
 
@@ -330,7 +261,7 @@ public:
 
 class SteamAchievementsFF8
 {
-private:
+  private:
     enum Achievements
     {
         UNLOCK_GF_QUEZACOTL = 0,
@@ -418,131 +349,25 @@ private:
     };
 
     static inline const achievement ACHIEVEMENTS[] = {
-        _ACH_ID(UNLOCK_GF_QUEZACOTL),
-        _ACH_ID(UNLOCK_GF_SHIVA),
-        _ACH_ID(UNLOCK_GF_IFRIT),
-        _ACH_ID(UNLOCK_GF_SIREN),
-        _ACH_ID(UNLOCK_GF_BROTHERS),
-        _ACH_ID(UNLOCK_GF_DIABLOS),
-        _ACH_ID(UNLOCK_GF_CARBUNCLE),
-        _ACH_ID(UNLOCK_GF_LEVIATHAN),
-        _ACH_ID(UNLOCK_GF_PANDEMONA),
-        _ACH_ID(UNLOCK_GF_CERBERUS),
-        _ACH_ID(UNLOCK_GF_ALEXANDER),
-        _ACH_ID(UNLOCK_GF_DOOMTRAIN),
-        _ACH_ID(UNLOCK_GF_BAHAMUT),
-        _ACH_ID(UNLOCK_GF_CACTUAR),
-        _ACH_ID(UNLOCK_GF_TONBERRY),
-        _ACH_ID(UNLOCK_GF_EDEN),
-        _ACH_ID(DRAW_100_MAGIC),
-        _ACH_ID(REACH_SEED_RANK_A),
-        _ACH_ID(CARDGAME_FIRST_TIME),
-        _ACH_ID(COLLECT_ALL_CARDS),
-        _ACH_ID(UPGRADE_WEAPON_FIRST_TIME),
-        _ACH_ID(REACH_MAX_HP),
-        _ACH_ID(REACH_MAX_GIL),
-        _ACH_ID(REACH_LEVEL_100),
-        _ACH_ID(FINISH_THE_GAME),
-        _ACH_ID(FINISH_THE_GAME_INITIAL_LEVEL),
-        _ACH_ID(CAPTURE_CHOCOBO_FIRST_TIME),
-        _ACH_ID(FOUND_RAGNAROK),
-        _ACH_ID(SEED_FIRST_SALARY),
-        _ACH_ID(CHOCORPG_FIRST_ITEM),
-        _ACH_ID(BEAT_OMEGA_WEAPON),
-        _ACH_ID(OBEL_LAKE_SECRET),
-        _ACH_ID(UFO),
-        _ACH_ID(CARDS_CLUB_MASTER),
-        _ACH_ID(LOSER),
-        _ACH_ID(PROFESSIONAL),
-        _ACH_ID(TIMBER_MANIACS),
-        _ACH_ID(MAGAZINES_ADDICT),
-        _ACH_ID(MAGIC_FINDER),
-        _ACH_ID(CHICOBO_TOP_LEVEL),
-        _ACH_ID(BLUE_MAGICS),
-        _ACH_ID(DOG_TRICKS),
-        _ACH_ID(TOTAL_KILLS_100),
-        _ACH_ID(TOTAL_KILLS_1000),
-        _ACH_ID(TOTAL_KILLS_10000),
+        _ACH_ID(UNLOCK_GF_QUEZACOTL), _ACH_ID(UNLOCK_GF_SHIVA), _ACH_ID(UNLOCK_GF_IFRIT), _ACH_ID(UNLOCK_GF_SIREN), _ACH_ID(UNLOCK_GF_BROTHERS), _ACH_ID(UNLOCK_GF_DIABLOS), _ACH_ID(UNLOCK_GF_CARBUNCLE), _ACH_ID(UNLOCK_GF_LEVIATHAN), _ACH_ID(UNLOCK_GF_PANDEMONA), _ACH_ID(UNLOCK_GF_CERBERUS), _ACH_ID(UNLOCK_GF_ALEXANDER), _ACH_ID(UNLOCK_GF_DOOMTRAIN), _ACH_ID(UNLOCK_GF_BAHAMUT), _ACH_ID(UNLOCK_GF_CACTUAR), _ACH_ID(UNLOCK_GF_TONBERRY), _ACH_ID(UNLOCK_GF_EDEN), _ACH_ID(DRAW_100_MAGIC), _ACH_ID(REACH_SEED_RANK_A), _ACH_ID(CARDGAME_FIRST_TIME), _ACH_ID(COLLECT_ALL_CARDS), _ACH_ID(UPGRADE_WEAPON_FIRST_TIME), _ACH_ID(REACH_MAX_HP), _ACH_ID(REACH_MAX_GIL), _ACH_ID(REACH_LEVEL_100), _ACH_ID(FINISH_THE_GAME), _ACH_ID(FINISH_THE_GAME_INITIAL_LEVEL), _ACH_ID(CAPTURE_CHOCOBO_FIRST_TIME), _ACH_ID(FOUND_RAGNAROK), _ACH_ID(SEED_FIRST_SALARY), _ACH_ID(CHOCORPG_FIRST_ITEM), _ACH_ID(BEAT_OMEGA_WEAPON), _ACH_ID(OBEL_LAKE_SECRET), _ACH_ID(UFO),
+        _ACH_ID(CARDS_CLUB_MASTER),   _ACH_ID(LOSER),           _ACH_ID(PROFESSIONAL),    _ACH_ID(TIMBER_MANIACS),  _ACH_ID(MAGAZINES_ADDICT),   _ACH_ID(MAGIC_FINDER),      _ACH_ID(CHICOBO_TOP_LEVEL),   _ACH_ID(BLUE_MAGICS),         _ACH_ID(DOG_TRICKS),          _ACH_ID(TOTAL_KILLS_100),    _ACH_ID(TOTAL_KILLS_1000),    _ACH_ID(TOTAL_KILLS_10000),
     };
 
-    static inline const achievement ACHIEVEMENTS_REMASTERED[] = {
-        _ACH_ID(NEW_ACHIEVEMENT_1_0),
-        _ACH_ID(NEW_ACHIEVEMENT_1_1),
-        _ACH_ID(NEW_ACHIEVEMENT_1_2),
-        _ACH_ID(NEW_ACHIEVEMENT_1_3),
-        _ACH_ID(NEW_ACHIEVEMENT_1_5),
-        _ACH_ID(NEW_ACHIEVEMENT_1_6),
-        _ACH_ID(NEW_ACHIEVEMENT_1_7),
-        _ACH_ID(NEW_ACHIEVEMENT_1_8),
-        _ACH_ID(NEW_ACHIEVEMENT_1_9),
-        _ACH_ID(NEW_ACHIEVEMENT_1_10),
-        _ACH_ID(NEW_ACHIEVEMENT_1_11),
-        _ACH_ID(NEW_ACHIEVEMENT_1_12),
-        _ACH_ID(NEW_ACHIEVEMENT_1_13),
-        _ACH_ID(NEW_ACHIEVEMENT_1_14),
-        _ACH_ID(NEW_ACHIEVEMENT_1_15),
-        _ACH_ID(NEW_ACHIEVEMENT_1_16),
-        _ACH_ID(NEW_ACHIEVEMENT_1_17),
-        _ACH_ID(NEW_ACHIEVEMENT_1_18),
-        _ACH_ID(NEW_ACHIEVEMENT_1_19),
-        _ACH_ID(NEW_ACHIEVEMENT_1_20),
-        _ACH_ID(NEW_ACHIEVEMENT_1_21),
-        _ACH_ID(NEW_ACHIEVEMENT_1_22),
-        _ACH_ID(NEW_ACHIEVEMENT_1_23),
-        _ACH_ID(NEW_ACHIEVEMENT_1_24),
-        _ACH_ID(NEW_ACHIEVEMENT_1_25),
-        _ACH_ID(NEW_ACHIEVEMENT_1_26),
-        _ACH_ID(NEW_ACHIEVEMENT_1_27),
-        _ACH_ID(NEW_ACHIEVEMENT_1_28),
-        _ACH_ID(NEW_ACHIEVEMENT_1_29),
-        _ACH_ID(NEW_ACHIEVEMENT_1_30),
-        _ACH_ID(NEW_ACHIEVEMENT_1_31),
-        _ACH_ID(NEW_ACHIEVEMENT_2_0),
-        _ACH_ID(NEW_ACHIEVEMENT_2_1),
-        _ACH_ID(NEW_ACHIEVEMENT_2_2)
-    };
+    static inline const achievement ACHIEVEMENTS_REMASTERED[] = {_ACH_ID(NEW_ACHIEVEMENT_1_0),  _ACH_ID(NEW_ACHIEVEMENT_1_1),  _ACH_ID(NEW_ACHIEVEMENT_1_2),  _ACH_ID(NEW_ACHIEVEMENT_1_3),  _ACH_ID(NEW_ACHIEVEMENT_1_5),  _ACH_ID(NEW_ACHIEVEMENT_1_6),  _ACH_ID(NEW_ACHIEVEMENT_1_7),  _ACH_ID(NEW_ACHIEVEMENT_1_8),  _ACH_ID(NEW_ACHIEVEMENT_1_9),  _ACH_ID(NEW_ACHIEVEMENT_1_10), _ACH_ID(NEW_ACHIEVEMENT_1_11), _ACH_ID(NEW_ACHIEVEMENT_1_12), _ACH_ID(NEW_ACHIEVEMENT_1_13), _ACH_ID(NEW_ACHIEVEMENT_1_14), _ACH_ID(NEW_ACHIEVEMENT_1_15), _ACH_ID(NEW_ACHIEVEMENT_1_16), _ACH_ID(NEW_ACHIEVEMENT_1_17),
+                                                                 _ACH_ID(NEW_ACHIEVEMENT_1_18), _ACH_ID(NEW_ACHIEVEMENT_1_19), _ACH_ID(NEW_ACHIEVEMENT_1_20), _ACH_ID(NEW_ACHIEVEMENT_1_21), _ACH_ID(NEW_ACHIEVEMENT_1_22), _ACH_ID(NEW_ACHIEVEMENT_1_23), _ACH_ID(NEW_ACHIEVEMENT_1_24), _ACH_ID(NEW_ACHIEVEMENT_1_25), _ACH_ID(NEW_ACHIEVEMENT_1_26), _ACH_ID(NEW_ACHIEVEMENT_1_27), _ACH_ID(NEW_ACHIEVEMENT_1_28), _ACH_ID(NEW_ACHIEVEMENT_1_29), _ACH_ID(NEW_ACHIEVEMENT_1_30), _ACH_ID(NEW_ACHIEVEMENT_1_31), _ACH_ID(NEW_ACHIEVEMENT_2_0),  _ACH_ID(NEW_ACHIEVEMENT_2_1),  _ACH_ID(NEW_ACHIEVEMENT_2_2)};
 
-    struct upgrade_data {
+    struct upgrade_data
+    {
         byte char_id = 0xFF;
         byte prev_weapon_id = 0xFF;
     };
 
     static inline const Achievements gfIndexToAchMap[16] = {
-        UNLOCK_GF_QUEZACOTL,
-        UNLOCK_GF_SHIVA,
-        UNLOCK_GF_IFRIT,
-        UNLOCK_GF_SIREN,
-        UNLOCK_GF_BROTHERS,
-        UNLOCK_GF_DIABLOS,
-        UNLOCK_GF_CARBUNCLE,
-        UNLOCK_GF_LEVIATHAN,
-        UNLOCK_GF_PANDEMONA,
-        UNLOCK_GF_CERBERUS,
-        UNLOCK_GF_ALEXANDER,
-        UNLOCK_GF_DOOMTRAIN,
-        UNLOCK_GF_BAHAMUT,
-        UNLOCK_GF_CACTUAR,
-        UNLOCK_GF_TONBERRY,
-        UNLOCK_GF_EDEN,
+        UNLOCK_GF_QUEZACOTL, UNLOCK_GF_SHIVA, UNLOCK_GF_IFRIT, UNLOCK_GF_SIREN, UNLOCK_GF_BROTHERS, UNLOCK_GF_DIABLOS, UNLOCK_GF_CARBUNCLE, UNLOCK_GF_LEVIATHAN, UNLOCK_GF_PANDEMONA, UNLOCK_GF_CERBERUS, UNLOCK_GF_ALEXANDER, UNLOCK_GF_DOOMTRAIN, UNLOCK_GF_BAHAMUT, UNLOCK_GF_CACTUAR, UNLOCK_GF_TONBERRY, UNLOCK_GF_EDEN,
     };
 
     static inline const AchievementsRemastered gfIndexToAchRemasteredMap[16] = {
-        NEW_ACHIEVEMENT_1_0,
-        NEW_ACHIEVEMENT_1_1,
-        NEW_ACHIEVEMENT_1_2,
-        NEW_ACHIEVEMENT_1_3,
-        NEW_ACHIEVEMENT_1_8,
-        NEW_ACHIEVEMENT_1_30,
-        NEW_ACHIEVEMENT_1_17,
-        NEW_ACHIEVEMENT_1_14,
-        NEW_ACHIEVEMENT_1_15,
-        NEW_ACHIEVEMENT_1_16,
-        NEW_ACHIEVEMENT_1_13,
-        NEW_ACHIEVEMENT_1_18,
-        NEW_ACHIEVEMENT_1_31,
-        NEW_ACHIEVEMENT_1_26,
-        NEW_ACHIEVEMENT_1_27,
-        NEW_ACHIEVEMENT_1_28,
+        NEW_ACHIEVEMENT_1_0, NEW_ACHIEVEMENT_1_1, NEW_ACHIEVEMENT_1_2, NEW_ACHIEVEMENT_1_3, NEW_ACHIEVEMENT_1_8, NEW_ACHIEVEMENT_1_30, NEW_ACHIEVEMENT_1_17, NEW_ACHIEVEMENT_1_14, NEW_ACHIEVEMENT_1_15, NEW_ACHIEVEMENT_1_16, NEW_ACHIEVEMENT_1_13, NEW_ACHIEVEMENT_1_18, NEW_ACHIEVEMENT_1_31, NEW_ACHIEVEMENT_1_26, NEW_ACHIEVEMENT_1_27, NEW_ACHIEVEMENT_1_28,
     };
 
     static inline constexpr int FF8_N_ACHIEVEMENTS = 45;
@@ -572,7 +397,7 @@ private:
     int getAchievementIdByVersion(Achievements ach_original, AchievementsRemastered ach_remastered);
     void increaseUserStatAndTryUnlockAchievement(int achId, const std::string &statName, int achValue, bool showAchievementProgress = false);
 
-public:
+  public:
     static inline constexpr byte DIABLOS_GF_IDX = 5;
     static inline constexpr WORD DIABLOS_ENCOUNTER_ID = 811;
 
@@ -614,7 +439,6 @@ public:
     void unlockMagazineAddictAchievement(std::span<const savemap_ff8_item> items);
 
     static bool itemIsMagazine(uint8_t item_id);
-
 };
 
 // Global, access to Achievements object

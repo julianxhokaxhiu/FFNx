@@ -28,207 +28,247 @@
 #include "../log.h"
 #include "remaster.h"
 
-struct FF8Bink {
-	pak_pointers_entry entry;
-	FILE *f;
+struct FF8Bink
+{
+    pak_pointers_entry entry;
+    FILE *f;
 };
 
 void *ff8_bink_open(uint8_t disc, uint32_t movie)
 {
-	const pak_pointers_entry &pak_pointer = ff8_externals.disc_pak_offsets[disc][movie];
-	char filename[MAX_PATH] = {};
-	if (disc >= 4) {
-		strcpy(filename, ff8_externals.app_path);
-		filename[strlen(filename)] = '\\';
-	} else {
-		strcpy(filename, ff8_externals.data_drive_path);
-	}
-	strcat(filename, ff8_externals.disc_pak_filenames[disc]);
+    const pak_pointers_entry &pak_pointer = ff8_externals.disc_pak_offsets[disc][movie];
+    char filename[MAX_PATH] = {};
+    if (disc >= 4)
+    {
+        strcpy(filename, ff8_externals.app_path);
+        filename[strlen(filename)] = '\\';
+    }
+    else
+    {
+        strcpy(filename, ff8_externals.data_drive_path);
+    }
+    strcat(filename, ff8_externals.disc_pak_filenames[disc]);
 
-	if (trace_all || trace_files || trace_movies) ffnx_trace("%s: disc=%d movie=%d filename=%s\n", __func__, disc, movie, filename);
+    if (trace_all || trace_files || trace_movies)
+        ffnx_trace("%s: disc=%d movie=%d filename=%s\n", __func__, disc, movie, filename);
 
-	FF8Bink *ret = new FF8Bink();
+    FF8Bink *ret = new FF8Bink();
 
-	ret->entry = pak_pointer;
-	ret->f = fopen(filename, "rb");
+    ret->entry = pak_pointer;
+    ret->f = fopen(filename, "rb");
 
-	if (ret->f == nullptr) {
-		delete ret;
+    if (ret->f == nullptr)
+    {
+        delete ret;
 
-		return nullptr;
-	}
+        return nullptr;
+    }
 
-	if (fseek(ret->f, pak_pointer.bik_offset, SEEK_SET) != 0) {
-		fclose(ret->f);
+    if (fseek(ret->f, pak_pointer.bik_offset, SEEK_SET) != 0)
+    {
+        fclose(ret->f);
 
-		delete ret;
+        delete ret;
 
-		return nullptr;
-	}
+        return nullptr;
+    }
 
-	return ret;
+    return ret;
 }
 
 int ff8_bink_read(void *opaque, uint8_t *buf, int buf_size)
 {
-	if (trace_all || trace_movies) ffnx_trace("%s: buf_size=%d\n", __func__, buf_size);
+    if (trace_all || trace_movies)
+        ffnx_trace("%s: buf_size=%d\n", __func__, buf_size);
 
-	if (opaque == nullptr) {
-		return AVERROR_EXIT;
-	}
+    if (opaque == nullptr)
+    {
+        return AVERROR_EXIT;
+    }
 
-	if (buf_size <= 0) {
-		return AVERROR_BUFFER_TOO_SMALL;
-	}
+    if (buf_size <= 0)
+    {
+        return AVERROR_BUFFER_TOO_SMALL;
+    }
 
-	FF8Bink *f = (FF8Bink *)opaque;
-	long pos = ftell(f->f);
+    FF8Bink *f = (FF8Bink *)opaque;
+    long pos = ftell(f->f);
 
-	if (pos >= f->entry.bik_lowres_offset) {
-		return AVERROR_EOF;
-	}
+    if (pos >= f->entry.bik_lowres_offset)
+    {
+        return AVERROR_EOF;
+    }
 
-	int max_size = int(f->entry.bik_lowres_offset - pos);
-	int r = fread(buf, 1, std::min(buf_size, max_size), f->f);
+    int max_size = int(f->entry.bik_lowres_offset - pos);
+    int r = fread(buf, 1, std::min(buf_size, max_size), f->f);
 
-	if (r < 0) {
-		return AVERROR_EXIT;
-	}
+    if (r < 0)
+    {
+        return AVERROR_EXIT;
+    }
 
-	if (r == 0 && ftell(f->f) >= f->entry.bik_lowres_offset) {
-		return AVERROR_EOF;
-	}
+    if (r == 0 && ftell(f->f) >= f->entry.bik_lowres_offset)
+    {
+        return AVERROR_EOF;
+    }
 
-	return r;
+    return r;
 }
 
 int64_t ff8_bink_seek(void *opaque, int64_t offset, int whence)
 {
-	if (trace_all || trace_movies) ffnx_trace("%s: offset=%d, whence=%X\n", __func__, offset, whence);
+    if (trace_all || trace_movies)
+        ffnx_trace("%s: offset=%d, whence=%X\n", __func__, offset, whence);
 
-	if (opaque == nullptr) {
-		return AVERROR_EXIT;
-	}
+    if (opaque == nullptr)
+    {
+        return AVERROR_EXIT;
+    }
 
-	FF8Bink *f = (FF8Bink *)opaque;
+    FF8Bink *f = (FF8Bink *)opaque;
 
-	if (whence == AVSEEK_SIZE) {
-		return f->entry.bik_lowres_offset - f->entry.bik_offset;
-	}
+    if (whence == AVSEEK_SIZE)
+    {
+        return f->entry.bik_lowres_offset - f->entry.bik_offset;
+    }
 
-	whence &= 0xFFFF;
+    whence &= 0xFFFF;
 
-	if (whence == SEEK_END) {
-		offset = f->entry.bik_lowres_offset + offset;
-		whence = SEEK_SET;
-	} else if (whence == SEEK_SET) {
-		offset = f->entry.bik_offset + offset;
-	} else if (whence != SEEK_CUR) {
-		ffnx_error("%s: seek type not supported: %d\n", __func__, whence);
+    if (whence == SEEK_END)
+    {
+        offset = f->entry.bik_lowres_offset + offset;
+        whence = SEEK_SET;
+    }
+    else if (whence == SEEK_SET)
+    {
+        offset = f->entry.bik_offset + offset;
+    }
+    else if (whence != SEEK_CUR)
+    {
+        ffnx_error("%s: seek type not supported: %d\n", __func__, whence);
 
-		return AVERROR_EXIT;
-	}
+        return AVERROR_EXIT;
+    }
 
-	if (fseek(f->f, offset, whence) != 0) {
-		return AVERROR_EXIT;
-	}
+    if (fseek(f->f, offset, whence) != 0)
+    {
+        return AVERROR_EXIT;
+    }
 
-	return ftell(f->f);
+    return ftell(f->f);
 }
 
 void ff8_bink_close(void *opaque)
 {
-	if (trace_all || trace_files || trace_movies) ffnx_trace("%s\n", __func__);
+    if (trace_all || trace_files || trace_movies)
+        ffnx_trace("%s\n", __func__);
 
-	if (opaque == nullptr) {
-		return;
-	}
+    if (opaque == nullptr)
+    {
+        return;
+    }
 
-	FF8Bink *f = (FF8Bink *)opaque;
+    FF8Bink *f = (FF8Bink *)opaque;
 
-	fclose(f->f);
+    fclose(f->f);
 
-	delete f;
+    delete f;
 }
 
 void *ff8_zzz_open(const char *fmv_name)
 {
-	return g_FF8ZzzArchiveOther.openFile(fmv_name);
+    return g_FF8ZzzArchiveOther.openFile(fmv_name);
 }
 
 int ff8_zzz_read(void *opaque, uint8_t *buf, int buf_size)
 {
-	if (trace_all) ffnx_trace("%s: buf_size=%d\n", __func__, buf_size);
+    if (trace_all)
+        ffnx_trace("%s: buf_size=%d\n", __func__, buf_size);
 
-	if (opaque == nullptr) {
-		return AVERROR_EXIT;
-	}
+    if (opaque == nullptr)
+    {
+        return AVERROR_EXIT;
+    }
 
-	if (buf_size == 0) {
-		return 0;
-	}
+    if (buf_size == 0)
+    {
+        return 0;
+    }
 
-	Zzz::File *f = (Zzz::File *)opaque;
+    Zzz::File *f = (Zzz::File *)opaque;
 
-	int r = f->read(buf, buf_size);
+    int r = f->read(buf, buf_size);
 
-	if (r == 0) {
-		return AVERROR_EOF;
-	}
+    if (r == 0)
+    {
+        return AVERROR_EOF;
+    }
 
-	if (r < 0) {
-		return AVERROR_EXIT;
-	}
+    if (r < 0)
+    {
+        return AVERROR_EXIT;
+    }
 
-	return r;
+    return r;
 }
 
 int64_t ff8_zzz_seek(void *opaque, int64_t offset, int whence)
 {
-	if (trace_all) ffnx_trace("%s: offset=%d, whence=%d\n", __func__, offset, whence);
+    if (trace_all)
+        ffnx_trace("%s: offset=%d, whence=%d\n", __func__, offset, whence);
 
-	if (opaque == nullptr) {
-		return AVERROR_EXIT;
-	}
+    if (opaque == nullptr)
+    {
+        return AVERROR_EXIT;
+    }
 
-	Zzz::File *f = (Zzz::File *)opaque;
+    Zzz::File *f = (Zzz::File *)opaque;
 
-	if (whence == AVSEEK_SIZE) {
-		return int64_t(f->size());
-	}
+    if (whence == AVSEEK_SIZE)
+    {
+        return int64_t(f->size());
+    }
 
-	whence &= 0xFFFF;
+    whence &= 0xFFFF;
 
-	bx::Whence::Enum zzzWhence = bx::Whence::Begin;
+    bx::Whence::Enum zzzWhence = bx::Whence::Begin;
 
-	if (whence == SEEK_END) {
-		zzzWhence = bx::Whence::End;
-	} else if (whence == SEEK_CUR) {
-		zzzWhence = bx::Whence::Current;
-	} else if (whence != SEEK_SET) {
-		ffnx_error("%s: seek type not supported: %d\n", __func__, whence);
+    if (whence == SEEK_END)
+    {
+        zzzWhence = bx::Whence::End;
+    }
+    else if (whence == SEEK_CUR)
+    {
+        zzzWhence = bx::Whence::Current;
+    }
+    else if (whence != SEEK_SET)
+    {
+        ffnx_error("%s: seek type not supported: %d\n", __func__, whence);
 
-		return AVERROR_EXIT;
-	}
+        return AVERROR_EXIT;
+    }
 
-	int64_t pos = f->seek(offset, zzzWhence);
+    int64_t pos = f->seek(offset, zzzWhence);
 
-	if (pos < 0) {
-		return AVERROR_EXIT;
-	}
+    if (pos < 0)
+    {
+        return AVERROR_EXIT;
+    }
 
-	return pos;
+    return pos;
 }
 
 void ff8_zzz_close(void *opaque)
 {
-	if (trace_all || trace_files) ffnx_trace("%s\n", __func__);
+    if (trace_all || trace_files)
+        ffnx_trace("%s\n", __func__);
 
-	if (opaque == nullptr) {
-		return;
-	}
+    if (opaque == nullptr)
+    {
+        return;
+    }
 
-	Zzz::File *f = (Zzz::File *)opaque;
+    Zzz::File *f = (Zzz::File *)opaque;
 
-	Zzz::closeFile(f);
+    Zzz::closeFile(f);
 }

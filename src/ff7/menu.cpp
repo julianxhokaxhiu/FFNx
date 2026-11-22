@@ -29,13 +29,15 @@ void ff7_menu_battle_end_sub_6C9543()
 {
     ((void (*)())ff7_externals.menu_battle_end_sub_6C9543)();
 
-    if(*ff7_externals.menu_battle_end_mode == 0){
+    if (*ff7_externals.menu_battle_end_mode == 0)
+    {
         if (trace_all || trace_achievement)
             ffnx_trace("%s - trying to unlock achievement for battle won and weapons\n", __func__);
         g_FF7SteamAchievements->unlockBattleWonAchievement(*ff7_externals.battle_formation_id);
     }
 
-    if(*ff7_externals.menu_battle_end_mode == 1){
+    if (*ff7_externals.menu_battle_end_mode == 1)
+    {
         if (trace_all || trace_achievement)
             ffnx_trace("%s - trying to unlock achievement for first limit, cait sith, character level, and master materia\n", __func__);
 
@@ -43,7 +45,8 @@ void ff7_menu_battle_end_sub_6C9543()
         g_FF7SteamAchievements->unlockCharacterLevelAchievement(ff7_externals.savemap->chars);
         g_FF7SteamAchievements->unlockMasterMateriaAchievement(ff7_externals.savemap->chars);
     }
-    if(*ff7_externals.menu_battle_end_mode == 3){
+    if (*ff7_externals.menu_battle_end_mode == 3)
+    {
         if (trace_all || trace_achievement)
             ffnx_trace("%s - trying to unlock achievement for gil\n", __func__);
         g_FF7SteamAchievements->unlockGilAchievement(ff7_externals.savemap->gil);
@@ -77,7 +80,7 @@ void ff7_opcode_increase_gil_call(int gilObtained)
 
 byte ff7_menu_sub_6CBCF3(uint32_t materia_id)
 {
-    byte returnValue = ((byte(*)(uint32_t))ff7_externals.menu_sub_6CBCF3)(materia_id);
+    byte returnValue = ((byte (*)(uint32_t))ff7_externals.menu_sub_6CBCF3)(materia_id);
 
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock achievement for getting materia\n", __func__);
@@ -103,15 +106,14 @@ uint32_t ff7_menu_decrease_item_quantity(uint32_t item_used)
     uint32_t prevIndex;
     uint32_t item_quantity;
     WORD local_c;
-    int index=0;
+    int index = 0;
 
     WORD *party_item_slots = ff7_externals.savemap->items;
     item_id = item_used & 0x1FF;
     item_quantity = (item_used & 0xFFFF) >> 9;
     prevIndex = item_id;
 
-    while (!(((WORD)party_item_slots[index] != -1) &&
-            (prevIndex = (WORD)party_item_slots[index] & 0x1ff, item_id == prevIndex)))
+    while (!(((WORD)party_item_slots[index] != -1) && (prevIndex = (WORD)party_item_slots[index] & 0x1ff, item_id == prevIndex)))
     {
         if (index >= 320)
             return prevIndex & 0xFFFF0000 | 0xFFFF;
@@ -135,28 +137,33 @@ uint32_t ff7_menu_decrease_item_quantity(uint32_t item_used)
     return item_id & 0xFFFF0000 | (uint32_t)local_c;
 }
 
-void dispatchAttackCommand(){
-    char* character = (char*)ff7_externals.menu_objects + 0x2CBC; //Character attacking
-    char* attack = (char*)ff7_externals.gamepad_status + 0xCA8 + (*character * 6); //Their equipped attack
+void dispatchAttackCommand()
+{
+    char *character = (char *)ff7_externals.menu_objects + 0x2CBC;                  // Character attacking
+    char *attack = (char *)ff7_externals.gamepad_status + 0xCA8 + (*character * 6); // Their equipped attack
     *ff7_externals.issued_command_id = *attack;
     *ff7_externals.issued_action_target_type = 0;
     *ff7_externals.issued_action_target_index = 4;
-    ((void(*)())ff7_externals.dispatch_chosen_battle_action)();
+    ((void (*)())ff7_externals.dispatch_chosen_battle_action)();
 }
 
-void ff7_battle_menu_sub_6DB0EE(){
-    ((void(*)())ff7_externals.battle_sub_6DB0EE)();
-    if(gamehacks.isAutoAttack() && (*ff7_externals.battle_menu_state >= 0 && *ff7_externals.battle_menu_state < 19)){
-        dispatchAttackCommand();
-    }
-}
-
-void ff7_set_battle_menu_state_data_at_full_atb(short param_1, short param_2, short menu_state){
-    if(gamehacks.isAutoAttack())
+void ff7_battle_menu_sub_6DB0EE()
+{
+    ((void (*)())ff7_externals.battle_sub_6DB0EE)();
+    if (gamehacks.isAutoAttack() && (*ff7_externals.battle_menu_state >= 0 && *ff7_externals.battle_menu_state < 19))
     {
         dispatchAttackCommand();
     }
-    else{
-        ((void(*)(short, short, short))ff7_externals.set_battle_menu_state_data)(param_1, param_2, menu_state);
+}
+
+void ff7_set_battle_menu_state_data_at_full_atb(short param_1, short param_2, short menu_state)
+{
+    if (gamehacks.isAutoAttack())
+    {
+        dispatchAttackCommand();
+    }
+    else
+    {
+        ((void (*)(short, short, short))ff7_externals.set_battle_menu_state_data)(param_1, param_2, menu_state);
     }
 }

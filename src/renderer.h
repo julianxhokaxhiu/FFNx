@@ -45,18 +45,20 @@
 #include <bimg/encode.h>
 #include <bgfx/bgfx.h>
 
-#define FFNX_RENDERER_INVALID_HANDLE { 0 }
+#define FFNX_RENDERER_INVALID_HANDLE {0}
 
 // bgfx stores a uniform array's element count in 8 bits, so 255 matrices is the largest array it supports.
 // Keep in sync with misc/FFNx.common.sh
 #define MAX_BONE_MATRICES 255
 
-enum RendererInterpolationQualifier {
+enum RendererInterpolationQualifier
+{
     FLAT = 0,
     SMOOTH
 };
 
-enum RendererBlendMode {
+enum RendererBlendMode
+{
     BLEND_AVG = 0,
     BLEND_ADD,
     BLEND_SUB,
@@ -65,13 +67,15 @@ enum RendererBlendMode {
     BLEND_DISABLED = 999
 };
 
-enum RendererCullMode {
+enum RendererCullMode
+{
     DISABLED = 0,
     FRONT,
     BACK
 };
 
-enum RendererAlphaFunc {
+enum RendererAlphaFunc
+{
     NEVER = 0,
     LESS,
     EQUAL,
@@ -155,26 +159,30 @@ enum RendererUniform
     COUNT,
 };
 
-enum ColorMatrixType{
+enum ColorMatrixType
+{
     COLORMATRIX_BT601 = 0,
     COLORMATRIX_BT709 = 1,
     COLORMATRIX_BINK = 2
 };
 
-enum ColorGamutType{
+enum ColorGamutType
+{
     COLORGAMUT_SRGB = 0,
     COLORGAMUT_NTSCJ = 1,
     COLORGAMUT_SMPTEC = 2,
     COLORGAMUT_RAWP22 = 3
 };
 
-enum InverseGammaFunctionType{
+enum InverseGammaFunctionType
+{
     GAMMAFUNCTION_SRGB = 0,
     GAMMAFUNCTION_SMPTE170M = 1,
     GAMMAFUNCTION_BT1886_APPX1 = 2
 };
 
-enum ChromaLocationType{
+enum ChromaLocationType
+{
     CHROMALOC_TOPLEFT = 0,
     CHROMALOC_TOP = 1,
     CHROMALOC_LEFT = 2,
@@ -183,59 +191,62 @@ enum ChromaLocationType{
     CHROMALOC_BOTTOM = 5
 };
 
-namespace RendererTextureSlot {
-    enum RendererTextureSlot
-    {
-        TEX_Y = 0,
-        TEX_U,
-        TEX_V,
-        TEX_S,
-        TEX_D,
-        TEX_NML,
-        TEX_PBR,
-        TEX_IBL_SPEC,
-        TEX_IBL_DIFF,
-        TEX_BRDF,
-        TEX_G_LUT,
-        COUNT
-    };
+namespace RendererTextureSlot
+{
+enum RendererTextureSlot
+{
+    TEX_Y = 0,
+    TEX_U,
+    TEX_V,
+    TEX_S,
+    TEX_D,
+    TEX_NML,
+    TEX_PBR,
+    TEX_IBL_SPEC,
+    TEX_IBL_DIFF,
+    TEX_BRDF,
+    TEX_G_LUT,
+    COUNT
 };
+}; // namespace RendererTextureSlot
 
-enum GamutLUTIndexType{
+enum GamutLUTIndexType
+{
     INDEX_LUT_NTSCJ_TO_SRGB,
     INDEX_LUT_INVERSE_NTSCJ_TO_SRGB,
     INDEX_LUT_INVERSE_NTSCJ_TO_SMPTEC
 };
 
-static void RendererReleaseImageContainer(void* _ptr, void* _userData)
+static void RendererReleaseImageContainer(void *_ptr, void *_userData)
 {
     BX_UNUSED(_ptr);
-    bimg::ImageContainer* imageContainer = (bimg::ImageContainer*)_userData;
+    bimg::ImageContainer *imageContainer = (bimg::ImageContainer *)_userData;
     bimg::imageFree(imageContainer);
 }
 
-static void RendererReleaseData(void* _ptr, void* _userData)
+static void RendererReleaseData(void *_ptr, void *_userData)
 {
     BX_UNUSED(_ptr);
     driver_free(_userData);
 }
 
-struct RendererCallbacks : public bgfx::CallbackI {
+struct RendererCallbacks : public bgfx::CallbackI
+{
     std::string cachePath = R"(shaders\cache)";
 
     virtual ~RendererCallbacks() {};
-    virtual void fatal(const char* _filePath, uint16_t _line, bgfx::Fatal::Enum _code, const char* _str) override;
-    virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) override;
-    virtual void profilerBegin(const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line) override {};
-    virtual void profilerBeginLiteral(const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line) override {};
+    virtual void fatal(const char *_filePath, uint16_t _line, bgfx::Fatal::Enum _code, const char *_str) override;
+    virtual void traceVargs(const char *_filePath, uint16_t _line, const char *_format, va_list _argList) override;
+    virtual void profilerBegin(const char *_name, uint32_t _abgr, const char *_filePath, uint16_t _line) override {};
+    virtual void profilerBeginLiteral(const char *_name, uint32_t _abgr, const char *_filePath, uint16_t _line) override {};
     virtual void profilerEnd() override {};
     virtual uint32_t cacheReadSize(uint64_t _id) override;
-    virtual bool cacheRead(uint64_t _id, void* _data, uint32_t _size) override;
-    virtual void cacheWrite(uint64_t _id, const void* _data, uint32_t _size) override;
-    virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx::TextureFormat::Enum _format, const void* _data, uint32_t _size, bool _yflip) override {};
+    virtual bool cacheRead(uint64_t _id, void *_data, uint32_t _size) override;
+    virtual void cacheWrite(uint64_t _id, const void *_data, uint32_t _size) override;
+    virtual void screenShot(const char *_filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx::TextureFormat::Enum _format, const void *_data, uint32_t _size, bool _yflip) override {};
     virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx::TextureFormat::Enum _format, bool _yflip) override {};
     virtual void captureEnd() override {};
-    virtual void captureFrame(const void* _data, uint32_t _size) override {};
+    virtual void captureFrame(const void *_data, uint32_t _size) override {};
 };
 
 // Vertex data structure
@@ -255,12 +266,14 @@ struct Vertex
     uint8_t bone_indices[4];
 };
 
-class Renderer {
-private:
+class Renderer
+{
+  private:
     friend class Lighting;
 
     // Current renderer view
-    enum RendererProgram {
+    enum RendererProgram
+    {
         FLAT = 0,
         SMOOTH,
         SHADOW_MAP,
@@ -336,18 +349,18 @@ private:
         std::array<float, 4> TimeColor;
         std::array<float, 4> TimeData;
 
-        float bone_matrices[16*MAX_BONE_MATRICES];
+        float bone_matrices[16 * MAX_BONE_MATRICES];
         uint16_t bone_matrix_count = 1;
 
         std::array<float, 4> gameLightingFlags;
-        float gameGlobalLightColor[4] = { 0.0, 0.0, 0.0, 0.0 };
-        float gameLightDir1[4] = { 0.0, 0.0, 0.0, 0.0 };
-        float gameLightColor1[4] = { 0.0, 0.0, 0.0, 0.0 };
-        float gameLightDir2[4] = { 0.0, 0.0, 0.0, 0.0 };
-        float gameLightColor2[4] = { 0.0, 0.0, 0.0, 0.0 };
-        float gameLightDir3[4] = { 0.0, 0.0, 0.0, 0.0 };
-        float gameLightColor3[4] = { 0.0, 0.0, 0.0, 0.0 };
-        float gameScriptedLightColor[4] = { 0.0, 0.0, 0.0, 0.0 };
+        float gameGlobalLightColor[4] = {0.0, 0.0, 0.0, 0.0};
+        float gameLightDir1[4] = {0.0, 0.0, 0.0, 0.0};
+        float gameLightColor1[4] = {0.0, 0.0, 0.0, 0.0};
+        float gameLightDir2[4] = {0.0, 0.0, 0.0, 0.0};
+        float gameLightColor2[4] = {0.0, 0.0, 0.0, 0.0};
+        float gameLightDir3[4] = {0.0, 0.0, 0.0, 0.0};
+        float gameLightColor3[4] = {0.0, 0.0, 0.0, 0.0};
+        float gameScriptedLightColor[4] = {0.0, 0.0, 0.0, 0.0};
         std::array<float, 4> kawaiColorOffset{};
 
         float d3dViewMatrix[16];
@@ -411,7 +424,7 @@ private:
 
     std::vector<bgfx::ProgramHandle> backendProgramHandles = std::vector<bgfx::ProgramHandle>(RendererProgram::COUNT, BGFX_INVALID_HANDLE);
 
-    std::vector<bgfx::TextureHandle> backendFrameBufferRT = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
+    std::vector<bgfx::TextureHandle> backendFrameBufferRT = {BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE};
     bgfx::FrameBufferHandle backendFrameBuffer = BGFX_INVALID_HANDLE;
     std::vector<DownsampleTarget> downsampleTargets;
 
@@ -466,7 +479,7 @@ private:
     uint32_t createBGRA(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
     bgfx::RendererType::Enum getUserChosenRenderer();
     void updateRendererShaderPaths();
-    bgfx::ShaderHandle getShader(const char* filePath);
+    bgfx::ShaderHandle getShader(const char *filePath);
     RendererProgram getSkinnedProgram(RendererProgram program);
 
     bgfx::UniformHandle createUniform(std::string uniformName, bgfx::UniformType::Enum uniformType, uint16_t arraySize = 1);
@@ -478,7 +491,7 @@ private:
 
     void renderFrame();
 
-    void printMatrix(const char* name, float* mat);
+    void printMatrix(const char *name, float *mat);
 
     void recalcInternals();
     void calcBackendProjMatrix();
@@ -495,7 +508,7 @@ private:
 
     bgfx::Init bgfxInit;
 
-public:
+  public:
     std::string currentRenderer;
 
     // ---
@@ -504,8 +517,8 @@ public:
     void reset();
     void prepareFFNxLogo();
     void prepareShadowMap();
-    void prepareSpecularIbl(char* fullpath = nullptr);
-    void prepareDiffuseIbl(char* fullpath = nullptr);
+    void prepareSpecularIbl(char *fullpath = nullptr);
+    void prepareDiffuseIbl(char *fullpath = nullptr);
     void prepareEnvBrdf();
     void prepareGamutLUTs();
     void LoadGamutLUT(GamutLUTIndexType whichLUT);
@@ -521,19 +534,19 @@ public:
     void drawFFNxLogo(float fade);
     void show();
 
-    void printText(uint16_t x, uint16_t y, uint32_t attr, const char* text);
+    void printText(uint16_t x, uint16_t y, uint32_t attr, const char *text);
     void toggleCaptureFrame();
 
     // ---
 
-    const bgfx::Caps* getCaps();
-    const bgfx::Stats* getStats();
-    const bgfx::VertexLayout& GetVertexLayout();
+    const bgfx::Caps *getCaps();
+    const bgfx::Stats *getStats();
+    const bgfx::VertexLayout &GetVertexLayout();
 
-    void bindVertexBuffer(struct nvertex* inVertex, vector3<float>* normals, uint32_t inCount);
-    void bindIndexBuffer(WORD* inIndex, uint32_t inCount);
+    void bindVertexBuffer(struct nvertex *inVertex, vector3<float> *normals, uint32_t inCount);
+    void bindIndexBuffer(WORD *inIndex, uint32_t inCount);
 
-    bgfx::UniformHandle setUniform(RendererUniform uniform, const void* uniformValue, int arraySize = 1);
+    bgfx::UniformHandle setUniform(RendererUniform uniform, const void *uniformValue, int arraySize = 1);
     void setCommonUniforms();
     void setTextureFlagsUniforms();
     void setLightingUniforms();
@@ -543,14 +556,14 @@ public:
     void setClearFlags(bool doClearColor = false, bool doClearDepth = false);
     void setBackgroundColor(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 0.0f);
 
-    uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool isSrgb = true, bool copyData = true, const char* debugName = nullptr, bool worldTerrainMipmaps = false);
-    uint32_t createTexture(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = true);
-    bimg::ImageContainer* createImageContainer(const char* filename, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::Count);
-    bimg::ImageContainer* createImageContainer(cmrc::file* file, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::Count);
-    bgfx::TextureHandle createTextureHandle(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = true);
-    bgfx::TextureHandle createTextureHandle(cmrc::file* file, char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = true);
-    uint32_t createTextureLibPng(char* filename, uint32_t* width, uint32_t* height, bool isSrgb = true);
-    bool saveTexture(const char* filename, uint32_t width, uint32_t height, const void* data);
+    uint32_t createTexture(uint8_t *data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool isSrgb = true, bool copyData = true, const char *debugName = nullptr, bool worldTerrainMipmaps = false);
+    uint32_t createTexture(char *filename, uint32_t *width, uint32_t *height, uint32_t *mipCount, bool isSrgb = true);
+    bimg::ImageContainer *createImageContainer(const char *filename, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::Count);
+    bimg::ImageContainer *createImageContainer(cmrc::file *file, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::Count);
+    bgfx::TextureHandle createTextureHandle(char *filename, uint32_t *width, uint32_t *height, uint32_t *mipCount, bool isSrgb = true);
+    bgfx::TextureHandle createTextureHandle(cmrc::file *file, char *filename, uint32_t *width, uint32_t *height, uint32_t *mipCount, bool isSrgb = true);
+    uint32_t createTextureLibPng(char *filename, uint32_t *width, uint32_t *height, bool isSrgb = true);
+    bool saveTexture(const char *filename, uint32_t width, uint32_t height, const void *data);
     void deleteTexture(uint16_t texId);
     void useTexture(uint16_t texId, uint32_t slot = 0);
     uint32_t createBlitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
@@ -596,16 +609,16 @@ public:
     void setWireframeMode(bool flag = false);
 
     // Viewport
-    void setViewMatrix(struct matrix* matrix);
-    float* getViewMatrix();
-    float* getInvViewMatrix();
+    void setViewMatrix(struct matrix *matrix);
+    float *getViewMatrix();
+    float *getInvViewMatrix();
     bool isViewMatrixSet();
     void resetViewMatrixFlag();
-    void setWorldViewMatrix(struct matrix* matrix, bool calculateNormalMatrix = true);
-    float* getWorldViewMatrix();
-    float* getNormalMatrix();
-    void setD3DViweport(struct matrix* matrix);
-    void setD3DProjection(struct matrix* matrix);
+    void setWorldViewMatrix(struct matrix *matrix, bool calculateNormalMatrix = true);
+    float *getWorldViewMatrix();
+    float *getNormalMatrix();
+    void setD3DViweport(struct matrix *matrix);
+    void setD3DProjection(struct matrix *matrix);
 
     // Internal coord calculation
     uint16_t getInternalCoordX(uint16_t inX);
@@ -622,16 +635,16 @@ public:
 
     // Smooth skinning
     void isSmoothSkinning(bool flag = false);
-    void setSmoothSkinningBoneMatrices(std::array<struct matrix, MAX_BONE_MATRICES>* matrix_palette, size_t joint_count);
+    void setSmoothSkinningBoneMatrices(std::array<struct matrix, MAX_BONE_MATRICES> *matrix_palette, size_t joint_count);
     void setSmoothSkinningUniforms();
-    
+
     // Worldmap
     void setSphericalWorldRate(float value = 0.0f);
     void setFogEnabled(bool flag = false);
     bool isFogEnabled();
 
     // Game lighting
-    void setGameLightData(light_data* lightdata = nullptr);
+    void setGameLightData(light_data *lightdata = nullptr);
 
     static bool doesItFitInMemory(size_t size);
 };

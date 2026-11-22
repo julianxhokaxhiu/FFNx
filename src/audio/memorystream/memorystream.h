@@ -27,33 +27,34 @@
 
 namespace SoLoud
 {
-	class MemoryStream : public AudioSource
-	{
-	public:
-		uint32_t mPushLength;
-		std::atomic<uint32_t> mPushOffset;
-		std::atomic<uint32_t> mReadOffset;
-		std::atomic<uint32_t> mUnderrunSamples;
-		uint32_t mSampleCount;
-		float* mData;
+class MemoryStream : public AudioSource
+{
+  public:
+    uint32_t mPushLength;
+    std::atomic<uint32_t> mPushOffset;
+    std::atomic<uint32_t> mReadOffset;
+    std::atomic<uint32_t> mUnderrunSamples;
+    uint32_t mSampleCount;
+    float *mData;
 
-		MemoryStream(float sampleRate, uint32_t sampleCount, uint32_t channels);
-		virtual ~MemoryStream();
+    MemoryStream(float sampleRate, uint32_t sampleCount, uint32_t channels);
+    virtual ~MemoryStream();
 
-    result push(uint8_t* data, uint32_t size);
-		double getBufferedDuration() const;
+    result push(uint8_t *data, uint32_t size);
+    double getBufferedDuration() const;
 
-		virtual AudioSourceInstance* createInstance();
-		time getLength();
-	};
-
-	class MemoryStreamInstance : public AudioSourceInstance
-	{
-		MemoryStream* mParent;
-		uint32_t mOffset;
-	public:
-		MemoryStreamInstance(MemoryStream* aParent);
-		virtual uint32_t getAudio(float* aBuffer, uint32_t aSamplesToRead, uint32_t aBufferSize);
-		virtual bool hasEnded();
-	};
+    virtual AudioSourceInstance *createInstance();
+    time getLength();
 };
+
+class MemoryStreamInstance : public AudioSourceInstance
+{
+    MemoryStream *mParent;
+    uint32_t mOffset;
+
+  public:
+    MemoryStreamInstance(MemoryStream *aParent);
+    virtual uint32_t getAudio(float *aBuffer, uint32_t aSamplesToRead, uint32_t aBufferSize);
+    virtual bool hasEnded();
+};
+}; // namespace SoLoud

@@ -36,14 +36,15 @@ constexpr int MIM_DATA_HEIGHT = TEXTURE_HEIGHT;
 constexpr int TILE_SIZE = 16;
 constexpr int PALETTE_SIZE = 256;
 
-struct Tile {
-	int16_t x, y, z;
-	uint16_t texID; // 2 bits = depth | 2 bits = blend | 1 bit = draw | 4 bits = textureID
-	uint16_t palID; // 6 bits = Always 30 | 4 bits = PaletteID | 6 bits = Always 0
-	uint8_t srcX, srcY;
-	uint8_t layerID; // 0-7
-	uint8_t blendType; // 0-4
-	uint8_t parameter, state;
+struct Tile
+{
+    int16_t x, y, z;
+    uint16_t texID; // 2 bits = depth | 2 bits = blend | 1 bit = draw | 4 bits = textureID
+    uint16_t palID; // 6 bits = Always 30 | 4 bits = PaletteID | 6 bits = Always 0
+    uint8_t srcX, srcY;
+    uint8_t layerID;   // 0-7
+    uint8_t blendType; // 0-4
+    uint8_t parameter, state;
 };
 
 // A tile looks like another if it uses the same texture with the same palette and uses the same blending

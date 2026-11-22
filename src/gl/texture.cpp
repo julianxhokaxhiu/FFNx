@@ -29,114 +29,105 @@
 // check to make sure we can actually load a given texture
 bool gl_check_texture_dimensions(uint32_t width, uint32_t height, char *source)
 {
-	if (width > max_texture_size || height > max_texture_size) {
-		ffnx_error("Texture dimensions exceed max texture size, will not be able to load %s\n", source);
-		return false;
-	}
-	else
-		return true;
+    if (width > max_texture_size || height > max_texture_size)
+    {
+        ffnx_error("Texture dimensions exceed max texture size, will not be able to load %s\n", source);
+        return false;
+    }
+    else
+        return true;
 }
 
 // apply OpenGL texture for a certain palette in a texture set, possibly
 // replacing an existing texture which will then be unloaded
 void gl_replace_texture(struct texture_set *texture_set, uint32_t palette_index, uint32_t new_texture)
 {
-	VOBJ(texture_set, texture_set, texture_set);
+    VOBJ(texture_set, texture_set, texture_set);
 
-	if(VREF(texture_set, texturehandle[palette_index]))
-	{
-		if (VREF(texture_set, ogl.external) && !VREF(texture_set, ogl.gl_set->is_animated)) ffnx_glitch("oops, may have messed up an external texture\n");
-		if (!VREF(texture_set, ogl.external) || !VREF(texture_set, ogl.gl_set->is_animated)) newRenderer.deleteTexture(VREF(texture_set, texturehandle[palette_index]));
-	}
+    if (VREF(texture_set, texturehandle[palette_index]))
+    {
+        if (VREF(texture_set, ogl.external) && !VREF(texture_set, ogl.gl_set->is_animated))
+            ffnx_glitch("oops, may have messed up an external texture\n");
+        if (!VREF(texture_set, ogl.external) || !VREF(texture_set, ogl.gl_set->is_animated))
+            newRenderer.deleteTexture(VREF(texture_set, texturehandle[palette_index]));
+    }
 
-	VRASS(texture_set, texturehandle[palette_index], new_texture);
+    VRASS(texture_set, texturehandle[palette_index], new_texture);
 }
 
 // upload texture for a texture set from raw pixel data
 void gl_upload_texture(struct texture_set *texture_set, uint32_t palette_index, void *image_data, uint32_t format, uint32_t savePaletteIndex)
 {
-	uint32_t w, h;
-	VOBJ(texture_set, texture_set, texture_set);
-	VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
+    uint32_t w, h;
+    VOBJ(texture_set, texture_set, texture_set);
+    VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
 
-	if(VREF(texture_set, ogl.external))
-	{
-		w = VREF(texture_set, ogl.width);
-		h = VREF(texture_set, ogl.height);
-	}
-	else
-	{
-		w = VREF(tex_header, version) == FB_TEX_VERSION ? VREF(tex_header, fb_tex.w) : VREF(tex_header, tex_format.width);
-		h = VREF(tex_header, version) == FB_TEX_VERSION ? VREF(tex_header, fb_tex.h) : VREF(tex_header, tex_format.height);
-	}
+    if (VREF(texture_set, ogl.external))
+    {
+        w = VREF(texture_set, ogl.width);
+        h = VREF(texture_set, ogl.height);
+    }
+    else
+    {
+        w = VREF(tex_header, version) == FB_TEX_VERSION ? VREF(tex_header, fb_tex.w) : VREF(tex_header, tex_format.width);
+        h = VREF(tex_header, version) == FB_TEX_VERSION ? VREF(tex_header, fb_tex.h) : VREF(tex_header, tex_format.height);
+    }
 
-	gl_check_texture_dimensions(w, h, "unknown");
-	std::string debugName;
-	if ((uint32_t)VREF(tex_header, file.pc_name) > 32)
-	{
-		debugName = get_gpu_texture_name(image_data, w * h * sizeof(uint32_t), savePaletteIndex,
-			VREF(tex_header, file.pc_name), VREF(texture_set, ogl.gl_set->is_animated));
-	}
+    gl_check_texture_dimensions(w, h, "unknown");
+    std::string debugName;
+    if ((uint32_t)VREF(tex_header, file.pc_name) > 32)
+    {
+        debugName = get_gpu_texture_name(image_data, w * h * sizeof(uint32_t), savePaletteIndex, VREF(tex_header, file.pc_name), VREF(texture_set, ogl.gl_set->is_animated));
+    }
 
-	uint32_t newTexture = newRenderer.createTexture(
-		(uint8_t*)image_data,
-		w,
-		h,
-		0,
-		RendererTextureType(format),
-		true,
-		true,
-		debugName.empty() ? nullptr : debugName.c_str(),
-		!ff8 && !VREF(texture_set, ogl.external) &&
-			VREF(tex_header, version) != FB_TEX_VERSION &&
-			VREF(texture_set, ogl.gl_set->world_terrain)
-	);
+    uint32_t newTexture = newRenderer.createTexture((uint8_t *)image_data, w, h, 0, RendererTextureType(format), true, true, debugName.empty() ? nullptr : debugName.c_str(), !ff8 && !VREF(texture_set, ogl.external) && VREF(tex_header, version) != FB_TEX_VERSION && VREF(texture_set, ogl.gl_set->world_terrain));
 
-	gl_replace_texture(
-		texture_set,
-		palette_index,
-		newTexture
-	);
+    gl_replace_texture(texture_set, palette_index, newTexture);
 
-	if (trace_all) ffnx_trace("Created internal texture: %u\n", newTexture);
+    if (trace_all)
+        ffnx_trace("Created internal texture: %u\n", newTexture);
 }
 
 // prepare texture set for rendering
 void gl_bind_texture_set(struct texture_set *_texture_set)
 {
-	VOBJ(texture_set, texture_set, _texture_set);
+    VOBJ(texture_set, texture_set, _texture_set);
 
-	if(VPTR(texture_set))
-	{
-		VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
+    if (VPTR(texture_set))
+    {
+        VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
 
-		struct gl_texture_set* gl_set = VREF(texture_set, ogl.gl_set);
+        struct gl_texture_set *gl_set = VREF(texture_set, ogl.gl_set);
 
-		gl_set_texture(VREF(texture_set, texturehandle[VREF(tex_header, palette_index)]), gl_set);
+        gl_set_texture(VREF(texture_set, texturehandle[VREF(tex_header, palette_index)]), gl_set);
 
-		if(VREF(tex_header, version) == FB_TEX_VERSION) current_state.fb_texture = true;
-		else current_state.fb_texture = false;
-	}
-	else gl_set_texture(0, NULL);
+        if (VREF(tex_header, version) == FB_TEX_VERSION)
+            current_state.fb_texture = true;
+        else
+            current_state.fb_texture = false;
+    }
+    else
+        gl_set_texture(0, NULL);
 
-	current_state.texture_set = _texture_set;
+    current_state.texture_set = _texture_set;
 }
 
 // prepare an OpenGL texture for rendering, passing zero to this function will
 // disable texturing entirely
-void gl_set_texture(uint32_t texture, struct gl_texture_set* gl_set)
+void gl_set_texture(uint32_t texture, struct gl_texture_set *gl_set)
 {
-	if(trace_all) ffnx_trace("gl_set_texture: set texture %i\n", texture);
+    if (trace_all)
+        ffnx_trace("gl_set_texture: set texture %i\n", texture);
 
-	newRenderer.useTexture(texture);
+    newRenderer.useTexture(texture);
 
-	// Attach additional textures only for non-paletted static textures
-	if (gl_set && !gl_set->is_animated)
-	{
-		for (short slot = RendererTextureSlot::TEX_NML; slot < RendererTextureSlot::COUNT; slot++)
-			newRenderer.useTexture(texture > 0 ? gl_set->additional_textures[slot] : 0, slot);
-	}
+    // Attach additional textures only for non-paletted static textures
+    if (gl_set && !gl_set->is_animated)
+    {
+        for (short slot = RendererTextureSlot::TEX_NML; slot < RendererTextureSlot::COUNT; slot++)
+            newRenderer.useTexture(texture > 0 ? gl_set->additional_textures[slot] : 0, slot);
+    }
 
-	current_state.texture_handle = texture;
-	current_state.texture_set = 0;
+    current_state.texture_handle = texture;
+    current_state.texture_set = 0;
 }
