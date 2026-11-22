@@ -1,5 +1,6 @@
 {
   "search.exclude": {
     "vcpkg": true
-  }
+  },
+  "cmakefmt.executablePath": ".\\.build\\tools\\cmakefmt\\cmakefmt.exe"
 }

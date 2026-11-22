@@ -72,6 +72,8 @@ endif()
 
 project(FFNx)
 
+include("${CMAKE_SOURCE_DIR}/.cmake/format.cmake")
+
 find_package(ZLIB REQUIRED)
 find_package(BX REQUIRED)
 find_package(BIMG REQUIRED)
@@ -112,6 +114,7 @@ endif()
 set(CHOCO_RELEASE_NAME "FFNx-Choco")
 file(GLOB_RECURSE choco_source_files "${CMAKE_SOURCE_DIR}/choco/*.cpp")
 add_library(${CHOCO_RELEASE_NAME} SHARED ${choco_source_files} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+add_dependencies(${CHOCO_RELEASE_NAME} fmt)
 target_include_directories(
   ${CHOCO_RELEASE_NAME}
   PRIVATE "${CMAKE_SOURCE_DIR}/choco"
@@ -150,7 +153,7 @@ cmrc_add_resource_library(
 
 add_library(${RELEASE_NAME} SHARED ${source_files} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 ffnx_setup_steamworks(${RELEASE_NAME})
-add_dependencies(${RELEASE_NAME} ${CHOCO_RELEASE_NAME})
+add_dependencies(${RELEASE_NAME} ${CHOCO_RELEASE_NAME} fmt)
 target_include_directories(
   ${RELEASE_NAME}
   PRIVATE "${CMAKE_SOURCE_DIR}/src"

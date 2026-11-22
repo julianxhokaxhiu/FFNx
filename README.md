@@ -223,11 +223,37 @@ To build from the terminal (example with *RelWithDebInfo*):
 
 ## Auto-Formatting
 
-### CMake Files
+Formatting is handled automatically when you build FFNx. If you have followed the [build instructions](#how-to-build), no additional setup is needed:
 
-0. **REQUIRED!** Install [Python](https://www.python.org/)
-1. Install [cmake-format](https://github.com/cheshirekow/cmake_format#installation) and make sure the binary is available in your PATH environment variable
-2. **OPTIONAL!** Integrate it [in your own IDE](https://github.com/cheshirekow/cmake_format#integrations) (eg. for Visual Studio Code use [the relative extension](https://marketplace.visualstudio.com/items?itemName=cheshirekow.cmake-format))
+- **C/C++:** Uses `clang-format`, included with Visual Studio.
+- **CMake:** Uses [cmakefmt](https://github.com/cmakefmt/cmakefmt), downloaded automatically when you configure the project. The first download requires internet access; no Python or Rust installation is needed.
+
+Only project source files are formatted. Third-party dependencies and generated files are left untouched.
+
+### Format without building
+
+After configuring the project, run this from the repository folder to format both C/C++ and CMake files without compiling or copying anything to your game installation:
+
+```pwsh
+cmake --build --preset RelWithDebInfo --target fmt
+```
+
+You can replace `RelWithDebInfo` with your chosen build preset.
+
+To check formatting without changing any files:
+
+```pwsh
+cmake --build --preset RelWithDebInfo --target fmt-check
+```
+
+If the check fails, run `fmt` to apply the required formatting. Review the changes before committing.
+
+### Formatting in Visual Studio Code
+
+For CMake formatting in the editor, install the [cmakefmt extension](https://marketplace.visualstudio.com/items?itemName=cmakefmt.vscode-cmakefmt) and configure the project once.
+The workspace settings already point to the automatically downloaded formatter.
+
+The shared formatting rules are in [.clang-format](.clang-format) and [.cmakefmt.yaml](.cmakefmt.yaml).
 
 ## Support
 
