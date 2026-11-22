@@ -247,6 +247,7 @@ cmake --build --preset RelWithDebInfo --target fmt-check
 ```
 
 If the check fails, run `fmt` to apply the required formatting. Review the changes before committing.
+CI checks formatting before building on every run, including pull requests.
 
 ### Formatting in Visual Studio Code
 
