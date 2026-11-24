@@ -32,7 +32,7 @@ void rereplace_function(uint32_t func);
 void unreplace_functions();
 
 void replace_call(uint32_t offset, void *func);
-uint32_t replace_call_function(uint32_t offset, void* func);
+uint32_t replace_call_function(uint32_t offset, void *func);
 
 uint32_t get_relative_call(uint32_t base, uint32_t offset);
 uint32_t get_absolute_value(uint32_t base, uint32_t offset);
@@ -46,26 +46,24 @@ void patch_code_uint(uint32_t offset, uint32_t r);
 void patch_code_float(uint32_t offset, float r);
 void patch_code_double(uint32_t offset, double r);
 
-template<typename T>
-void patch_multiply_code(uint32_t offset, int multiplier)
+template <typename T> void patch_multiply_code(uint32_t offset, int multiplier)
 {
-	DWORD dummy;
+    DWORD dummy;
 
-	VirtualProtect((void *)offset, sizeof(T), PAGE_EXECUTE_READWRITE, &dummy);
+    VirtualProtect((void *)offset, sizeof(T), PAGE_EXECUTE_READWRITE, &dummy);
 
-	*(T *)offset = (*(T *)offset) * (T)multiplier;
+    *(T *)offset = (*(T *)offset) * (T)multiplier;
 
     // TODO Add assertion
 }
 
-template<typename T>
-void patch_divide_code(uint32_t offset, int multiplier)
+template <typename T> void patch_divide_code(uint32_t offset, int multiplier)
 {
-	DWORD dummy;
+    DWORD dummy;
 
-	VirtualProtect((void *)offset, sizeof(T), PAGE_EXECUTE_READWRITE, &dummy);
+    VirtualProtect((void *)offset, sizeof(T), PAGE_EXECUTE_READWRITE, &dummy);
 
-	*(T *)offset = (*(T *)offset) / (T)multiplier;
+    *(T *)offset = (*(T *)offset) / (T)multiplier;
 
     // TODO Add assertion
 }
@@ -73,4 +71,4 @@ void patch_divide_code(uint32_t offset, int multiplier)
 void memcpy_code(uint32_t offset, const void *data, uint32_t size);
 void memset_code(uint32_t offset, uint32_t val, uint32_t size);
 
-void* member_func_to_ptr(char i, ...);
+void *member_func_to_ptr(char i, ...);

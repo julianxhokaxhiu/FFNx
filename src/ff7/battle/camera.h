@@ -19,42 +19,43 @@
 
 namespace ff7::battle
 {
-    class Camera
-    {
-        public:
-            Camera() = default;
-            ~Camera() = default;
+class Camera
+{
+  public:
+    Camera() = default;
+    ~Camera() = default;
 
-            void setRotationSpeed(float rotX, float rotY, float rotZ);
-            vector3<float> getRotationSpeed();
-            void setZoomSpeed(float speed);
-            float getZoomSpeed();
-            void reset();
-            void setupInitialCamera();
+    void setRotationSpeed(float rotX, float rotY, float rotZ);
+    vector3<float> getRotationSpeed();
+    void setZoomSpeed(float speed);
+    float getZoomSpeed();
+    void reset();
+    void setupInitialCamera();
 
-            void controlCamera(vector3<short>* cameraPosition);
-        private:
-            vector3<float> rotationSpeed = { 0.0, 0.0, 0.0 };
-            vector3<float> rotationOffset = { 0.0, 0.0, 0.0 };
-            vector3<float> initialCameraPos = { 0.0, 0.0, 0.0 };
-            vector3<float> initialCameraFocusPos = { 0.0, 0.0, 0.0 };
-            float zoomSpeed = 0.0f;
-            float zoomOffset = 0.0f;
-            const float minZoomDist = 5000.0f;
-            const float maxZoomDist = 30000.0f;
-            const float minVerticalAngle = 5.0f;
-            const float maxVerticalAngle = 85.0f;
-    };
+    void controlCamera(vector3<short> *cameraPosition);
 
-    inline vector3<float> Camera::getRotationSpeed()
-    {
-        return rotationSpeed;
-    }
+  private:
+    vector3<float> rotationSpeed = {0.0, 0.0, 0.0};
+    vector3<float> rotationOffset = {0.0, 0.0, 0.0};
+    vector3<float> initialCameraPos = {0.0, 0.0, 0.0};
+    vector3<float> initialCameraFocusPos = {0.0, 0.0, 0.0};
+    float zoomSpeed = 0.0f;
+    float zoomOffset = 0.0f;
+    const float minZoomDist = 5000.0f;
+    const float maxZoomDist = 30000.0f;
+    const float minVerticalAngle = 5.0f;
+    const float maxVerticalAngle = 85.0f;
+};
 
-    inline float Camera::getZoomSpeed()
-    {
-        return zoomSpeed;
-    }
-
-    extern Camera camera;
+inline vector3<float> Camera::getRotationSpeed()
+{
+    return rotationSpeed;
 }
+
+inline float Camera::getZoomSpeed()
+{
+    return zoomSpeed;
+}
+
+extern Camera camera;
+} // namespace ff7::battle

@@ -27,102 +27,88 @@
 
 #include "engine.h"
 
-static const std::vector<std::string> ff8_table = {
-  " ","0","1","2","3","4","5","6","7","8","9","%","/",":","!","?",
-  "…","+","-","=","*","&","「","」","(",")","·",".",",","~","”","“",
-  "‘","#","$","'","_","A","B","C","D","E","F","G","H","I","J","K",
-  "L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","a",
-  "b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q",
-  "r","s","t","u","v","w","x","y","z","À","Á","Â","Ä","Ç","È","É",
-  "Ê","Ë","Ì","Í","Î","Ï","Ñ","Ò","Ó","Ô","Ö","Ù","Ú","Û","Ü","Œ",
-  "ß","à","á","â","ä","ç","è","é","ê","ë","ì","í","î","ï","ñ","ò",
-  "ó","ô","ö","ù","ú","û","ü","œ","","[","]","■","○","♦","【","】",
-  "□","","『","』","",";","","¯","×","","","↓","°","¡","¿","─","«",
-  "»","±","♫","","↑","","","","™","<",">","","","","","","","","",
-  "","","","","","","","","","","","","","","®","","","","","",
-  "{in}","{e }","{ne}","{to}","{re}","{HP}","{l }","{ll}","{GF}",
-  "{nt}","{il}","{o }","{ef}","{on}","{ w}","{ r}","{wi}","{fi}",
-  "{EC}","{s }","{ar}","{FE}","{ S}","{ag}"
-};
+static const std::vector<std::string> ff8_table = {" ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "%", "/", ":", "!", "?", "…", "+", "-", "=", "*", "&", "「", "」", "(", ")", "·", ".", ",", "~", "”",  "“",  "‘", "#", "$",  "'",  "_", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",    "À",    "Á",    "Â",    "Ä",    "Ç",    "È",    "É",    "Ê",    "Ë",    "Ì",    "Í",    "Î",    "Ï",    "Ñ",    "Ò",    "Ó",    "Ô",    "Ö",    "Ù",    "Ú",    "Û",    "Ü",    "Œ",
+                                                   "ß", "à", "á", "â", "ä", "ç", "è", "é", "ê", "ë", "ì", "í", "î", "ï", "ñ", "ò", "ó", "ô", "ö", "ù", "ú", "û", "ü",  "œ",  "",  "[", "]", "■", "○", "♦", "【", "】", "□", "",  "『", "』", "",  ";", "",  "¯", "×", "",  "",  "↓", "°", "¡", "¿", "─", "«", "»", "±", "♫", "",  "↑", "",  "",  "",  "™", "<", ">", "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "",  "®", "",  "",  "",  "",  "",  "{in}", "{e }", "{ne}", "{to}", "{re}", "{HP}", "{l }", "{ll}", "{GF}", "{nt}", "{il}", "{o }", "{ef}", "{on}", "{ w}", "{ r}", "{wi}", "{fi}", "{EC}", "{s }", "{ar}", "{FE}", "{ S}", "{ag}"};
 
 int ff8_manage_time_engine(int enable_rdtsc)
 {
-  // Force rdtsc
-  return ff8_externals.enable_rdtsc_sub_40AA00(1);
+    // Force rdtsc
+    return ff8_externals.enable_rdtsc_sub_40AA00(1);
 }
 
-std::string ff8_decode_text(const char* encoded_text)
+std::string ff8_decode_text(const char *encoded_text)
 {
-  std::string ret{};
-  int index = 0;
-  char current_char = NULL, last_char = NULL;
+    std::string ret{};
+    int index = 0;
+    char current_char = NULL, last_char = NULL;
 
-  if (encoded_text != NULL)
-  {
-    while (current_char = encoded_text[index++], current_char != char(NULL))
+    if (encoded_text != NULL)
     {
-      // Control char, save it and continue
-      if (current_char < 0x20)
-      {
-        last_char = current_char;
-        continue;
-      }
+        while (current_char = encoded_text[index++], current_char != char(NULL))
+        {
+            // Control char, save it and continue
+            if (current_char < 0x20)
+            {
+                last_char = current_char;
+                continue;
+            }
 
-      // If it was a control char, evaluate
-      if (last_char != char(NULL) && last_char < 0x20)
-      {
-        switch (last_char){
-          case 0x2:
-            ret.append(" ");
+            // If it was a control char, evaluate
+            if (last_char != char(NULL) && last_char < 0x20)
+            {
+                switch (last_char)
+                {
+                case 0x2:
+                    ret.append(" ");
+                    ret.append(ff8_table[current_char - 0x20]);
+                    break;
+                case 0x3:
+                    if (current_char >= 0x30 && current_char <= 0x3a)
+                        ret.append(ff8_names[current_char - 0x30]);
+                    else if (current_char == 0x40)
+                        ret.append(ff8_names[11]);
+                    else if (current_char == 0x50)
+                        ret.append(ff8_names[12]);
+                    else if (current_char == 0x60)
+                        ret.append(ff8_names[13]);
+                    break;
+                }
+
+                last_char = NULL;
+
+                continue;
+            }
+
+            // Normal string char, append
             ret.append(ff8_table[current_char - 0x20]);
-            break;
-          case 0x3:
-            if(current_char>=0x30 && current_char<=0x3a)
-              ret.append(ff8_names[current_char-0x30]);
-            else if(current_char==0x40)
-              ret.append(ff8_names[11]);
-            else if(current_char==0x50)
-              ret.append(ff8_names[12]);
-            else if(current_char==0x60)
-              ret.append(ff8_names[13]);
-            break;
+        }
+    }
+
+    return ret;
+}
+
+std::string ff8_encode_text(const char *text)
+{
+    std::string ret{};
+
+    while (*text != '\0')
+    {
+        size_t length = 1; // Skip characters the font lacks
+
+        for (size_t i = 0; i < ff8_table.size(); ++i)
+        {
+            const std::string &character = ff8_table[i];
+
+            if (!character.empty() && strncmp(text, character.c_str(), character.size()) == 0)
+            {
+                ret.push_back(char(0x20 + i));
+                length = character.size();
+                break;
+            }
         }
 
-        last_char = NULL;
-
-        continue;
-      }
-
-      // Normal string char, append
-      ret.append(ff8_table[current_char - 0x20]);
-    }
-  }
-
-  return ret;
-}
-
-std::string ff8_encode_text(const char* text)
-{
-  std::string ret{};
-
-  while (*text != '\0')
-  {
-    size_t length = 1; // Skip characters the font lacks
-
-    for (size_t i = 0; i < ff8_table.size(); ++i)
-    {
-      const std::string& character = ff8_table[i];
-
-      if (!character.empty() && strncmp(text, character.c_str(), character.size()) == 0)
-      {
-        ret.push_back(char(0x20 + i));
-        length = character.size();
-        break;
-      }
+        text += length;
     }
 
-    text += length;
-  }
-
-  return ret;
+    return ret;
 }

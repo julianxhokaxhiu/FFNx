@@ -22,515 +22,622 @@ namespace ff8fx
 {
 namespace quick196
 {
-	using namespace eng;
-	using namespace magc;
+using namespace eng;
+using namespace magc;
 
-	inline int32_t &EndTick() { return var<int32_t>(game_addr(game::MAG_196_QUICKSHOT_AfterimageEndTick)); }
-	inline int32_t &ModuleTick() { return var<int32_t>(game_addr(game::MAG_196_QUICKSHOT_ModuleTick)); }
-	inline uint32_t &Flags() { return var<uint32_t>(game_addr(game::MAG_196_QUICKSHOT_Flags)); }
-	inline CastContext *&Ctx() { return var<CastContext *>(game_addr(game::MAG_196_QUICKSHOT_Ctx)); }
-	inline int32_t &CasterSlot() { return var<int32_t>(game_addr(game::MAG_196_QUICKSHOT_CasterSlot)); }
-	inline int32_t &ImpactCount() { return var<int32_t>(game_addr(game::MAG_196_QUICKSHOT_ImpactCount)); }
-	inline uint32_t &TexBase() { return var<uint32_t>(game_addr(game::MAG_196_QUICKSHOT_TexBase)); }
-	inline uint32_t &PacketCursor() { return var<uint32_t>(game_addr(game::MAG_196_QUICKSHOT_PacketCursor)); }
-	inline TaskQueue *QShots() { return (TaskQueue *)game_addr(game::MAG_196_QUICKSHOT_ShotQueue); }
-	inline TaskQueue *QAux() { return (TaskQueue *)game_addr(game::MAG_196_QUICKSHOT_AuxQueue); }
-	static constexpr game::Id PARTS_A = game::MAG_196_QUICKSHOT_SparksA, PARTS_B = game::MAG_196_QUICKSHOT_SparksB;
-	static constexpr game::Id SHOTS = game::MAG_196_QUICKSHOT_ShotRecords;
-	static constexpr game::Id BIND_OUT = game::MAG_196_QUICKSHOT_BindBlock;
-	static constexpr game::Id BONES_NOW = game::MAG_196_QUICKSHOT_WeaponBonesNow;
-	static constexpr game::Id GHOSTS = game::MAG_196_QUICKSHOT_GhostSlots, GHOSTS_END = game::MAG_196_QUICKSHOT_ShotCount;
-	static const uint32_t ARENA_ODD = 0xC000;
+inline int32_t &EndTick()
+{
+    return var<int32_t>(game_addr(game::MAG_196_QUICKSHOT_AfterimageEndTick));
+}
+inline int32_t &ModuleTick()
+{
+    return var<int32_t>(game_addr(game::MAG_196_QUICKSHOT_ModuleTick));
+}
+inline uint32_t &Flags()
+{
+    return var<uint32_t>(game_addr(game::MAG_196_QUICKSHOT_Flags));
+}
+inline CastContext *&Ctx()
+{
+    return var<CastContext *>(game_addr(game::MAG_196_QUICKSHOT_Ctx));
+}
+inline int32_t &CasterSlot()
+{
+    return var<int32_t>(game_addr(game::MAG_196_QUICKSHOT_CasterSlot));
+}
+inline int32_t &ImpactCount()
+{
+    return var<int32_t>(game_addr(game::MAG_196_QUICKSHOT_ImpactCount));
+}
+inline uint32_t &TexBase()
+{
+    return var<uint32_t>(game_addr(game::MAG_196_QUICKSHOT_TexBase));
+}
+inline uint32_t &PacketCursor()
+{
+    return var<uint32_t>(game_addr(game::MAG_196_QUICKSHOT_PacketCursor));
+}
+inline TaskQueue *QShots()
+{
+    return (TaskQueue *)game_addr(game::MAG_196_QUICKSHOT_ShotQueue);
+}
+inline TaskQueue *QAux()
+{
+    return (TaskQueue *)game_addr(game::MAG_196_QUICKSHOT_AuxQueue);
+}
+static constexpr game::Id PARTS_A = game::MAG_196_QUICKSHOT_SparksA, PARTS_B = game::MAG_196_QUICKSHOT_SparksB;
+static constexpr game::Id SHOTS = game::MAG_196_QUICKSHOT_ShotRecords;
+static constexpr game::Id BIND_OUT = game::MAG_196_QUICKSHOT_BindBlock;
+static constexpr game::Id BONES_NOW = game::MAG_196_QUICKSHOT_WeaponBonesNow;
+static constexpr game::Id GHOSTS = game::MAG_196_QUICKSHOT_GhostSlots, GHOSTS_END = game::MAG_196_QUICKSHOT_ShotCount;
+static const uint32_t ARENA_ODD = 0xC000;
 
-	static constexpr game::Id ORIG_RootTask = game::MAG_196_QUICKSHOT_RootTask;
-	static constexpr game::Id ORIG_StartTask = game::MAG_196_QUICKSHOT_StartTask;
-	static constexpr game::Id ORIG_ShotTask = game::MAG_196_QUICKSHOT_ShotTask;
-	static constexpr game::Id ORIG_EndTask = game::MAG_196_QUICKSHOT_EndTask;
-	static constexpr game::Id ORIG_FadeOutTask = game::MAG_196_QUICKSHOT_FadeOutTask;
-	static constexpr game::Id ORIG_FadeInTask = game::MAG_196_QUICKSHOT_FadeInTask;
-	static constexpr game::Id ORIG_AfterimageTask = game::MAG_196_QUICKSHOT_AfterimageTask;
-	static constexpr game::Id ORIG_FlashTask = game::MAG_196_QUICKSHOT_FlashTask;
-	static constexpr game::Id ORIG_Flash2Task = game::MAG_196_QUICKSHOT_YawFlashTask;
-	static constexpr game::Id ORIG_ImpactTask = game::MAG_196_QUICKSHOT_ImpactTask;
+static constexpr game::Id ORIG_RootTask = game::MAG_196_QUICKSHOT_RootTask;
+static constexpr game::Id ORIG_StartTask = game::MAG_196_QUICKSHOT_StartTask;
+static constexpr game::Id ORIG_ShotTask = game::MAG_196_QUICKSHOT_ShotTask;
+static constexpr game::Id ORIG_EndTask = game::MAG_196_QUICKSHOT_EndTask;
+static constexpr game::Id ORIG_FadeOutTask = game::MAG_196_QUICKSHOT_FadeOutTask;
+static constexpr game::Id ORIG_FadeInTask = game::MAG_196_QUICKSHOT_FadeInTask;
+static constexpr game::Id ORIG_AfterimageTask = game::MAG_196_QUICKSHOT_AfterimageTask;
+static constexpr game::Id ORIG_FlashTask = game::MAG_196_QUICKSHOT_FlashTask;
+static constexpr game::Id ORIG_Flash2Task = game::MAG_196_QUICKSHOT_YawFlashTask;
+static constexpr game::Id ORIG_ImpactTask = game::MAG_196_QUICKSHOT_ImpactTask;
 
-	static constexpr game::Id ANIM_DATA = game::MAG_196_QUICK_SHOT_AnimSet;
-	static constexpr game::Id MODEL_Flash = game::unk_D0609C, MODEL_Flash2 = game::unk_D06FD4;
-	static constexpr game::Id SEQ_Impact = game::unk_D05DB0, SEQ_Spark = game::unk_D05FC0;
-	static const void *SOUND_Gun() { return (const void *)game_addr(game::unk_D073C4); }
-	static const int32_t *MUZZLE_REF() { return (const int32_t *)game_addr(game::unk_D073D0); }
-	static const uint32_t *GHOST_COLOURS() { return (const uint32_t *)game_addr(game::unk_D073E0); }
+static constexpr game::Id ANIM_DATA = game::MAG_196_QUICK_SHOT_AnimSet;
+static constexpr game::Id MODEL_Flash = game::unk_D0609C, MODEL_Flash2 = game::unk_D06FD4;
+static constexpr game::Id SEQ_Impact = game::unk_D05DB0, SEQ_Spark = game::unk_D05FC0;
+static const void *SOUND_Gun()
+{
+    return (const void *)game_addr(game::unk_D073C4);
+}
+static const int32_t *MUZZLE_REF()
+{
+    return (const int32_t *)game_addr(game::unk_D073D0);
+}
+static const uint32_t *GHOST_COLOURS()
+{
+    return (const uint32_t *)game_addr(game::unk_D073E0);
+}
 
-	inline uint32_t BindExternalAnimSet(uint8_t *entity, uint32_t out, uint32_t data) { return fn<uint32_t (__cdecl *)(uint8_t *, uint32_t, uint32_t)>(game_addr(game::BattleEntity_BindExternalAnimSet))(entity, out, data); }
-	inline uint32_t QueueChainTransformation(uint8_t *entity, uint32_t id) { return fn<uint32_t (__cdecl *)(uint8_t *, uint32_t)>(game_addr(game::QueueChainTransformation))(entity, id); }
-	inline int32_t GetEffectSpawnPosition(uint8_t *entity, int32_t bone, int32_t angle, int16_t *out) { return fn<int32_t (__cdecl *)(uint8_t *, int32_t, int32_t, int16_t *)>(game_addr(game::GetEffectSpawnPosition))(entity, bone, angle, out); }
-	inline int32_t Normalize(const int32_t *in, int32_t *out) { return fn<int32_t (__cdecl *)(const int32_t *, int32_t *)>(game_addr(game::NormalizeVectorToFixedPoint))(in, out); }
-	inline void MatVec(const Mat4x3 *m, const int16_t *in, int16_t *out) { fn<void (__cdecl *)(const Mat4x3 *, const int16_t *, int16_t *)>(game_addr(game::matrixMultiplyVector))(m, in, out); }
-	inline void GteMatrixMultiply(const Mat4x3 *a, Mat4x3 *b) { fn<void (__cdecl *)(const Mat4x3 *, Mat4x3 *)>(game_addr(game::GTE_MatrixMultiply))(a, b); }
-	inline uint32_t RenderGeometry(uint32_t model, void *ctx, uint32_t ot, int32_t a, uint32_t cursor) { return fn<uint32_t (__cdecl *)(uint32_t, void *, uint32_t, int32_t, uint32_t)>(game_addr(game::RenderGeometry))(model, ctx, ot, a, cursor); }
-	inline uint32_t &FramePackets() { return var<uint32_t>(game_addr(game::BATTLE_PACKET_WRITE_CURSOR)); }
+inline uint32_t BindExternalAnimSet(uint8_t *entity, uint32_t out, uint32_t data)
+{
+    return fn<uint32_t(__cdecl *)(uint8_t *, uint32_t, uint32_t)>(game_addr(game::BattleEntity_BindExternalAnimSet))(entity, out, data);
+}
+inline uint32_t QueueChainTransformation(uint8_t *entity, uint32_t id)
+{
+    return fn<uint32_t(__cdecl *)(uint8_t *, uint32_t)>(game_addr(game::QueueChainTransformation))(entity, id);
+}
+inline int32_t GetEffectSpawnPosition(uint8_t *entity, int32_t bone, int32_t angle, int16_t *out)
+{
+    return fn<int32_t(__cdecl *)(uint8_t *, int32_t, int32_t, int16_t *)>(game_addr(game::GetEffectSpawnPosition))(entity, bone, angle, out);
+}
+inline int32_t Normalize(const int32_t *in, int32_t *out)
+{
+    return fn<int32_t(__cdecl *)(const int32_t *, int32_t *)>(game_addr(game::NormalizeVectorToFixedPoint))(in, out);
+}
+inline void MatVec(const Mat4x3 *m, const int16_t *in, int16_t *out)
+{
+    fn<void(__cdecl *)(const Mat4x3 *, const int16_t *, int16_t *)>(game_addr(game::matrixMultiplyVector))(m, in, out);
+}
+inline void GteMatrixMultiply(const Mat4x3 *a, Mat4x3 *b)
+{
+    fn<void(__cdecl *)(const Mat4x3 *, Mat4x3 *)>(game_addr(game::GTE_MatrixMultiply))(a, b);
+}
+inline uint32_t RenderGeometry(uint32_t model, void *ctx, uint32_t ot, int32_t a, uint32_t cursor)
+{
+    return fn<uint32_t(__cdecl *)(uint32_t, void *, uint32_t, int32_t, uint32_t)>(game_addr(game::RenderGeometry))(model, ctx, ot, a, cursor);
+}
+inline uint32_t &FramePackets()
+{
+    return var<uint32_t>(game_addr(game::BATTLE_PACKET_WRITE_CURSOR));
+}
 
 #pragma pack(push, 1)
-	struct RootNode
-	{
-		TaskNode hdr;
-		int16_t counter;
-		int16_t pad;
-	};
-	struct Node
-	{
-		TaskNode hdr;
-		int16_t counter;
-		int16_t f0E;
-		int16_t pos[4];
-		int16_t f18;
-		int16_t f1A;
-		int16_t f1C;
-		int16_t f1E;
-		uint8_t pad20[4];
-	};
-	struct ShotRec
-	{
-		int16_t pos[4];
-		Mat4x3 m;
-	};
-	struct Particle
-	{
-		int32_t id;
-		int16_t frame;
-		int16_t size;
-		int16_t pos[4];
-		int16_t vel[3];
-		int16_t pad;
-	};
-	struct Ghost
-	{
-		int32_t used;
-		uint8_t bones[0x80];
-	};
+struct RootNode
+{
+    TaskNode hdr;
+    int16_t counter;
+    int16_t pad;
+};
+struct Node
+{
+    TaskNode hdr;
+    int16_t counter;
+    int16_t f0E;
+    int16_t pos[4];
+    int16_t f18;
+    int16_t f1A;
+    int16_t f1C;
+    int16_t f1E;
+    uint8_t pad20[4];
+};
+struct ShotRec
+{
+    int16_t pos[4];
+    Mat4x3 m;
+};
+struct Particle
+{
+    int32_t id;
+    int16_t frame;
+    int16_t size;
+    int16_t pos[4];
+    int16_t vel[3];
+    int16_t pad;
+};
+struct Ghost
+{
+    int32_t used;
+    uint8_t bones[0x80];
+};
 #pragma pack(pop)
-	static_assert(sizeof(RootNode) == 0x10 && sizeof(Node) == 0x24, "Normal Shot nodes");
-	static_assert(sizeof(ShotRec) == 0x28 && sizeof(Particle) == 0x18 && sizeof(Ghost) == 0x84, "Normal Shot records");
+static_assert(sizeof(RootNode) == 0x10 && sizeof(Node) == 0x24, "Normal Shot nodes");
+static_assert(sizeof(ShotRec) == 0x28 && sizeof(Particle) == 0x18 && sizeof(Ghost) == 0x84, "Normal Shot records");
 
-	inline ShotRec *Shot(int32_t i) { return (ShotRec *)(game_addr(SHOTS) + 0x28 * i); }
-	inline Ghost *GhostSlot(int32_t i) { return (Ghost *)(game_addr(GHOSTS) + 0x84 * i); }
-	inline uint8_t *Caster() { return Entity(CasterSlot()); }
-	inline Node *AddTask(TaskQueue *q, uint32_t fn) { return (Node *)AddTaskToQueue(q, fn); }
+inline ShotRec *Shot(int32_t i)
+{
+    return (ShotRec *)(game_addr(SHOTS) + 0x28 * i);
 }
+inline Ghost *GhostSlot(int32_t i)
+{
+    return (Ghost *)(game_addr(GHOSTS) + 0x84 * i);
 }
+inline uint8_t *Caster()
+{
+    return Entity(CasterSlot());
+}
+inline Node *AddTask(TaskQueue *q, uint32_t fn)
+{
+    return (Node *)AddTaskToQueue(q, fn);
+}
+} // namespace quick196
+} // namespace ff8fx
 
 namespace ff8fx
 {
 namespace quick196
 {
-	static void BoneFrame(uint8_t *anim_header, int32_t bone, int32_t *dir, int16_t *pos)
-	{
-		const uint8_t *sk = *(uint8_t **)*(uint8_t **)(anim_header + 4);
-		if (bone >= 0xF0) bone = sk[bone - 0xEC];
-		const uint8_t *b = sk + 0x10 + bone * 0x30;
-		dir[1] = 0;
-		dir[0] = 0;
-		dir[2] = -0x1000;
-		TransformVectorBy3x3Matrix((const Mat4x3 *)(b + 0x10), dir, dir);
-		Normalize(dir, dir);
-		pos[0] = *(const int16_t *)(b + 0x24);
-		pos[1] = *(const int16_t *)(b + 0x28);
-		pos[2] = *(const int16_t *)(b + 0x2C);
-	}
-
-	static void WeaponBone(uint8_t *entity, int32_t bone, int32_t *dir, int16_t *pos)
-	{
-		uint8_t *w = *(uint8_t **)(entity + 0x78);
-		if (!w) return;
-		BoneFrame(w, bone, dir, pos);
-		Mat4x3 m;
-		ComposeAffineTransform((const Mat4x3 *)(entity + 0x40), (const Mat4x3 *)(w + 0x24), &m);
-		TransformVectorBy3x3Matrix(&m, dir, dir);
-		Normalize(dir, dir);
-		MatVec(&m, pos, pos);
-		pos[0] = (int16_t)(pos[0] + (int16_t)m.t[0]);
-		pos[1] = (int16_t)(pos[1] + (int16_t)m.t[1]);
-		pos[2] = (int16_t)(pos[2] + (int16_t)m.t[2]);
-	}
-
-	static void BoneSnapshot(uint8_t *w, uint8_t *dst)
-	{
-		const uint8_t *sk = *(const uint8_t **)*(uint8_t **)(w + 4);
-		const int32_t n = sk[0];
-		const uint8_t *src = sk + 0x20;
-		for (int32_t k = 0; k < n; k++, src += 0x30, dst += 0x20) ff8fx::copy<(0x20)>(dst, src);
-	}
-	static void BoneRestore(uint8_t *w, const uint8_t *src)
-	{
-		uint8_t *sk = *(uint8_t **)*(uint8_t **)(w + 4);
-		uint8_t *dst = sk + 0x20;
-		for (int32_t k = 0; k < (int32_t)sk[0]; k++, src += 0x20, dst += 0x30) ff8fx::copy<(0x20)>(dst, src);
-	}
-
-	static void GhostDraw(uint8_t *entity)
-	{
-		uint8_t *h = (uint8_t *)FieldAlloc(0x4C);
-		uint8_t *w = *(uint8_t **)(entity + 0x78);
-		if (w && !(entity[1] & 2))
-		{
-			Mat4x3 *m = (Mat4x3 *)h;
-			ComposeAffineTransform(&Camera(), (const Mat4x3 *)(entity + 0x40), m);
-			*(uint16_t *)(h + 0x34) = 0;
-			*(uint16_t *)(h + 0x36) = 0;
-			*(uint32_t *)(h + 0x24) = var<uint32_t>(game_addr(game::g_BattleVertexWorkspace));
-			*(uint32_t *)(h + 0x3C) = *(const uint32_t *)(entity + 0x28);
-			*(uint16_t *)(h + 0x38) = 0x140;
-			*(uint16_t *)(h + 0x3A) = 0xD8;
-			*(uint32_t *)(h + 0x30) = var<uint32_t>(game_addr(game::BATTLE_PACKET_BUFFER_END));
-			*(uint32_t *)(h + 0x40) = 0xFFFFFFFF;
-			const uint8_t c = entity[7];
-			h[0x4A] = c;
-			h[0x49] = c;
-			h[0x48] = c;
-			ComposeAffineTransform(m, (const Mat4x3 *)(w + 0x24), m);
-			ComputeBonesWorldMatrices(w, m);
-			FramePackets() = RenderGeometry(*(const uint32_t *)(w + 4), h + 0x20, RenderOT(), 4, FramePackets());
-		}
-		FieldFree(0x4C);
-	}
-
-	static void ModelDraw(uint32_t model, bool faded, int32_t fade)
-	{
-		uint8_t *h = (uint8_t *)FieldAlloc(0x58);
-		*(uint32_t *)h = model;
-		*(uint32_t *)(h + 8) = 0;
-		*(uint32_t *)(h + 0x1C) = 0x33;
-		if (faded)
-		{
-			*(int32_t *)(h + 0xC) = fade;
-			*(uint32_t *)(h + 0x1C) = 0xF3;
-		}
-		PacketCursor() = RenderPrimModel(h, RenderOT(), 2, PacketCursor());
-		FieldFree(0x58);
-	}
-
-	static void MuzzleModel(const Node *n, uint32_t model, bool faded, int32_t fade)
-	{
-		const ShotRec *s = Shot(n->f0E);
-		int16_t ang[4];
-		ang[0] = 0;
-		ang[1] = 0;
-		ang[2] = n->f18;
-		ang[3] = 0;
-		Mat4x3 m;
-		ComposeZYXRotationMatrix(ang, &m);
-		GteMatrixMultiply(&s->m, &m);
-		m.t[0] = s->pos[0];
-		m.t[1] = s->pos[1];
-		const int32_t sc = n->f1C;
-		const int32_t v[3] = { sc, sc, sc };
-		m.t[2] = s->pos[2];
-		Scale3DMatrix(&m, v);
-		ComposeAffineTransform(&Camera(), &m, &m);
-		GteSetRotMatrix(&m);
-		GteSetTransVector(&m);
-		ModelDraw(model, faded, fade);
-	}
-	static void YawModel(const Node *n, uint32_t model, bool faded, int32_t fade)
-	{
-		const ShotRec *s = Shot(n->f0E);
-		int16_t ang[4];
-		ang[0] = 0;
-		ang[1] = n->f18;
-		ang[2] = 0;
-		ang[3] = 0;
-		Mat4x3 m;
-		ComposeZYXRotationMatrix(ang, &m);
-		m.t[0] = s->pos[0];
-		m.t[1] = 0;
-		const int32_t sc = n->f1C;
-		const int32_t v[3] = { sc, sc, sc };
-		m.t[2] = s->pos[2];
-		Scale3DMatrix(&m, v);
-		ComposeAffineTransform(&Camera(), &m, &m);
-		GteSetRotMatrix(&m);
-		GteSetTransVector(&m);
-		ModelDraw(model, faded, fade);
-	}
-
-	static void ImpactFlashDraw(const Node *n, uint8_t *h)
-	{
-		*(int16_t *)(h + 4) = n->counter;
-		*(uint32_t *)h = game_addr(SEQ_Impact);
-		*(int16_t *)(h + 0x24) = 8;
-		TransformCameraByShadowRotation(n->pos, n->f1C, -(int32_t)n->pos[3]);
-		PacketCursor() = InitEffectSequenceFromData(h, RenderOT(), 2, PacketCursor());
-	}
-
-	static void SparkDraw(const Particle *e, int16_t depth, uint8_t *h)
-	{
-		*(int16_t *)(h + 4) = e->frame;
-		TransformCameraByShadowRotation(e->pos, e->size, -(int32_t)depth);
-		PacketCursor() = InitEffectSequenceFromData(h, RenderOT(), 2, PacketCursor());
-	}
-	static void SparkMove(Particle *e)
-	{
-		e->pos[0] = (int16_t)(e->pos[0] + e->vel[0]);
-		e->pos[1] = (int16_t)(e->pos[1] + e->vel[1]);
-		e->pos[2] = (int16_t)(e->pos[2] + e->vel[2]);
-		e->vel[0] = (int16_t)(e->vel[0] - (int16_t)(e->vel[0] >> 2));
-		e->vel[1] = (int16_t)(e->vel[1] - (int16_t)(e->vel[1] >> 2));
-		e->vel[2] = (int16_t)(e->vel[2] - (int16_t)(e->vel[2] >> 2));
-	}
-	inline Particle *Sparks(const Node *n) { return (Particle *)((n->f0E & 1) ? game_addr(PARTS_B) : game_addr(PARTS_A)); }
-
-	static uint32_t __cdecl FlashTask(TaskNode *n_)
-	{
-		Node *n = (Node *)n_;
-		MuzzleModel(n, game_addr(MODEL_Flash), n->counter == 1, 0xC00);
-		if (UpdateFlags() & 0x201) return 0;
-		n->counter++;
-		return n->counter >= 2 ? TASK_END : 0;
-	}
-
-	static uint32_t __cdecl Flash2Task(TaskNode *n_)
-	{
-		Node *n = (Node *)n_;
-		YawModel(n, game_addr(MODEL_Flash2), n->counter == 1, 0x800);
-		if (UpdateFlags() & 0x201) return 0;
-		n->counter++;
-		return n->counter >= 2 ? TASK_END : 0;
-	}
-
-	static uint32_t __cdecl ImpactTask(TaskNode *n_)
-	{
-		Node *n = (Node *)n_;
-		Particle *arr = Sparks(n);
-		uint8_t *h = (uint8_t *)FieldAlloc(0xB4);
-		if (n->counter < 0x10) ImpactFlashDraw(n, h);
-		*(int16_t *)(h + 0x24) = 8;
-		*(uint32_t *)h = game_addr(SEQ_Spark);
-		int32_t alive = 0;
-		const int32_t id = n->f0E + 1;
-		for (Particle *e = arr; e < arr + 150; e++)
-		{
-			if (e->id != id) continue;
-			SparkDraw(e, n->pos[3], h);
-			if (UpdateFlags() & 0x201) continue;
-			e->frame++;
-			if (*(const int16_t *)(h + 0x28) < 0)
-			{
-				e->id = 0;
-				continue;
-			}
-			SparkMove(e);
-			alive++;
-		}
-		FieldFree(0xB4);
-		if (UpdateFlags() & 0x201) return 0;
-		if (n->counter == 0)
-		{
-			for (int32_t k = 0; k < 0xC; k++)
-			{
-				int32_t i = 0;
-				while (i < 150 && arr[i].id != 0) i++;
-				if (i >= 150) break;
-				Particle *e = &arr[i];
-				e->id = id;
-				e->frame = 0;
-				e->size = (int16_t)(CrtRand() % 0x480 + 0x100);
-				*(uint32_t *)&e->pos[0] = *(const uint32_t *)&n->pos[0];
-				*(uint32_t *)&e->pos[2] = *(const uint32_t *)&n->pos[2];
-				e->pos[0] = (int16_t)(e->pos[0] + (CrtRand() % 300 - 0x96));
-				e->pos[1] = (int16_t)(e->pos[1] + (CrtRand() % 300 - 0x96));
-				e->pos[2] = (int16_t)(e->pos[2] + (CrtRand() % 300 - 0x96));
-				int32_t v[3];
-				v[0] = CrtRand() % 0x1000 - 0x800;
-				v[1] = CrtRand() % 0x1000 - 0x800;
-				v[2] = CrtRand() % 0x1000 - 0x800;
-				Normalize(v, v);
-				const int32_t sp = CrtRand() % 400 + 0xB4;
-				e->vel[0] = (int16_t)(mul32(sp, v[0]) >> 12);
-				e->vel[1] = (int16_t)(mul32(sp, v[1]) >> 12);
-				e->vel[2] = (int16_t)(mul32(sp, v[2]) >> 12);
-			}
-		}
-		n->counter++;
-		return (n->counter >= 4 && alive == 0) ? TASK_END : 0;
-	}
-
-	static uint32_t __cdecl ShotTask(TaskNode *n_)
-	{
-		Node *n = (Node *)n_;
-		if (UpdateFlags() & 0x201) return 0;
-		if (!(Flags() & 1)) return 0;
-		if (n->counter == 0)
-		{
-			if (Flags() & 4) return 0;
-			QueueChainTransformation(Caster(), n->f18);
-			Flags() |= 4;
-		}
-		if (n->counter == 0)
-		{
-			Ctx()->done = 1;
-			Flags() &= ~4u;
-		}
-		if (n->counter == 0)
-		{
-			ShotRec *s = Shot(n->f0E);
-			int16_t pos[4];
-			int32_t dir[3];
-			WeaponBone(Caster(), 2, dir, pos);
-			s->pos[0] = (int16_t)((mul32(dir[0], 350) >> 12) + pos[0]);
-			s->pos[1] = (int16_t)((mul32(dir[1], 350) >> 12) + pos[1]);
-			s->pos[2] = (int16_t)((mul32(dir[2], 350) >> 12) + pos[2]);
-			int32_t axis[3];
-			const int32_t angle = RotationBetweenVectors(MUZZLE_REF(), dir, axis);
-			BuildAxisAngleRotationMatrix(angle, &s->m, axis);
-			Node *f = AddTask(QAux(), game_addr(ORIG_FlashTask));
-			f->counter = 0;
-			f->f0E = n->f0E;
-			f->f18 = (int16_t)(CrtRand() % 0x1000);
-			f->f1C = (int16_t)(CrtRand() % 0x500 + 0x900);
-			Node *g = AddTask(QAux(), game_addr(ORIG_Flash2Task));
-			g->counter = 0;
-			g->f0E = n->f0E;
-			g->f18 = (int16_t)(CrtRand() % 0x1000);
-			g->f1C = (int16_t)(CrtRand() % 0x280 + 0x800);
-		}
-		if (n->counter == 0)
-		{
-			uint8_t *t = Entity(n->f1A);
-			int32_t bone = 0;
-			const uint8_t anchors = ***(const uint8_t ***)(t + 0x64);
-			if (anchors) bone = CrtRand() % anchors;
-			Node *i = AddTask(QAux(), game_addr(ORIG_ImpactTask));
-			i->f0E = (int16_t)ImpactCount();
-			ImpactCount()++;
-			i->counter = 0;
-			GetEffectSpawnPosition(t, bone, CrtRand() % 0x1000, i->pos);
-			i->pos[3] = (int16_t)(mul32(*(const int16_t *)(Entity(n->f1A) + 0x26), 2000) >> 12);
-			i->f1C = (int16_t)(CrtRand() % 0xC00 + 0x800);
-			ApplyActionResultToTargets(Ctx()->actions[0].targets, Ctx()->actions[0].target_count);
-			BdPlaySE(SOUND_Gun(), (n->f0E & 1) ? 1 : 2, 0x80);
-		}
-		n->counter++;
-		return n->counter >= 2 ? TASK_END : 0;
-	}
-
-	static uint32_t __cdecl FadeOutTask(TaskNode *n_)
-	{
-		Node *n = (Node *)n_;
-		SetScreenFlash(n->f18 - n->f18 / n->f0E * n->counter, 0);
-		if (UpdateFlags() & 0x201) return 0;
-		n->counter++;
-		if (n->counter < n->f0E) return 0;
-		SetScreenFlash(0, 0);
-		return TASK_END;
-	}
-
-	static uint32_t __cdecl FadeInTask(TaskNode *n_)
-	{
-		Node *n = (Node *)n_;
-		SetScreenFlash(n->f18 / n->f0E * n->counter, 0);
-		if (UpdateFlags() & 0x201) return 0;
-		n->counter++;
-		return n->counter >= n->f0E ? TASK_END : 0;
-	}
-
-	static uint32_t __cdecl AfterimageTask(TaskNode *n_)
-	{
-		Node *n = (Node *)n_;
-		const int32_t c = n->counter;
-		Ghost *g = GhostSlot(c % 5);
-		g->used = 1;
-		uint8_t *e = Caster();
-		BoneSnapshot(*(uint8_t **)(e + 0x78), g->bones);
-		BoneSnapshot(*(uint8_t **)(Caster() + 0x78), (uint8_t *)game_addr(BONES_NOW));
-		const uint32_t colour = *(const uint32_t *)(Caster() + 0x28);
-		int32_t slot = c - 1 >= 0 ? (c - 1) % 5 : 0;
-		const int32_t end = EndTick();
-		const int32_t count = c >= end ? end - c + 5 : 5;
-		*(volatile int32_t *)&n_ = count;
-		for (int32_t k = 0; k < count; k++)
-		{
-			const Ghost *s = GhostSlot(slot);
-			if (!s->used) break;
-			BoneRestore(*(uint8_t **)(Caster() + 0x78), s->bones);
-			*(uint32_t *)(Caster() + 0x28) = GHOST_COLOURS()[k];
-			GhostDraw(Caster());
-			if (--slot < 0) slot = 4;
-		}
-		BoneRestore(*(uint8_t **)(Caster() + 0x78), (const uint8_t *)game_addr(BONES_NOW));
-		*(uint32_t *)(Caster() + 0x28) = colour;
-		if (UpdateFlags() & 0x201) return 0;
-		n->counter++;
-		return n->counter >= EndTick() + 5 ? TASK_END : 0;
-	}
-
-	static uint32_t __cdecl StartTask(TaskNode *n_)
-	{
-		Node *n = (Node *)n_;
-		if (UpdateFlags() & 0x201) return 0;
-		if (n->counter == 0)
-		{
-			BindExternalAnimSet(Caster(), game_addr(BIND_OUT), game_addr(ANIM_DATA));
-			QueueChainTransformation(Caster(), 1);
-			Node *f = AddTask(QAux(), game_addr(ORIG_FadeInTask));
-			f->counter = 0;
-			f->f0E = 8;
-			f->f18 = 0x800;
-			AddTask(QAux(), game_addr(ORIG_AfterimageTask))->counter = 0;
-			EndTick() = 999999;
-			for (uint32_t a = game_addr(GHOSTS); a < game_addr(GHOSTS_END); a += 0x84) *(int32_t *)a = 0;
-		}
-		n->counter++;
-		if (n->counter < 7) return 0;
-		Flags() |= 1;
-		Ctx()->done = 1;
-		return TASK_END;
-	}
-
-	static uint32_t __cdecl EndTask(TaskNode *n_)
-	{
-		if (UpdateFlags() & 0x201) return 0;
-		if (Flags() & 4) return 0;
-		Node *n = (Node *)n_;
-		if (n->counter == 0)
-		{
-			QueueChainTransformation(Caster(), 2);
-			Node *f = AddTask(QAux(), game_addr(ORIG_FadeOutTask));
-			f->counter = 0;
-			f->f0E = 8;
-			f->f18 = 0x800;
-			EndTick() = ModuleTick();
-		}
-		if (n->counter == 0) ApplyActionResultToTargets(Ctx()->actions[0].targets, Ctx()->actions[0].target_count);
-		n->counter++;
-		if (n->counter < 0xC) return 0;
-		Flags() |= 2;
-		Ctx()->done = 1;
-		return TASK_END;
-	}
-
-	static uint32_t __cdecl RootTask(TaskNode *n_)
-	{
-		RootNode *r = (RootNode *)n_;
-		PacketCursor() = (*(const uint8_t *)&r->counter & 1) ? TexBase() + ARENA_ODD : TexBase();
-		const int shots = ExecuteTaskQueue(QShots());
-		const int aux = ExecuteTaskQueue(QAux());
-		if (!(UpdateFlags() & 0x201)) ModuleTick()++;
-		r->counter++;
-		return (aux == 0 && shots == 0 && (Flags() & 2)) ? TASK_END : 0;
-	}
+static void BoneFrame(uint8_t *anim_header, int32_t bone, int32_t *dir, int16_t *pos)
+{
+    const uint8_t *sk = *(uint8_t **)*(uint8_t **)(anim_header + 4);
+    if (bone >= 0xF0)
+        bone = sk[bone - 0xEC];
+    const uint8_t *b = sk + 0x10 + bone * 0x30;
+    dir[1] = 0;
+    dir[0] = 0;
+    dir[2] = -0x1000;
+    TransformVectorBy3x3Matrix((const Mat4x3 *)(b + 0x10), dir, dir);
+    Normalize(dir, dir);
+    pos[0] = *(const int16_t *)(b + 0x24);
+    pos[1] = *(const int16_t *)(b + 0x28);
+    pos[2] = *(const int16_t *)(b + 0x2C);
 }
 
-	void register_mag196_quick_shot()
-	{
-		register_port(quick196::ORIG_RootTask, (void *)quick196::RootTask, "196 RootTask", 196);
-		register_port(quick196::ORIG_StartTask, (void *)quick196::StartTask, "196 StartTask", 196);
-		register_port(quick196::ORIG_ShotTask, (void *)quick196::ShotTask, "196 ShotTask", 196);
-		register_port(quick196::ORIG_EndTask, (void *)quick196::EndTask, "196 EndTask", 196);
-		register_port(quick196::ORIG_FadeOutTask, (void *)quick196::FadeOutTask, "196 FadeOutTask", 196);
-		register_port(quick196::ORIG_FadeInTask, (void *)quick196::FadeInTask, "196 FadeInTask", 196);
-		register_port(quick196::ORIG_AfterimageTask, (void *)quick196::AfterimageTask, "196 AfterimageTask", 196);
-		register_port(quick196::ORIG_FlashTask, (void *)quick196::FlashTask, "196 FlashTask", 196);
-		register_port(quick196::ORIG_Flash2Task, (void *)quick196::Flash2Task, "196 Flash2Task", 196);
-		register_port(quick196::ORIG_ImpactTask, (void *)quick196::ImpactTask, "196 ImpactTask", 196);
-	}
+static void WeaponBone(uint8_t *entity, int32_t bone, int32_t *dir, int16_t *pos)
+{
+    uint8_t *w = *(uint8_t **)(entity + 0x78);
+    if (!w)
+        return;
+    BoneFrame(w, bone, dir, pos);
+    Mat4x3 m;
+    ComposeAffineTransform((const Mat4x3 *)(entity + 0x40), (const Mat4x3 *)(w + 0x24), &m);
+    TransformVectorBy3x3Matrix(&m, dir, dir);
+    Normalize(dir, dir);
+    MatVec(&m, pos, pos);
+    pos[0] = (int16_t)(pos[0] + (int16_t)m.t[0]);
+    pos[1] = (int16_t)(pos[1] + (int16_t)m.t[1]);
+    pos[2] = (int16_t)(pos[2] + (int16_t)m.t[2]);
 }
 
+static void BoneSnapshot(uint8_t *w, uint8_t *dst)
+{
+    const uint8_t *sk = *(const uint8_t **)*(uint8_t **)(w + 4);
+    const int32_t n = sk[0];
+    const uint8_t *src = sk + 0x20;
+    for (int32_t k = 0; k < n; k++, src += 0x30, dst += 0x20)
+        ff8fx::copy<(0x20)>(dst, src);
+}
+static void BoneRestore(uint8_t *w, const uint8_t *src)
+{
+    uint8_t *sk = *(uint8_t **)*(uint8_t **)(w + 4);
+    uint8_t *dst = sk + 0x20;
+    for (int32_t k = 0; k < (int32_t)sk[0]; k++, src += 0x20, dst += 0x30)
+        ff8fx::copy<(0x20)>(dst, src);
+}
+
+static void GhostDraw(uint8_t *entity)
+{
+    uint8_t *h = (uint8_t *)FieldAlloc(0x4C);
+    uint8_t *w = *(uint8_t **)(entity + 0x78);
+    if (w && !(entity[1] & 2))
+    {
+        Mat4x3 *m = (Mat4x3 *)h;
+        ComposeAffineTransform(&Camera(), (const Mat4x3 *)(entity + 0x40), m);
+        *(uint16_t *)(h + 0x34) = 0;
+        *(uint16_t *)(h + 0x36) = 0;
+        *(uint32_t *)(h + 0x24) = var<uint32_t>(game_addr(game::g_BattleVertexWorkspace));
+        *(uint32_t *)(h + 0x3C) = *(const uint32_t *)(entity + 0x28);
+        *(uint16_t *)(h + 0x38) = 0x140;
+        *(uint16_t *)(h + 0x3A) = 0xD8;
+        *(uint32_t *)(h + 0x30) = var<uint32_t>(game_addr(game::BATTLE_PACKET_BUFFER_END));
+        *(uint32_t *)(h + 0x40) = 0xFFFFFFFF;
+        const uint8_t c = entity[7];
+        h[0x4A] = c;
+        h[0x49] = c;
+        h[0x48] = c;
+        ComposeAffineTransform(m, (const Mat4x3 *)(w + 0x24), m);
+        ComputeBonesWorldMatrices(w, m);
+        FramePackets() = RenderGeometry(*(const uint32_t *)(w + 4), h + 0x20, RenderOT(), 4, FramePackets());
+    }
+    FieldFree(0x4C);
+}
+
+static void ModelDraw(uint32_t model, bool faded, int32_t fade)
+{
+    uint8_t *h = (uint8_t *)FieldAlloc(0x58);
+    *(uint32_t *)h = model;
+    *(uint32_t *)(h + 8) = 0;
+    *(uint32_t *)(h + 0x1C) = 0x33;
+    if (faded)
+    {
+        *(int32_t *)(h + 0xC) = fade;
+        *(uint32_t *)(h + 0x1C) = 0xF3;
+    }
+    PacketCursor() = RenderPrimModel(h, RenderOT(), 2, PacketCursor());
+    FieldFree(0x58);
+}
+
+static void MuzzleModel(const Node *n, uint32_t model, bool faded, int32_t fade)
+{
+    const ShotRec *s = Shot(n->f0E);
+    int16_t ang[4];
+    ang[0] = 0;
+    ang[1] = 0;
+    ang[2] = n->f18;
+    ang[3] = 0;
+    Mat4x3 m;
+    ComposeZYXRotationMatrix(ang, &m);
+    GteMatrixMultiply(&s->m, &m);
+    m.t[0] = s->pos[0];
+    m.t[1] = s->pos[1];
+    const int32_t sc = n->f1C;
+    const int32_t v[3] = {sc, sc, sc};
+    m.t[2] = s->pos[2];
+    Scale3DMatrix(&m, v);
+    ComposeAffineTransform(&Camera(), &m, &m);
+    GteSetRotMatrix(&m);
+    GteSetTransVector(&m);
+    ModelDraw(model, faded, fade);
+}
+static void YawModel(const Node *n, uint32_t model, bool faded, int32_t fade)
+{
+    const ShotRec *s = Shot(n->f0E);
+    int16_t ang[4];
+    ang[0] = 0;
+    ang[1] = n->f18;
+    ang[2] = 0;
+    ang[3] = 0;
+    Mat4x3 m;
+    ComposeZYXRotationMatrix(ang, &m);
+    m.t[0] = s->pos[0];
+    m.t[1] = 0;
+    const int32_t sc = n->f1C;
+    const int32_t v[3] = {sc, sc, sc};
+    m.t[2] = s->pos[2];
+    Scale3DMatrix(&m, v);
+    ComposeAffineTransform(&Camera(), &m, &m);
+    GteSetRotMatrix(&m);
+    GteSetTransVector(&m);
+    ModelDraw(model, faded, fade);
+}
+
+static void ImpactFlashDraw(const Node *n, uint8_t *h)
+{
+    *(int16_t *)(h + 4) = n->counter;
+    *(uint32_t *)h = game_addr(SEQ_Impact);
+    *(int16_t *)(h + 0x24) = 8;
+    TransformCameraByShadowRotation(n->pos, n->f1C, -(int32_t)n->pos[3]);
+    PacketCursor() = InitEffectSequenceFromData(h, RenderOT(), 2, PacketCursor());
+}
+
+static void SparkDraw(const Particle *e, int16_t depth, uint8_t *h)
+{
+    *(int16_t *)(h + 4) = e->frame;
+    TransformCameraByShadowRotation(e->pos, e->size, -(int32_t)depth);
+    PacketCursor() = InitEffectSequenceFromData(h, RenderOT(), 2, PacketCursor());
+}
+static void SparkMove(Particle *e)
+{
+    e->pos[0] = (int16_t)(e->pos[0] + e->vel[0]);
+    e->pos[1] = (int16_t)(e->pos[1] + e->vel[1]);
+    e->pos[2] = (int16_t)(e->pos[2] + e->vel[2]);
+    e->vel[0] = (int16_t)(e->vel[0] - (int16_t)(e->vel[0] >> 2));
+    e->vel[1] = (int16_t)(e->vel[1] - (int16_t)(e->vel[1] >> 2));
+    e->vel[2] = (int16_t)(e->vel[2] - (int16_t)(e->vel[2] >> 2));
+}
+inline Particle *Sparks(const Node *n)
+{
+    return (Particle *)((n->f0E & 1) ? game_addr(PARTS_B) : game_addr(PARTS_A));
+}
+
+static uint32_t __cdecl FlashTask(TaskNode *n_)
+{
+    Node *n = (Node *)n_;
+    MuzzleModel(n, game_addr(MODEL_Flash), n->counter == 1, 0xC00);
+    if (UpdateFlags() & 0x201)
+        return 0;
+    n->counter++;
+    return n->counter >= 2 ? TASK_END : 0;
+}
+
+static uint32_t __cdecl Flash2Task(TaskNode *n_)
+{
+    Node *n = (Node *)n_;
+    YawModel(n, game_addr(MODEL_Flash2), n->counter == 1, 0x800);
+    if (UpdateFlags() & 0x201)
+        return 0;
+    n->counter++;
+    return n->counter >= 2 ? TASK_END : 0;
+}
+
+static uint32_t __cdecl ImpactTask(TaskNode *n_)
+{
+    Node *n = (Node *)n_;
+    Particle *arr = Sparks(n);
+    uint8_t *h = (uint8_t *)FieldAlloc(0xB4);
+    if (n->counter < 0x10)
+        ImpactFlashDraw(n, h);
+    *(int16_t *)(h + 0x24) = 8;
+    *(uint32_t *)h = game_addr(SEQ_Spark);
+    int32_t alive = 0;
+    const int32_t id = n->f0E + 1;
+    for (Particle *e = arr; e < arr + 150; e++)
+    {
+        if (e->id != id)
+            continue;
+        SparkDraw(e, n->pos[3], h);
+        if (UpdateFlags() & 0x201)
+            continue;
+        e->frame++;
+        if (*(const int16_t *)(h + 0x28) < 0)
+        {
+            e->id = 0;
+            continue;
+        }
+        SparkMove(e);
+        alive++;
+    }
+    FieldFree(0xB4);
+    if (UpdateFlags() & 0x201)
+        return 0;
+    if (n->counter == 0)
+    {
+        for (int32_t k = 0; k < 0xC; k++)
+        {
+            int32_t i = 0;
+            while (i < 150 && arr[i].id != 0)
+                i++;
+            if (i >= 150)
+                break;
+            Particle *e = &arr[i];
+            e->id = id;
+            e->frame = 0;
+            e->size = (int16_t)(CrtRand() % 0x480 + 0x100);
+            *(uint32_t *)&e->pos[0] = *(const uint32_t *)&n->pos[0];
+            *(uint32_t *)&e->pos[2] = *(const uint32_t *)&n->pos[2];
+            e->pos[0] = (int16_t)(e->pos[0] + (CrtRand() % 300 - 0x96));
+            e->pos[1] = (int16_t)(e->pos[1] + (CrtRand() % 300 - 0x96));
+            e->pos[2] = (int16_t)(e->pos[2] + (CrtRand() % 300 - 0x96));
+            int32_t v[3];
+            v[0] = CrtRand() % 0x1000 - 0x800;
+            v[1] = CrtRand() % 0x1000 - 0x800;
+            v[2] = CrtRand() % 0x1000 - 0x800;
+            Normalize(v, v);
+            const int32_t sp = CrtRand() % 400 + 0xB4;
+            e->vel[0] = (int16_t)(mul32(sp, v[0]) >> 12);
+            e->vel[1] = (int16_t)(mul32(sp, v[1]) >> 12);
+            e->vel[2] = (int16_t)(mul32(sp, v[2]) >> 12);
+        }
+    }
+    n->counter++;
+    return (n->counter >= 4 && alive == 0) ? TASK_END : 0;
+}
+
+static uint32_t __cdecl ShotTask(TaskNode *n_)
+{
+    Node *n = (Node *)n_;
+    if (UpdateFlags() & 0x201)
+        return 0;
+    if (!(Flags() & 1))
+        return 0;
+    if (n->counter == 0)
+    {
+        if (Flags() & 4)
+            return 0;
+        QueueChainTransformation(Caster(), n->f18);
+        Flags() |= 4;
+    }
+    if (n->counter == 0)
+    {
+        Ctx()->done = 1;
+        Flags() &= ~4u;
+    }
+    if (n->counter == 0)
+    {
+        ShotRec *s = Shot(n->f0E);
+        int16_t pos[4];
+        int32_t dir[3];
+        WeaponBone(Caster(), 2, dir, pos);
+        s->pos[0] = (int16_t)((mul32(dir[0], 350) >> 12) + pos[0]);
+        s->pos[1] = (int16_t)((mul32(dir[1], 350) >> 12) + pos[1]);
+        s->pos[2] = (int16_t)((mul32(dir[2], 350) >> 12) + pos[2]);
+        int32_t axis[3];
+        const int32_t angle = RotationBetweenVectors(MUZZLE_REF(), dir, axis);
+        BuildAxisAngleRotationMatrix(angle, &s->m, axis);
+        Node *f = AddTask(QAux(), game_addr(ORIG_FlashTask));
+        f->counter = 0;
+        f->f0E = n->f0E;
+        f->f18 = (int16_t)(CrtRand() % 0x1000);
+        f->f1C = (int16_t)(CrtRand() % 0x500 + 0x900);
+        Node *g = AddTask(QAux(), game_addr(ORIG_Flash2Task));
+        g->counter = 0;
+        g->f0E = n->f0E;
+        g->f18 = (int16_t)(CrtRand() % 0x1000);
+        g->f1C = (int16_t)(CrtRand() % 0x280 + 0x800);
+    }
+    if (n->counter == 0)
+    {
+        uint8_t *t = Entity(n->f1A);
+        int32_t bone = 0;
+        const uint8_t anchors = ***(const uint8_t ***)(t + 0x64);
+        if (anchors)
+            bone = CrtRand() % anchors;
+        Node *i = AddTask(QAux(), game_addr(ORIG_ImpactTask));
+        i->f0E = (int16_t)ImpactCount();
+        ImpactCount()++;
+        i->counter = 0;
+        GetEffectSpawnPosition(t, bone, CrtRand() % 0x1000, i->pos);
+        i->pos[3] = (int16_t)(mul32(*(const int16_t *)(Entity(n->f1A) + 0x26), 2000) >> 12);
+        i->f1C = (int16_t)(CrtRand() % 0xC00 + 0x800);
+        ApplyActionResultToTargets(Ctx()->actions[0].targets, Ctx()->actions[0].target_count);
+        BdPlaySE(SOUND_Gun(), (n->f0E & 1) ? 1 : 2, 0x80);
+    }
+    n->counter++;
+    return n->counter >= 2 ? TASK_END : 0;
+}
+
+static uint32_t __cdecl FadeOutTask(TaskNode *n_)
+{
+    Node *n = (Node *)n_;
+    SetScreenFlash(n->f18 - n->f18 / n->f0E * n->counter, 0);
+    if (UpdateFlags() & 0x201)
+        return 0;
+    n->counter++;
+    if (n->counter < n->f0E)
+        return 0;
+    SetScreenFlash(0, 0);
+    return TASK_END;
+}
+
+static uint32_t __cdecl FadeInTask(TaskNode *n_)
+{
+    Node *n = (Node *)n_;
+    SetScreenFlash(n->f18 / n->f0E * n->counter, 0);
+    if (UpdateFlags() & 0x201)
+        return 0;
+    n->counter++;
+    return n->counter >= n->f0E ? TASK_END : 0;
+}
+
+static uint32_t __cdecl AfterimageTask(TaskNode *n_)
+{
+    Node *n = (Node *)n_;
+    const int32_t c = n->counter;
+    Ghost *g = GhostSlot(c % 5);
+    g->used = 1;
+    uint8_t *e = Caster();
+    BoneSnapshot(*(uint8_t **)(e + 0x78), g->bones);
+    BoneSnapshot(*(uint8_t **)(Caster() + 0x78), (uint8_t *)game_addr(BONES_NOW));
+    const uint32_t colour = *(const uint32_t *)(Caster() + 0x28);
+    int32_t slot = c - 1 >= 0 ? (c - 1) % 5 : 0;
+    const int32_t end = EndTick();
+    const int32_t count = c >= end ? end - c + 5 : 5;
+    *(volatile int32_t *)&n_ = count;
+    for (int32_t k = 0; k < count; k++)
+    {
+        const Ghost *s = GhostSlot(slot);
+        if (!s->used)
+            break;
+        BoneRestore(*(uint8_t **)(Caster() + 0x78), s->bones);
+        *(uint32_t *)(Caster() + 0x28) = GHOST_COLOURS()[k];
+        GhostDraw(Caster());
+        if (--slot < 0)
+            slot = 4;
+    }
+    BoneRestore(*(uint8_t **)(Caster() + 0x78), (const uint8_t *)game_addr(BONES_NOW));
+    *(uint32_t *)(Caster() + 0x28) = colour;
+    if (UpdateFlags() & 0x201)
+        return 0;
+    n->counter++;
+    return n->counter >= EndTick() + 5 ? TASK_END : 0;
+}
+
+static uint32_t __cdecl StartTask(TaskNode *n_)
+{
+    Node *n = (Node *)n_;
+    if (UpdateFlags() & 0x201)
+        return 0;
+    if (n->counter == 0)
+    {
+        BindExternalAnimSet(Caster(), game_addr(BIND_OUT), game_addr(ANIM_DATA));
+        QueueChainTransformation(Caster(), 1);
+        Node *f = AddTask(QAux(), game_addr(ORIG_FadeInTask));
+        f->counter = 0;
+        f->f0E = 8;
+        f->f18 = 0x800;
+        AddTask(QAux(), game_addr(ORIG_AfterimageTask))->counter = 0;
+        EndTick() = 999999;
+        for (uint32_t a = game_addr(GHOSTS); a < game_addr(GHOSTS_END); a += 0x84)
+            *(int32_t *)a = 0;
+    }
+    n->counter++;
+    if (n->counter < 7)
+        return 0;
+    Flags() |= 1;
+    Ctx()->done = 1;
+    return TASK_END;
+}
+
+static uint32_t __cdecl EndTask(TaskNode *n_)
+{
+    if (UpdateFlags() & 0x201)
+        return 0;
+    if (Flags() & 4)
+        return 0;
+    Node *n = (Node *)n_;
+    if (n->counter == 0)
+    {
+        QueueChainTransformation(Caster(), 2);
+        Node *f = AddTask(QAux(), game_addr(ORIG_FadeOutTask));
+        f->counter = 0;
+        f->f0E = 8;
+        f->f18 = 0x800;
+        EndTick() = ModuleTick();
+    }
+    if (n->counter == 0)
+        ApplyActionResultToTargets(Ctx()->actions[0].targets, Ctx()->actions[0].target_count);
+    n->counter++;
+    if (n->counter < 0xC)
+        return 0;
+    Flags() |= 2;
+    Ctx()->done = 1;
+    return TASK_END;
+}
+
+static uint32_t __cdecl RootTask(TaskNode *n_)
+{
+    RootNode *r = (RootNode *)n_;
+    PacketCursor() = (*(const uint8_t *)&r->counter & 1) ? TexBase() + ARENA_ODD : TexBase();
+    const int shots = ExecuteTaskQueue(QShots());
+    const int aux = ExecuteTaskQueue(QAux());
+    if (!(UpdateFlags() & 0x201))
+        ModuleTick()++;
+    r->counter++;
+    return (aux == 0 && shots == 0 && (Flags() & 2)) ? TASK_END : 0;
+}
+} // namespace quick196
+
+void register_mag196_quick_shot()
+{
+    register_port(quick196::ORIG_RootTask, (void *)quick196::RootTask, "196 RootTask", 196);
+    register_port(quick196::ORIG_StartTask, (void *)quick196::StartTask, "196 StartTask", 196);
+    register_port(quick196::ORIG_ShotTask, (void *)quick196::ShotTask, "196 ShotTask", 196);
+    register_port(quick196::ORIG_EndTask, (void *)quick196::EndTask, "196 EndTask", 196);
+    register_port(quick196::ORIG_FadeOutTask, (void *)quick196::FadeOutTask, "196 FadeOutTask", 196);
+    register_port(quick196::ORIG_FadeInTask, (void *)quick196::FadeInTask, "196 FadeInTask", 196);
+    register_port(quick196::ORIG_AfterimageTask, (void *)quick196::AfterimageTask, "196 AfterimageTask", 196);
+    register_port(quick196::ORIG_FlashTask, (void *)quick196::FlashTask, "196 FlashTask", 196);
+    register_port(quick196::ORIG_Flash2Task, (void *)quick196::Flash2Task, "196 Flash2Task", 196);
+    register_port(quick196::ORIG_ImpactTask, (void *)quick196::ImpactTask, "196 ImpactTask", 196);
+}
+} // namespace ff8fx

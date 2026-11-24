@@ -20,28 +20,34 @@ namespace ff8fx
 {
 namespace megiddo
 {
-	struct D312
-	{
-		// A copy of Megiddo Flame 166: its code, globals and data are at the same distance from 166's in every release
-		static uint32_t code() { return game_addr(game::MAG_166_MegiddoFlame_Root) - game_addr(game::MAG_312_MegiddoFlame_Root); }
-		static uint32_t glob() { return game_addr(game::unk_23BF038) - game_addr(game::unk_223CCA0); }
-		static uint32_t data() { return game_addr(game::unk_D78048) - game_addr(game::unk_CDF658); }
-		static constexpr game::Id CAMERA = game::MAG312_MEGIDDO_FLAME_MOBILE_TYPE_8_cameraAnim;
-		static constexpr int32_t BONE = 0xA;
-		static constexpr int32_t RMODE = 2;
-		static constexpr int EFFECT = 312;
-	};
-}
-}
+struct D312
+{
+    // A copy of Megiddo Flame 166: its code, globals and data are at the same distance from 166's in every release
+    static uint32_t code()
+    {
+        return game_addr(game::MAG_166_MegiddoFlame_Root) - game_addr(game::MAG_312_MegiddoFlame_Root);
+    }
+    static uint32_t glob()
+    {
+        return game_addr(game::unk_23BF038) - game_addr(game::unk_223CCA0);
+    }
+    static uint32_t data()
+    {
+        return game_addr(game::unk_D78048) - game_addr(game::unk_CDF658);
+    }
+    static constexpr game::Id CAMERA = game::MAG312_MEGIDDO_FLAME_MOBILE_TYPE_8_cameraAnim;
+    static constexpr int32_t BONE = 0xA;
+    static constexpr int32_t RMODE = 2;
+    static constexpr int EFFECT = 312;
+};
+} // namespace megiddo
+} // namespace ff8fx
 
 namespace ff8fx
 {
-	void register_mag312_megiddo_flame()
-	{
-		static const char *const names[19] = { "312 Root", "312 Restore", "312 Director", "312 Glow", "312 Spin", "312 Ring", "312 BoltDirector",
-			"312 Arc", "312 Sheet", "312 Ribbon", "312 Column", "312 ColumnFlash", "312 Pillar", "312 Flame", "312 Sparks", "312 Debris",
-			"312 KnockDown", "312 Throw", "312 Ring2" };
-		megiddo::Megiddo<megiddo::D312>::Register(names);
-	}
+void register_mag312_megiddo_flame()
+{
+    static const char *const names[19] = {"312 Root", "312 Restore", "312 Director", "312 Glow", "312 Spin", "312 Ring", "312 BoltDirector", "312 Arc", "312 Sheet", "312 Ribbon", "312 Column", "312 ColumnFlash", "312 Pillar", "312 Flame", "312 Sparks", "312 Debris", "312 KnockDown", "312 Throw", "312 Ring2"};
+    megiddo::Megiddo<megiddo::D312>::Register(names);
 }
-
+} // namespace ff8fx

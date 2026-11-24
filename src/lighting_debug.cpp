@@ -21,7 +21,7 @@
 #include <imgui.h>
 #include <math.h>
 
-void lighting_debug(bool* isOpen)
+void lighting_debug(bool *isOpen)
 {
     if (!ImGui::Begin("Lighting Debug", isOpen, ImGuiWindowFlags_::ImGuiWindowFlags_AlwaysAutoResize))
     {
@@ -30,11 +30,11 @@ void lighting_debug(bool* isOpen)
     }
 
     if (!(getmode_cached()->driver_mode == MODE_FIELD || getmode_cached()->driver_mode == MODE_BATTLE || getmode_cached()->driver_mode == MODE_WORLDMAP))
-	{
-		ImGui::Text("Not currently on a battle/field or worldmap.");
-		ImGui::End();
-		return;
-	}
+    {
+        ImGui::Text("Not currently on a battle/field or worldmap.");
+        ImGui::End();
+        return;
+    }
 
     ImGui::Text("Group ID: %s", lighting.getConfigGroup().c_str());
 
@@ -59,25 +59,27 @@ void lighting_debug(bool* isOpen)
         game_lighting = gameLightingMode;
     }
     ImGui::BeginGroup();
-    if (ImGui::Button("Load config from disk")) {
+    if (ImGui::Button("Load config from disk"))
+    {
         lighting.reload();
     }
     ImGui::SameLine();
-    if (ImGui::Button("Save config to disk")) {
+    if (ImGui::Button("Save config to disk"))
+    {
         lighting.save();
     }
     ImGui::EndGroup();
     if (ImGui::CollapsingHeader("Direct Lighting", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
     {
         vector3<float> lightDirVector = lighting.getWorldLightDir();
-        float lightRotation[3] = { lightDirVector.x , lightDirVector.y };
+        float lightRotation[3] = {lightDirVector.x, lightDirVector.y};
         if (ImGui::DragFloat2("Light Rotation", lightRotation, 1.0f))
         {
             lightRotation[0] = std::max(0.0f, std::min(180.0f, lightRotation[0]));
             lightRotation[1] = std::max(0.0f, std::min(360.0f, lightRotation[1]));
             lighting.setWorldLightDir(lightRotation[0], lightRotation[1], 0.0f);
             lighting.setConfigEntry("light_rotation_vertical", lightRotation[0]);
-	        lighting.setConfigEntry("light_rotation_horizontal", lightRotation[1]);
+            lighting.setConfigEntry("light_rotation_horizontal", lightRotation[1]);
         }
         float lightIntensity = lighting.getLightIntensity();
         if (ImGui::DragFloat("Intensity##0", &lightIntensity, 0.01f, 0.0f, 100.0f))
@@ -86,7 +88,7 @@ void lighting_debug(bool* isOpen)
             lighting.setConfigEntry("light_intensity", lightIntensity);
         }
         vector3<float> lightColorPoint3d = lighting.getLightColor();
-        float lightColor[3] = { lightColorPoint3d.x, lightColorPoint3d.y, lightColorPoint3d.z };
+        float lightColor[3] = {lightColorPoint3d.x, lightColorPoint3d.y, lightColorPoint3d.z};
         if (ImGui::ColorEdit3("Color##0", lightColor))
         {
             lighting.setLightColor(lightColor[0], lightColor[1], lightColor[2]);
@@ -103,7 +105,7 @@ void lighting_debug(bool* isOpen)
         }
 
         vector3<float> ambientLightColorPoint3d = lighting.getAmbientLightColor();
-        float ambientLightColor[3] = { ambientLightColorPoint3d.x, ambientLightColorPoint3d.y, ambientLightColorPoint3d.z };
+        float ambientLightColor[3] = {ambientLightColorPoint3d.x, ambientLightColorPoint3d.y, ambientLightColorPoint3d.z};
         if (ImGui::ColorEdit3("Color##1", ambientLightColor))
         {
             lighting.setAmbientLightColor(ambientLightColor[0], ambientLightColor[1], ambientLightColor[2]);
@@ -174,7 +176,7 @@ void lighting_debug(bool* isOpen)
             lighting.setShadowMapNearFarSize(shadowMapNearFarSize);
         }
     }
-    if (ImGui::CollapsingHeader("Field shadow map", ImGuiTreeNodeFlags_DefaultOpen| ImGuiTreeNodeFlags_SpanAvailWidth))
+    if (ImGui::CollapsingHeader("Field shadow map", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
     {
         float fieldShadowOcclusion = lighting.getFieldShadowOcclusion();
         if (ImGui::DragFloat("Occlusion", &fieldShadowOcclusion, 0.01f, 0.0f, 1.0f))

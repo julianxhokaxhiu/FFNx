@@ -23,17 +23,22 @@ foreach(shader IN LISTS FFNX_SHADERS)
         set(shader_output "${SHADER_OUTPUT_DIR}/${shader}.${varying}.${platform}.${stage}")
         message(STATUS "Building ${shader}.${varying}.${platform}.${stage} shader...")
         execute_process(
-          COMMAND "${SHADERC}"
-            -i "${SHADER_INCLUDE_DIR}"
-            -f "${shader_source}"
-            -o "${shader_output}"
-            --type "${shader_type}"
-            --varyingdef "${shader_varying}"
+          COMMAND
+            "${SHADERC}"
+            -i
+            "${SHADER_INCLUDE_DIR}"
+            -f
+            "${shader_source}"
+            -o
+            "${shader_output}"
+            --type
+            "${shader_type}"
+            --varyingdef
+            "${shader_varying}"
             ${platform_flags}
           OUTPUT_VARIABLE shaderc_output
           ERROR_VARIABLE shaderc_output
-          RESULT_VARIABLE shaderc_result
-        )
+          RESULT_VARIABLE shaderc_result)
         file(APPEND "${SHADER_LOG}" "--- ${shader_output} ---\n${shaderc_output}\n")
 
         if(NOT "${shaderc_result}" STREQUAL "0")
@@ -60,18 +65,24 @@ foreach(shader IN LISTS FFNX_SKINNED_SHADERS)
     set(shader_output "${SHADER_OUTPUT_DIR}/${shader}.skinned.smooth.${platform}.vert")
     message(STATUS "Building ${shader}.skinned.smooth.${platform}.vert shader...")
     execute_process(
-      COMMAND "${SHADERC}"
-        -i "${SHADER_INCLUDE_DIR}"
-        -f "${shader_source}"
-        -o "${shader_output}"
-        --type v
-        --varyingdef "${shader_varying}"
-        --define SMOOTH_SKINNING
+      COMMAND
+        "${SHADERC}"
+        -i
+        "${SHADER_INCLUDE_DIR}"
+        -f
+        "${shader_source}"
+        -o
+        "${shader_output}"
+        --type
+        v
+        --varyingdef
+        "${shader_varying}"
+        --define
+        SMOOTH_SKINNING
         ${platform_flags}
       OUTPUT_VARIABLE shaderc_output
       ERROR_VARIABLE shaderc_output
-      RESULT_VARIABLE shaderc_result
-    )
+      RESULT_VARIABLE shaderc_result)
     file(APPEND "${SHADER_LOG}" "--- ${shader_output} ---\n${shaderc_output}\n")
 
     if(NOT "${shaderc_result}" STREQUAL "0")

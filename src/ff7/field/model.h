@@ -29,29 +29,28 @@
 
 namespace ff7::field
 {
-    struct external_field_model_data
-    {
-        int moveFrameIndex;
-        vector3<int> initialPosition;
-        vector3<int> finalPosition;
-        int wasNotCollidingWithTarget;
-        int updateMovementReturnValue;
-        int prevCollisionRadius;
+struct external_field_model_data
+{
+    int moveFrameIndex;
+    vector3<int> initialPosition;
+    vector3<int> finalPosition;
+    int wasNotCollidingWithTarget;
+    int updateMovementReturnValue;
+    int prevCollisionRadius;
 
-        int rotationMoveFrameIndex;
+    int rotationMoveFrameIndex;
+};
 
-    };
+constexpr int MAX_FIELD_MODELS = 32;
 
-    constexpr int MAX_FIELD_MODELS = 32;
+std::array<external_field_model_data, MAX_FIELD_MODELS> external_model_data;
+uint32_t ff7_kawai_current_model_id = 0xFF;
 
-    std::array<external_field_model_data, MAX_FIELD_MODELS> external_model_data;
-    uint32_t ff7_kawai_current_model_id = 0xFF;
-
-    bool ff7_field_do_draw_3d_model(short x, short y);
-    void ff7_field_update_models_position(int key_input_status);
-    int ff7_field_update_player_model_position(short model_id);
-    int ff7_field_update_single_model_position(short model_id);
-    int ff7_field_check_collision_with_target(field_event_data* field_event_model, short target_collision_radius);
-    void ff7_field_update_models_rotation_new();
-    void ff7_field_update_model_animation_frame(short model_id);
-}
+bool ff7_field_do_draw_3d_model(short x, short y);
+void ff7_field_update_models_position(int key_input_status);
+int ff7_field_update_player_model_position(short model_id);
+int ff7_field_update_single_model_position(short model_id);
+int ff7_field_check_collision_with_target(field_event_data *field_event_model, short target_collision_radius);
+void ff7_field_update_models_rotation_new();
+void ff7_field_update_model_animation_frame(short model_id);
+} // namespace ff7::field

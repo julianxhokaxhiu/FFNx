@@ -22,10 +22,10 @@ namespace gfc
 {
 namespace turret245
 {
-	static Clone g_c = {};
+static Clone g_c = {};
 }
-}
-}
+} // namespace gfc
+} // namespace ff8fx
 
 namespace ff8fx
 {
@@ -33,47 +33,46 @@ namespace gfc
 {
 namespace turret245
 {
-	static void describe(Clone &c)
-	{
-		c.name = "245 BGH251F2 3rd turret explosion";
-		c.effect_id = 245;
-		c.vm_table = game_addr(game::funcs_9E52CC);
-		c.bone_table = game_addr(game::funcs_9E1EA7);
-		c.prim_table = game_addr(game::funcs_9DE854);
-		c.prim_size = game_addr(game::unk_1860E8C);
-		c.spr_table = game_addr(game::unk_1860EA0);
-		c.ptype_table = game_addr(game::unk_1860ECC);
-		c.pop_table = game_addr(game::funcs_9DF897);
-		c.draw_table = game_addr(game::unk_1860F40);
-		c.attr_16A = game_addr(game::unk_18610AA);
-		c.attr_184 = game_addr(game::unk_18610C4);
-		c.attr_186 = game_addr(game::unk_18610C6);
-		c.attr_194 = game_addr(game::unk_18610D4);
-		c.attr_19C = game_addr(game::unk_18610DC);
-		c.desc = game_addr(game::unk_1860C58);
-		c.ptr_block = game_addr(game::unk_1860D2C);
-		c.queue = game_addr(game::unk_2796788);
-		c.file00 = game_addr(game::unk_2796784);
-		c.file01 = game_addr(game::unk_2796780);
-		c.tick = game_addr(game::MAG_245_sub_9DCC00);
-		c.load_cb = game_addr(game::MAG_245_sub_9E1290);
-		c.lit_dispatcher = false;
-		c.bone_count = 18;
-	}
-
-	static uint32_t __cdecl SequenceTask(TaskNode *)
-	{
-		return SequenceTick(g_c);
-	}
-}
+static void describe(Clone &c)
+{
+    c.name = "245 BGH251F2 3rd turret explosion";
+    c.effect_id = 245;
+    c.vm_table = game_addr(game::funcs_9E52CC);
+    c.bone_table = game_addr(game::funcs_9E1EA7);
+    c.prim_table = game_addr(game::funcs_9DE854);
+    c.prim_size = game_addr(game::unk_1860E8C);
+    c.spr_table = game_addr(game::unk_1860EA0);
+    c.ptype_table = game_addr(game::unk_1860ECC);
+    c.pop_table = game_addr(game::funcs_9DF897);
+    c.draw_table = game_addr(game::unk_1860F40);
+    c.attr_16A = game_addr(game::unk_18610AA);
+    c.attr_184 = game_addr(game::unk_18610C4);
+    c.attr_186 = game_addr(game::unk_18610C6);
+    c.attr_194 = game_addr(game::unk_18610D4);
+    c.attr_19C = game_addr(game::unk_18610DC);
+    c.desc = game_addr(game::unk_1860C58);
+    c.ptr_block = game_addr(game::unk_1860D2C);
+    c.queue = game_addr(game::unk_2796788);
+    c.file00 = game_addr(game::unk_2796784);
+    c.file01 = game_addr(game::unk_2796780);
+    c.tick = game_addr(game::MAG_245_sub_9DCC00);
+    c.load_cb = game_addr(game::MAG_245_sub_9E1290);
+    c.lit_dispatcher = false;
+    c.bone_count = 18;
 }
 
-	void register_mag245_bgh_turret3_explode()
-	{
-		using namespace gfc;
-		turret245::describe(turret245::g_c);
-		init_clone(turret245::g_c, nullptr, 0);
-		register_port(game::MAG_245_sub_9DCC00, (void *)turret245::SequenceTask, "MAG245 BGH251F2 3rd turret explosion SequenceTick", 245);
-	}
+static uint32_t __cdecl SequenceTask(TaskNode *)
+{
+    return SequenceTick(g_c);
 }
+} // namespace turret245
+} // namespace gfc
 
+void register_mag245_bgh_turret3_explode()
+{
+    using namespace gfc;
+    turret245::describe(turret245::g_c);
+    init_clone(turret245::g_c, nullptr, 0);
+    register_port(game::MAG_245_sub_9DCC00, (void *)turret245::SequenceTask, "MAG245 BGH251F2 3rd turret explosion SequenceTick", 245);
+}
+} // namespace ff8fx

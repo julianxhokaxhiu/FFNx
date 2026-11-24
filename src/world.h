@@ -23,4 +23,4 @@
 #pragma once
 
 void world_init();
-void world_debug(bool* isOpen);
+void world_debug(bool *isOpen);

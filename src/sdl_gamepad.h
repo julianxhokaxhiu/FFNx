@@ -29,7 +29,7 @@
 
 class SDLGamepad
 {
-private:
+  private:
     SDL_Gamepad *sdlgamepad = nullptr;
     SDL_JoystickID sdlInstanceId = 0;
     bool sdlInitialized = false;
@@ -38,7 +38,7 @@ private:
     void GamepadEvents();
     void closeGamepad();
 
-public:
+  public:
     ~SDLGamepad();
 
     float leftStickX = 0.0f;
@@ -48,8 +48,8 @@ public:
     float leftTrigger = 0.0f;
     float rightTrigger = 0.0f;
 
-    int  GetPort() const;
-    const char* GetName() const;
+    int GetPort() const;
+    const char *GetName() const;
     bool IsXbox() const;
     bool IsSwitch() const;
     bool CheckConnection();

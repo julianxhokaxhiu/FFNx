@@ -23,71 +23,75 @@
 
 #pragma once
 
-namespace FF8BattleEffect {
-    // See https://github.com/DarkShinryu/doomtrain/blob/master/Doomtrain/Resources/Magic_ID_List.txt
-    enum Effect {
-        Cure = 0,
-        Leviathan = 5,
-        Cura = 24,
-        Scan = 39,
-        Potion = 49,
-        HiPotion = 50,
-        Scan2 = 67,
-        UltimeciaJunction = 79,
-        TheEnd = 84,
-        Tonberry = 89,
-        Siren = 94,
-        Minimog = 95,
-        BokoChocofire = 96,
-        BokoChocoflare = 97,
-        BokoChocometeor = 98,
-        BokoChocobocle = 99,
-        Quezacotl = 115,
-        ElectricDischarge = 125,
-        GastricJuice = 127,
-        Breath = 128,
-        DissolvingAcid = 131,
-        Hypnotize = 132,
-        Saliva = 137,
-        Phoenix = 139,
-        Ultima = 148,
-        Shiva = 184,
-        Odin = 186,
-        Doomtrain = 190,
-        Cactuar = 198,
-        Ifrit = 200,
-        Bahamut = 201,
-        Cerberus = 202,
-        Alexander = 203,
-        Brothers = 204,
-        Eden = 205,
-        Apocalypse = 220,
-        Meteor = 222,
-        Electrocute = 274,
-        XATM092Death = 275,
-        Carbuncle = 277,
-        MegaSpark = 278,
-        MagicSummon = 282,
-        MegaPulseCannon = 286,
-        Pandemona = 290,
-        WhiteWind = 296,
-        QuistisAcid = 316,
-        Diablos = 324,
-        GilgameshZantetsukenReverse = 325,
-        GilgameshZantetsuken = 326,
-        GilgameshMasamune = 327,
-        GilgameshExcaliber = 328,
-        GilgameshExcalipoor = 329,
-        Moomba = 337,
-    };
-}
+namespace FF8BattleEffect
+{
+// See https://github.com/DarkShinryu/doomtrain/blob/master/Doomtrain/Resources/Magic_ID_List.txt
+enum Effect
+{
+    Cure = 0,
+    Leviathan = 5,
+    Cura = 24,
+    Scan = 39,
+    Potion = 49,
+    HiPotion = 50,
+    Scan2 = 67,
+    UltimeciaJunction = 79,
+    TheEnd = 84,
+    Tonberry = 89,
+    Siren = 94,
+    Minimog = 95,
+    BokoChocofire = 96,
+    BokoChocoflare = 97,
+    BokoChocometeor = 98,
+    BokoChocobocle = 99,
+    Quezacotl = 115,
+    ElectricDischarge = 125,
+    GastricJuice = 127,
+    Breath = 128,
+    DissolvingAcid = 131,
+    Hypnotize = 132,
+    Saliva = 137,
+    Phoenix = 139,
+    Ultima = 148,
+    Shiva = 184,
+    Odin = 186,
+    Doomtrain = 190,
+    Cactuar = 198,
+    Ifrit = 200,
+    Bahamut = 201,
+    Cerberus = 202,
+    Alexander = 203,
+    Brothers = 204,
+    Eden = 205,
+    Apocalypse = 220,
+    Meteor = 222,
+    Electrocute = 274,
+    XATM092Death = 275,
+    Carbuncle = 277,
+    MegaSpark = 278,
+    MagicSummon = 282,
+    MegaPulseCannon = 286,
+    Pandemona = 290,
+    WhiteWind = 296,
+    QuistisAcid = 316,
+    Diablos = 324,
+    GilgameshZantetsukenReverse = 325,
+    GilgameshZantetsuken = 326,
+    GilgameshMasamune = 327,
+    GilgameshExcaliber = 328,
+    GilgameshExcalipoor = 329,
+    Moomba = 337,
+};
+} // namespace FF8BattleEffect
 
-namespace FF8BattleEffectOpcode {
-    enum Opcode {
-        UploadTexture39 = 39,
-        UploadPalette75 = 75
-    };
-}
+namespace FF8BattleEffectOpcode
+{
+enum Opcode
+{
+    UploadTexture39 = 39,
+    UploadPalette75 = 75
+};
+} // namespace FF8BattleEffectOpcode
 
 // Battle effect fixes, per topic (effects/magic.cpp, summon.cpp, enemy.cpp, items.cpp)
 void ff8_battle_effects_init();

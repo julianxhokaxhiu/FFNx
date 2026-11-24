@@ -28,12 +28,14 @@
 #include <vector>
 #include <unordered_map>
 
-struct WmsetSection17Texture {
+struct WmsetSection17Texture
+{
     uint16_t x, y;
     std::vector<const uint8_t *> textureFramePositions;
 };
 
-struct WmsetSection41Texture {
+struct WmsetSection41Texture
+{
     uint16_t srcX, srcY, x, y;
     uint8_t height;
     std::vector<const uint16_t *> palettePositions;

@@ -23,9 +23,12 @@
 
 #include <stdint.h>
 
-namespace SoLoud { class VGMStream; }
+namespace SoLoud
+{
+class VGMStream;
+}
 
-SoLoud::VGMStream* sfx_load_original(int id, bool loop);
+SoLoud::VGMStream *sfx_load_original(int id, bool loop);
 
 void sfx_process_footstep(bool is_player_moving);
 void sfx_process_wm_footstep(int player_model_id, int player_walkmap_type);

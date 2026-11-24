@@ -28,122 +28,315 @@
 
 namespace ff7::field
 {
-    struct field_bank_address
+struct field_bank_address
+{
+    byte bank;
+    byte address;
+
+    uint32_t getID() const
     {
-        byte bank;
-        byte address;
+        return bank * 256 + address;
+    }
 
-        uint32_t getID() const
-        {
-            return bank * 256 + address;
-        }
+    bool operator<(const field_bank_address &f) const
+    {
+        return this->getID() < f.getID();
+    }
 
-        bool operator< (const field_bank_address& f) const
-        {
-            return this->getID() < f.getID();
-        }
+    bool operator==(const field_bank_address &f) const
+    {
+        return this->getID() == f.getID();
+    }
+};
 
-        bool operator== (const field_bank_address& f) const
-        {
-            return this->getID() == f.getID();
-        }
-    };
+std::array<uint32_t, 256> original_opcode_table{0};
 
-    std::array<uint32_t, 256> original_opcode_table {0};
+short ff7_opcode_multiply_get_bank_value(short bank, short address);
+short ff7_opcode_divide_get_bank_value(short bank, short address);
+int opcode_script_partial_animation_wrapper();
+int opcode_script_SHAKE();
+int opcode_script_WAIT();
+int opcode_script_MVIEF();
+int opcode_script_BGMOVIE();
+int opcode_script_VISI();
+uint8_t opcode_IFSW_compare_sub();
+int opcode_script_FADE();
+int opcode_script_IFKEY();
 
-    short ff7_opcode_multiply_get_bank_value(short bank, short address);
-    short ff7_opcode_divide_get_bank_value(short bank, short address);
-    int opcode_script_partial_animation_wrapper();
-    int opcode_script_SHAKE();
-    int opcode_script_WAIT();
-    int opcode_script_MVIEF();
-    int opcode_script_BGMOVIE();
-    int opcode_script_VISI();
-    uint8_t opcode_IFSW_compare_sub();
-    int opcode_script_FADE();
-    int opcode_script_IFKEY();
+// Thanks for myst6re https://github.com/myst6re/makoureactor/blob/5231723307901043941356ad1e42d26725305edf/core/field/Opcode.h#L71
+enum FieldOpcode
+{
+    RET = 0,
+    REQ,
+    REQSW,
+    REQEW,
+    PREQ,
+    PRQSW,
+    PRQEW,
+    RETTO,
+    JOIN,
+    SPLIT,
+    SPTYE,
+    GTPYE,
+    Unknown1,
+    Unknown2,
+    DSKCG,
+    SPECIAL,
 
-    // Thanks for myst6re https://github.com/myst6re/makoureactor/blob/5231723307901043941356ad1e42d26725305edf/core/field/Opcode.h#L71
-    enum FieldOpcode {
-        RET=0, REQ, REQSW, REQEW,
-        PREQ, PRQSW, PRQEW, RETTO,
-        JOIN, SPLIT, SPTYE, GTPYE,
-        Unknown1, Unknown2, DSKCG, SPECIAL,
+    JMPF,
+    JMPFL,
+    JMPB,
+    JMPBL,
+    IFUB,
+    IFUBL,
+    IFSW,
+    IFSWL,
+    IFUW,
+    IFUWL,
+    Unknown3,
+    Unknown4,
+    Unknown5,
+    Unknown6,
+    Unknown7,
+    Unknown8,
 
-        JMPF, JMPFL, JMPB, JMPBL,
-        IFUB, IFUBL, IFSW, IFSWL,
-        IFUW, IFUWL, Unknown3, Unknown4,
-        Unknown5, Unknown6, Unknown7, Unknown8,
+    MINIGAME,
+    TUTOR,
+    BTMD2,
+    BTRLD,
+    WAIT,
+    NFADE,
+    BLINK,
+    BGMOVIE,
+    KAWAI,
+    KAWIW,
+    PMOVA,
+    SLIP,
+    BGPDH,
+    BGSCR,
+    WCLS,
+    WSIZW,
 
-        MINIGAME, TUTOR, BTMD2, BTRLD,
-        WAIT, NFADE, BLINK, BGMOVIE,
-        KAWAI, KAWIW, PMOVA, SLIP,
-        BGPDH, BGSCR, WCLS, WSIZW,
+    IFKEY,
+    IFKEYON,
+    IFKEYOFF,
+    UC,
+    PDIRA,
+    PTURA,
+    WSPCL,
+    WNUMB,
+    STTIM,
+    GOLDu,
+    GOLDd,
+    CHGLD,
+    HMPMAX1,
+    HMPMAX2,
+    MHMMX,
+    HMPMAX3,
 
-        IFKEY, IFKEYON, IFKEYOFF, UC,
-        PDIRA, PTURA, WSPCL, WNUMB,
-        STTIM, GOLDu, GOLDd, CHGLD,
-        HMPMAX1, HMPMAX2, MHMMX, HMPMAX3,
+    MESSAGE,
+    MPARA,
+    MPRA2,
+    MPNAM,
+    Unknown9,
+    MPu,
+    Unknown10,
+    MPd,
+    ASK,
+    MENU,
+    MENU2,
+    BTLTB,
+    Unknown11,
+    HPu,
+    Unknown12,
+    HPd,
 
-        MESSAGE, MPARA, MPRA2, MPNAM,
-        Unknown9, MPu, Unknown10, MPd,
-        ASK, MENU, MENU2, BTLTB,
-        Unknown11, HPu, Unknown12, HPd,
+    WINDOW,
+    WMOVE,
+    WMODE,
+    WREST,
+    WCLSE,
+    WROW,
+    GWCOL,
+    SWCOL,
+    STITM,
+    DLITM,
+    CKITM,
+    SMTRA,
+    DMTRA,
+    CMTRA,
+    SHAKE,
+    NOP,
 
-        WINDOW, WMOVE, WMODE, WREST,
-        WCLSE, WROW, GWCOL, SWCOL,
-        STITM, DLITM, CKITM, SMTRA,
-        DMTRA, CMTRA, SHAKE, NOP,
+    MAPJUMP,
+    SCRLO,
+    SCRLC,
+    SCRLA,
+    SCR2D,
+    SCRCC,
+    SCR2DC,
+    SCRLW,
+    SCR2DL,
+    MPDSP,
+    VWOFT,
+    FADE,
+    FADEW,
+    IDLCK,
+    LSTMP,
+    SCRLP,
 
-        MAPJUMP, SCRLO, SCRLC, SCRLA,
-        SCR2D, SCRCC, SCR2DC, SCRLW,
-        SCR2DL, MPDSP, VWOFT, FADE,
-        FADEW, IDLCK, LSTMP, SCRLP,
+    BATTLE,
+    BTLON,
+    BTLMD,
+    PGTDR,
+    GETPC,
+    PXYZI,
+    PLUSX,
+    PLUS2X,
+    MINUSX,
+    MINUS2X,
+    INCX,
+    INC2X,
+    DECX,
+    DEC2X,
+    TLKON,
+    RDMSD,
 
-        BATTLE, BTLON, BTLMD, PGTDR,
-        GETPC, PXYZI, PLUSX, PLUS2X,
-        MINUSX, MINUS2X, INCX, INC2X,
-        DECX, DEC2X, TLKON, RDMSD,
+    SETBYTE,
+    SETWORD,
+    BITON,
+    BITOFF,
+    BITXOR,
+    PLUS,
+    PLUS2,
+    MINUS,
+    MINUS2,
+    MUL,
+    MUL2,
+    DIV,
+    DIV2,
+    MOD,
+    MOD2,
+    AND,
 
-        SETBYTE, SETWORD, BITON, BITOFF,
-        BITXOR, PLUS, PLUS2, MINUS,
-        MINUS2, MUL, MUL2, DIV,
-        DIV2, MOD, MOD2, AND,
+    AND2,
+    OR,
+    OR2,
+    XOR,
+    XOR2,
+    INC,
+    INC2,
+    DEC,
+    DEC2,
+    RANDOM,
+    LBYTE,
+    HBYTE,
+    TOBYTE,
+    SETX,
+    GETX,
+    SEARCHX,
 
-        AND2, OR, OR2, XOR,
-        XOR2, INC, INC2, DEC,
-        DEC2, RANDOM, LBYTE, HBYTE,
-        TOBYTE, SETX, GETX, SEARCHX,
+    PC,
+    CHAR,
+    DFANM,
+    ANIME1,
+    VISI,
+    XYZI,
+    XYI,
+    XYZ,
+    MOVE,
+    CMOVE,
+    MOVA,
+    TURA,
+    ANIMW,
+    FMOVE,
+    ANIME2,
+    ANIMX1,
 
-        PC, CHAR, DFANM, ANIME1,
-        VISI, XYZI, XYI, XYZ,
-        MOVE, CMOVE, MOVA, TURA,
-        ANIMW, FMOVE, ANIME2, ANIMX1,
+    CANIM1,
+    CANMX1,
+    MSPED,
+    DIR,
+    TURNGEN,
+    TURN,
+    DIRA,
+    GETDIR,
+    GETAXY,
+    GETAI,
+    ANIMX2,
+    CANIM2,
+    CANMX2,
+    ASPED,
+    Unknown13,
+    CC,
 
-        CANIM1, CANMX1, MSPED, DIR,
-        TURNGEN, TURN, DIRA, GETDIR,
-        GETAXY, GETAI, ANIMX2, CANIM2,
-        CANMX2, ASPED, Unknown13, CC,
+    JUMP,
+    AXYZI,
+    LADER,
+    OFST,
+    OFSTW,
+    TALKR,
+    SLIDR,
+    SOLID,
+    PRTYP,
+    PRTYM,
+    PRTYE,
+    IFPRTYQ,
+    IFMEMBQ,
+    MMBud,
+    MMBLK,
+    MMBUK,
 
-        JUMP, AXYZI, LADER, OFST,
-        OFSTW, TALKR, SLIDR, SOLID,
-        PRTYP, PRTYM, PRTYE, IFPRTYQ,
-        IFMEMBQ, MMBud, MMBLK, MMBUK,
+    LINE,
+    LINON,
+    MPJPO,
+    SLINE,
+    SIN,
+    COS,
+    TLKR2,
+    SLDR2,
+    PMJMP,
+    PMJMP2,
+    AKAO2,
+    FCFIX,
+    CCANM,
+    ANIMB,
+    TURNW,
+    MPPAL,
 
-        LINE, LINON, MPJPO, SLINE,
-        SIN, COS, TLKR2, SLDR2,
-        PMJMP, PMJMP2, AKAO2, FCFIX,
-        CCANM, ANIMB, TURNW, MPPAL,
+    BGON,
+    BGOFF,
+    BGROL,
+    BGROL2,
+    BGCLR,
+    STPAL,
+    LDPAL,
+    CPPAL,
+    RTPAL,
+    ADPAL,
+    MPPAL2,
+    STPLS,
+    LDPLS,
+    CPPAL2,
+    RTPAL2,
+    ADPAL2,
 
-        BGON, BGOFF, BGROL, BGROL2,
-        BGCLR, STPAL, LDPAL, CPPAL,
-        RTPAL, ADPAL, MPPAL2, STPLS,
-        LDPLS, CPPAL2, RTPAL2, ADPAL2,
-
-        MUSIC, SOUND, AKAO, MUSVT,
-        MUSVM, MULCK, BMUSC, CHMPH,
-        PMVIE, MOVIE, MVIEF, MVCAM,
-        FMUSC, CMUSC, CHMST, GAMEOVER,
-        OPCODE_COUNT
-    };
-}
+    MUSIC,
+    SOUND,
+    AKAO,
+    MUSVT,
+    MUSVM,
+    MULCK,
+    BMUSC,
+    CHMPH,
+    PMVIE,
+    MOVIE,
+    MVIEF,
+    MVCAM,
+    FMUSC,
+    CMUSC,
+    CHMST,
+    GAMEOVER,
+    OPCODE_COUNT
+};
+} // namespace ff7::field

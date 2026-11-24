@@ -26,13 +26,14 @@
 #include <vector>
 #include <unordered_map>
 
-struct CharaOneModel {
-	char name[6];
-	bool isMch;
-	bool isClassicDirect;
-	std::vector<uint32_t> texturesData;
-	uint32_t modelId;
-	int8_t rgbaModifier[4];
+struct CharaOneModel
+{
+    char name[6];
+    bool isMch;
+    bool isClassicDirect;
+    std::vector<uint32_t> texturesData;
+    uint32_t modelId;
+    int8_t rgbaModifier[4];
 };
 
 std::unordered_map<uint32_t, CharaOneModel> ff8_chara_one_parse_models(const uint8_t *chara_one_data, size_t size);

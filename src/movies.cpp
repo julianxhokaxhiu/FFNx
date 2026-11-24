@@ -31,451 +31,487 @@
 #include "ff8/movies.h"
 #include "ff8/remaster.h"
 
-enum MovieAudioLayers {
-	MUSIC = 0,
-	VOICE
+enum MovieAudioLayers
+{
+    MUSIC = 0,
+    VOICE
 };
 
 char movie_music_path[512];
 char movie_voice_path[512];
 
-uint8_t ff8_movie_cam_buffer[2*1024*1024]; // 2MB
+uint8_t ff8_movie_cam_buffer[2 * 1024 * 1024]; // 2MB
 
 uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice, uint32_t dd2interface)
 {
-	char drivename[4];
-	char dirname[256];
-	char filename[128];
-	char fmvName[512];
-	char newFmvName[512];
+    char drivename[4];
+    char dirname[256];
+    char filename[128];
+    char fmvName[512];
+    char newFmvName[512];
 
-	if(trace_all || trace_movies) ffnx_trace("prepare_movie %s\n", name);
+    if (trace_all || trace_movies)
+        ffnx_trace("prepare_movie %s\n", name);
 
-	ff7_externals.movie_object->loop = loop;
-	ff7_externals.movie_sub_415231(name);
+    ff7_externals.movie_object->loop = loop;
+    ff7_externals.movie_sub_415231(name);
 
-	ff7_externals.movie_object->field_1F8 = 1;
-	ff7_externals.movie_object->is_playing = 0;
-	ff7_externals.movie_object->movie_end = 0;
-	ff7_externals.movie_object->global_movie_flag = 0;
-	ff7_externals.movie_object->field_E0 = !((struct ff7_game_obj *)common_externals.get_game_object())->field_968;
+    ff7_externals.movie_object->field_1F8 = 1;
+    ff7_externals.movie_object->is_playing = 0;
+    ff7_externals.movie_object->movie_end = 0;
+    ff7_externals.movie_object->global_movie_flag = 0;
+    ff7_externals.movie_object->field_E0 = !((struct ff7_game_obj *)common_externals.get_game_object())->field_968;
 
-	_splitpath(name, drivename, dirname, filename, NULL);
-	_snprintf(fmvName, sizeof(fmvName), "%s%s%s.%s", drivename, dirname, filename, ffmpeg_video_ext.c_str());
+    _splitpath(name, drivename, dirname, filename, NULL);
+    _snprintf(fmvName, sizeof(fmvName), "%s%s%s.%s", drivename, dirname, filename, ffmpeg_video_ext.c_str());
 
-	redirect_path_with_override(fmvName, newFmvName, sizeof(newFmvName));
+    redirect_path_with_override(fmvName, newFmvName, sizeof(newFmvName));
 
-	_splitpath(newFmvName, drivename, dirname, filename, NULL);
-	// Remove extension
-	_snprintf(movie_music_path, sizeof(movie_music_path), "%s%s%s", drivename, dirname, filename);
-	_snprintf(movie_voice_path, sizeof(movie_voice_path), "%s%s%s_va", drivename, dirname, filename);
+    _splitpath(newFmvName, drivename, dirname, filename, NULL);
+    // Remove extension
+    _snprintf(movie_music_path, sizeof(movie_music_path), "%s%s%s", drivename, dirname, filename);
+    _snprintf(movie_voice_path, sizeof(movie_voice_path), "%s%s%s_va", drivename, dirname, filename);
 
-	bool has_ext_audio_file = nxAudioEngine.canPlayMovieAudio(movie_music_path);
-	ffmpeg_prepare_movie(newFmvName, !has_ext_audio_file);
-	if (!has_ext_audio_file) nxAudioEngine.setStreamMasterVolume(ffmpeg_video_volume / 100.0f);
+    bool has_ext_audio_file = nxAudioEngine.canPlayMovieAudio(movie_music_path);
+    ffmpeg_prepare_movie(newFmvName, !has_ext_audio_file);
+    if (!has_ext_audio_file)
+        nxAudioEngine.setStreamMasterVolume(ffmpeg_video_volume / 100.0f);
 
-	ff7_externals.movie_object->global_movie_flag = 1;
+    ff7_externals.movie_object->global_movie_flag = 1;
 
-	// Required by > 15 FPS movies
-	movie_fps_ratio = ffmpeg_get_fps_ratio();
-	if (movie_fps_ratio > 1)
-	{
-		if (strcmp(filename, "opening") == 0)
-		{
-			*ff7_externals.opening_movie_music_start_frame = *ff7_externals.opening_movie_music_start_frame * movie_fps_ratio;
-		}
-	}
-	// ---------------------------
+    // Required by > 15 FPS movies
+    movie_fps_ratio = ffmpeg_get_fps_ratio();
+    if (movie_fps_ratio > 1)
+    {
+        if (strcmp(filename, "opening") == 0)
+        {
+            *ff7_externals.opening_movie_music_start_frame = *ff7_externals.opening_movie_music_start_frame * movie_fps_ratio;
+        }
+    }
+    // ---------------------------
 
-	if(widescreen_enabled)
-		widescreen.initMovieParamsFromConfig(filename);
+    if (widescreen_enabled)
+        widescreen.initMovieParamsFromConfig(filename);
 
-	if(enable_steam_achievements)
-		g_FF7SteamAchievements->initMovieStats(std::string(filename));
+    if (enable_steam_achievements)
+        g_FF7SteamAchievements->initMovieStats(std::string(filename));
 
-	return true;
+    return true;
 }
 
 uint32_t ff7_update_movie_sample(LPDIRECTDRAWSURFACE surface)
 {
-	uint32_t movie_end;
+    uint32_t movie_end;
 
-	ff7_externals.movie_object->movie_end = 0;
+    ff7_externals.movie_object->movie_end = 0;
 
-	if(!ff7_externals.movie_object->is_playing) return false;
+    if (!ff7_externals.movie_object->is_playing)
+        return false;
 
 retry:
-	// Use native movie fps limiter if it's not been playback in fields ( no 3d models drawn on top )
-	movie_end = !ffmpeg_update_movie_sample(!(*ff7_externals.field_limit_fps));
+    // Use native movie fps limiter if it's not been playback in fields ( no 3d models drawn on top )
+    movie_end = !ffmpeg_update_movie_sample(!(*ff7_externals.field_limit_fps));
 
-	if(movie_end)
-	{
-		if(trace_all || trace_movies) ffnx_trace("movie end\n");
-		if(ff7_externals.movie_object->loop)
-		{
-			ffmpeg_loop();
-			goto retry;
-		}
+    if (movie_end)
+    {
+        if (trace_all || trace_movies)
+            ffnx_trace("movie end\n");
+        if (ff7_externals.movie_object->loop)
+        {
+            ffmpeg_loop();
+            goto retry;
+        }
 
-		ff7_externals.movie_object->movie_end = 1;
-		is_movie_bgfield = false;
+        ff7_externals.movie_object->movie_end = 1;
+        is_movie_bgfield = false;
 
-		if(enable_steam_achievements)
-			if(g_FF7SteamAchievements->isEndingMovie())
-				g_FF7SteamAchievements->unlockGameProgressAchievement();
+        if (enable_steam_achievements)
+            if (g_FF7SteamAchievements->isEndingMovie())
+                g_FF7SteamAchievements->unlockGameProgressAchievement();
 
-		return true;
-	}
+        return true;
+    }
 
-	return true;
+    return true;
 }
 
 uint32_t ff7_start_movie()
 {
-	if(trace_all || trace_movies) ffnx_trace("start_movie\n");
+    if (trace_all || trace_movies)
+        ffnx_trace("start_movie\n");
 
-	if(ff7_externals.movie_object->is_playing) return true;
+    if (ff7_externals.movie_object->is_playing)
+        return true;
 
-	ff7_externals.movie_object->is_playing = 1;
+    ff7_externals.movie_object->is_playing = 1;
 
-	if (!is_movie_bgfield) nxAudioEngine.pauseAmbient();
-	nxAudioEngine.setMovieMasterVolume(ffmpeg_video_volume / 100.0f);
-	nxAudioEngine.playMovieAudio(movie_music_path, MovieAudioLayers::MUSIC);
-	nxAudioEngine.playMovieAudio(movie_voice_path, MovieAudioLayers::VOICE, 3.0f);
+    if (!is_movie_bgfield)
+        nxAudioEngine.pauseAmbient();
+    nxAudioEngine.setMovieMasterVolume(ffmpeg_video_volume / 100.0f);
+    nxAudioEngine.playMovieAudio(movie_music_path, MovieAudioLayers::MUSIC);
+    nxAudioEngine.playMovieAudio(movie_voice_path, MovieAudioLayers::VOICE, 3.0f);
 
-	return ff7_update_movie_sample(0);
+    return ff7_update_movie_sample(0);
 }
 
 uint32_t ff7_stop_movie()
 {
-	if(trace_all || trace_movies) ffnx_trace("stop_movie\n");
+    if (trace_all || trace_movies)
+        ffnx_trace("stop_movie\n");
 
-	if(ff7_externals.movie_object->is_playing)
-	{
-		ff7_externals.movie_object->is_playing = 0;
-		ff7_externals.movie_object->movie_end = 0;
+    if (ff7_externals.movie_object->is_playing)
+    {
+        ff7_externals.movie_object->is_playing = 0;
+        ff7_externals.movie_object->movie_end = 0;
 
-		ffmpeg_stop_movie();
+        ffmpeg_stop_movie();
 
-		nxAudioEngine.stopMovieAudio(MovieAudioLayers::MUSIC);
-		nxAudioEngine.stopMovieAudio(MovieAudioLayers::VOICE);
-		if (!is_movie_bgfield) nxAudioEngine.resumeAmbient();
-	}
+        nxAudioEngine.stopMovieAudio(MovieAudioLayers::MUSIC);
+        nxAudioEngine.stopMovieAudio(MovieAudioLayers::VOICE);
+        if (!is_movie_bgfield)
+            nxAudioEngine.resumeAmbient();
+    }
 
-	return true;
+    return true;
 }
 
 void ff7_release_movie_objects()
 {
-	if(trace_all || trace_movies) ffnx_trace("release_movie_objects\n");
+    if (trace_all || trace_movies)
+        ffnx_trace("release_movie_objects\n");
 
-	ff7_stop_movie();
+    ff7_stop_movie();
 
-	ffmpeg_release_movie_objects();
+    ffmpeg_release_movie_objects();
 
-	ff7_externals.movie_object->global_movie_flag = 0;
+    ff7_externals.movie_object->global_movie_flag = 0;
 }
 
 void draw_current_frame()
 {
-	if (trace_all || trace_movies) ffnx_trace("draw_current_frame\n");
+    if (trace_all || trace_movies)
+        ffnx_trace("draw_current_frame\n");
 
-	ffmpeg_draw_current_frame();
+    ffmpeg_draw_current_frame();
 
-	// FF8 on Steam sometimes forgets to release the movie objects, so we do ensure it's done anyway
-	ffmpeg_release_movie_objects();
+    // FF8 on Steam sometimes forgets to release the movie objects, so we do ensure it's done anyway
+    ffmpeg_release_movie_objects();
 }
 
 uint32_t ff7_get_movie_frame()
 {
-	if(!ff7_externals.movie_object->is_playing) return 0;
+    if (!ff7_externals.movie_object->is_playing)
+        return 0;
 
-	return ffmpeg_get_movie_frame();
+    return ffmpeg_get_movie_frame();
 }
 
 uint32_t ff8_get_movie_frame()
 {
-	// Field scripts wait for movie frames counted at 15 FPS
-	if (movie_fps_ratio > 1) return ff8_externals.movie_object->movie_current_frame / movie_fps_ratio;
+    // Field scripts wait for movie frames counted at 15 FPS
+    if (movie_fps_ratio > 1)
+        return ff8_externals.movie_object->movie_current_frame / movie_fps_ratio;
 
-	return ff8_externals.movie_object->movie_current_frame;
+    return ff8_externals.movie_object->movie_current_frame;
 }
 
 uint32_t ff8_movie_frames;
 
 void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 {
-	char fmvName[MAX_PATH], camName[MAX_PATH], newFmvName[MAX_PATH], newCamName[MAX_PATH];
-	char drivename[4], dirname[256], filename[128];
+    char fmvName[MAX_PATH], camName[MAX_PATH], newFmvName[MAX_PATH], newCamName[MAX_PATH];
+    char drivename[4], dirname[256], filename[128];
 
-	_snprintf(fmvName, sizeof(fmvName), "data/movies/disc%02i_%02ih.%s", disc, movie, ffmpeg_video_ext.c_str());
+    _snprintf(fmvName, sizeof(fmvName), "data/movies/disc%02i_%02ih.%s", disc, movie, ffmpeg_video_ext.c_str());
 
-	const int redirect_status = redirect_path_with_override(fmvName, newFmvName, sizeof(newFmvName));
-	if (redirect_status != 0) {
-		_snprintf(newFmvName, sizeof(newFmvName), "%s/%s", ff8_externals.app_path, fmvName);
-	}
+    const int redirect_status = redirect_path_with_override(fmvName, newFmvName, sizeof(newFmvName));
+    if (redirect_status != 0)
+    {
+        _snprintf(newFmvName, sizeof(newFmvName), "%s/%s", ff8_externals.app_path, fmvName);
+    }
 
-	_splitpath(newFmvName, drivename, dirname, filename, NULL);
-	_snprintf(movie_music_path, sizeof(movie_music_path), "%s%s%s", drivename, dirname, filename);
-	_snprintf(movie_voice_path, sizeof(movie_voice_path), "%s_va", movie_music_path);
-	bool has_ext_audio_file = nxAudioEngine.canPlayMovieAudio(movie_music_path);
-	if (!has_ext_audio_file) nxAudioEngine.setStreamMasterVolume(ffmpeg_video_volume / 100.0f);
+    _splitpath(newFmvName, drivename, dirname, filename, NULL);
+    _snprintf(movie_music_path, sizeof(movie_music_path), "%s%s%s", drivename, dirname, filename);
+    _snprintf(movie_voice_path, sizeof(movie_voice_path), "%s_va", movie_music_path);
+    bool has_ext_audio_file = nxAudioEngine.canPlayMovieAudio(movie_music_path);
+    if (!has_ext_audio_file)
+        nxAudioEngine.setStreamMasterVolume(ffmpeg_video_volume / 100.0f);
 
-	if(disc != 4)
-	{
-		_snprintf(camName, sizeof(camName), "data/movies/disc%02i_%02i.cam", disc, movie);
-		bool camdata_read = false;
+    if (disc != 4)
+    {
+        _snprintf(camName, sizeof(camName), "data/movies/disc%02i_%02i.cam", disc, movie);
+        bool camdata_read = false;
 
-		if (redirect_path_with_override(camName, newCamName, sizeof(newCamName)) != 0) {
-			_snprintf(newCamName, sizeof(newCamName), "%s/%s", ff8_externals.app_path, camName);
-		}
+        if (redirect_path_with_override(camName, newCamName, sizeof(newCamName)) != 0)
+        {
+            _snprintf(newCamName, sizeof(newCamName), "%s/%s", ff8_externals.app_path, camName);
+        }
 
-		FILE *camFile = fopen(newCamName, "rb");
+        FILE *camFile = fopen(newCamName, "rb");
 
-		if (!camFile)
-		{
-			if (!steam_edition)
-			{
-				// Try to open the cam files using the FF8 2000 PAK files
-				const pak_pointers_entry &pak_pointer = ff8_externals.disc_pak_offsets[disc][movie];
+        if (!camFile)
+        {
+            if (!steam_edition)
+            {
+                // Try to open the cam files using the FF8 2000 PAK files
+                const pak_pointers_entry &pak_pointer = ff8_externals.disc_pak_offsets[disc][movie];
 
-				char filename[MAX_PATH] = {};
-				strcpy(filename, ff8_externals.data_drive_path);
-				strcat(filename, ff8_externals.disc_pak_filenames[disc]);
+                char filename[MAX_PATH] = {};
+                strcpy(filename, ff8_externals.data_drive_path);
+                strcat(filename, ff8_externals.disc_pak_filenames[disc]);
 
-				camFile = fopen(filename, "rb");
+                camFile = fopen(filename, "rb");
 
-				if (camFile)
-				{
-					fseek(camFile, pak_pointer.cam_offset, SEEK_SET);
-					fread(&ff8_movie_cam_buffer, 1, pak_pointer.bik_offset - pak_pointer.cam_offset, camFile);
-					fclose(camFile);
-					camdata_read = true;
-				}
-			}
-		}
-		else
-		{
-			fseek(camFile, 0, SEEK_END);
-			long camFileSize = ftell(camFile);
-			rewind(camFile);
-			fread(&ff8_movie_cam_buffer, 1, camFileSize, camFile);
-			fclose(camFile);
-			camdata_read = true;
-		}
+                if (camFile)
+                {
+                    fseek(camFile, pak_pointer.cam_offset, SEEK_SET);
+                    fread(&ff8_movie_cam_buffer, 1, pak_pointer.bik_offset - pak_pointer.cam_offset, camFile);
+                    fclose(camFile);
+                    camdata_read = true;
+                }
+            }
+        }
+        else
+        {
+            fseek(camFile, 0, SEEK_END);
+            long camFileSize = ftell(camFile);
+            rewind(camFile);
+            fread(&ff8_movie_cam_buffer, 1, camFileSize, camFile);
+            fclose(camFile);
+            camdata_read = true;
+        }
 
-		if (!camdata_read && ff8_remastered_edition)
-		{
-			Zzz::File *f = g_FF8ZzzArchiveOther.openFile(camName);
+        if (!camdata_read && ff8_remastered_edition)
+        {
+            Zzz::File *f = g_FF8ZzzArchiveOther.openFile(camName);
 
-			if (f != nullptr)
-			{
-				f->read(&ff8_movie_cam_buffer, f->size());
-				Zzz::closeFile(f);
+            if (f != nullptr)
+            {
+                f->read(&ff8_movie_cam_buffer, f->size());
+                Zzz::closeFile(f);
 
-				camdata_read = true;
-			}
-		}
+                camdata_read = true;
+            }
+        }
 
-		if (!camdata_read)
-		{
-			ffnx_error("could not load camera data from %s\n", camName);
-			return;
-		}
+        if (!camdata_read)
+        {
+            ffnx_error("could not load camera data from %s\n", camName);
+            return;
+        }
 
-		ff8_externals.movie_object->movie_intro_pak = false;
-	}
-	else ff8_externals.movie_object->movie_intro_pak = true;
+        ff8_externals.movie_object->movie_intro_pak = false;
+    }
+    else
+        ff8_externals.movie_object->movie_intro_pak = true;
 
-	ff8_externals.movie_object->camdata_start = (struct ff8_camdata *)(&ff8_movie_cam_buffer[8]);
-	ff8_externals.movie_object->camdata_pointer = ff8_externals.movie_object->camdata_start;
+    ff8_externals.movie_object->camdata_start = (struct ff8_camdata *)(&ff8_movie_cam_buffer[8]);
+    ff8_externals.movie_object->camdata_pointer = ff8_externals.movie_object->camdata_start;
 
-	ff8_externals.movie_object->movie_current_frame = 0;
+    ff8_externals.movie_object->movie_current_frame = 0;
 
-	if(trace_all || trace_movies) ffnx_trace("prepare_movie %s disc=%d movie=%d\n", newFmvName, disc, movie);
+    if (trace_all || trace_movies)
+        ffnx_trace("prepare_movie %s disc=%d movie=%d\n", newFmvName, disc, movie);
 
-	if (enable_steam_achievements) {
-		if (disc == 3 && movie == 4) // game ending movie
-		{
-			int squall_lvl = ff8_externals.get_char_level_4961D0(ff8_externals.savemap->chars[0].exp, 0);
-			g_FF8SteamAchievements->unlockEndOfGameAchievement(squall_lvl);
-		}
-	}
+    if (enable_steam_achievements)
+    {
+        if (disc == 3 && movie == 4) // game ending movie
+        {
+            int squall_lvl = ff8_externals.get_char_level_4961D0(ff8_externals.savemap->chars[0].exp, 0);
+            g_FF8SteamAchievements->unlockEndOfGameAchievement(squall_lvl);
+        }
+    }
 
-	ffmpeg_release_movie_objects();
+    ffmpeg_release_movie_objects();
 
-	if (!fileExists(newFmvName)) {
-		if (ff8_remastered_edition) {
-			// Force 'avi' extension
-			if (game_language == GAME_LANGUAGE_JP && disc == 3 && (movie == 5 || movie == 6)) {
-				_snprintf(fmvName, sizeof(fmvName), "data/lang-jp/movies/disc%02i_%02ih.avi", disc, movie);
-			} else {
-				_snprintf(fmvName, sizeof(fmvName), "data/movies/disc%02i_%02ih.avi", disc, movie);
-			}
-			void *opaque = ff8_zzz_open(fmvName);
+    if (!fileExists(newFmvName))
+    {
+        if (ff8_remastered_edition)
+        {
+            // Force 'avi' extension
+            if (game_language == GAME_LANGUAGE_JP && disc == 3 && (movie == 5 || movie == 6))
+            {
+                _snprintf(fmvName, sizeof(fmvName), "data/lang-jp/movies/disc%02i_%02ih.avi", disc, movie);
+            }
+            else
+            {
+                _snprintf(fmvName, sizeof(fmvName), "data/movies/disc%02i_%02ih.avi", disc, movie);
+            }
+            void *opaque = ff8_zzz_open(fmvName);
 
-			if (opaque != nullptr) {
-				ff8_movie_frames = ffmpeg_prepare_movie_from_io(fmvName, opaque, ff8_zzz_read, ff8_zzz_seek, ff8_zzz_close, !has_ext_audio_file);
+            if (opaque != nullptr)
+            {
+                ff8_movie_frames = ffmpeg_prepare_movie_from_io(fmvName, opaque, ff8_zzz_read, ff8_zzz_seek, ff8_zzz_close, !has_ext_audio_file);
 
-				return;
-			}
-		} else if (!steam_edition) {
-			// Name is mostly for logs
-			_snprintf(fmvName, sizeof(fmvName), "disc%02i_%02ih.bik", disc, movie);
-			void *opaque = ff8_bink_open(disc, movie);
+                return;
+            }
+        }
+        else if (!steam_edition)
+        {
+            // Name is mostly for logs
+            _snprintf(fmvName, sizeof(fmvName), "disc%02i_%02ih.bik", disc, movie);
+            void *opaque = ff8_bink_open(disc, movie);
 
-			if (opaque != nullptr) {
-				ff8_movie_frames = ffmpeg_prepare_movie_from_io(fmvName, opaque, ff8_bink_read, ff8_bink_seek, ff8_bink_close, !has_ext_audio_file);
+            if (opaque != nullptr)
+            {
+                ff8_movie_frames = ffmpeg_prepare_movie_from_io(fmvName, opaque, ff8_bink_read, ff8_bink_seek, ff8_bink_close, !has_ext_audio_file);
 
-				return;
-			}
-		}
-	}
+                return;
+            }
+        }
+    }
 
-	ff8_movie_frames = ffmpeg_prepare_movie(newFmvName, !has_ext_audio_file);
+    ff8_movie_frames = ffmpeg_prepare_movie(newFmvName, !has_ext_audio_file);
 }
 
 void ff8_release_movie_objects()
 {
-	if(trace_all || trace_movies) ffnx_trace("release_movie_objects\n");
+    if (trace_all || trace_movies)
+        ffnx_trace("release_movie_objects\n");
 
-	ffmpeg_release_movie_objects();
+    ffmpeg_release_movie_objects();
 }
 
 int ff8_update_movie_sample()
 {
-	if(trace_all || trace_movies) ffnx_trace("update_movie_sample\n");
+    if (trace_all || trace_movies)
+        ffnx_trace("update_movie_sample\n");
 
-	ff8_externals.movie_object->movie_current_frame = ffmpeg_get_movie_frame();
+    ff8_externals.movie_object->movie_current_frame = ffmpeg_get_movie_frame();
 
-	if(ff8_externals.movie_object->camdata_pointer->flag & 0x8) *ff8_externals.byte_1CE4907 = 0;
-	if(ff8_externals.movie_object->camdata_pointer->flag & 0x10) *ff8_externals.byte_1CE4907 = 1;
-	if(ff8_externals.movie_object->camdata_pointer->flag & 0x20)
-	{
-		*ff8_externals.byte_1CE4901 = 1;
-		ff8_externals.movie_object->field_4C4B0 = 1;
-	}
-	else
-	{
-		*ff8_externals.byte_1CE4901 = 0;
-		ff8_externals.movie_object->field_4C4B0 = 0;
-	}
+    if (ff8_externals.movie_object->camdata_pointer->flag & 0x8)
+        *ff8_externals.byte_1CE4907 = 0;
+    if (ff8_externals.movie_object->camdata_pointer->flag & 0x10)
+        *ff8_externals.byte_1CE4907 = 1;
+    if (ff8_externals.movie_object->camdata_pointer->flag & 0x20)
+    {
+        *ff8_externals.byte_1CE4901 = 1;
+        ff8_externals.movie_object->field_4C4B0 = 1;
+    }
+    else
+    {
+        *ff8_externals.byte_1CE4901 = 0;
+        ff8_externals.movie_object->field_4C4B0 = 0;
+    }
 
-	if(ff8_externals.movie_object->camdata_pointer->flag & 0x1)
-	{
-		*ff8_externals.byte_1CE4901 = 1;
-		ff8_externals.movie_object->field_4C4B0 = 1;
-	}
+    if (ff8_externals.movie_object->camdata_pointer->flag & 0x1)
+    {
+        *ff8_externals.byte_1CE4901 = 1;
+        ff8_externals.movie_object->field_4C4B0 = 1;
+    }
 
-	*ff8_externals.byte_1CE490D = ff8_externals.movie_object->camdata_pointer->flag & 0x40;
+    *ff8_externals.byte_1CE490D = ff8_externals.movie_object->camdata_pointer->flag & 0x40;
 
-	int ret = 0;
+    int ret = 0;
 
-	if (ff8_externals.movie_object->movie_current_frame <= ff8_externals.movie_object->movie_total_frames &&
-		ffmpeg_update_movie_sample())
-	{
-		ret = (int)ff8_externals.movie_object->camdata_start;
-		ff8_externals.movie_object->camdata_pointer = &ff8_externals.movie_object->camdata_start[ff8_externals.movie_object->movie_current_frame];
-	}
-	else if(ff8_externals.movie_object->movie_intro_pak)
-		ret = ff8_stop_movie();
-	else
-		ret = ff8_externals.sub_5304B0();
+    if (ff8_externals.movie_object->movie_current_frame <= ff8_externals.movie_object->movie_total_frames && ffmpeg_update_movie_sample())
+    {
+        ret = (int)ff8_externals.movie_object->camdata_start;
+        ff8_externals.movie_object->camdata_pointer = &ff8_externals.movie_object->camdata_start[ff8_externals.movie_object->movie_current_frame];
+    }
+    else if (ff8_externals.movie_object->movie_intro_pak)
+        ret = ff8_stop_movie();
+    else
+        ret = ff8_externals.sub_5304B0();
 
-	return ret;
+    return ret;
 }
 
 int ff8_start_movie()
 {
-	if(trace_all || trace_movies) ffnx_trace("start_movie\n");
+    if (trace_all || trace_movies)
+        ffnx_trace("start_movie\n");
 
-	ff8_externals.movie_object->field_4C4B0 = 0;
+    ff8_externals.movie_object->field_4C4B0 = 0;
 
-	// Required by > 15 FPS movies
-	movie_fps_ratio = ffmpeg_get_fps_ratio();
+    // Required by > 15 FPS movies
+    movie_fps_ratio = ffmpeg_get_fps_ratio();
 
-	if(ff8_externals.movie_object->movie_intro_pak)
-	{
-		if (ff8_movie_frames == 0) {
-			return 0;
-		}
+    if (ff8_externals.movie_object->movie_intro_pak)
+    {
+        if (ff8_movie_frames == 0)
+        {
+            return 0;
+        }
 
-		ff8_externals.movie_object->movie_total_frames = ff8_movie_frames;
-	}
-	else
-	{
-		ff8_externals.movie_object->movie_total_frames = ((WORD *)ff8_movie_cam_buffer)[3];
-		if(trace_all || trace_movies) ffnx_trace("%i frames\n", ff8_externals.movie_object->movie_total_frames);
-	}
+        ff8_externals.movie_object->movie_total_frames = ff8_movie_frames;
+    }
+    else
+    {
+        ff8_externals.movie_object->movie_total_frames = ((WORD *)ff8_movie_cam_buffer)[3];
+        if (trace_all || trace_movies)
+            ffnx_trace("%i frames\n", ff8_externals.movie_object->movie_total_frames);
+    }
 
-	*ff8_externals.enable_framelimiter = false;
+    *ff8_externals.enable_framelimiter = false;
 
-	ff8_externals.movie_object->movie_is_playing = true;
+    ff8_externals.movie_object->movie_is_playing = true;
 
-	nxAudioEngine.setMovieMasterVolume(ffmpeg_video_volume / 100.0f);
-	nxAudioEngine.playMovieAudio(movie_music_path, MovieAudioLayers::MUSIC);
-	nxAudioEngine.playMovieAudio(movie_voice_path, MovieAudioLayers::VOICE, 3.0f);
+    nxAudioEngine.setMovieMasterVolume(ffmpeg_video_volume / 100.0f);
+    nxAudioEngine.playMovieAudio(movie_music_path, MovieAudioLayers::MUSIC);
+    nxAudioEngine.playMovieAudio(movie_voice_path, MovieAudioLayers::VOICE, 3.0f);
 
-	return ff8_update_movie_sample();
+    return ff8_update_movie_sample();
 }
 
 int ff8_stop_movie()
 {
-	if(trace_all || trace_movies) ffnx_trace("stop_movie\n");
+    if (trace_all || trace_movies)
+        ffnx_trace("stop_movie\n");
 
-	ffmpeg_stop_movie();
+    ffmpeg_stop_movie();
 
-	nxAudioEngine.stopMovieAudio(MovieAudioLayers::MUSIC);
-	nxAudioEngine.stopMovieAudio(MovieAudioLayers::VOICE);
+    nxAudioEngine.stopMovieAudio(MovieAudioLayers::MUSIC);
+    nxAudioEngine.stopMovieAudio(MovieAudioLayers::VOICE);
 
-	ff8_externals.movie_object->movie_is_playing = false;
+    ff8_externals.movie_object->movie_is_playing = false;
 
-	ff8_externals.movie_object->field_4C4AC = 0;
-	ff8_externals.movie_object->field_4C4B0 = 0;
+    ff8_externals.movie_object->field_4C4AC = 0;
+    ff8_externals.movie_object->field_4C4B0 = 0;
 
-	*ff8_externals.enable_framelimiter = true;
+    *ff8_externals.enable_framelimiter = true;
 
-	int ret = (int)ff8_externals.movie_object->movie_file_handle;
+    int ret = (int)ff8_externals.movie_object->movie_file_handle;
 
-	if (ff8_externals.movie_object->movie_file_handle)
-	{
-		ret = CloseHandle(ff8_externals.movie_object->movie_file_handle);
-		ff8_externals.movie_object->movie_file_handle = 0;
-	}
+    if (ff8_externals.movie_object->movie_file_handle)
+    {
+        ret = CloseHandle(ff8_externals.movie_object->movie_file_handle);
+        ff8_externals.movie_object->movie_file_handle = 0;
+    }
 
-	return ret;
+    return ret;
 }
 
 bool is_overlapping_movie_playing()
 {
-	return ff7_externals.movie_object->is_playing && !is_movie_bgfield;
+    return ff7_externals.movie_object->is_playing && !is_movie_bgfield;
 }
 
 void movie_init()
 {
-	if(!ff8)
-	{
-		nxAudioEngine.setMovieAudioMaxSlots(2);
+    if (!ff8)
+    {
+        nxAudioEngine.setMovieAudioMaxSlots(2);
 
-		replace_function(common_externals.prepare_movie, ff7_prepare_movie);
-		replace_function(common_externals.release_movie_objects, ff7_release_movie_objects);
-		replace_function(common_externals.start_movie, ff7_start_movie);
-		replace_function(common_externals.update_movie_sample, ff7_update_movie_sample);
-		replace_function(common_externals.stop_movie, ff7_stop_movie);
-		replace_function(common_externals.get_movie_frame, ff7_get_movie_frame);
-	}
-	else
-	{
-		nxAudioEngine.setMovieAudioMaxSlots(1);
+        replace_function(common_externals.prepare_movie, ff7_prepare_movie);
+        replace_function(common_externals.release_movie_objects, ff7_release_movie_objects);
+        replace_function(common_externals.start_movie, ff7_start_movie);
+        replace_function(common_externals.update_movie_sample, ff7_update_movie_sample);
+        replace_function(common_externals.stop_movie, ff7_stop_movie);
+        replace_function(common_externals.get_movie_frame, ff7_get_movie_frame);
+    }
+    else
+    {
+        nxAudioEngine.setMovieAudioMaxSlots(1);
 
-		replace_function(common_externals.prepare_movie, ff8_prepare_movie);
-		replace_function(common_externals.release_movie_objects, ff8_release_movie_objects);
-		replace_function(common_externals.start_movie, ff8_start_movie);
-		replace_function(common_externals.update_movie_sample, ff8_update_movie_sample);
-		replace_function(ff8_externals.draw_movie_frame, draw_current_frame);
-		replace_function(common_externals.stop_movie, ff8_stop_movie);
-		replace_function(common_externals.get_movie_frame, ff8_get_movie_frame);
-	}
+        replace_function(common_externals.prepare_movie, ff8_prepare_movie);
+        replace_function(common_externals.release_movie_objects, ff8_release_movie_objects);
+        replace_function(common_externals.start_movie, ff8_start_movie);
+        replace_function(common_externals.update_movie_sample, ff8_update_movie_sample);
+        replace_function(ff8_externals.draw_movie_frame, draw_current_frame);
+        replace_function(common_externals.stop_movie, ff8_stop_movie);
+        replace_function(common_externals.get_movie_frame, ff8_get_movie_frame);
+    }
 
-	ffmpeg_movie_init();
+    ffmpeg_movie_init();
 }

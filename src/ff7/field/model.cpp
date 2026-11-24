@@ -33,259 +33,248 @@
 
 namespace ff7::field
 {
-    bool ff7_field_do_draw_3d_model(short x, short y)
+bool ff7_field_do_draw_3d_model(short x, short y)
+{
+    if (*ff7_externals.field_bg_flag_CC15E4)
+        return 1;
+    int left_offset_x = 40 + (widescreen_enabled ? abs(wide_viewport_x) - 50 : 0);
+    int right_offset_x = 400 + (widescreen_enabled ? abs(wide_viewport_x) - 50 : 0);
+    return x > ff7_externals.field_viewport_xy_CFF204->x - left_offset_x && x < ff7_externals.field_viewport_xy_CFF204->x + right_offset_x && y > ff7_externals.field_viewport_xy_CFF204->y - 120 && y < ff7_externals.field_viewport_xy_CFF204->y + 460;
+}
+
+void ff7_field_update_models_position(int key_input_status)
+{
+    bool emulate_run = !(ff7_externals.modules_global_object->current_key_input_status & 0x40) && gamepad_analogue_intent == INTENT_RUN;
+
+    if (emulate_run)
     {
-        if(*ff7_externals.field_bg_flag_CC15E4)
-            return 1;
-        int left_offset_x = 40 + (widescreen_enabled ? abs(wide_viewport_x) - 50 : 0);
-        int right_offset_x = 400 + (widescreen_enabled ? abs(wide_viewport_x) - 50 : 0);
-        return x > ff7_externals.field_viewport_xy_CFF204->x - left_offset_x && x < ff7_externals.field_viewport_xy_CFF204->x + right_offset_x &&
-            y > ff7_externals.field_viewport_xy_CFF204->y - 120 && y < ff7_externals.field_viewport_xy_CFF204->y + 460;
+        key_input_status |= 0x40;
+        ff7_externals.modules_global_object->current_key_input_status |= 0x40;
     }
 
-    void ff7_field_update_models_position(int key_input_status)
+    ((void (*)(int))ff7_externals.field_update_models_positions)(key_input_status);
+
+    if (emulate_run)
     {
-        bool emulate_run = !(ff7_externals.modules_global_object->current_key_input_status & 0x40) && gamepad_analogue_intent == INTENT_RUN;
-
-        if (emulate_run)
-        {
-            key_input_status |= 0x40;
-            ff7_externals.modules_global_object->current_key_input_status |= 0x40;
-        }
-
-        ((void(*)(int))ff7_externals.field_update_models_positions)(key_input_status);
-
-        if (emulate_run)
-        {
-            key_input_status &= ~0x40;
-            ff7_externals.modules_global_object->current_key_input_status &= ~0x40;
-        }
-
-        for(int model_idx = 0; model_idx < (int)(*ff7_externals.field_n_models); model_idx++)
-        {
-            // Reset movement frame index for all models if they are not walking/running
-            if((*ff7_externals.field_event_data_ptr)[model_idx].movement_type != 1)
-            {
-                external_model_data[model_idx].moveFrameIndex = 0;
-            }
-
-            // Reset rotation movement frame index for all models if they are not rotating
-            byte rotation_type = (*ff7_externals.field_event_data_ptr)[model_idx].rotation_steps_type;
-            if(rotation_type == 0 || rotation_type == 3)
-            {
-                external_model_data[model_idx].rotationMoveFrameIndex = 0;
-            }
-        }
+        key_input_status &= ~0x40;
+        ff7_externals.modules_global_object->current_key_input_status &= ~0x40;
     }
 
-    int ff7_field_update_player_model_position(short model_id)
+    for (int model_idx = 0; model_idx < (int)(*ff7_externals.field_n_models); model_idx++)
     {
-        field_event_data* field_event_data_array = (*ff7_externals.field_event_data_ptr);
-        int original_movement_speed = field_event_data_array[model_id].movement_speed;
-        int frame_multiplier = get_frame_multiplier();
-        if(is_fps_running_more_than_original())
+        // Reset movement frame index for all models if they are not walking/running
+        if ((*ff7_externals.field_event_data_ptr)[model_idx].movement_type != 1)
         {
-            field_event_data_array[model_id].movement_speed = original_movement_speed / frame_multiplier;
+            external_model_data[model_idx].moveFrameIndex = 0;
         }
 
-        int is_player_moving = ff7_externals.field_update_single_model_position(model_id);
-        field_event_data_array[model_id].movement_speed = original_movement_speed;
+        // Reset rotation movement frame index for all models if they are not rotating
+        byte rotation_type = (*ff7_externals.field_event_data_ptr)[model_idx].rotation_steps_type;
+        if (rotation_type == 0 || rotation_type == 3)
+        {
+            external_model_data[model_idx].rotationMoveFrameIndex = 0;
+        }
+    }
+}
 
-        // Allow footsteps to be detected correctly
-        if(ff7_footsteps)
-            sfx_process_footstep(is_player_moving);
-
-        return is_player_moving;
+int ff7_field_update_player_model_position(short model_id)
+{
+    field_event_data *field_event_data_array = (*ff7_externals.field_event_data_ptr);
+    int original_movement_speed = field_event_data_array[model_id].movement_speed;
+    int frame_multiplier = get_frame_multiplier();
+    if (is_fps_running_more_than_original())
+    {
+        field_event_data_array[model_id].movement_speed = original_movement_speed / frame_multiplier;
     }
 
-    int ff7_field_update_single_model_position(short model_id)
+    int is_player_moving = ff7_externals.field_update_single_model_position(model_id);
+    field_event_data_array[model_id].movement_speed = original_movement_speed;
+
+    // Allow footsteps to be detected correctly
+    if (ff7_footsteps)
+        sfx_process_footstep(is_player_moving);
+
+    return is_player_moving;
+}
+
+int ff7_field_update_single_model_position(short model_id)
+{
+    int ret;
+    int frame_multiplier = get_frame_multiplier();
+    field_event_data *field_event_data_array = (*ff7_externals.field_event_data_ptr);
+
+    if (is_fps_running_more_than_original() && *ff7_externals.field_id == 748)
     {
-        int ret;
-        int frame_multiplier = get_frame_multiplier();
-        field_event_data* field_event_data_array = (*ff7_externals.field_event_data_ptr);
-
-        if(is_fps_running_more_than_original() && *ff7_externals.field_id == 748)
+        // Fix softlock related to this discussion https://github.com/julianxhokaxhiu/FFNx/discussions/569.
+        // The issue is due to the fact that when Cloud climb up, there is a mini auto movement which triggers a line making Cloud jump below.
+        // This script that makes Cloud jump below does not end well, which makes the next script overlapping with this.
+        // If the next script is to climb back up, there is a sort of race condition where the player movability is activated.
+        // Then if the player taps the DOWN button, it will go into a softlock.
+        //
+        // This logic is very fragile (might cause other softlock), so, the solution is to write another logic only for this map
+        int interpolationStep = external_model_data[model_id].moveFrameIndex + 1;
+        if (external_model_data[model_id].moveFrameIndex == 0)
         {
-            // Fix softlock related to this discussion https://github.com/julianxhokaxhiu/FFNx/discussions/569. 
-            // The issue is due to the fact that when Cloud climb up, there is a mini auto movement which triggers a line making Cloud jump below.
-            // This script that makes Cloud jump below does not end well, which makes the next script overlapping with this.
-            // If the next script is to climb back up, there is a sort of race condition where the player movability is activated.
-            // Then if the player taps the DOWN button, it will go into a softlock.
-            // 
-            // This logic is very fragile (might cause other softlock), so, the solution is to write another logic only for this map
-            int interpolationStep = external_model_data[model_id].moveFrameIndex + 1;
-            if(external_model_data[model_id].moveFrameIndex == 0)
-            {
-                external_model_data[model_id].initialPosition = field_event_data_array[model_id].model_pos;
-                ret = ff7_externals.field_update_single_model_position(model_id);
-                external_model_data[model_id].updateMovementReturnValue = ret;
-                external_model_data[model_id].finalPosition = field_event_data_array[model_id].model_pos;
-                external_model_data[model_id].prevCollisionRadius = field_event_data_array[model_id].collision_radius;
-                field_event_data_array[model_id].model_pos.x = external_model_data[model_id].initialPosition.x + ((external_model_data[model_id].finalPosition.x - external_model_data[model_id].initialPosition.x) * interpolationStep) / frame_multiplier;
-                field_event_data_array[model_id].model_pos.y = external_model_data[model_id].initialPosition.y + ((external_model_data[model_id].finalPosition.y - external_model_data[model_id].initialPosition.y) * interpolationStep) / frame_multiplier;
-                field_event_data_array[model_id].model_pos.z = external_model_data[model_id].initialPosition.z + ((external_model_data[model_id].finalPosition.z - external_model_data[model_id].initialPosition.z) * interpolationStep) / frame_multiplier;
-                field_event_data_array[model_id].collision_radius = 0;
-            }
-            else
-            {
-                ret = external_model_data[model_id].updateMovementReturnValue;
-                field_event_data_array[model_id].model_pos.x = external_model_data[model_id].initialPosition.x + ((external_model_data[model_id].finalPosition.x - external_model_data[model_id].initialPosition.x) * interpolationStep) / frame_multiplier;
-                field_event_data_array[model_id].model_pos.y = external_model_data[model_id].initialPosition.y + ((external_model_data[model_id].finalPosition.y - external_model_data[model_id].initialPosition.y) * interpolationStep) / frame_multiplier;
-                field_event_data_array[model_id].model_pos.z = external_model_data[model_id].initialPosition.z + ((external_model_data[model_id].finalPosition.z - external_model_data[model_id].initialPosition.z) * interpolationStep) / frame_multiplier;
-            }
-
-            if((external_model_data[model_id].moveFrameIndex + 1) % frame_multiplier == 0)
-            {
-                field_event_data_array[model_id].collision_radius = external_model_data[model_id].prevCollisionRadius;
-            }
-
-            external_model_data[model_id].moveFrameIndex = (external_model_data[model_id].moveFrameIndex + 1) % frame_multiplier;
-        }
-        else if(is_fps_running_more_than_original())
-        {
-            int interpolationStep = external_model_data[model_id].moveFrameIndex + 1;
-            if(external_model_data[model_id].moveFrameIndex == 0)
-            {
-                external_model_data[model_id].initialPosition = field_event_data_array[model_id].model_pos;
-                ret = ff7_externals.field_update_single_model_position(model_id);
-                external_model_data[model_id].updateMovementReturnValue = ret;
-                external_model_data[model_id].finalPosition = field_event_data_array[model_id].model_pos;
-                field_event_data_array[model_id].model_pos.x = external_model_data[model_id].initialPosition.x + ((external_model_data[model_id].finalPosition.x - external_model_data[model_id].initialPosition.x) * interpolationStep) / frame_multiplier;
-                field_event_data_array[model_id].model_pos.y = external_model_data[model_id].initialPosition.y + ((external_model_data[model_id].finalPosition.y - external_model_data[model_id].initialPosition.y) * interpolationStep) / frame_multiplier;
-                field_event_data_array[model_id].model_pos.z = external_model_data[model_id].initialPosition.z + ((external_model_data[model_id].finalPosition.z - external_model_data[model_id].initialPosition.z) * interpolationStep) / frame_multiplier;
-            }
-            else
-            {
-                ret = external_model_data[model_id].updateMovementReturnValue;
-                field_event_data_array[model_id].model_pos.x = external_model_data[model_id].initialPosition.x + ((external_model_data[model_id].finalPosition.x - external_model_data[model_id].initialPosition.x) * interpolationStep) / frame_multiplier;
-                field_event_data_array[model_id].model_pos.y = external_model_data[model_id].initialPosition.y + ((external_model_data[model_id].finalPosition.y - external_model_data[model_id].initialPosition.y) * interpolationStep) / frame_multiplier;
-                field_event_data_array[model_id].model_pos.z = external_model_data[model_id].initialPosition.z + ((external_model_data[model_id].finalPosition.z - external_model_data[model_id].initialPosition.z) * interpolationStep) / frame_multiplier;
-            }
-            external_model_data[model_id].moveFrameIndex = (external_model_data[model_id].moveFrameIndex + 1) % frame_multiplier;
-        }
-        else
-        {
+            external_model_data[model_id].initialPosition = field_event_data_array[model_id].model_pos;
             ret = ff7_externals.field_update_single_model_position(model_id);
-        }
-
-        return ret;
-    }
-
-    int ff7_field_check_collision_with_target(field_event_data* field_event_model, short target_collision_radius)
-    {
-        int ret;
-        int frame_multiplier = get_frame_multiplier();
-        int model_id = std::distance(*ff7_externals.field_event_data_ptr, field_event_model);
-
-        if(is_fps_running_more_than_original())
-        {
-            if(external_model_data[model_id].moveFrameIndex == 0)
-            {
-                ret = ff7_externals.field_check_collision_with_target(field_event_model, target_collision_radius);
-                external_model_data[model_id].wasNotCollidingWithTarget = ret;
-            }
-            else
-            {
-                ret = external_model_data[model_id].wasNotCollidingWithTarget;
-            }
+            external_model_data[model_id].updateMovementReturnValue = ret;
+            external_model_data[model_id].finalPosition = field_event_data_array[model_id].model_pos;
+            external_model_data[model_id].prevCollisionRadius = field_event_data_array[model_id].collision_radius;
+            field_event_data_array[model_id].model_pos.x = external_model_data[model_id].initialPosition.x + ((external_model_data[model_id].finalPosition.x - external_model_data[model_id].initialPosition.x) * interpolationStep) / frame_multiplier;
+            field_event_data_array[model_id].model_pos.y = external_model_data[model_id].initialPosition.y + ((external_model_data[model_id].finalPosition.y - external_model_data[model_id].initialPosition.y) * interpolationStep) / frame_multiplier;
+            field_event_data_array[model_id].model_pos.z = external_model_data[model_id].initialPosition.z + ((external_model_data[model_id].finalPosition.z - external_model_data[model_id].initialPosition.z) * interpolationStep) / frame_multiplier;
+            field_event_data_array[model_id].collision_radius = 0;
         }
         else
+        {
+            ret = external_model_data[model_id].updateMovementReturnValue;
+            field_event_data_array[model_id].model_pos.x = external_model_data[model_id].initialPosition.x + ((external_model_data[model_id].finalPosition.x - external_model_data[model_id].initialPosition.x) * interpolationStep) / frame_multiplier;
+            field_event_data_array[model_id].model_pos.y = external_model_data[model_id].initialPosition.y + ((external_model_data[model_id].finalPosition.y - external_model_data[model_id].initialPosition.y) * interpolationStep) / frame_multiplier;
+            field_event_data_array[model_id].model_pos.z = external_model_data[model_id].initialPosition.z + ((external_model_data[model_id].finalPosition.z - external_model_data[model_id].initialPosition.z) * interpolationStep) / frame_multiplier;
+        }
+
+        if ((external_model_data[model_id].moveFrameIndex + 1) % frame_multiplier == 0)
+        {
+            field_event_data_array[model_id].collision_radius = external_model_data[model_id].prevCollisionRadius;
+        }
+
+        external_model_data[model_id].moveFrameIndex = (external_model_data[model_id].moveFrameIndex + 1) % frame_multiplier;
+    }
+    else if (is_fps_running_more_than_original())
+    {
+        int interpolationStep = external_model_data[model_id].moveFrameIndex + 1;
+        if (external_model_data[model_id].moveFrameIndex == 0)
+        {
+            external_model_data[model_id].initialPosition = field_event_data_array[model_id].model_pos;
+            ret = ff7_externals.field_update_single_model_position(model_id);
+            external_model_data[model_id].updateMovementReturnValue = ret;
+            external_model_data[model_id].finalPosition = field_event_data_array[model_id].model_pos;
+            field_event_data_array[model_id].model_pos.x = external_model_data[model_id].initialPosition.x + ((external_model_data[model_id].finalPosition.x - external_model_data[model_id].initialPosition.x) * interpolationStep) / frame_multiplier;
+            field_event_data_array[model_id].model_pos.y = external_model_data[model_id].initialPosition.y + ((external_model_data[model_id].finalPosition.y - external_model_data[model_id].initialPosition.y) * interpolationStep) / frame_multiplier;
+            field_event_data_array[model_id].model_pos.z = external_model_data[model_id].initialPosition.z + ((external_model_data[model_id].finalPosition.z - external_model_data[model_id].initialPosition.z) * interpolationStep) / frame_multiplier;
+        }
+        else
+        {
+            ret = external_model_data[model_id].updateMovementReturnValue;
+            field_event_data_array[model_id].model_pos.x = external_model_data[model_id].initialPosition.x + ((external_model_data[model_id].finalPosition.x - external_model_data[model_id].initialPosition.x) * interpolationStep) / frame_multiplier;
+            field_event_data_array[model_id].model_pos.y = external_model_data[model_id].initialPosition.y + ((external_model_data[model_id].finalPosition.y - external_model_data[model_id].initialPosition.y) * interpolationStep) / frame_multiplier;
+            field_event_data_array[model_id].model_pos.z = external_model_data[model_id].initialPosition.z + ((external_model_data[model_id].finalPosition.z - external_model_data[model_id].initialPosition.z) * interpolationStep) / frame_multiplier;
+        }
+        external_model_data[model_id].moveFrameIndex = (external_model_data[model_id].moveFrameIndex + 1) % frame_multiplier;
+    }
+    else
+    {
+        ret = ff7_externals.field_update_single_model_position(model_id);
+    }
+
+    return ret;
+}
+
+int ff7_field_check_collision_with_target(field_event_data *field_event_model, short target_collision_radius)
+{
+    int ret;
+    int frame_multiplier = get_frame_multiplier();
+    int model_id = std::distance(*ff7_externals.field_event_data_ptr, field_event_model);
+
+    if (is_fps_running_more_than_original())
+    {
+        if (external_model_data[model_id].moveFrameIndex == 0)
         {
             ret = ff7_externals.field_check_collision_with_target(field_event_model, target_collision_radius);
+            external_model_data[model_id].wasNotCollidingWithTarget = ret;
         }
-
-        return ret;
+        else
+        {
+            ret = external_model_data[model_id].wasNotCollidingWithTarget;
+        }
+    }
+    else
+    {
+        ret = ff7_externals.field_check_collision_with_target(field_event_model, target_collision_radius);
     }
 
-    void ff7_field_update_models_rotation_new()
+    return ret;
+}
+
+void ff7_field_update_models_rotation_new()
+{
+    for (int model_idx = 0; model_idx < *ff7_externals.field_n_models; model_idx++)
     {
-        for(int model_idx = 0; model_idx < *ff7_externals.field_n_models; model_idx++)
+        auto &field_event_data = (*ff7_externals.field_event_data_ptr)[model_idx];
+        byte rotation_type = field_event_data.rotation_steps_type;
+        if (rotation_type)
         {
-            auto &field_event_data = (*ff7_externals.field_event_data_ptr)[model_idx];
-            byte rotation_type = field_event_data.rotation_steps_type;
-            if(rotation_type)
+            // Legacy code still works, but when in 60FPS, the steps index and number of steps are modified
+            uint32_t rotation_n_steps = field_event_data.rotation_n_steps;
+            uint32_t rotation_steps_idx = field_event_data.rotation_step_idx;
+
+            if (is_fps_running_more_than_original())
             {
-                // Legacy code still works, but when in 60FPS, the steps index and number of steps are modified
-                uint32_t rotation_n_steps = field_event_data.rotation_n_steps;
-                uint32_t rotation_steps_idx = field_event_data.rotation_step_idx;
+                rotation_n_steps *= get_frame_multiplier();
+                rotation_steps_idx = rotation_steps_idx * get_frame_multiplier() + external_model_data[model_idx].rotationMoveFrameIndex;
+            }
 
-                if(is_fps_running_more_than_original())
+            if (rotation_type == 1)
+            {
+                field_event_data.rotation_curr_value = ff7_externals.field_get_linear_interpolated_value(field_event_data.rotation_initial, field_event_data.rotation_final, rotation_n_steps, rotation_steps_idx);
+
+                if (field_event_data.rotation_step_idx == field_event_data.rotation_n_steps)
+                    field_event_data.rotation_steps_type = 3;
+                else
                 {
-                    rotation_n_steps *= get_frame_multiplier();
-                    rotation_steps_idx = rotation_steps_idx * get_frame_multiplier() + external_model_data[model_idx].rotationMoveFrameIndex;
-                }
-
-                if(rotation_type == 1)
-                {
-                    field_event_data.rotation_curr_value = ff7_externals.field_get_linear_interpolated_value(
-                        field_event_data.rotation_initial,
-                        field_event_data.rotation_final,
-                        rotation_n_steps,
-                        rotation_steps_idx
-                    );
-
-                    if(field_event_data.rotation_step_idx == field_event_data.rotation_n_steps)
-                        field_event_data.rotation_steps_type = 3;
+                    if (is_fps_running_more_than_original())
+                    {
+                        external_model_data[model_idx].rotationMoveFrameIndex = (external_model_data[model_idx].rotationMoveFrameIndex + 1) % get_frame_multiplier();
+                        if (external_model_data[model_idx].rotationMoveFrameIndex == 0)
+                            field_event_data.rotation_step_idx++;
+                    }
                     else
                     {
-                        if(is_fps_running_more_than_original())
-                        {
-                            external_model_data[model_idx].rotationMoveFrameIndex = (external_model_data[model_idx].rotationMoveFrameIndex + 1) % get_frame_multiplier();
-                            if(external_model_data[model_idx].rotationMoveFrameIndex == 0)
-                                field_event_data.rotation_step_idx++;
-                        }
-                        else
-                        {
-                            field_event_data.rotation_step_idx++;
-                        }
+                        field_event_data.rotation_step_idx++;
                     }
                 }
-                else if(rotation_type == 2)
-                {
-                    field_event_data.rotation_curr_value = ff7_externals.field_get_smooth_interpolated_value(
-                        field_event_data.rotation_initial,
-                        field_event_data.rotation_final,
-                        rotation_n_steps,
-                        rotation_steps_idx
-                    );
+            }
+            else if (rotation_type == 2)
+            {
+                field_event_data.rotation_curr_value = ff7_externals.field_get_smooth_interpolated_value(field_event_data.rotation_initial, field_event_data.rotation_final, rotation_n_steps, rotation_steps_idx);
 
-                    if(field_event_data.rotation_step_idx == field_event_data.rotation_n_steps)
-                        field_event_data.rotation_steps_type = 3;
+                if (field_event_data.rotation_step_idx == field_event_data.rotation_n_steps)
+                    field_event_data.rotation_steps_type = 3;
+                else
+                {
+                    if (is_fps_running_more_than_original())
+                    {
+                        external_model_data[model_idx].rotationMoveFrameIndex = (external_model_data[model_idx].rotationMoveFrameIndex + 1) % get_frame_multiplier();
+                        if (external_model_data[model_idx].rotationMoveFrameIndex == 0)
+                            field_event_data.rotation_step_idx++;
+                    }
                     else
                     {
-                        if(is_fps_running_more_than_original())
-                        {
-                            external_model_data[model_idx].rotationMoveFrameIndex = (external_model_data[model_idx].rotationMoveFrameIndex + 1) % get_frame_multiplier();
-                            if(external_model_data[model_idx].rotationMoveFrameIndex == 0)
-                                field_event_data.rotation_step_idx++;
-                        }
-                        else
-                        {
-                            field_event_data.rotation_step_idx++;
-                        }
+                        field_event_data.rotation_step_idx++;
                     }
                 }
             }
         }
     }
+}
 
-    void ff7_field_update_model_animation_frame(short model_id)
+void ff7_field_update_model_animation_frame(short model_id)
+{
+    field_event_data &model_event_data = (*ff7_externals.field_event_data_ptr)[model_id];
+    const int original_animation_speed = model_event_data.animation_speed;
+    if (is_overlapping_movie_playing())
     {
-        field_event_data &model_event_data = (*ff7_externals.field_event_data_ptr)[model_id];
-        const int original_animation_speed = model_event_data.animation_speed;
-        if (is_overlapping_movie_playing())
-        {
-            if(movie_fps_ratio == 1 && ff7_fps_limiter == FPS_LIMITER_60FPS)
-                model_event_data.animation_speed *= common_frame_multiplier;
-            else if(movie_fps_ratio > 1 && ff7_fps_limiter < FPS_LIMITER_60FPS)
-                model_event_data.animation_speed /= movie_fps_ratio;
-            else if(movie_fps_ratio > 2 && ff7_fps_limiter == FPS_LIMITER_60FPS)
-                model_event_data.animation_speed /= (movie_fps_ratio / 2);
-        }
-
-        ff7_externals.field_update_model_animation_frame(model_id);
-
-        model_event_data.animation_speed = original_animation_speed;
+        if (movie_fps_ratio == 1 && ff7_fps_limiter == FPS_LIMITER_60FPS)
+            model_event_data.animation_speed *= common_frame_multiplier;
+        else if (movie_fps_ratio > 1 && ff7_fps_limiter < FPS_LIMITER_60FPS)
+            model_event_data.animation_speed /= movie_fps_ratio;
+        else if (movie_fps_ratio > 2 && ff7_fps_limiter == FPS_LIMITER_60FPS)
+            model_event_data.animation_speed /= (movie_fps_ratio / 2);
     }
 
+    ff7_externals.field_update_model_animation_frame(model_id);
+
+    model_event_data.animation_speed = original_animation_speed;
 }
+
+} // namespace ff7::field

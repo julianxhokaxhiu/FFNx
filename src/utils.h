@@ -28,38 +28,36 @@
 #include <random>
 
 // Get the size of a vector in bytes
-template<typename T>
-size_t vectorSizeOf(const typename std::vector<T>& vec)
+template <typename T> size_t vectorSizeOf(const typename std::vector<T> &vec)
 {
     return sizeof(T) * vec.size();
 }
 
 // trim from start (in place)
-inline void ltrim(std::string& s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
-        return !std::isspace(ch);
-        }));
+inline void ltrim(std::string &s)
+{
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) { return !std::isspace(ch); }));
 }
 
 // trim from end (in place)
-inline void rtrim(std::string& s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
-        return !std::isspace(ch);
-        }).base(), s.end());
+inline void rtrim(std::string &s)
+{
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) { return !std::isspace(ch); }).base(), s.end());
 }
 
 // trim from both ends (in place)
-inline void trim(std::string& s) {
+inline void trim(std::string &s)
+{
     ltrim(s);
     rtrim(s);
 }
 
-inline bool contains(std::string const& value, std::string const& token)
+inline bool contains(std::string const &value, std::string const &token)
 {
     return value.find(token) != std::string::npos;
 }
 
-inline std::vector<std::string> split(const std::string& string, const std::string& regex)
+inline std::vector<std::string> split(const std::string &string, const std::string &regex)
 {
     std::vector<std::string> result;
     std::string safeString(string);
@@ -77,19 +75,21 @@ inline std::vector<std::string> split(const std::string& string, const std::stri
     return result;
 }
 
-inline bool starts_with(std::string const& value, std::string const& starting)
+inline bool starts_with(std::string const &value, std::string const &starting)
 {
-    if (starting.size() > value.size()) return false;
+    if (starting.size() > value.size())
+        return false;
     return value.rfind(starting, 0) == 0;
 }
 
-inline bool ends_with(std::string const& value, std::string const& ending)
+inline bool ends_with(std::string const &value, std::string const &ending)
 {
-    if (ending.size() > value.size()) return false;
+    if (ending.size() > value.size())
+        return false;
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 }
 
-inline bool replaceOnce(std::string& str, const std::string& from, const std::string& to)
+inline bool replaceOnce(std::string &str, const std::string &from, const std::string &to)
 {
     size_t start_pos = str.find(from);
 
@@ -101,7 +101,7 @@ inline bool replaceOnce(std::string& str, const std::string& from, const std::st
     return true;
 }
 
-inline void replaceAll(std::string& str, const char from, const char to)
+inline void replaceAll(std::string &str, const char from, const char to)
 {
     std::replace(str.begin(), str.end(), from, to);
 }
@@ -110,16 +110,7 @@ inline void replaceAll(std::string& str, const char from, const char to)
 inline int getRandomInt(int min, int max)
 {
     std::random_device rd;
-    std::mt19937::result_type seed = rd() ^ (
-        (std::mt19937::result_type)
-        std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::system_clock::now().time_since_epoch()
-        ).count() +
-        (std::mt19937::result_type)
-        std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::high_resolution_clock::now().time_since_epoch()
-        ).count()
-    );
+    std::mt19937::result_type seed = rd() ^ ((std::mt19937::result_type)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count() + (std::mt19937::result_type)std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
 
     std::mt19937 gen(seed);
     std::uniform_int_distribution<unsigned> distrib(min, max);
@@ -139,10 +130,10 @@ inline long double elapsedMicroseconds(std::chrono::time_point<std::chrono::high
 
 bool fileExists(const char *filename);
 bool dirExists(const char *dirname);
-std::string getCopyrightInfoFromExe(const std::string& filePath);
+std::string getCopyrightInfoFromExe(const std::string &filePath);
 std::wstring GetErrorMessage(unsigned long errorCode);
-bool isFileSigned(const char* dllPath);
-std::string sha1_file(const char* filename);
-std::string md5_hash(const unsigned char* data, size_t length);
+bool isFileSigned(const char *dllPath);
+std::string sha1_file(const char *filename);
+std::string md5_hash(const unsigned char *data, size_t length);
 bool isMacOSLauncher();
 uint32_t getProcessEntryPoint();

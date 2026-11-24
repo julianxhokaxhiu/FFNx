@@ -43,7 +43,6 @@ int SDLGamepad::GetPort() const
     return sdlgamepad ? 1 : 0;
 }
 
-
 bool SDLGamepad::init()
 {
     if (sdlInitialized)
@@ -64,40 +63,42 @@ bool SDLGamepad::init()
     if (trace_all || trace_gamepad)
     {
         ffnx_trace("SDL gamepad: subsystem initialized\n");
-        if (GamepadMappingLoaded > 0) ffnx_trace("SDL gamepad: loaded %d mappings from gamecontrollerdb.txt\n", GamepadMappingLoaded);
+        if (GamepadMappingLoaded > 0)
+            ffnx_trace("SDL gamepad: loaded %d mappings from gamecontrollerdb.txt\n", GamepadMappingLoaded);
     }
 
     return true;
 }
 
-const char* SDLGamepad::GetName() const
+const char *SDLGamepad::GetName() const
 {
-    if (!sdlgamepad) return "";
+    if (!sdlgamepad)
+        return "";
     const char *name = SDL_GetGamepadName(sdlgamepad);
     return name ? name : "";
 }
 
 bool SDLGamepad::IsXbox() const
 {
-    if (!sdlgamepad) return false;
+    if (!sdlgamepad)
+        return false;
     SDL_GamepadType type = SDL_GetGamepadType(sdlgamepad);
     return type == SDL_GAMEPAD_TYPE_XBOX360 || type == SDL_GAMEPAD_TYPE_XBOXONE;
 }
 
 bool SDLGamepad::IsSwitch() const
 {
-    if (!sdlgamepad) return false;
+    if (!sdlgamepad)
+        return false;
     SDL_GamepadType type = SDL_GetGamepadType(sdlgamepad);
-    return type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO ||
-        type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT ||
-        type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT ||
-        type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR;
+    return type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO || type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT || type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT || type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR;
 }
 
 static float applyDeadzone(float value, float deadzone)
 {
     float norm = fmaxf(-1.0f, value / SDL_JOYSTICK_AXIS_MAX);
-    if (fabsf(norm) < deadzone) return 0.0f;
+    if (fabsf(norm) < deadzone)
+        return 0.0f;
     float sign = (norm < 0.0f) ? -1.0f : 1.0f;
     return ((fabsf(norm) - deadzone) / (1.0f - deadzone)) * sign;
 }
@@ -105,7 +106,8 @@ static float applyDeadzone(float value, float deadzone)
 static float applyTriggerDeadzone(float value, float deadzone)
 {
     float raw = SDL_clamp(value / SDL_JOYSTICK_AXIS_MAX, 0.0f, 1.0f);
-    if (raw <= deadzone) return 0.0f;
+    if (raw <= deadzone)
+        return 0.0f;
     return (raw - deadzone) / (1.0f - deadzone);
 }
 
@@ -116,61 +118,60 @@ void SDLGamepad::GamepadEvents()
     {
         switch (event.type)
         {
-            case SDL_EVENT_GAMEPAD_AXIS_MOTION:
-                if (sdlgamepad && event.gaxis.which == sdlInstanceId)
+        case SDL_EVENT_GAMEPAD_AXIS_MOTION:
+            if (sdlgamepad && event.gaxis.which == sdlInstanceId)
+            {
+                float leftDz = (float)left_analog_stick_deadzone;
+                float rightDz = (float)right_analog_stick_deadzone;
+
+                switch ((SDL_GamepadAxis)event.gaxis.axis)
                 {
-                    float leftDz  = (float)left_analog_stick_deadzone;
-                    float rightDz = (float)right_analog_stick_deadzone;
-
-                    switch ((SDL_GamepadAxis)event.gaxis.axis)
-                    {
-                        case SDL_GAMEPAD_AXIS_LEFTX:
-                            leftStickX = applyDeadzone((float)event.gaxis.value, leftDz);
-                            break;
-                        case SDL_GAMEPAD_AXIS_LEFTY:
-                            leftStickY = -applyDeadzone((float)event.gaxis.value, leftDz);
-                            break;
-                        case SDL_GAMEPAD_AXIS_RIGHTX:
-                            rightStickX = applyDeadzone((float)event.gaxis.value, rightDz);
-                            break;
-                        case SDL_GAMEPAD_AXIS_RIGHTY:
-                            rightStickY = -applyDeadzone((float)event.gaxis.value, rightDz);
-                            break;
-                        case SDL_GAMEPAD_AXIS_LEFT_TRIGGER:
-                            leftTrigger = applyTriggerDeadzone((float)event.gaxis.value, (float)left_analog_trigger_deadzone);
-                            break;
-                        case SDL_GAMEPAD_AXIS_RIGHT_TRIGGER:
-                            rightTrigger = applyTriggerDeadzone((float)event.gaxis.value, (float)right_analog_trigger_deadzone);
-                            break;
-                        default:
-                            break;
-                    }
+                case SDL_GAMEPAD_AXIS_LEFTX:
+                    leftStickX = applyDeadzone((float)event.gaxis.value, leftDz);
+                    break;
+                case SDL_GAMEPAD_AXIS_LEFTY:
+                    leftStickY = -applyDeadzone((float)event.gaxis.value, leftDz);
+                    break;
+                case SDL_GAMEPAD_AXIS_RIGHTX:
+                    rightStickX = applyDeadzone((float)event.gaxis.value, rightDz);
+                    break;
+                case SDL_GAMEPAD_AXIS_RIGHTY:
+                    rightStickY = -applyDeadzone((float)event.gaxis.value, rightDz);
+                    break;
+                case SDL_GAMEPAD_AXIS_LEFT_TRIGGER:
+                    leftTrigger = applyTriggerDeadzone((float)event.gaxis.value, (float)left_analog_trigger_deadzone);
+                    break;
+                case SDL_GAMEPAD_AXIS_RIGHT_TRIGGER:
+                    rightTrigger = applyTriggerDeadzone((float)event.gaxis.value, (float)right_analog_trigger_deadzone);
+                    break;
+                default:
+                    break;
                 }
-                break;
+            }
+            break;
 
-            case SDL_EVENT_GAMEPAD_ADDED:
-                if (!sdlgamepad)
+        case SDL_EVENT_GAMEPAD_ADDED:
+            if (!sdlgamepad)
+            {
+                SDL_Gamepad *gp = SDL_OpenGamepad(event.gdevice.which);
+                if (gp)
                 {
-                    SDL_Gamepad *gp = SDL_OpenGamepad(event.gdevice.which);
-                    if (gp)
-                    {
-                        sdlgamepad = gp;
-                        sdlInstanceId = event.gdevice.which;
-                    }
+                    sdlgamepad = gp;
+                    sdlInstanceId = event.gdevice.which;
                 }
-                break;
+            }
+            break;
 
-            case SDL_EVENT_GAMEPAD_REMOVED:
-                if (sdlgamepad && event.gdevice.which == sdlInstanceId)
-                    closeGamepad();
-                break;
+        case SDL_EVENT_GAMEPAD_REMOVED:
+            if (sdlgamepad && event.gdevice.which == sdlInstanceId)
+                closeGamepad();
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
     }
 }
-
 
 bool SDLGamepad::CheckConnection()
 {
@@ -222,27 +223,12 @@ bool SDLGamepad::Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed)
 
 bool SDLGamepad::IsPressed(SDL_GamepadButton button) const
 {
-    if (!sdlgamepad) return false;
+    if (!sdlgamepad)
+        return false;
     return SDL_GetGamepadButton(sdlgamepad, button);
 }
 
 bool SDLGamepad::IsIdle() const
 {
-    return !(leftStickY > 0.5f  || IsPressed(SDL_GAMEPAD_BUTTON_DPAD_UP))    &&
-           !(leftStickY < -0.5f || IsPressed(SDL_GAMEPAD_BUTTON_DPAD_DOWN))  &&
-           !(leftStickX < -0.5f || IsPressed(SDL_GAMEPAD_BUTTON_DPAD_LEFT))  &&
-           !(leftStickX > 0.5f  || IsPressed(SDL_GAMEPAD_BUTTON_DPAD_RIGHT)) &&
-           !IsPressed(SDL_GAMEPAD_BUTTON_WEST)              &&
-           !IsPressed(SDL_GAMEPAD_BUTTON_SOUTH)             &&
-           !IsPressed(SDL_GAMEPAD_BUTTON_EAST)              &&
-           !IsPressed(SDL_GAMEPAD_BUTTON_NORTH)             &&
-           !IsPressed(SDL_GAMEPAD_BUTTON_LEFT_SHOULDER)     &&
-           !IsPressed(SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER)    &&
-           !(leftTrigger  > 0.85f)                         &&
-           !(rightTrigger > 0.85f)                         &&
-           !IsPressed(SDL_GAMEPAD_BUTTON_BACK)              &&
-           !IsPressed(SDL_GAMEPAD_BUTTON_START)             &&
-           !IsPressed(SDL_GAMEPAD_BUTTON_LEFT_STICK)        &&
-           !IsPressed(SDL_GAMEPAD_BUTTON_RIGHT_STICK)       &&
-           !IsPressed(SDL_GAMEPAD_BUTTON_GUIDE);
+    return !(leftStickY > 0.5f || IsPressed(SDL_GAMEPAD_BUTTON_DPAD_UP)) && !(leftStickY < -0.5f || IsPressed(SDL_GAMEPAD_BUTTON_DPAD_DOWN)) && !(leftStickX < -0.5f || IsPressed(SDL_GAMEPAD_BUTTON_DPAD_LEFT)) && !(leftStickX > 0.5f || IsPressed(SDL_GAMEPAD_BUTTON_DPAD_RIGHT)) && !IsPressed(SDL_GAMEPAD_BUTTON_WEST) && !IsPressed(SDL_GAMEPAD_BUTTON_SOUTH) && !IsPressed(SDL_GAMEPAD_BUTTON_EAST) && !IsPressed(SDL_GAMEPAD_BUTTON_NORTH) && !IsPressed(SDL_GAMEPAD_BUTTON_LEFT_SHOULDER) && !IsPressed(SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER) && !(leftTrigger > 0.85f) && !(rightTrigger > 0.85f) && !IsPressed(SDL_GAMEPAD_BUTTON_BACK) && !IsPressed(SDL_GAMEPAD_BUTTON_START) && !IsPressed(SDL_GAMEPAD_BUTTON_LEFT_STICK) && !IsPressed(SDL_GAMEPAD_BUTTON_RIGHT_STICK) && !IsPressed(SDL_GAMEPAD_BUTTON_GUIDE);
 }

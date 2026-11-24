@@ -28,37 +28,39 @@
 #include "imgui_club/imgui_memory_editor.h"
 #include "input.h"
 
-class Overlay : public MouseListener, public KeyListener {
-private:
-	INT64 g_Time = 0;
-	INT64  g_TicksPerSecond = 0;
-	ImGuiMouseCursor g_LastMouseCursor = ImGuiMouseCursor_COUNT;
-	bgfx::VertexLayout imguiVertexLayout;
-	bgfx::UniformHandle s_tex;
-	bgfx::TextureHandle m_texture;
-	bgfx::ProgramHandle m_program;
-	bool visible = true;
-	bool field_debug_open = false;
-	bool lighting_debug_open = false;
-	bool world_debug_open = false;
+class Overlay : public MouseListener, public KeyListener
+{
+  private:
+    INT64 g_Time = 0;
+    INT64 g_TicksPerSecond = 0;
+    ImGuiMouseCursor g_LastMouseCursor = ImGuiMouseCursor_COUNT;
+    bgfx::VertexLayout imguiVertexLayout;
+    bgfx::UniformHandle s_tex;
+    bgfx::TextureHandle m_texture;
+    bgfx::ProgramHandle m_program;
+    bool visible = true;
+    bool field_debug_open = false;
+    bool lighting_debug_open = false;
+    bool world_debug_open = false;
 
-	MemoryEditor mem_edit;
+    MemoryEditor mem_edit;
 
-	void UpdateMousePos();
-	bool UpdateMouseCursor();
-	void Update();
-	void Render(ImDrawData* drawData);
-	inline bool IsVkDown(int vk);
-public:
-	bool init(bgfx::ProgramHandle program, int width, int height);
-	void drawMainWindow();
-	void draw();
-	void destroy();
-	void MouseDown(MouseEventArgs e);
-	void MouseUp(MouseEventArgs e);
-	void MouseWheel(MouseEventArgs e);
-	void MouseMove(MouseEventArgs e);
-	void KeyUp(KeyEventArgs e);
-	void KeyDown(KeyEventArgs e);
-	void KeyPress(KeyPressEventArgs e);
+    void UpdateMousePos();
+    bool UpdateMouseCursor();
+    void Update();
+    void Render(ImDrawData *drawData);
+    inline bool IsVkDown(int vk);
+
+  public:
+    bool init(bgfx::ProgramHandle program, int width, int height);
+    void drawMainWindow();
+    void draw();
+    void destroy();
+    void MouseDown(MouseEventArgs e);
+    void MouseUp(MouseEventArgs e);
+    void MouseWheel(MouseEventArgs e);
+    void MouseMove(MouseEventArgs e);
+    void KeyUp(KeyEventArgs e);
+    void KeyDown(KeyEventArgs e);
+    void KeyPress(KeyPressEventArgs e);
 };

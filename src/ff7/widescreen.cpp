@@ -54,21 +54,24 @@ static void ff7_swirl_init_widescreen()
 // This function should be called at each frame after drawing backgrounds and 3d models
 void Widescreen::zoomBackground()
 {
-    if(gl_defer_zoom()) return;
+    if (gl_defer_zoom())
+        return;
 
     bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
     int width = 0;
-    if(is_movie_playing )
+    if (is_movie_playing)
     {
-        if(widescreen.getMovieMode() == WM_ZOOM) width = 640;
+        if (widescreen.getMovieMode() == WM_ZOOM)
+            width = 640;
     }
-    else if(widescreen.getMode() == WM_ZOOM)
+    else if (widescreen.getMode() == WM_ZOOM)
     {
         auto camera_range = widescreen.getCameraRange();
         width = 2 * (camera_range.right - camera_range.left);
     }
 
-    if(width == 0) return;
+    if (width == 0)
+        return;
 
     int zoomed_x = (wide_viewport_width - width) / 2;
     float vOffset = (480 - 9 * width / 16) / 2;
@@ -78,7 +81,7 @@ void Widescreen::zoomBackground()
     uint16_t newY = newRenderer.getInternalCoordY(vOffset);
     uint16_t newHeight = newRenderer.getInternalCoordY(game_height - 2 * vOffset);
 
-    if(is_movie_playing)
+    if (is_movie_playing)
     {
         int frame = ffmpeg_get_movie_frame();
         auto keyPair = widescreen.getMovieKeyPair(frame);
@@ -88,8 +91,8 @@ void Widescreen::zoomBackground()
 
         float t = 0.0;
         auto seqFrameCount = static_cast<float>(keyPair.second.frame - keyPair.first.frame);
-        if(seqFrameCount > 0)
-            t =  static_cast<float>(frame - keyPair.first.frame) / static_cast<float>(keyPair.second.frame - keyPair.first.frame);
+        if (seqFrameCount > 0)
+            t = static_cast<float>(frame - keyPair.first.frame) / static_cast<float>(keyPair.second.frame - keyPair.first.frame);
         t = std::max(std::min(t, 1.0f), 0.0f);
         int newVOffset = std::round(std::lerp(newY1, newY2, t));
         newY = newVOffset;
@@ -98,30 +101,32 @@ void Widescreen::zoomBackground()
     newRenderer.zoomBackendFrameBuffer(newX, newY, newWidth, newHeight);
 }
 
-void ifrit_first_wave_effect_widescreen_fix_sub_66A47E(int wave_data_pointer) {
-	int viewport_width_1_fix = ceil(255.f / game_width * wide_viewport_width) - 255;
-	*(short*)(wave_data_pointer + 8) += wide_viewport_x;
-	*(short*)(wave_data_pointer + 16) += wide_viewport_x + viewport_width_1_fix * 2;
-	*(short*)(wave_data_pointer + 24) += wide_viewport_x;
-	*(short*)(wave_data_pointer + 32) += wide_viewport_x + viewport_width_1_fix * 2;
+void ifrit_first_wave_effect_widescreen_fix_sub_66A47E(int wave_data_pointer)
+{
+    int viewport_width_1_fix = ceil(255.f / game_width * wide_viewport_width) - 255;
+    *(short *)(wave_data_pointer + 8) += wide_viewport_x;
+    *(short *)(wave_data_pointer + 16) += wide_viewport_x + viewport_width_1_fix * 2;
+    *(short *)(wave_data_pointer + 24) += wide_viewport_x;
+    *(short *)(wave_data_pointer + 32) += wide_viewport_x + viewport_width_1_fix * 2;
 
     ff7_externals.engine_draw_sub_66A47E(wave_data_pointer);
 }
 
-void ifrit_second_third_wave_effect_widescreen_fix_sub_66A47E(int wave_data_pointer) {
-	int viewport_width_1_fix = ceil(255.f / game_width * wide_viewport_width) - 255;
-	int viewport_width_2_fix = ceil(65.f / game_width * wide_viewport_width) - 65;
-	*(short*)(wave_data_pointer + 8) += wide_viewport_x + viewport_width_1_fix * 2;
-	*(short*)(wave_data_pointer + 16) += wide_viewport_x + (viewport_width_1_fix + viewport_width_2_fix) * 2;
-	*(short*)(wave_data_pointer + 24) += wide_viewport_x + viewport_width_1_fix * 2;
-	*(short*)(wave_data_pointer + 32) += wide_viewport_x + (viewport_width_1_fix + viewport_width_2_fix) * 2;
+void ifrit_second_third_wave_effect_widescreen_fix_sub_66A47E(int wave_data_pointer)
+{
+    int viewport_width_1_fix = ceil(255.f / game_width * wide_viewport_width) - 255;
+    int viewport_width_2_fix = ceil(65.f / game_width * wide_viewport_width) - 65;
+    *(short *)(wave_data_pointer + 8) += wide_viewport_x + viewport_width_1_fix * 2;
+    *(short *)(wave_data_pointer + 16) += wide_viewport_x + (viewport_width_1_fix + viewport_width_2_fix) * 2;
+    *(short *)(wave_data_pointer + 24) += wide_viewport_x + viewport_width_1_fix * 2;
+    *(short *)(wave_data_pointer + 32) += wide_viewport_x + (viewport_width_1_fix + viewport_width_2_fix) * 2;
 
     ff7_externals.engine_draw_sub_66A47E(wave_data_pointer);
 }
 
 void pollensalta_cold_breath_atk_white_dot_effect()
 {
-    effect100_data* effect_data = &ff7_externals.effect100_array_data[*ff7_externals.effect100_array_idx];
+    effect100_data *effect_data = &ff7_externals.effect100_array_data[*ff7_externals.effect100_array_idx];
     ff7_externals.pollensalta_cold_breath_atk_draw_white_dots_547E75(*ff7_externals.pollensalta_cold_breath_white_dot_rgb_scalar);
     if (!*ff7_externals.g_is_battle_paused)
     {
@@ -143,22 +148,22 @@ void pollensalta_cold_breath_atk_white_dot_effect()
             *ff7_externals.pollensalta_cold_breath_white_dot_rgb_scalar -= 1;
         if (++effect_data->field_2 == 50)
             effect_data->field_0 = 0xFFFF;
-
     }
 }
 
-void ff7_widescreen_fix_chocobo_submit_quad_graphics_object(int x, int y, int width, int height, int color, int unknown, float z_value, DWORD* pointer)
+void ff7_widescreen_fix_chocobo_submit_quad_graphics_object(int x, int y, int width, int height, int color, int unknown, float z_value, DWORD *pointer)
 {
-	if(width == 640) // Replace only quad related to water effect
-	{
-		x = wide_viewport_x;
-		width = wide_viewport_width;
-		height = wide_viewport_height;
-	}
-	ff7_externals.generic_submit_quad_graphics_object_671D2A(x, y, width, height, color, unknown, z_value, pointer);
+    if (width == 640) // Replace only quad related to water effect
+    {
+        x = wide_viewport_x;
+        width = wide_viewport_width;
+        height = wide_viewport_height;
+    }
+    ff7_externals.generic_submit_quad_graphics_object_671D2A(x, y, width, height, color, unknown, z_value, pointer);
 }
 
-void ff7_widescreen_hook_init() {
+void ff7_widescreen_hook_init()
+{
     // Field fix
     replace_function((uint32_t)ff7_externals.field_clip_with_camera_range_6438F6, ff7::field::ff7_field_clip_with_camera_range);
     replace_function(ff7_externals.field_layer3_clip_with_camera_range_643628, ff7::field::ff7_field_layer3_clip_with_camera_range);
@@ -292,7 +297,7 @@ void ff7_widescreen_hook_init() {
     patch_code_int(ff7_externals.world_submit_draw_clouds_and_meteor_7547A6 + 0x2DC, 0);
     patch_code_int(ff7_externals.world_submit_draw_clouds_and_meteor_7547A6 + 0x40F, 0);
     patch_code_dword(ff7_externals.world_submit_draw_clouds_and_meteor_7547A6 + 0x5A5, (uint32_t)&wide_viewport_x); // Meteor avoid culling
-    patch_code_int(ff7_externals.world_submit_draw_clouds_and_meteor_7547A6 + 0x5B5, wide_viewport_width / 2); // Meteor avoid culling
+    patch_code_int(ff7_externals.world_submit_draw_clouds_and_meteor_7547A6 + 0x5B5, wide_viewport_width / 2);      // Meteor avoid culling
 
     // Gameover fix
     patch_code_int(ff7_externals.enter_gameover + 0xA4, wide_viewport_x);
@@ -387,12 +392,12 @@ void Widescreen::init()
 
 void Widescreen::initParamsFromConfig()
 {
-    field_trigger_header* field_triggers_header_ptr = *ff7_externals.field_triggers_header;
+    field_trigger_header *field_triggers_header_ptr = *ff7_externals.field_triggers_header;
     camera_range.left = field_triggers_header_ptr->camera_range.left;
     camera_range.right = field_triggers_header_ptr->camera_range.right;
     camera_range.bottom = field_triggers_header_ptr->camera_range.bottom;
     camera_range.top = field_triggers_header_ptr->camera_range.top;
-    if(camera_range.right - camera_range.left >= game_width / 2 + abs(wide_viewport_x))
+    if (camera_range.right - camera_range.left >= game_width / 2 + abs(wide_viewport_x))
         widescreen_mode = WM_EXTEND_WIDE;
     else
         widescreen_mode = WM_DISABLED;
@@ -404,25 +409,36 @@ void Widescreen::initParamsFromConfig()
     movie_v_offset.clear();
 
     auto pName = get_current_field_name();
-    if(pName == 0) return;
+    if (pName == 0)
+        return;
 
     std::string _name(pName);
     auto node = config[_name];
-    if(node)
+    if (node)
     {
-        if(auto leftNode = node["left"]) camera_range.left = leftNode.value_or(0);
-        if(auto rightNode = node["right"]) camera_range.right = rightNode.value_or(0);
-        if(auto bottomNode = node["bottom"])camera_range.bottom = bottomNode.value_or(0);
-        if(auto topNode = node["top"]) camera_range.top = topNode.value_or(0);
-        if(auto hOffsetNode = node["h_offset"]) h_offset = hOffsetNode.value_or(0);
-        if(auto vOffsetNode = node["v_offset"]) v_offset = vOffsetNode.value_or(0);
-        if(auto vResetVerticalPosNode = node["reset_vertical_pos"]) is_reset_vertical_pos = vResetVerticalPosNode.value_or(false);
-        if(auto vScriptedClipNode = node["scripted_clip"]) is_scripted_clip_enabled = vScriptedClipNode.value_or(true);
-        if(auto vScriptedVerticalClipNode = node["scripted_vertical_clip"]) is_scripted_vertical_clip_enabled = vScriptedVerticalClipNode.value_or(false);
+        if (auto leftNode = node["left"])
+            camera_range.left = leftNode.value_or(0);
+        if (auto rightNode = node["right"])
+            camera_range.right = rightNode.value_or(0);
+        if (auto bottomNode = node["bottom"])
+            camera_range.bottom = bottomNode.value_or(0);
+        if (auto topNode = node["top"])
+            camera_range.top = topNode.value_or(0);
+        if (auto hOffsetNode = node["h_offset"])
+            h_offset = hOffsetNode.value_or(0);
+        if (auto vOffsetNode = node["v_offset"])
+            v_offset = vOffsetNode.value_or(0);
+        if (auto vResetVerticalPosNode = node["reset_vertical_pos"])
+            is_reset_vertical_pos = vResetVerticalPosNode.value_or(false);
+        if (auto vScriptedClipNode = node["scripted_clip"])
+            is_scripted_clip_enabled = vScriptedClipNode.value_or(true);
+        if (auto vScriptedVerticalClipNode = node["scripted_vertical_clip"])
+            is_scripted_vertical_clip_enabled = vScriptedVerticalClipNode.value_or(false);
 
-        if(auto modeNode = node["mode"]) widescreen_mode = static_cast<WIDESCREEN_MODE>(modeNode.value_or(0));
+        if (auto modeNode = node["mode"])
+            widescreen_mode = static_cast<WIDESCREEN_MODE>(modeNode.value_or(0));
 
-        if(widescreen_mode == WM_ZOOM)
+        if (widescreen_mode == WM_ZOOM)
         {
             int verticalRangeOffset = 9 * (camera_range.right - camera_range.left) / 16 - 240;
             camera_range.bottom -= verticalRangeOffset / 2;
@@ -436,15 +452,17 @@ void Widescreen::initMovieParamsFromConfig(char *name)
     widescreen_movie_mode = WM_DISABLED;
     movie_v_offset.clear();
 
-    if(name == 0) return;
+    if (name == 0)
+        return;
 
     std::string _name(name);
     auto node = movie_config[_name];
-    if(node)
+    if (node)
     {
-        if(auto modeNode = node["mode"]) widescreen_movie_mode = static_cast<WIDESCREEN_MODE>(modeNode.value_or(0));
+        if (auto modeNode = node["mode"])
+            widescreen_movie_mode = static_cast<WIDESCREEN_MODE>(modeNode.value_or(0));
 
-        if(auto movie_v_offset_node = node["movie_v_offset"])
+        if (auto movie_v_offset_node = node["movie_v_offset"])
         {
             auto array = movie_v_offset_node.as_array();
             auto size = array->size();
@@ -464,10 +482,10 @@ KeyPair Widescreen::getMovieKeyPair(int frame)
     KeyPair ret;
 
     int keyCount = movie_v_offset.size();
-    for(int keyIndex = 0; keyIndex < keyCount; ++keyIndex)
+    for (int keyIndex = 0; keyIndex < keyCount; ++keyIndex)
     {
         auto key = movie_v_offset[keyIndex];
-        if(keyIndex == keyCount-1)
+        if (keyIndex == keyCount - 1)
         {
             ret.first.frame = key.frame * movie_fps_ratio;
             ret.first.v_offset = key.v_offset;
@@ -479,7 +497,7 @@ KeyPair Widescreen::getMovieKeyPair(int frame)
         auto nextKey = movie_v_offset[keyIndex + 1];
         auto keyFrame = key.frame * movie_fps_ratio;
         auto nextkeyFrame = nextKey.frame * movie_fps_ratio;
-        if(frame >= keyFrame && frame < nextkeyFrame)
+        if (frame >= keyFrame && frame < nextkeyFrame)
         {
             auto nextKey = movie_v_offset[keyIndex + 1];
             ret.first.frame = keyFrame;

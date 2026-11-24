@@ -6,4 +6,4 @@ namespace ff7::multilanguage
 {
 void init();
 uint8_t *translate(uint8_t *text);
-}
+} // namespace ff7::multilanguage

@@ -21,7 +21,8 @@
 #pragma once
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
 #include <libvgmstream/vgmstream.h>
@@ -32,4 +33,4 @@ extern "C" {
 
 #include "../../ff8/zzz_archive.h"
 
-STREAMFILE* open_ZZZ_STREAMFILE(const char* const filename, size_t buf_size = STREAMFILE_DEFAULT_BUFFER_SIZE);
+STREAMFILE *open_ZZZ_STREAMFILE(const char *const filename, size_t buf_size = STREAMFILE_DEFAULT_BUFFER_SIZE);

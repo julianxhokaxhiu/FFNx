@@ -22,10 +22,10 @@ namespace gfc
 {
 namespace sand_shake
 {
-	static Clone g_c = {};
+static Clone g_c = {};
 }
-}
-}
+} // namespace gfc
+} // namespace ff8fx
 
 namespace ff8fx
 {
@@ -33,48 +33,47 @@ namespace gfc
 {
 namespace sand_shake
 {
-	static void describe(Clone &c)
-	{
-		c.name = "256 Sand Shake";
-		c.effect_id = 256;
-		c.vm_table = game_addr(game::MAG_256_VmOpcodeTable);
-		c.bone_table = game_addr(game::MAG_256_BoneHandlerTable);
-		c.prim_table = game_addr(game::MAG_256_PrimHandlerTable);
-		c.prim_size = game_addr(game::MAG_256_PrimSizeTable);
-		c.spr_table = game_addr(game::MAG_256_SpriteOrientTable);
-		c.ptype_table = game_addr(game::MAG_256_ParticleTypeTable);
-		c.pop_table = game_addr(game::MAG_256_ParticleOpTable);
-		c.draw_table = game_addr(game::MAG_256_DrawHandlerTable);
-		c.attr_16A = game_addr(game::MAG_256_Attr16A);
-		c.attr_184 = game_addr(game::MAG_256_Attr184);
-		c.attr_186 = game_addr(game::MAG_256_Attr186);
-		c.attr_194 = game_addr(game::MAG_256_Attr194);
-		c.attr_19C = game_addr(game::MAG_256_Attr19C);
-		c.desc = game_addr(game::MAG_256_DescBlock);
-		c.ptr_block = game_addr(game::MAG_256_PtrBlock);
-		c.queue = game_addr(game::MAG_256_TaskQueue);
-		c.file00 = game_addr(game::MAG_256_File00);
-		c.file01 = game_addr(game::MAG_256_File01);
-		c.tick = game_addr(game::MAG_256_SandShake_SequenceTick);
-		c.load_cb = game_addr(game::MAG_256_LoadFileDoneCallback);
-		c.lit_dispatcher = false;
-		c.bone_count = 18;
-	}
-
-	static uint32_t __cdecl SequenceTask(TaskNode *)
-	{
-		return SequenceTick(g_c);
-	}
-}
+static void describe(Clone &c)
+{
+    c.name = "256 Sand Shake";
+    c.effect_id = 256;
+    c.vm_table = game_addr(game::MAG_256_VmOpcodeTable);
+    c.bone_table = game_addr(game::MAG_256_BoneHandlerTable);
+    c.prim_table = game_addr(game::MAG_256_PrimHandlerTable);
+    c.prim_size = game_addr(game::MAG_256_PrimSizeTable);
+    c.spr_table = game_addr(game::MAG_256_SpriteOrientTable);
+    c.ptype_table = game_addr(game::MAG_256_ParticleTypeTable);
+    c.pop_table = game_addr(game::MAG_256_ParticleOpTable);
+    c.draw_table = game_addr(game::MAG_256_DrawHandlerTable);
+    c.attr_16A = game_addr(game::MAG_256_Attr16A);
+    c.attr_184 = game_addr(game::MAG_256_Attr184);
+    c.attr_186 = game_addr(game::MAG_256_Attr186);
+    c.attr_194 = game_addr(game::MAG_256_Attr194);
+    c.attr_19C = game_addr(game::MAG_256_Attr19C);
+    c.desc = game_addr(game::MAG_256_DescBlock);
+    c.ptr_block = game_addr(game::MAG_256_PtrBlock);
+    c.queue = game_addr(game::MAG_256_TaskQueue);
+    c.file00 = game_addr(game::MAG_256_File00);
+    c.file01 = game_addr(game::MAG_256_File01);
+    c.tick = game_addr(game::MAG_256_SandShake_SequenceTick);
+    c.load_cb = game_addr(game::MAG_256_LoadFileDoneCallback);
+    c.lit_dispatcher = false;
+    c.bone_count = 18;
 }
 
-	void register_mag256_sand_shake()
-	{
-		using namespace gfc;
-		sand_shake::describe(sand_shake::g_c);
-		init_clone(sand_shake::g_c, nullptr, 0);
-		apply_shared_misc(sand_shake::g_c);
-		register_port(game::MAG_256_SandShake_SequenceTick, (void *)sand_shake::SequenceTask, "MAG256 Sand Shake SequenceTick", 256);
-	}
+static uint32_t __cdecl SequenceTask(TaskNode *)
+{
+    return SequenceTick(g_c);
 }
+} // namespace sand_shake
+} // namespace gfc
 
+void register_mag256_sand_shake()
+{
+    using namespace gfc;
+    sand_shake::describe(sand_shake::g_c);
+    init_clone(sand_shake::g_c, nullptr, 0);
+    apply_shared_misc(sand_shake::g_c);
+    register_port(game::MAG_256_SandShake_SequenceTick, (void *)sand_shake::SequenceTask, "MAG256 Sand Shake SequenceTick", 256);
+}
+} // namespace ff8fx

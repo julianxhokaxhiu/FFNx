@@ -24,51 +24,55 @@
 
 namespace ff8fx
 {
-	void verify_install();
-	void (*g_queue_seen)(TaskQueue *q) = nullptr;
-	static bool g_installed = false;
+void verify_install();
+void (*g_queue_seen)(TaskQueue *q) = nullptr;
+static bool g_installed = false;
 
-	// Replaces the game's task queue executor only while verifying, so the verifier sees every queue that runs
-	static int __cdecl execute_task_queue(TaskQueue *q)
-	{
-		if (g_queue_seen) g_queue_seen(q);
-		TaskNode *prev = nullptr;
-		int kept = 0;
-		for (TaskNode *cur = q->head; cur; cur = cur->next)
-		{
-			if (cur->func(cur) & 2)
-			{
-				cur->flags = 0;
-				if (prev) prev->next = cur->next;
-				else q->head = cur->next;
-			}
-			else
-			{
-				prev = cur;
-				kept++;
-			}
-		}
-		q->tail = prev;
-		return kept;
-	}
-
-	void install()
-	{
-		if (g_installed || !ff8_battle_fx_native) return;
-		g_installed = true;
-		if (!address_init())
-		{
-			ffnx_info("FF8 battle fx: native effect code not available for this release\n");
-			return;
-		}
-		register_all();
-		set_ports(true);
-		ffnx_info("FF8 battle fx: native effect code on%s\n", ff8_battle_fx_verify ? ", verified against the original" : "");
-		if (ff8_battle_fx_verify)
-		{
-			replace_function(game_addr(game::ExecuteTaskQueue), (void *)execute_task_queue);
-			prim::install_verify();
-			verify_install();
-		}
-	}
+// Replaces the game's task queue executor only while verifying, so the verifier sees every queue that runs
+static int __cdecl execute_task_queue(TaskQueue *q)
+{
+    if (g_queue_seen)
+        g_queue_seen(q);
+    TaskNode *prev = nullptr;
+    int kept = 0;
+    for (TaskNode *cur = q->head; cur; cur = cur->next)
+    {
+        if (cur->func(cur) & 2)
+        {
+            cur->flags = 0;
+            if (prev)
+                prev->next = cur->next;
+            else
+                q->head = cur->next;
+        }
+        else
+        {
+            prev = cur;
+            kept++;
+        }
+    }
+    q->tail = prev;
+    return kept;
 }
+
+void install()
+{
+    if (g_installed || !ff8_battle_fx_native)
+        return;
+    g_installed = true;
+    if (!address_init())
+    {
+        ffnx_info("FF8 battle fx: native effect code not available for this release\n");
+        return;
+    }
+    register_all();
+    set_ports(true);
+    ffnx_info("FF8 battle fx: native effect code on%s\n", ff8_battle_fx_verify ? ", verified against the original" : "");
+    if (ff8_battle_fx_verify)
+    {
+        replace_function(game_addr(game::ExecuteTaskQueue), (void *)execute_task_queue);
+        prim::install_verify();
+        verify_install();
+    }
+}
+} // namespace ff8fx

@@ -25,6 +25,6 @@
 
 namespace ff7::battle
 {
-    void delay_battle_target_pointer_animation_type();
-    void battle_depth_clear();
-}
+void delay_battle_target_pointer_animation_type();
+void battle_depth_clear();
+} // namespace ff7::battle
