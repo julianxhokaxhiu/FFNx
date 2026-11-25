@@ -24,5 +24,5 @@
 #include "globals.h"
 #include "input.h"
 
-FFNX_API void __stdcall nxRegisterMouseListener(MouseListener* listener);
-FFNX_API void __stdcall nxRegisterKeyListener(KeyListener* listener);
+FFNX_API void __stdcall nxRegisterMouseListener(MouseListener *listener);
+FFNX_API void __stdcall nxRegisterKeyListener(KeyListener *listener);

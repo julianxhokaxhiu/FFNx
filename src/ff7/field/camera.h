@@ -19,44 +19,44 @@
 
 namespace ff7::field
 {
-    class Camera
-    {
-        public:
-            Camera() = default;
-            ~Camera() = default;
+class Camera
+{
+  public:
+    Camera() = default;
+    ~Camera() = default;
 
-            void setScrollingDir(float x, float y);
-            float getScrollingDirX();
-            float getScrollingDirY();
+    void setScrollingDir(float x, float y);
+    float getScrollingDirX();
+    float getScrollingDirY();
 
-            void setScrollingOffset(float x, float y);
-            float getScrollingOffsetX();
-            float getScrollingOffsetY();
+    void setScrollingOffset(float x, float y);
+    float getScrollingOffsetX();
+    float getScrollingOffsetY();
 
-        private:
-            vector2<float> scrollingDir = { 0.0, 0.0 };
-            vector2<float> scrollingOffset = { 0.0, 0.0 };
-    };
+  private:
+    vector2<float> scrollingDir = {0.0, 0.0};
+    vector2<float> scrollingOffset = {0.0, 0.0};
+};
 
-    inline float Camera::getScrollingDirX()
-    {
-        return scrollingDir.x;
-    }
-
-    inline float Camera::getScrollingDirY()
-    {
-        return scrollingDir.y;
-    }
-
-    inline float Camera::getScrollingOffsetX()
-    {
-        return scrollingOffset.x;
-    }
-
-    inline float Camera::getScrollingOffsetY()
-    {
-        return scrollingOffset.y;
-    }
-
-    extern Camera camera;
+inline float Camera::getScrollingDirX()
+{
+    return scrollingDir.x;
 }
+
+inline float Camera::getScrollingDirY()
+{
+    return scrollingDir.y;
+}
+
+inline float Camera::getScrollingOffsetX()
+{
+    return scrollingOffset.x;
+}
+
+inline float Camera::getScrollingOffsetY()
+{
+    return scrollingOffset.y;
+}
+
+extern Camera camera;
+} // namespace ff7::field

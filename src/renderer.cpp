@@ -48,23 +48,36 @@ Renderer newRenderer;
 RendererCallbacks bgfxCallbacks;
 
 // BGFX CALLBACKS
-void RendererCallbacks::fatal(const char* _filePath, uint16_t _line, bgfx::Fatal::Enum _code, const char* _str)
+void RendererCallbacks::fatal(const char *_filePath, uint16_t _line, bgfx::Fatal::Enum _code, const char *_str)
 {
     std::string error;
 
-    switch (_code) {
-    case bgfx::Fatal::Enum::DebugCheck: error = "Debug Check"; break;
-    case bgfx::Fatal::Enum::InvalidShader: error = "Invalid Shader"; break;
-    case bgfx::Fatal::Enum::UnableToInitialize: error = "Unable To Initialize"; break;
-    case bgfx::Fatal::Enum::UnableToCreateTexture: error = "Unable To Create Texture"; break;
-    case bgfx::Fatal::Enum::DeviceLost: error = "Device Lost"; break;
-    default: error = "Unknown"; break;
+    switch (_code)
+    {
+    case bgfx::Fatal::Enum::DebugCheck:
+        error = "Debug Check";
+        break;
+    case bgfx::Fatal::Enum::InvalidShader:
+        error = "Invalid Shader";
+        break;
+    case bgfx::Fatal::Enum::UnableToInitialize:
+        error = "Unable To Initialize";
+        break;
+    case bgfx::Fatal::Enum::UnableToCreateTexture:
+        error = "Unable To Create Texture";
+        break;
+    case bgfx::Fatal::Enum::DeviceLost:
+        error = "Device Lost";
+        break;
+    default:
+        error = "Unknown";
+        break;
     }
 
     ffnx_error("[%s] %s\n", error.c_str(), _str);
 }
 
-void RendererCallbacks::traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList)
+void RendererCallbacks::traceVargs(const char *_filePath, uint16_t _line, const char *_format, va_list _argList)
 {
     if (renderer_debug)
     {
@@ -85,13 +98,13 @@ uint32_t RendererCallbacks::cacheReadSize(uint64_t _id)
     return 0;
 }
 
-bool RendererCallbacks::cacheRead(uint64_t _id, void* _data, uint32_t _size)
+bool RendererCallbacks::cacheRead(uint64_t _id, void *_data, uint32_t _size)
 {
     // Shader is not found in cache, needs to be rebuilt.
     return false;
 }
 
-void RendererCallbacks::cacheWrite(uint64_t _id, const void* _data, uint32_t _size)
+void RendererCallbacks::cacheWrite(uint64_t _id, const void *_data, uint32_t _size)
 {
 }
 
@@ -105,78 +118,41 @@ uint32_t Renderer::createBGRA(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 
 void Renderer::setCommonUniforms()
 {
-    internalState.VSFlags = {
-        (float)internalState.bIsTLVertex,
-        (float)internalState.blendMode,
-        (float)internalState.bIsFBTexture,
-        (float)internalState.bIsTexture
-    };
-    if (uniform_log) ffnx_trace("%s: VSFlags XYZW(isTLVertex %f, blendMode %f, isFBTexture %f, isTexture %f)\n", __func__, internalState.VSFlags[0], internalState.VSFlags[1], internalState.VSFlags[2], internalState.VSFlags[3]);
+    internalState.VSFlags = {(float)internalState.bIsTLVertex, (float)internalState.blendMode, (float)internalState.bIsFBTexture, (float)internalState.bIsTexture};
+    if (uniform_log)
+        ffnx_trace("%s: VSFlags XYZW(isTLVertex %f, blendMode %f, isFBTexture %f, isTexture %f)\n", __func__, internalState.VSFlags[0], internalState.VSFlags[1], internalState.VSFlags[2], internalState.VSFlags[3]);
 
-    internalState.FSAlphaFlags = {
-        (float)internalState.alphaRef,
-        (float)internalState.alphaFunc,
-        (float)internalState.bDoAlphaTest,
-        (float)internalState.bFBTextureColorKey
-    };
-    if (uniform_log) ffnx_trace("%s: FSAlphaFlags XYZW(inAlphaRef %f, inAlphaFunc %f, bDoAlphaTest %f, fbTextureColorKey %f)\n", __func__, internalState.FSAlphaFlags[0], internalState.FSAlphaFlags[1], internalState.FSAlphaFlags[2], internalState.FSAlphaFlags[3]);
+    internalState.FSAlphaFlags = {(float)internalState.alphaRef, (float)internalState.alphaFunc, (float)internalState.bDoAlphaTest, (float)internalState.bFBTextureColorKey};
+    if (uniform_log)
+        ffnx_trace("%s: FSAlphaFlags XYZW(inAlphaRef %f, inAlphaFunc %f, bDoAlphaTest %f, fbTextureColorKey %f)\n", __func__, internalState.FSAlphaFlags[0], internalState.FSAlphaFlags[1], internalState.FSAlphaFlags[2], internalState.FSAlphaFlags[3]);
 
-    internalState.FSMiscFlags = {
-        NULL,
-        NULL,
-        (float)internalState.bModulateAlpha,
-        (float)internalState.bIsMovie
-    };
-    if (uniform_log) ffnx_trace("%s: FSMiscFlags XYZW(isMovieFullRange %f, isMovieYUV %f, modulateAlpha %f, isMovie %f)\n", __func__, internalState.FSMiscFlags[0], internalState.FSMiscFlags[1], internalState.FSMiscFlags[2], internalState.FSMiscFlags[3]);
+    internalState.FSMiscFlags = {NULL, NULL, (float)internalState.bModulateAlpha, (float)internalState.bIsMovie};
+    if (uniform_log)
+        ffnx_trace("%s: FSMiscFlags XYZW(isMovieFullRange %f, isMovieYUV %f, modulateAlpha %f, isMovie %f)\n", __func__, internalState.FSMiscFlags[0], internalState.FSMiscFlags[1], internalState.FSMiscFlags[2], internalState.FSMiscFlags[3]);
 
-    internalState.FSHDRFlags = {
-        (float)internalState.bIsHDR,
-        (float)hdr_max_nits,
-        NULL,
-        NULL
-    };
-    if (uniform_log) ffnx_trace("%s: FSHDRFlags XYZW(isHDR %f, monitorNits %f, bIsOverrideGamut %f, NULL)\n", __func__, internalState.FSHDRFlags[0], internalState.FSHDRFlags[1], internalState.FSHDRFlags[2]);
+    internalState.FSHDRFlags = {(float)internalState.bIsHDR, (float)hdr_max_nits, NULL, NULL};
+    if (uniform_log)
+        ffnx_trace("%s: FSHDRFlags XYZW(isHDR %f, monitorNits %f, bIsOverrideGamut %f, NULL)\n", __func__, internalState.FSHDRFlags[0], internalState.FSHDRFlags[1], internalState.FSHDRFlags[2]);
 
-    internalState.WMFlags = {
-        (float)internalState.sphericalWorldRate,
-        (float)internalState.bIsFogEnabled,
-        !ff8 && !enable_worldmap_external_mesh && current_state.psx_world ?
-            (worldTerrainTextures.count(internalState.texHandlers[RendererTextureSlot::TEX_Y].idx) ? 2.0f : 1.0f) : 0.0f,
-        !ff8 && !enable_worldmap_external_mesh ?
-            (current_state.psx_world_radar ? 1.0f :
-                (current_state.psx_world_meteor && !internalState.bIsExternalTexture ? 2.0f : 0.0f)) : 0.0f
-    };
-    if (uniform_log) ffnx_trace("%s: WMFlags XYZW(sphericalWorldRate %f, bIsFogEnabled %f, psxWorld %f, psxWorldOverlay %f)\n", __func__, internalState.WMFlags[0], internalState.WMFlags[1], internalState.WMFlags[2], internalState.WMFlags[3]);
+    internalState.WMFlags = {(float)internalState.sphericalWorldRate, (float)internalState.bIsFogEnabled, !ff8 && !enable_worldmap_external_mesh && current_state.psx_world ? (worldTerrainTextures.count(internalState.texHandlers[RendererTextureSlot::TEX_Y].idx) ? 2.0f : 1.0f) : 0.0f, !ff8 && !enable_worldmap_external_mesh ? (current_state.psx_world_radar ? 1.0f : (current_state.psx_world_meteor && !internalState.bIsExternalTexture ? 2.0f : 0.0f)) : 0.0f};
+    if (uniform_log)
+        ffnx_trace("%s: WMFlags XYZW(sphericalWorldRate %f, bIsFogEnabled %f, psxWorld %f, psxWorldOverlay %f)\n", __func__, internalState.WMFlags[0], internalState.WMFlags[1], internalState.WMFlags[2], internalState.WMFlags[3]);
 
-    internalState.PSXWorldDither = {
-        2.0f * scalingFactor,
-        2.0f * scalingFactor,
-        getCaps()->originBottomLeft ? static_cast<float>(framebufferHeight) : 0.0f,
-        static_cast<float>(!ff8 && !enable_worldmap_external_mesh ?
-            current_state.psx_world_dither : PSXWorldDitherMode::Off)
-    };
+    internalState.PSXWorldDither = {2.0f * scalingFactor, 2.0f * scalingFactor, getCaps()->originBottomLeft ? static_cast<float>(framebufferHeight) : 0.0f, static_cast<float>(!ff8 && !enable_worldmap_external_mesh ? current_state.psx_world_dither : PSXWorldDitherMode::Off)};
 
-    internalState.FSMovieFlags = {
-        (float)internalState.bIsMovieColorMatrix,
-        (float)internalState.bIsMovieColorGamut,
-        (float)internalState.bIsMovieGammaType,
-        (float)internalState.bIsMovieFullRange
-    };
-    if (uniform_log) ffnx_trace("%s: FSMovieFlags XYZW(color matrix %f, color gamut %f, gamma type %f, is full range %f)\n", __func__, internalState.FSMovieFlags[0], internalState.FSMovieFlags[1], internalState.FSMovieFlags[2], internalState.FSMovieFlags[3]);
+    internalState.FSMovieFlags = {(float)internalState.bIsMovieColorMatrix, (float)internalState.bIsMovieColorGamut, (float)internalState.bIsMovieGammaType, (float)internalState.bIsMovieFullRange};
+    if (uniform_log)
+        ffnx_trace("%s: FSMovieFlags XYZW(color matrix %f, color gamut %f, gamma type %f, is full range %f)\n", __func__, internalState.FSMovieFlags[0], internalState.FSMovieFlags[1], internalState.FSMovieFlags[2], internalState.FSMovieFlags[3]);
 
-    internalState.FSMoreMovieFlags = {
-        (float)internalState.bChromaLocation,
-        (float)internalState.bIsMovieRGB,
-        internalState.bIsMovieRGB ? internalState.movieRGBScaleX : (internalState.movieYUV8 ? 1020.0f / 1023.0f : 65535.0f / (1023.0f * (internalState.movieP010 ? 64.0f : 1.0f))),
-        internalState.bIsMovieRGB ? internalState.movieRGBScaleY : (internalState.movieYUV8 ? 256.0f : 1024.0f) * (internalState.movieUVInterleaved ? -1.0f : 1.0f)
-    };
-    if (uniform_log) ffnx_trace("%s: FSMoreMovieFlags XYZW(chroma location %f, reserved %f, reserved %f, reserved %f)\n", __func__, internalState.FSMoreMovieFlags[0], internalState.FSMoreMovieFlags[1], internalState.FSMoreMovieFlags[2], internalState.FSMoreMovieFlags[3]);
+    internalState.FSMoreMovieFlags = {(float)internalState.bChromaLocation, (float)internalState.bIsMovieRGB, internalState.bIsMovieRGB ? internalState.movieRGBScaleX : (internalState.movieYUV8 ? 1020.0f / 1023.0f : 65535.0f / (1023.0f * (internalState.movieP010 ? 64.0f : 1.0f))), internalState.bIsMovieRGB ? internalState.movieRGBScaleY : (internalState.movieYUV8 ? 256.0f : 1024.0f) * (internalState.movieUVInterleaved ? -1.0f : 1.0f)};
+    if (uniform_log)
+        ffnx_trace("%s: FSMoreMovieFlags XYZW(chroma location %f, reserved %f, reserved %f, reserved %f)\n", __func__, internalState.FSMoreMovieFlags[0], internalState.FSMoreMovieFlags[1], internalState.FSMoreMovieFlags[2], internalState.FSMoreMovieFlags[3]);
 
     internalState.gameLightingFlags[0] = (float)game_lighting;
     internalState.gameLightingFlags[1] = !ff8 && current_state.psx_field_facial ? 1.0f : 0.0f;
     internalState.gameLightingFlags[3] = 0;
-    if (uniform_log) ffnx_trace("%s: gameLightingFlags XYZW(game_lighting %f, psxFieldFacial %f, useGameLighting %f, NULL)\n",
-        __func__, internalState.gameLightingFlags[0], internalState.gameLightingFlags[1], internalState.gameLightingFlags[2]);
+    if (uniform_log)
+        ffnx_trace("%s: gameLightingFlags XYZW(game_lighting %f, psxFieldFacial %f, useGameLighting %f, NULL)\n", __func__, internalState.gameLightingFlags[0], internalState.gameLightingFlags[1], internalState.gameLightingFlags[2]);
 
     setUniform(RendererUniform::FS_ALPHA_FLAGS, internalState.FSAlphaFlags.data());
     setUniform(RendererUniform::FS_MISC_FLAGS, internalState.FSMiscFlags.data());
@@ -196,7 +172,7 @@ void Renderer::setCommonUniforms()
     setUniform(RendererUniform::VIEW_MATRIX, internalState.viewMatrix);
     setUniform(RendererUniform::INV_VIEW_MATRIX, internalState.invViewMatrix);
 
-    setUniform(RendererUniform::GAME_LIGHTING_FLAGS,  internalState.gameLightingFlags.data());
+    setUniform(RendererUniform::GAME_LIGHTING_FLAGS, internalState.gameLightingFlags.data());
     setUniform(RendererUniform::GAME_GLOBAL_LIGHT_COLOR, internalState.gameGlobalLightColor);
     setUniform(RendererUniform::GAME_LIGHT_COLOR1, internalState.gameLightColor1);
     setUniform(RendererUniform::GAME_LIGHT_COLOR2, internalState.gameLightColor2);
@@ -214,13 +190,9 @@ void Renderer::setTextureFlagsUniforms()
     internalState.VSFlags[3] = (float)internalState.bIsTexture;
     setUniform(RendererUniform::VS_FLAGS, internalState.VSFlags.data());
 
-    internalState.FSTexFlags = {
-        (float)(internalState.texHandlers[RendererTextureSlot::TEX_NML].idx != bgfx::kInvalidHandle),
-        (float)(internalState.texHandlers[RendererTextureSlot::TEX_PBR].idx != bgfx::kInvalidHandle),
-        (float)(specularIblTexture.idx != bgfx::kInvalidHandle && diffuseIblTexture.idx != bgfx::kInvalidHandle && envBrdfTexture.idx != bgfx::kInvalidHandle),
-        (float)internalState.bIsExternalTexture
-    };
-    if (uniform_log) ffnx_trace("%s: FSTexFlags XYZW(isNmlTextureLoaded %f, isPbrTextureLoaded %f, isIblTextureLoaded %f, isExternalTexture %f)\n", __func__, internalState.FSTexFlags[0], internalState.FSTexFlags[1], internalState.FSTexFlags[2], internalState.FSTexFlags[3]);
+    internalState.FSTexFlags = {(float)(internalState.texHandlers[RendererTextureSlot::TEX_NML].idx != bgfx::kInvalidHandle), (float)(internalState.texHandlers[RendererTextureSlot::TEX_PBR].idx != bgfx::kInvalidHandle), (float)(specularIblTexture.idx != bgfx::kInvalidHandle && diffuseIblTexture.idx != bgfx::kInvalidHandle && envBrdfTexture.idx != bgfx::kInvalidHandle), (float)internalState.bIsExternalTexture};
+    if (uniform_log)
+        ffnx_trace("%s: FSTexFlags XYZW(isNmlTextureLoaded %f, isPbrTextureLoaded %f, isIblTextureLoaded %f, isExternalTexture %f)\n", __func__, internalState.FSTexFlags[0], internalState.FSTexFlags[1], internalState.FSTexFlags[2], internalState.FSTexFlags[3]);
 
     setUniform(RendererUniform::FS_TEX_FLAGS, internalState.FSTexFlags.data());
 }
@@ -245,7 +217,8 @@ void Renderer::setLightingUniforms()
     setUniform(RendererUniform::LIGHT_INV_VIEW_PROJ_TEX_MATRIX, lightingState.lightInvViewProjTexMatrix);
 }
 
-bgfx::RendererType::Enum Renderer::getUserChosenRenderer() {
+bgfx::RendererType::Enum Renderer::getUserChosenRenderer()
+{
     bgfx::RendererType::Enum ret;
 
     switch (renderer_backend)
@@ -336,26 +309,29 @@ Renderer::RendererProgram Renderer::getSkinnedProgram(RendererProgram program)
     switch (program)
     {
     case RendererProgram::FLAT:
-    case RendererProgram::SMOOTH: return RendererProgram::SKINNED_SMOOTH;
+    case RendererProgram::SMOOTH:
+        return RendererProgram::SKINNED_SMOOTH;
     case RendererProgram::LIGHTING_FLAT:
-    case RendererProgram::LIGHTING_SMOOTH: return RendererProgram::LIGHTING_SKINNED_SMOOTH;
-    default: return program;
+    case RendererProgram::LIGHTING_SMOOTH:
+        return RendererProgram::LIGHTING_SKINNED_SMOOTH;
+    default:
+        return program;
     }
 }
 
 // Via https://dev.to/pperon/hello-bgfx-4dka
-bgfx::ShaderHandle Renderer::getShader(const char* filePath)
+bgfx::ShaderHandle Renderer::getShader(const char *filePath)
 {
     bgfx::ShaderHandle handle = BGFX_INVALID_HANDLE;
     char _fullpath[MAX_PATH];
 
     _snprintf(_fullpath, sizeof(_fullpath), "%s/%s", basedir, filePath);
 
-    FILE* file = fopen(_fullpath, "rb");
+    FILE *file = fopen(_fullpath, "rb");
 
     if (file == NULL)
     {
-        char tmp[1024]{ 0 };
+        char tmp[1024]{0};
 
         sprintf(tmp, "Oops! Something very bad happened.\n\nCould not find shader file:\n%s\n\nMake sure all the provided files are installed correctly.", filePath);
 
@@ -368,7 +344,7 @@ bgfx::ShaderHandle Renderer::getShader(const char* filePath)
     long fileSize = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    const bgfx::Memory* mem = bgfx::alloc(fileSize);
+    const bgfx::Memory *mem = bgfx::alloc(fileSize);
     fread(mem->data, 1, fileSize, file);
     fclose(file);
 
@@ -389,7 +365,7 @@ bgfx::UniformHandle Renderer::createUniform(std::string uniformName, bgfx::Unifo
     return handle;
 }
 
-bgfx::UniformHandle Renderer::setUniform(RendererUniform uniform, const void* uniformValue, int arraySize)
+bgfx::UniformHandle Renderer::setUniform(RendererUniform uniform, const void *uniformValue, int arraySize)
 {
     bgfx::UniformHandle handle = bgfxUniformHandles[uniform];
 
@@ -403,7 +379,7 @@ bgfx::UniformHandle Renderer::setUniform(RendererUniform uniform, const void* un
 
 void Renderer::destroyUniforms()
 {
-    for (const auto& handle : bgfxUniformHandles)
+    for (const auto &handle : bgfxUniformHandles)
     {
         if (bgfx::isValid(handle))
             bgfx::destroy(handle);
@@ -420,7 +396,7 @@ void Renderer::destroyAll()
         fallbackTexture = BGFX_INVALID_HANDLE;
     }
 
-    for (auto& handle : internalState.texHandlers)
+    for (auto &handle : internalState.texHandlers)
     {
         if (bgfx::isValid(handle))
             bgfx::destroy(handle);
@@ -434,7 +410,7 @@ void Renderer::destroyAll()
 
     bgfx::destroy(shadowMapFrameBuffer);
 
-    for (auto& handle : backendProgramHandles)
+    for (auto &handle : backendProgramHandles)
     {
         if (bgfx::isValid(handle))
             bgfx::destroy(handle);
@@ -496,10 +472,7 @@ void Renderer::renderFrame()
             {fullWidth, 0.0f, 1.0f, 1.0f, 0xff000000, 0, 1.0f, bottomV},
             {fullWidth, fullHeight, 1.0f, 1.0f, 0xff000000, 0, 1.0f, topV},
         };
-        WORD downsampleIndices[] = {
-            0, 1, 2,
-            1, 3, 2
-        };
+        WORD downsampleIndices[] = {0, 1, 2, 1, 3, 2};
 
         backendProgram = RendererProgram::BLIT;
         setCullMode(RendererCullMode::DISABLED);
@@ -508,17 +481,12 @@ void Renderer::renderFrame()
         doDepthWrite(false);
         setPrimitiveType(RendererPrimitiveType::PT_TRIANGLES);
 
-        for (const DownsampleTarget& target : downsampleTargets)
+        for (const DownsampleTarget &target : downsampleTargets)
         {
             backendViewId++;
             setClearFlags(false, false);
             useTexture(frameTexture.idx);
-            bgfx::setTexture(
-                RendererTextureSlot::TEX_Y,
-                bgfxTexUniformHandles[RendererTextureSlot::TEX_Y],
-                frameTexture,
-                BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC
-            );
+            bgfx::setTexture(RendererTextureSlot::TEX_Y, bgfxTexUniformHandles[RendererTextureSlot::TEX_Y], frameTexture, BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC);
             bindVertexBuffer(downsampleVertices, 0, 4);
             bindIndexBuffer(downsampleIndices, 6);
             draw(false, true, false, target.frameBuffer, target.width, target.height);
@@ -539,7 +507,8 @@ void Renderer::renderFrame()
 
     // 0
     float x0 = framebufferVertexOffsetX;
-    if (aspect_ratio == AR_STRETCH) x0 = 0.0f;
+    if (aspect_ratio == AR_STRETCH)
+        x0 = 0.0f;
     float y0 = 0.0f;
     float u0 = 0.0f;
     float v0 = getCaps()->originBottomLeft ? 1.0f : 0.0f;
@@ -550,7 +519,8 @@ void Renderer::renderFrame()
     float v1 = getCaps()->originBottomLeft ? 0.0f : 1.0f;
     // 2
     float x2 = x0 + framebufferVertexWidth;
-    if (aspect_ratio == AR_STRETCH) x2 = x0 + game_width;
+    if (aspect_ratio == AR_STRETCH)
+        x2 = x0 + game_width;
     float y2 = y0;
     float u2 = 1.0f;
     float v2 = v0;
@@ -566,17 +536,12 @@ void Renderer::renderFrame()
         {x2, y2, 1.0f, 1.0f, 0xff000000, 0, u2, v2},
         {x3, y3, 1.0f, 1.0f, 0xff000000, 0, u3, v3},
     };
-    WORD indices[] = {
-        0, 1, 2,
-        1, 3, 2
-    };
+    WORD indices[] = {0, 1, 2, 1, 3, 2};
 
     setPostprocessingBackend();
     backendViewId++;
     {
-        useTexture(
-            frameTexture.idx
-        );
+        useTexture(frameTexture.idx);
 
         setClearFlags(true, true);
 
@@ -592,7 +557,7 @@ void Renderer::renderFrame()
     }
 };
 
-void Renderer::printMatrix(const char* name, float* mat)
+void Renderer::printMatrix(const char *name, float *mat)
 {
     ffnx_trace("%s: 0 [%f, %f, %f, %f]\n", name, mat[0], mat[1], mat[2], mat[3]);
     ffnx_trace("%s: 1 [%f, %f, %f, %f]\n", name, mat[4], mat[5], mat[6], mat[7]);
@@ -602,7 +567,8 @@ void Renderer::printMatrix(const char* name, float* mat)
 
 bool Renderer::doesItFitInMemory(size_t size)
 {
-    if (size <= 0) ffnx_glitch("Unexpected texture size while checking if it fits in memory.\n");
+    if (size <= 0)
+        ffnx_glitch("Unexpected texture size while checking if it fits in memory.\n");
 
     // We need to check this value as much as in real time as possible, to avoid possible crashes
     GlobalMemoryStatusEx(&last_ram_state);
@@ -618,64 +584,65 @@ void Renderer::recalcInternals()
     viewHeight = window_size_y;
 
     // aspect correction
-    switch(aspect_ratio){
-        case AR_ORIGINAL:
-            if (viewWidth * 3 != viewHeight * 4)
+    switch (aspect_ratio)
+    {
+    case AR_ORIGINAL:
+        if (viewWidth * 3 != viewHeight * 4)
+        {
+            if (viewHeight * 4 > viewWidth * 3)
             {
-                if (viewHeight * 4 > viewWidth * 3)
-                {
-                    viewOffsetY = viewHeight - (viewWidth * 3) / 4;
-                    viewHeight = (viewWidth * 3) / 4;
+                viewOffsetY = viewHeight - (viewWidth * 3) / 4;
+                viewHeight = (viewWidth * 3) / 4;
 
-                    y_offset = viewOffsetY;
-                }
-                else if (viewWidth * 3 > viewHeight * 4)
-                {
-                    viewOffsetX = (viewWidth - (viewHeight * 4) / 3) / 2;
-                    viewWidth = (viewHeight * 4) / 3;
-
-                    x_offset = viewOffsetX;
-                }
+                y_offset = viewOffsetY;
             }
-            break;
-        case AR_WIDESCREEN_16X9:
-            if (viewWidth * 9 != viewHeight * 16)
+            else if (viewWidth * 3 > viewHeight * 4)
             {
-                if (viewHeight * 16 > viewWidth * 9)
-                {
-                    viewOffsetY = viewHeight - (viewWidth * 9) / 16;
-                    viewHeight = (viewWidth * 9) / 16;
+                viewOffsetX = (viewWidth - (viewHeight * 4) / 3) / 2;
+                viewWidth = (viewHeight * 4) / 3;
 
-                    y_offset = viewOffsetY;
-                }
-                else if (viewWidth * 9 > viewHeight * 16)
-                {
-                    viewOffsetX = (viewWidth - (viewHeight * 16) / 9) / 2;
-                    viewWidth = (viewHeight * 16) / 9;
-
-                    x_offset = viewOffsetX;
-                }
+                x_offset = viewOffsetX;
             }
-            break;
-        case AR_WIDESCREEN_16X10:
-            if (viewWidth * 10 != viewHeight * 16)
+        }
+        break;
+    case AR_WIDESCREEN_16X9:
+        if (viewWidth * 9 != viewHeight * 16)
+        {
+            if (viewHeight * 16 > viewWidth * 9)
             {
-                if (viewHeight * 16 > viewWidth * 10)
-                {
-                    viewOffsetY = viewHeight - (viewWidth * 10) / 16;
-                    viewHeight = (viewWidth * 10) / 16;
+                viewOffsetY = viewHeight - (viewWidth * 9) / 16;
+                viewHeight = (viewWidth * 9) / 16;
 
-                    y_offset = viewOffsetY;
-                }
-                else if (viewWidth * 10 > viewHeight * 16)
-                {
-                    viewOffsetX = (viewWidth - (viewHeight * 16) / 10) / 2;
-                    viewWidth = (viewHeight * 16) / 10;
-
-                    x_offset = viewOffsetX;
-                }
+                y_offset = viewOffsetY;
             }
-            break;
+            else if (viewWidth * 9 > viewHeight * 16)
+            {
+                viewOffsetX = (viewWidth - (viewHeight * 16) / 9) / 2;
+                viewWidth = (viewHeight * 16) / 9;
+
+                x_offset = viewOffsetX;
+            }
+        }
+        break;
+    case AR_WIDESCREEN_16X10:
+        if (viewWidth * 10 != viewHeight * 16)
+        {
+            if (viewHeight * 16 > viewWidth * 10)
+            {
+                viewOffsetY = viewHeight - (viewWidth * 10) / 16;
+                viewHeight = (viewWidth * 10) / 16;
+
+                y_offset = viewOffsetY;
+            }
+            else if (viewWidth * 10 > viewHeight * 16)
+            {
+                viewOffsetX = (viewWidth - (viewHeight * 16) / 10) / 2;
+                viewWidth = (viewHeight * 16) / 10;
+
+                x_offset = viewOffsetX;
+            }
+        }
+        break;
     }
 
     // If internal_resolution_scale from settings is less than one, calculate the closest fit for the output resolution, otherwise use the value directly
@@ -684,13 +651,16 @@ void Renderer::recalcInternals()
         long scaleW = ::round(viewWidth / (float)game_width);
         long scaleH = ::round(viewHeight / (float)game_height);
 
-        if (scaleH > scaleW) scaleW = scaleH;
-        if (scaleW > internal_resolution_scale) scalingFactor = scaleW;
-        if (scalingFactor < 1) scalingFactor = 1;
+        if (scaleH > scaleW)
+            scaleW = scaleH;
+        if (scaleW > internal_resolution_scale)
+            scalingFactor = scaleW;
+        if (scalingFactor < 1)
+            scalingFactor = 1;
     }
 
     // Use the set or calculated scaling factor to determine the width and height of the framebuffer according to the original resolution
-    if(widescreen_enabled)
+    if (widescreen_enabled)
     {
         framebufferWidth = wide_game_width * scalingFactor;
         framebufferHeight = wide_game_height * scalingFactor;
@@ -711,36 +681,16 @@ void Renderer::recalcInternals()
     if (widescreen_enabled)
         ffnx_info("Original resolution %ix%i, Scaling factor %ix, Internal resolution %ix%i, Output resolution %ix%i\n", wide_game_width, wide_game_height, scalingFactor, framebufferWidth, framebufferHeight, window_size_x, window_size_y);
     else
-    ffnx_info("Original resolution %ix%i, Scaling factor %ix, Internal resolution %ix%i, Output resolution %ix%i\n", game_width, game_height, scalingFactor, framebufferWidth, framebufferHeight, window_size_x, window_size_y);
+        ffnx_info("Original resolution %ix%i, Scaling factor %ix, Internal resolution %ix%i, Output resolution %ix%i\n", game_width, game_height, scalingFactor, framebufferWidth, framebufferHeight, window_size_x, window_size_y);
 }
 
 void Renderer::calcBackendProjMatrix()
 {
     // Used by the game
-    bx::mtxOrtho(
-        internalState.backendProjMatrix,
-        widescreen_enabled ? wide_viewport_x : 0.0f,
-        widescreen_enabled ? wide_viewport_width + wide_viewport_x : game_width,
-        widescreen_enabled ? wide_game_height : game_height,
-        0.0f,
-        getCaps()->homogeneousDepth ? -1.0f : 0.0f,
-        1.0f,
-        0.0,
-        getCaps()->homogeneousDepth
-    );
+    bx::mtxOrtho(internalState.backendProjMatrix, widescreen_enabled ? wide_viewport_x : 0.0f, widescreen_enabled ? wide_viewport_width + wide_viewport_x : game_width, widescreen_enabled ? wide_game_height : game_height, 0.0f, getCaps()->homogeneousDepth ? -1.0f : 0.0f, 1.0f, 0.0, getCaps()->homogeneousDepth);
 
     // Used by postprocessing ( rendering the game framebuffer on screen)
-    bx::mtxOrtho(
-        internalState.postprocessingProjMatrix,
-        0.0f,
-        widescreen_enabled ? wide_game_width : game_width,
-        widescreen_enabled ? wide_game_height : game_height,
-        0.0f,
-        getCaps()->homogeneousDepth ? -1.0f : 0.0f,
-        1.0f,
-        0.0,
-        getCaps()->homogeneousDepth
-    );
+    bx::mtxOrtho(internalState.postprocessingProjMatrix, 0.0f, widescreen_enabled ? wide_game_width : game_width, widescreen_enabled ? wide_game_height : game_height, 0.0f, getCaps()->homogeneousDepth ? -1.0f : 0.0f, 1.0f, 0.0, getCaps()->homogeneousDepth);
 }
 
 void Renderer::prepareFramebuffer()
@@ -749,7 +699,7 @@ void Renderer::prepareFramebuffer()
     if (bgfx::isValid(backendFrameBuffer))
         bgfx::destroy(backendFrameBuffer);
 
-    for (const DownsampleTarget& target : downsampleTargets)
+    for (const DownsampleTarget &target : downsampleTargets)
     {
         if (bgfx::isValid(target.frameBuffer))
             bgfx::destroy(target.frameBuffer);
@@ -770,50 +720,20 @@ void Renderer::prepareFramebuffer()
             fbFlags = BGFX_TEXTURE_RT_MSAA_X16;
     }
 
-    backendFrameBufferRT[0] = bgfx::createTexture2D(
-        framebufferWidth,
-        framebufferHeight,
-        false,
-        1,
-        internalState.bIsHDR ? bgfx::TextureFormat::RGB10A2 : bgfx::TextureFormat::RGBA16,
-        fbFlags | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
-    );
+    backendFrameBufferRT[0] = bgfx::createTexture2D(framebufferWidth, framebufferHeight, false, 1, internalState.bIsHDR ? bgfx::TextureFormat::RGB10A2 : bgfx::TextureFormat::RGBA16, fbFlags | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
 
-    backendFrameBufferRT[1] = bgfx::createTexture2D(
-        framebufferWidth,
-        framebufferHeight,
-        false,
-        1,
-        bgfx::TextureFormat::D32F,
-        fbFlags | BGFX_TEXTURE_RT_WRITE_ONLY
-    );
+    backendFrameBufferRT[1] = bgfx::createTexture2D(framebufferWidth, framebufferHeight, false, 1, bgfx::TextureFormat::D32F, fbFlags | BGFX_TEXTURE_RT_WRITE_ONLY);
 
-    backendFrameBuffer = bgfx::createFrameBuffer(
-        backendFrameBufferRT.size(),
-        backendFrameBufferRT.data(),
-        true
-    );
+    backendFrameBuffer = bgfx::createFrameBuffer(backendFrameBufferRT.size(), backendFrameBufferRT.data(), true);
 
     uint16_t sourceWidth = framebufferWidth;
     uint16_t sourceHeight = framebufferHeight;
-    while (viewWidth != 0 && viewHeight != 0 &&
-        (sourceWidth > static_cast<uint32_t>(viewWidth) * 2 || sourceHeight > static_cast<uint32_t>(viewHeight) * 2))
+    while (viewWidth != 0 && viewHeight != 0 && (sourceWidth > static_cast<uint32_t>(viewWidth) * 2 || sourceHeight > static_cast<uint32_t>(viewHeight) * 2))
     {
-        const uint16_t targetWidth = sourceWidth > static_cast<uint32_t>(viewWidth) * 2
-            ? static_cast<uint16_t>(std::max<uint32_t>(static_cast<uint32_t>(viewWidth) * 2, (sourceWidth + 1) / 2))
-            : sourceWidth;
-        const uint16_t targetHeight = sourceHeight > static_cast<uint32_t>(viewHeight) * 2
-            ? static_cast<uint16_t>(std::max<uint32_t>(static_cast<uint32_t>(viewHeight) * 2, (sourceHeight + 1) / 2))
-            : sourceHeight;
+        const uint16_t targetWidth = sourceWidth > static_cast<uint32_t>(viewWidth) * 2 ? static_cast<uint16_t>(std::max<uint32_t>(static_cast<uint32_t>(viewWidth) * 2, (sourceWidth + 1) / 2)) : sourceWidth;
+        const uint16_t targetHeight = sourceHeight > static_cast<uint32_t>(viewHeight) * 2 ? static_cast<uint16_t>(std::max<uint32_t>(static_cast<uint32_t>(viewHeight) * 2, (sourceHeight + 1) / 2)) : sourceHeight;
 
-        bgfx::TextureHandle texture = bgfx::createTexture2D(
-            targetWidth,
-            targetHeight,
-            false,
-            1,
-            internalState.bIsHDR ? bgfx::TextureFormat::RGB10A2 : bgfx::TextureFormat::RGBA16,
-            BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
-        );
+        bgfx::TextureHandle texture = bgfx::createTexture2D(targetWidth, targetHeight, false, 1, internalState.bIsHDR ? bgfx::TextureFormat::RGB10A2 : bgfx::TextureFormat::RGBA16, BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
         DownsampleTarget target;
         target.frameBuffer = bgfx::createFrameBuffer(1, &texture, true);
         target.width = targetWidth;
@@ -842,47 +762,55 @@ void Renderer::bindTextures()
             {
                 uint32_t flags = 0;
 
-                switch(idx)
+                switch (idx)
                 {
-                    case RendererTextureSlot::TEX_Y:
-                    case RendererTextureSlot::TEX_U:
-                    case RendererTextureSlot::TEX_V:
-                        if (!internalState.bIsMovie && idx > RendererTextureSlot::TEX_Y) handle = BGFX_INVALID_HANDLE;
+                case RendererTextureSlot::TEX_Y:
+                case RendererTextureSlot::TEX_U:
+                case RendererTextureSlot::TEX_V:
+                    if (!internalState.bIsMovie && idx > RendererTextureSlot::TEX_Y)
+                        handle = BGFX_INVALID_HANDLE;
 
-                        if ((backendProgram == RendererProgram::POSTPROCESSING) || (backendProgram == RendererProgram::POSTPROCESSING_NTSCJ))
+                    if ((backendProgram == RendererProgram::POSTPROCESSING) || (backendProgram == RendererProgram::POSTPROCESSING_NTSCJ))
+                    {
+                        flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
+                    }
+                    else
+                    {
+                        if (internalState.bDoMirrorTextureWrap)
+                            flags |= BGFX_SAMPLER_U_MIRROR | BGFX_SAMPLER_V_MIRROR | BGFX_SAMPLER_W_CLAMP;
+
+                        if (internalState.bIsMovie || internalState.bIsFBTexture)
+                            flags |= BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
+
+                        // we always need chroma interpolation for YUV420 movies
+                        if (internalState.bIsMovie && (idx > RendererTextureSlot::TEX_Y))
                         {
-                            flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
+                            flags = BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
                         }
-                        else
+                        else if (idx == RendererTextureSlot::TEX_Y && worldTerrainTextures.count(handle.idx))
                         {
-                            if (internalState.bDoMirrorTextureWrap) flags |= BGFX_SAMPLER_U_MIRROR | BGFX_SAMPLER_V_MIRROR | BGFX_SAMPLER_W_CLAMP;
-
-                            if (internalState.bIsMovie || internalState.bIsFBTexture) flags |= BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
-
-                            // we always need chroma interpolation for YUV420 movies
-                            if (internalState.bIsMovie && (idx > RendererTextureSlot::TEX_Y)){
-                              flags = BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
-                            }
-                            else if (idx == RendererTextureSlot::TEX_Y && worldTerrainTextures.count(handle.idx))
-                            {
-                                if (enable_anisotropic) flags |= BGFX_SAMPLER_MIN_ANISOTROPIC;
-                                if (!internalState.bDoTextureFiltering) flags |= BGFX_SAMPLER_MAG_POINT;
-                            }
-                            else if (!internalState.bDoTextureFiltering) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT;
+                            if (enable_anisotropic)
+                                flags |= BGFX_SAMPLER_MIN_ANISOTROPIC;
+                            if (!internalState.bDoTextureFiltering)
+                                flags |= BGFX_SAMPLER_MAG_POINT;
                         }
-                        break;
-                    case RendererTextureSlot::TEX_S:
-                    case RendererTextureSlot::TEX_D:
-                        // Specially handled, move on
-                        continue;
-                    case RendererTextureSlot::TEX_G_LUT:
-                        flags |= BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
-                        break;
-                    default:
-                        break;
+                        else if (!internalState.bDoTextureFiltering)
+                            flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT;
+                    }
+                    break;
+                case RendererTextureSlot::TEX_S:
+                case RendererTextureSlot::TEX_D:
+                    // Specially handled, move on
+                    continue;
+                case RendererTextureSlot::TEX_G_LUT:
+                    flags |= BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
+                    break;
+                default:
+                    break;
                 }
 
-                if (flags == 0) flags = UINT32_MAX;
+                if (flags == 0)
+                    flags = UINT32_MAX;
 
                 bgfx::setTexture(idx, bgfxTexUniformHandles[idx], handle, flags);
             }
@@ -914,7 +842,8 @@ void Renderer::init()
     bgfxInit.videoDecode = true;
     bgfxInit.callback = &bgfxCallbacks;
 
-    if (!bgfx::init(bgfxInit)) exit(1);
+    if (!bgfx::init(bgfxInit))
+        exit(1);
 
     // If HDR support is present, make use of it
     if (getCaps()->supported & BGFX_CAPS_HDR10)
@@ -925,7 +854,8 @@ void Renderer::init()
         bgfxInit.reset |= BGFX_RESET_HDR10;
         bgfxInit.swapChain.formatColor = bgfx::TextureFormat::RGB10A2;
 
-        if (hdr_max_nits <= 0) {
+        if (hdr_max_nits <= 0)
+        {
             ffnx_info("Attempting to autodetect SDR white level for HDR...\n");
             // The goal here is to autodetect "the brightness level that SDR 'white' is rendered at within an HDR monitor."
             // See: https://www.pyromuffin.com/2018/07/how-to-do-nothing-in-hdr.html
@@ -941,13 +871,16 @@ void Renderer::init()
             LONG monresult = ERROR_SUCCESS;
             bool gotbuffersizes = false;
             bool usedefaultnits = true;
-            do {
+            do
+            {
                 // Determine how many path and mode structures to allocate
                 UINT32 pathCount, modeCount;
                 monresult = GetDisplayConfigBufferSizes(flags, &pathCount, &modeCount);
 
-                if (monresult != ERROR_SUCCESS){
-                    if (trace_all || trace_renderer) ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR failed. Cannot enumerate monitors. GetDisplayConfigBufferSizes() failed with error code %i.\n", monresult);
+                if (monresult != ERROR_SUCCESS)
+                {
+                    if (trace_all || trace_renderer)
+                        ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR failed. Cannot enumerate monitors. GetDisplayConfigBufferSizes() failed with error code %i.\n", monresult);
                     break;
                 }
                 gotbuffersizes = true;
@@ -967,15 +900,20 @@ void Renderer::init()
                 // that the display state changed, so loop on the case of ERROR_INSUFFICIENT_BUFFER.
             } while (monresult == ERROR_INSUFFICIENT_BUFFER);
 
-            if (monresult != ERROR_SUCCESS){
-                if (gotbuffersizes){
-                    if (trace_all || trace_renderer) ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR failed. Cannot enumerate monitors. QueryDisplayConfig() failed with error code %i.\n", monresult);
+            if (monresult != ERROR_SUCCESS)
+            {
+                if (gotbuffersizes)
+                {
+                    if (trace_all || trace_renderer)
+                        ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR failed. Cannot enumerate monitors. QueryDisplayConfig() failed with error code %i.\n", monresult);
                 }
             }
-            else {
+            else
+            {
                 // loop over monitors and take the SDR white level of the first HDR monitor we find.
                 int pathidx = -1;
-                for (auto& path : paths) {
+                for (auto &path : paths)
+                {
                     pathidx++;
 
                     // Check if this monitor is HDR capable and HDR enabled
@@ -988,12 +926,16 @@ void Renderer::init()
                     getColorInfo.header.adapterId = path.targetInfo.adapterId;
                     getColorInfo.header.size = sizeof(getColorInfo);
                     monresult = DisplayConfigGetDeviceInfo(&getColorInfo.header);
-                    if (monresult != ERROR_SUCCESS){
-                        if (trace_all || trace_renderer) ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR skipping monitor #%i because DisplayConfigGetDeviceInfo() DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO check failed with error code %i.\n", pathidx, monresult);
+                    if (monresult != ERROR_SUCCESS)
+                    {
+                        if (trace_all || trace_renderer)
+                            ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR skipping monitor #%i because DisplayConfigGetDeviceInfo() DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO check failed with error code %i.\n", pathidx, monresult);
                         continue;
                     }
-                    if (!getColorInfo.advancedColorSupported || !getColorInfo.advancedColorEnabled){
-                        if (trace_all || trace_renderer) ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR determined that monitor #%i is not an HDR monitor or HDR is not enabled. Checking next monitor (if any)...\n", pathidx);
+                    if (!getColorInfo.advancedColorSupported || !getColorInfo.advancedColorEnabled)
+                    {
+                        if (trace_all || trace_renderer)
+                            ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR determined that monitor #%i is not an HDR monitor or HDR is not enabled. Checking next monitor (if any)...\n", pathidx);
                         continue;
                     }
 
@@ -1005,12 +947,16 @@ void Renderer::init()
                     white_level.header.adapterId = path.targetInfo.adapterId;
                     white_level.header.size = sizeof(white_level);
                     monresult = DisplayConfigGetDeviceInfo(&white_level.header);
-                    if (monresult != ERROR_SUCCESS){
-                        if (trace_all || trace_renderer) ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR failed. Monitor #%i appears to be an HDR monitor, but DisplayConfigGetDeviceInfo() DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL check failed with error code %i.\n", pathidx, monresult);
+                    if (monresult != ERROR_SUCCESS)
+                    {
+                        if (trace_all || trace_renderer)
+                            ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR failed. Monitor #%i appears to be an HDR monitor, but DisplayConfigGetDeviceInfo() DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL check failed with error code %i.\n", pathidx, monresult);
                         break;
                     }
-                    if (white_level.SDRWhiteLevel == 0){
-                        if (trace_all || trace_renderer) ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR failed. Monitor #%i appears to be an HDR monitor, but SDR white level is reported as 0.\n", pathidx);
+                    if (white_level.SDRWhiteLevel == 0)
+                    {
+                        if (trace_all || trace_renderer)
+                            ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR failed. Monitor #%i appears to be an HDR monitor, but SDR white level is reported as 0.\n", pathidx);
                         break;
                     }
                     // SDRWhiteLevel is stored in units of 2/25 nits (but with steps of 80 nits), because Microsoft.
@@ -1023,7 +969,8 @@ void Renderer::init()
                 } // end for (auto& path : paths)
 
             } // end else (monresult == ERROR_SUCCESS)
-            if (usedefaultnits){
+            if (usedefaultnits)
+            {
                 ffnx_info("Autodetection of SDR white level for HDR failed. Assuming default value of 200 nits.\n");
                 // Google thinks 200 nits is a good default. Who are we to argue?
                 hdr_max_nits = 200.0;
@@ -1031,7 +978,7 @@ void Renderer::init()
         } // end if  (hdr_max_nits <= 0)
 
         bgfx::reset(bgfxInit.reset, &bgfxInit.swapChain);
-    } //end if HDR
+    } // end if HDR
 
     internalState.texHandlers.resize(RendererTextureSlot::COUNT, BGFX_INVALID_HANDLE);
 
@@ -1044,101 +991,37 @@ void Renderer::init()
     prepareShadowMap();
 
     // Create Program
-    backendProgramHandles[RendererProgram::POSTPROCESSING] = bgfx::createProgram(
-        getShader(vertexPostPath.c_str()),
-        getShader(fragmentPostPath.c_str()),
-        true
-    );
+    backendProgramHandles[RendererProgram::POSTPROCESSING] = bgfx::createProgram(getShader(vertexPostPath.c_str()), getShader(fragmentPostPath.c_str()), true);
 
-    backendProgramHandles[RendererProgram::POSTPROCESSING_NTSCJ] = bgfx::createProgram(
-        getShader(vertexPostNTSCJPath.c_str()),
-        getShader(fragmentPostNTSCJPath.c_str()),
-        true
-    );
+    backendProgramHandles[RendererProgram::POSTPROCESSING_NTSCJ] = bgfx::createProgram(getShader(vertexPostNTSCJPath.c_str()), getShader(fragmentPostNTSCJPath.c_str()), true);
 
-    backendProgramHandles[RendererProgram::FLAT] = bgfx::createProgram(
-        getShader(vertexPathFlat.c_str()),
-        getShader(fragmentPathFlat.c_str()),
-        true
-    );
+    backendProgramHandles[RendererProgram::FLAT] = bgfx::createProgram(getShader(vertexPathFlat.c_str()), getShader(fragmentPathFlat.c_str()), true);
 
-    backendProgramHandles[RendererProgram::SMOOTH] = bgfx::createProgram(
-        getShader(vertexPathSmooth.c_str()),
-        getShader(fragmentPathSmooth.c_str()),
-        true
-    );
+    backendProgramHandles[RendererProgram::SMOOTH] = bgfx::createProgram(getShader(vertexPathSmooth.c_str()), getShader(fragmentPathSmooth.c_str()), true);
 
-    backendProgramHandles[RendererProgram::LIGHTING_FLAT] = bgfx::createProgram(
-        getShader(vertexLightingPathFlat.c_str()),
-        getShader(fragmentLightingPathFlat.c_str()),
-        true
-    );
+    backendProgramHandles[RendererProgram::LIGHTING_FLAT] = bgfx::createProgram(getShader(vertexLightingPathFlat.c_str()), getShader(fragmentLightingPathFlat.c_str()), true);
 
-    backendProgramHandles[RendererProgram::LIGHTING_SMOOTH] = bgfx::createProgram(
-        getShader(vertexLightingPathSmooth.c_str()),
-        getShader(fragmentLightingPathSmooth.c_str()),
-        true
-    );
+    backendProgramHandles[RendererProgram::LIGHTING_SMOOTH] = bgfx::createProgram(getShader(vertexLightingPathSmooth.c_str()), getShader(fragmentLightingPathSmooth.c_str()), true);
 
-    backendProgramHandles[RendererProgram::FIELD_SHADOW] = bgfx::createProgram(
-        getShader(vertexFieldShadowPath.c_str()),
-        getShader(fragmentFieldShadowPath.c_str()),
-        true
-    );
+    backendProgramHandles[RendererProgram::FIELD_SHADOW] = bgfx::createProgram(getShader(vertexFieldShadowPath.c_str()), getShader(fragmentFieldShadowPath.c_str()), true);
 
-    backendProgramHandles[RendererProgram::SHADOW_MAP] = bgfx::createProgram(
-        getShader(vertexShadowMapPath.c_str()),
-        getShader(fragmentShadowMapPath.c_str()),
-        true
-    );
+    backendProgramHandles[RendererProgram::SHADOW_MAP] = bgfx::createProgram(getShader(vertexShadowMapPath.c_str()), getShader(fragmentShadowMapPath.c_str()), true);
 
     // Smooth skinning variants (smooth shaded only): the same fragment shaders, vertex shaders built with
     // SMOOTH_SKINNING
-    backendProgramHandles[RendererProgram::SKINNED_SMOOTH] = bgfx::createProgram(
-        getShader(vertexSkinnedPath.c_str()),
-        getShader(fragmentPathSmooth.c_str()),
-        true
-    );
+    backendProgramHandles[RendererProgram::SKINNED_SMOOTH] = bgfx::createProgram(getShader(vertexSkinnedPath.c_str()), getShader(fragmentPathSmooth.c_str()), true);
 
-    backendProgramHandles[RendererProgram::LIGHTING_SKINNED_SMOOTH] = bgfx::createProgram(
-        getShader(vertexLightingSkinnedPath.c_str()),
-        getShader(fragmentLightingPathSmooth.c_str()),
-        true
-    );
+    backendProgramHandles[RendererProgram::LIGHTING_SKINNED_SMOOTH] = bgfx::createProgram(getShader(vertexLightingSkinnedPath.c_str()), getShader(fragmentLightingPathSmooth.c_str()), true);
 
-    backendProgramHandles[RendererProgram::SHADOW_MAP_SKINNED] = bgfx::createProgram(
-        getShader(vertexShadowMapSkinnedPath.c_str()),
-        getShader(fragmentShadowMapPath.c_str()),
-        true
-    );
+    backendProgramHandles[RendererProgram::SHADOW_MAP_SKINNED] = bgfx::createProgram(getShader(vertexShadowMapSkinnedPath.c_str()), getShader(fragmentShadowMapPath.c_str()), true);
 
-    backendProgramHandles[RendererProgram::BLIT] = bgfx::createProgram(
-        getShader(vertexBlitPath.c_str()),
-        getShader(fragmentBlitPath.c_str()),
-        true
-    );
+    backendProgramHandles[RendererProgram::BLIT] = bgfx::createProgram(getShader(vertexBlitPath.c_str()), getShader(fragmentBlitPath.c_str()), true);
 
-    backendProgramHandles[RendererProgram::YUVMOVIE] = bgfx::createProgram(
-        getShader(vertexYUVMoviePath.c_str()),
-        getShader(fragmentYUVMoviePath.c_str()),
-        true
-    );
+    backendProgramHandles[RendererProgram::YUVMOVIE] = bgfx::createProgram(getShader(vertexYUVMoviePath.c_str()), getShader(fragmentYUVMoviePath.c_str()), true);
 
-    backendProgramHandles[RendererProgram::YUVMOVIE_TRUECOLOR] = bgfx::createProgram(
-        getShader(vertexYUVMovieTrueColorPath.c_str()),
-        getShader(fragmentYUVMovieTrueColorPath.c_str()),
-        true
-    );
+    backendProgramHandles[RendererProgram::YUVMOVIE_TRUECOLOR] = bgfx::createProgram(getShader(vertexYUVMovieTrueColorPath.c_str()), getShader(fragmentYUVMovieTrueColorPath.c_str()), true);
 
-    vertexLayout
-        .begin()
-        .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
-        .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
-        .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-        .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float)
-        .add(bgfx::Attrib::Weight, 4, bgfx::AttribType::Float)
-        .add(bgfx::Attrib::Indices, 4, bgfx::AttribType::Uint8, false, true)
-        .end();
+    vertexLayout.begin().add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float).add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true).add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float).add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float).add(bgfx::Attrib::Weight, 4, bgfx::AttribType::Float).add(bgfx::Attrib::Indices, 4, bgfx::AttribType::Uint8, false, true).end();
 
     bgfx::setDebug(BGFX_DEBUG_TEXT);
 
@@ -1146,11 +1029,7 @@ void Renderer::init()
 
     if (enable_devtools)
     {
-        backendProgramHandles[RendererProgram::OVERLAY] = bgfx::createProgram(
-            getShader(vertexOverlayPath.c_str()),
-            getShader(fragmentOverlayPath.c_str()),
-            true
-        );
+        backendProgramHandles[RendererProgram::OVERLAY] = bgfx::createProgram(getShader(vertexOverlayPath.c_str()), getShader(fragmentOverlayPath.c_str()), true);
         overlay.init(backendProgramHandles[RendererProgram::OVERLAY], window_size_x, window_size_y);
     }
 
@@ -1203,17 +1082,13 @@ void Renderer::init()
 
     bgfxUniformHandles[RendererUniform::BONE_MATRICES] = createUniform("boneMatrices", bgfx::UniformType::Mat4, MAX_BONE_MATRICES);
 
-    for(int i = 0; i < RendererTextureSlot::COUNT; ++i)
+    for (int i = 0; i < RendererTextureSlot::COUNT; ++i)
     {
         bgfxTexUniformHandles[i] = createUniform("tex_" + std::to_string(i), bgfx::UniformType::Sampler);
     }
 
-    const uint8_t fallbackPixel[] = { 255, 255, 255, 255 };
-    fallbackTexture = bgfx::createTexture2D(
-        1, 1, false, 1, bgfx::TextureFormat::RGBA8,
-        BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP,
-        bgfx::copy(fallbackPixel, sizeof(fallbackPixel))
-    );
+    const uint8_t fallbackPixel[] = {255, 255, 255, 255};
+    fallbackTexture = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::RGBA8, BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP, bgfx::copy(fallbackPixel, sizeof(fallbackPixel)));
     if (bgfx::isValid(fallbackTexture))
         bgfx::setName(fallbackTexture, "Untextured draw fallback");
 
@@ -1229,7 +1104,8 @@ void Renderer::reset()
 
     prepareFramebuffer();
 
-    if(!ff8 && enable_lighting) prepareShadowMap();
+    if (!ff8 && enable_lighting)
+        prepareShadowMap();
 
     bgfxInit.swapChain.width = window_size_x;
     bgfxInit.swapChain.height = window_size_y;
@@ -1248,7 +1124,8 @@ void Renderer::prepareFFNxLogo()
 
     uint32_t width, height, mipCount = 0;
     FFNxLogoHandle = createTextureHandle(&logo, FFNX_LOGO_PATH, &width, &height, &mipCount, true);
-    if (!FFNxLogoHandle.idx) FFNxLogoHandle = BGFX_INVALID_HANDLE;
+    if (!FFNxLogoHandle.idx)
+        FFNxLogoHandle = BGFX_INVALID_HANDLE;
 }
 
 void Renderer::prepareShadowMap()
@@ -1257,41 +1134,32 @@ void Renderer::prepareShadowMap()
         bgfx::destroy(shadowMapFrameBuffer);
 
     auto shadowMapResolution = lighting.getShadowMapResolution();
-    shadowMapTexture = bgfx::createTexture2D(
-        shadowMapResolution,
-        shadowMapResolution,
-        false,
-        1,
-        bgfx::TextureFormat::D32F,
-        BGFX_TEXTURE_RT | BGFX_SAMPLER_COMPARE_LEQUAL | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP
-    );
+    shadowMapTexture = bgfx::createTexture2D(shadowMapResolution, shadowMapResolution, false, 1, bgfx::TextureFormat::D32F, BGFX_TEXTURE_RT | BGFX_SAMPLER_COMPARE_LEQUAL | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP);
 
-    shadowMapFrameBuffer = bgfx::createFrameBuffer(
-        1,
-        &shadowMapTexture,
-        true
-    );
+    shadowMapFrameBuffer = bgfx::createFrameBuffer(1, &shadowMapTexture, true);
 }
 
-void Renderer::prepareSpecularIbl(char* fullpath)
+void Renderer::prepareSpecularIbl(char *fullpath)
 {
     if (bgfx::isValid(specularIblTexture))
         bgfx::destroy(specularIblTexture);
 
     uint32_t width, height, mipCount = 0;
     specularIblTexture = createTextureHandle(fullpath, &width, &height, &mipCount, false);
-    if (!specularIblTexture.idx) specularIblTexture = BGFX_INVALID_HANDLE;
+    if (!specularIblTexture.idx)
+        specularIblTexture = BGFX_INVALID_HANDLE;
     lighting.setIblMipCount(mipCount);
 }
 
-void Renderer::prepareDiffuseIbl(char* fullpath)
+void Renderer::prepareDiffuseIbl(char *fullpath)
 {
     if (bgfx::isValid(diffuseIblTexture))
         bgfx::destroy(diffuseIblTexture);
 
     uint32_t width, height, mipCount = 0;
     diffuseIblTexture = createTextureHandle(fullpath, &width, &height, &mipCount, false);
-    if (!diffuseIblTexture.idx) diffuseIblTexture = BGFX_INVALID_HANDLE;
+    if (!diffuseIblTexture.idx)
+        diffuseIblTexture = BGFX_INVALID_HANDLE;
 }
 
 void Renderer::prepareEnvBrdf()
@@ -1305,7 +1173,8 @@ void Renderer::prepareEnvBrdf()
 
     uint32_t width, height, mipCount = 0;
     envBrdfTexture = createTextureHandle(fullpath, &width, &height, &mipCount, false);
-    if (!envBrdfTexture.idx) envBrdfTexture = BGFX_INVALID_HANDLE;
+    if (!envBrdfTexture.idx)
+        envBrdfTexture = BGFX_INVALID_HANDLE;
 }
 
 void Renderer::shutdown()
@@ -1324,7 +1193,8 @@ void Renderer::clearShadowMap()
 
 void Renderer::drawToShadowMap(bool uniformsAlreadyAttached, bool texturesAlreadyAttached)
 {
-    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
+    if (trace_all || trace_renderer)
+        ffnx_trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
 
     // Lighting state
     auto lightingState = lighting.getLightingState();
@@ -1340,7 +1210,7 @@ void Renderer::drawToShadowMap(bool uniformsAlreadyAttached, bool texturesAlread
     bgfx::setViewTransform(0, lightingState.lightViewMatrix, lightingState.lightProjMatrix);
 
     // Set uniforms
-    if(!uniformsAlreadyAttached)
+    if (!uniformsAlreadyAttached)
     {
         setLightingUniforms();
         setCommonUniforms();
@@ -1360,8 +1230,12 @@ void Renderer::drawToShadowMap(bool uniformsAlreadyAttached, bool texturesAlread
     {
         switch (internalState.cullMode)
         {
-        case RendererCullMode::FRONT: internalState.state |= BGFX_STATE_CULL_CW; break;
-        case RendererCullMode::BACK: internalState.state |= BGFX_STATE_CULL_CCW; break;
+        case RendererCullMode::FRONT:
+            internalState.state |= BGFX_STATE_CULL_CW;
+            break;
+        case RendererCullMode::BACK:
+            internalState.state |= BGFX_STATE_CULL_CCW;
+            break;
         }
     }
     bgfx::setState(internalState.state);
@@ -1372,7 +1246,8 @@ void Renderer::drawToShadowMap(bool uniformsAlreadyAttached, bool texturesAlread
 
 void Renderer::drawWithLighting(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, bool keepBindings)
 {
-    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
+    if (trace_all || trace_renderer)
+        ffnx_trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
 
     // Set lighting program
     backendProgram = backendProgram == SMOOTH ? LIGHTING_SMOOTH : LIGHTING_FLAT;
@@ -1417,7 +1292,8 @@ void Renderer::drawFieldShadow()
 
 void Renderer::draw(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, bool keepBindings, bgfx::FrameBufferHandle targetFrameBuffer, uint16_t targetWidth, uint16_t targetHeight)
 {
-    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
+    if (trace_all || trace_renderer)
+        ffnx_trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
 
     // Set current view rect
     if (bgfx::isValid(targetFrameBuffer))
@@ -1441,7 +1317,8 @@ void Renderer::draw(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, 
 
         bgfx::setViewRect(backendViewId, 0, 0, framebufferWidth, framebufferHeight);
 
-        if (internalState.bDoScissorTest) bgfx::setScissor(scissorOffsetX, scissorOffsetY, scissorWidth, scissorHeight);
+        if (internalState.bDoScissorTest)
+            bgfx::setScissor(scissorOffsetX, scissorOffsetY, scissorWidth, scissorHeight);
 
         // Set current view transform
         bgfx::setViewTransform(backendViewId, NULL, internalState.backendProjMatrix);
@@ -1469,8 +1346,12 @@ void Renderer::draw(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, 
 
         switch (internalState.cullMode)
         {
-        case RendererCullMode::FRONT: internalState.state |= BGFX_STATE_CULL_CW; break;
-        case RendererCullMode::BACK: internalState.state |= BGFX_STATE_CULL_CCW; break;
+        case RendererCullMode::FRONT:
+            internalState.state |= BGFX_STATE_CULL_CW;
+            break;
+        case RendererCullMode::BACK:
+            internalState.state |= BGFX_STATE_CULL_CCW;
+            break;
         }
 
         switch (internalState.blendMode)
@@ -1493,8 +1374,10 @@ void Renderer::draw(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, 
             break;
         case RendererBlendMode::BLEND_NONE:
             internalState.state |= BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_ADD);
-            if (internalState.bIsExternalTexture && !ff8) internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
-            else internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ZERO);
+            if (internalState.bIsExternalTexture && !ff8)
+                internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
+            else
+                internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ZERO);
             break;
         }
 
@@ -1508,9 +1391,11 @@ void Renderer::draw(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, 
             break;
         }
 
-        if (internalState.bDoDepthTest) internalState.state |= BGFX_STATE_DEPTH_TEST_LEQUAL;
+        if (internalState.bDoDepthTest)
+            internalState.state |= BGFX_STATE_DEPTH_TEST_LEQUAL;
 
-        if (internalState.bDoDepthWrite) internalState.state |= BGFX_STATE_WRITE_Z;
+        if (internalState.bDoDepthWrite)
+            internalState.state |= BGFX_STATE_WRITE_Z;
     }
     bgfx::setState(internalState.state);
 
@@ -1537,73 +1422,70 @@ void Renderer::drawFFNxLogo(float fade)
 {
     setClearFlags(true, false);
 
-	/*  y0    y2
-	 x0 +-----+ x2
-		|    /|
-		|   / |
-		|  /  |
-		| /   |
-		|/    |
-	 x1 +-----+ x3
-		y1    y3
-	*/
+    /*  y0    y2
+     x0 +-----+ x2
+        |    /|
+        |   / |
+        |  /  |
+        | /   |
+        |/    |
+     x1 +-----+ x3
+        y1    y3
+    */
 
-	// 0
-	float x0 = 0.0f;
-	float y0 = 0.0f;
-	float u0 = 0.0f;
-	float v0 = 0.0f;
-	// 1
-	float x1 = x0;
-	float y1 = game_height;
-	float u1 = u0;
-	float v1 = 1.0f;
-	// 2
-	float x2 = game_width;
-	float y2 = y0;
-	float u2 = 1.0f;
-	float v2 = v0;
-	// 3
-	float x3 = x2;
-	float y3 = y1;
-	float u3 = u2;
-	float v3 = v1;
+    // 0
+    float x0 = 0.0f;
+    float y0 = 0.0f;
+    float u0 = 0.0f;
+    float v0 = 0.0f;
+    // 1
+    float x1 = x0;
+    float y1 = game_height;
+    float u1 = u0;
+    float v1 = 1.0f;
+    // 2
+    float x2 = game_width;
+    float y2 = y0;
+    float u2 = 1.0f;
+    float v2 = v0;
+    // 3
+    float x3 = x2;
+    float y3 = y1;
+    float u3 = u2;
+    float v3 = v1;
 
-	struct nvertex vertices[] = {
-		{x0, y0, 1.0f, 1.0f, 0xffffffff, 0, u0, v0},
-		{x1, y1, 1.0f, 1.0f, 0xffffffff, 0, u1, v1},
-		{x2, y2, 1.0f, 1.0f, 0xffffffff, 0, u2, v2},
-		{x3, y3, 1.0f, 1.0f, 0xffffffff, 0, u3, v3},
-	};
+    struct nvertex vertices[] = {
+        {x0, y0, 1.0f, 1.0f, 0xffffffff, 0, u0, v0},
+        {x1, y1, 1.0f, 1.0f, 0xffffffff, 0, u1, v1},
+        {x2, y2, 1.0f, 1.0f, 0xffffffff, 0, u2, v2},
+        {x3, y3, 1.0f, 1.0f, 0xffffffff, 0, u3, v3},
+    };
 
-    for(int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         vertices[i].color.a = 255 * fade;
     }
 
-	WORD indices[] = {
-		0, 1, 2,
-		1, 3, 2
-	};
+    WORD indices[] = {0, 1, 2, 1, 3, 2};
 
     bindVertexBuffer(vertices, 0, 4);
-	bindIndexBuffer(indices, 6);
+    bindIndexBuffer(indices, 6);
 
     resetState();
     setOverallColorGamut(COLORGAMUT_SRGB); // always draw the logo in sRGB mode. The old setting is restored in drawFFNxLogo() in common.cpp
-	setPrimitiveType();
-	isTLVertex(true);
-	setCullMode(RendererCullMode::DISABLED);
-	setBlendMode(RendererBlendMode::BLEND_AVG);
+    setPrimitiveType();
+    isTLVertex(true);
+    setCullMode(RendererCullMode::DISABLED);
+    setBlendMode(RendererBlendMode::BLEND_AVG);
     doTextureFiltering(true);
     isExternalTexture(true);
-	isTexture(true);
-	doDepthTest(false);
-	doDepthWrite(false);
+    isTexture(true);
+    doDepthTest(false);
+    doDepthWrite(false);
     doModulateAlpha(true);
     useTexture(FFNxLogoHandle.idx);
 
-	draw();
+    draw();
 }
 
 void Renderer::show()
@@ -1611,8 +1493,7 @@ void Renderer::show()
     // Reset internal state
     resetState();
 
-    const bool presentFrame = internalState.bHasDrawBeenDone
-        || internalState.bHasColorClearBeenDone;
+    const bool presentFrame = internalState.bHasDrawBeenDone || internalState.bHasColorClearBeenDone;
 
     if (presentFrame && !internalState.bHasDrawBeenDone)
     {
@@ -1624,38 +1505,27 @@ void Renderer::show()
     {
         renderFrame();
 
-        bgfx::update(
-            vertexBufferHandle,
-            0,
-            bgfx::copy(
-                vertexBufferData.data(),
-                vectorSizeOf(vertexBufferData)
-            )
-        );
+        bgfx::update(vertexBufferHandle, 0, bgfx::copy(vertexBufferData.data(), vectorSizeOf(vertexBufferData)));
 
-        bgfx::update(
-            indexBufferHandle,
-            0,
-            bgfx::copy(
-                indexBufferData.data(),
-                vectorSizeOf(indexBufferData)
-            )
-        );
+        bgfx::update(indexBufferHandle, 0, bgfx::copy(indexBufferData.data(), vectorSizeOf(indexBufferData)));
     }
 
     uint8_t frameFlags = doCaptureFrame ? BGFX_FRAME_DEBUG_CAPTURE : BGFX_FRAME_NONE;
-    if (!presentFrame) frameFlags |= BGFX_FRAME_FLUSH;
+    if (!presentFrame)
+        frameFlags |= BGFX_FRAME_FLUSH;
     bgfx::frame(frameFlags);
 
     internalState.bHasDrawBeenDone = false;
     internalState.bHasColorClearBeenDone = false;
 
-    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s\n", __func__);
+    if (trace_all || trace_renderer)
+        ffnx_trace("Renderer::%s\n", __func__);
 
     bgfx::dbgTextClear();
 
-    if(!ff8 && getmode_cached()->driver_mode == MODE_BATTLE) {
-        for(int i = 0; i <= backendViewId; i++)
+    if (!ff8 && getmode_cached()->driver_mode == MODE_BATTLE)
+    {
+        for (int i = 0; i <= backendViewId; i++)
             bgfx::resetView(i);
     }
 
@@ -1670,14 +1540,9 @@ void Renderer::show()
     bgfx::setViewMode(backendViewId, bgfx::ViewMode::Sequential);
 }
 
-void Renderer::printText(uint16_t x, uint16_t y, uint32_t color, const char* text)
+void Renderer::printText(uint16_t x, uint16_t y, uint32_t color, const char *text)
 {
-    bgfx::dbgTextPrintf(
-        x,
-        y,
-        color,
-        text
-    );
+    bgfx::dbgTextPrintf(x, y, color, text);
 }
 
 void Renderer::toggleCaptureFrame()
@@ -1685,24 +1550,25 @@ void Renderer::toggleCaptureFrame()
     doCaptureFrame = !doCaptureFrame;
 }
 
-const bgfx::Caps* Renderer::getCaps()
+const bgfx::Caps *Renderer::getCaps()
 {
     return bgfx::getCaps();
 };
 
-const bgfx::Stats* Renderer::getStats()
+const bgfx::Stats *Renderer::getStats()
 {
     return bgfx::getStats();
 }
 
-const bgfx::VertexLayout& Renderer::GetVertexLayout()
+const bgfx::VertexLayout &Renderer::GetVertexLayout()
 {
     return vertexLayout;
 }
 
-void Renderer::bindVertexBuffer(struct nvertex* inVertex, vector3<float>* normals, uint32_t inCount)
+void Renderer::bindVertexBuffer(struct nvertex *inVertex, vector3<float> *normals, uint32_t inCount)
 {
-    if (!bgfx::isValid(vertexBufferHandle)) vertexBufferHandle = bgfx::createDynamicVertexBuffer(inCount, vertexLayout, BGFX_BUFFER_ALLOW_RESIZE);
+    if (!bgfx::isValid(vertexBufferHandle))
+        vertexBufferHandle = bgfx::createDynamicVertexBuffer(inCount, vertexLayout, BGFX_BUFFER_ALLOW_RESIZE);
 
     uint32_t currentOffset = vertexBufferData.size();
 
@@ -1713,7 +1579,7 @@ void Renderer::bindVertexBuffer(struct nvertex* inVertex, vector3<float>* normal
         vertexBufferData[currentOffset + idx].x = inVertex[idx]._.x;
         vertexBufferData[currentOffset + idx].y = inVertex[idx]._.y;
         vertexBufferData[currentOffset + idx].z = inVertex[idx]._.z;
-        vertexBufferData[currentOffset + idx].w = ( ::isinf(inVertex[idx].color.w) ? 1.0f : inVertex[idx].color.w );
+        vertexBufferData[currentOffset + idx].w = (::isinf(inVertex[idx].color.w) ? 1.0f : inVertex[idx].color.w);
         vertexBufferData[currentOffset + idx].bgra = inVertex[idx].color.color;
         vertexBufferData[currentOffset + idx].u = inVertex[idx].u;
         vertexBufferData[currentOffset + idx].v = inVertex[idx].v;
@@ -1725,16 +1591,19 @@ void Renderer::bindVertexBuffer(struct nvertex* inVertex, vector3<float>* normal
             vertexBufferData[currentOffset + idx].nz = normals[idx].z;
         }
 
-        if (vertex_log && idx == 0) ffnx_trace("%s: %u [XYZW(%f, %f, %f, %f), BGRA(%08x), UV(%f, %f)]\n", __func__, idx, vertexBufferData[currentOffset + idx].x, vertexBufferData[currentOffset + idx].y, vertexBufferData[currentOffset + idx].z, vertexBufferData[currentOffset + idx].w, vertexBufferData[currentOffset + idx].bgra, vertexBufferData[currentOffset + idx].u, vertexBufferData[currentOffset + idx].v);
-        if (vertex_log && idx == 1) ffnx_trace("%s: See the rest on RenderDoc.\n", __func__);
+        if (vertex_log && idx == 0)
+            ffnx_trace("%s: %u [XYZW(%f, %f, %f, %f), BGRA(%08x), UV(%f, %f)]\n", __func__, idx, vertexBufferData[currentOffset + idx].x, vertexBufferData[currentOffset + idx].y, vertexBufferData[currentOffset + idx].z, vertexBufferData[currentOffset + idx].w, vertexBufferData[currentOffset + idx].bgra, vertexBufferData[currentOffset + idx].u, vertexBufferData[currentOffset + idx].v);
+        if (vertex_log && idx == 1)
+            ffnx_trace("%s: See the rest on RenderDoc.\n", __func__);
     }
 
     bgfx::setVertexBuffer(0, vertexBufferHandle, currentOffset, inCount);
 };
 
-void Renderer::bindIndexBuffer(WORD* inIndex, uint32_t inCount)
+void Renderer::bindIndexBuffer(WORD *inIndex, uint32_t inCount)
 {
-    if (!bgfx::isValid(indexBufferHandle)) indexBufferHandle = bgfx::createDynamicIndexBuffer(inCount, BGFX_BUFFER_ALLOW_RESIZE);
+    if (!bgfx::isValid(indexBufferHandle))
+        indexBufferHandle = bgfx::createDynamicIndexBuffer(inCount, BGFX_BUFFER_ALLOW_RESIZE);
 
     uint32_t currentOffset = indexBufferData.size();
 
@@ -1757,9 +1626,9 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
     if (enable_uncrop && !ff8)
     {
         bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
-        if(!(is_movie_playing && widescreen.getMovieMode() == WM_DISABLED))
+        if (!(is_movie_playing && widescreen.getMovieMode() == WM_DISABLED))
         {
-            if(y == 16 && height == 448)
+            if (y == 16 && height == 448)
             {
                 scissorOffsetY = getInternalCoordY(0.0);
                 scissorHeight = getInternalCoordY(480);
@@ -1767,92 +1636,89 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
         }
     }
 
-    if(!widescreen_enabled) return;
+    if (!widescreen_enabled)
+        return;
 
-    struct game_mode* mode = getmode_cached();
-    switch(mode->driver_mode)
+    struct game_mode *mode = getmode_cached();
+    switch (mode->driver_mode)
     {
-        case MODE_CREDITS:
-            {
-                // Keep the default scissor for credits mode
-                scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
-            }
-            break;
-        case MODE_FIELD:
-            {
-                // Keep the default scissor for widescreen disabled movies and fields
-                bool isKeepDefaultScissor = ff8;
-                if (!ff8)
-                {
-                     bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
-                     isKeepDefaultScissor = (is_movie_playing && widescreen.getMovieMode() == WM_DISABLED) || widescreen.getMode() == WM_DISABLED;
-                }
+    case MODE_CREDITS: {
+        // Keep the default scissor for credits mode
+        scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
+    }
+    break;
+    case MODE_FIELD: {
+        // Keep the default scissor for widescreen disabled movies and fields
+        bool isKeepDefaultScissor = ff8;
+        if (!ff8)
+        {
+            bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
+            isKeepDefaultScissor = (is_movie_playing && widescreen.getMovieMode() == WM_DISABLED) || widescreen.getMode() == WM_DISABLED;
+        }
 
-                if (isKeepDefaultScissor)
-                {
-                    scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
-                    return;
-                }
+        if (isKeepDefaultScissor)
+        {
+            scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
+            return;
+        }
 
-                // This changes the scissor width and makes it bigger to fit widescreen
-                if(x == 0 && width == game_width)
-                    scissorWidth = getInternalCoordX(wide_viewport_width);
-                else
-                    scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
-            }
-            break;
-        case MODE_SWIRL:
-            {
-                // This changes the scissor width and makes it bigger to fit widescreen
-                if(x == 0 && width == game_width)
-                    scissorWidth = getInternalCoordX(wide_viewport_width);
-                else
-                    scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
-            }
-            break;
-        case MODE_BATTLE:
-            {
-                if(x == 0 && width == game_width)
-                    scissorWidth = getInternalCoordX(wide_viewport_width);
-                else if(ff8 || internalState.bIsTLVertex)
-                    scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
+        // This changes the scissor width and makes it bigger to fit widescreen
+        if (x == 0 && width == game_width)
+            scissorWidth = getInternalCoordX(wide_viewport_width);
+        else
+            scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
+    }
+    break;
+    case MODE_SWIRL: {
+        // This changes the scissor width and makes it bigger to fit widescreen
+        if (x == 0 && width == game_width)
+            scissorWidth = getInternalCoordX(wide_viewport_width);
+        else
+            scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
+    }
+    break;
+    case MODE_BATTLE: {
+        if (x == 0 && width == game_width)
+            scissorWidth = getInternalCoordX(wide_viewport_width);
+        else if (ff8 || internalState.bIsTLVertex)
+            scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
 
-                if (ff8)
-                {
-                    // This removes the black bars on the top and bottom of the screen
-                    if(y == 24 && height == 432)
-                    {
-                        scissorOffsetY = getInternalCoordY(0.0);
-                        scissorHeight = getInternalCoordY(480);
-                    }
-                }
-            }
-            break;
-        default:
+        if (ff8)
+        {
+            // This removes the black bars on the top and bottom of the screen
+            if (y == 24 && height == 432)
             {
-                // This changes the scissor width and makes it bigger to fit widescreen
-                if(x == 0 && width == game_width)
-                    scissorWidth = getInternalCoordX(wide_viewport_width);
-                else
-                    scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
-
-                if (ff8)
-                {
-                    // This removes the black bars on the top and bottom of the screen
-                    if(y == 16 && height == 448)
-                    {
-                        scissorOffsetY = getInternalCoordY(0.0);
-                        scissorHeight = getInternalCoordY(480);
-                    }
-                }
+                scissorOffsetY = getInternalCoordY(0.0);
+                scissorHeight = getInternalCoordY(480);
             }
-            break;
+        }
+    }
+    break;
+    default: {
+        // This changes the scissor width and makes it bigger to fit widescreen
+        if (x == 0 && width == game_width)
+            scissorWidth = getInternalCoordX(wide_viewport_width);
+        else
+            scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
+
+        if (ff8)
+        {
+            // This removes the black bars on the top and bottom of the screen
+            if (y == 16 && height == 448)
+            {
+                scissorOffsetY = getInternalCoordY(0.0);
+                scissorHeight = getInternalCoordY(480);
+            }
+        }
+    }
+    break;
     }
 }
 
 void Renderer::setClearFlags(bool doClearColor, bool doClearDepth)
 {
-    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s clearColor=%d,clearDepth=%d\n", __func__, doClearColor, doClearDepth);
+    if (trace_all || trace_renderer)
+        ffnx_trace("Renderer::%s clearColor=%d,clearDepth=%d\n", __func__, doClearColor, doClearDepth);
 
     uint16_t clearFlags = BGFX_CLEAR_NONE;
 
@@ -1873,13 +1739,11 @@ void Renderer::setBackgroundColor(float r, float g, float b, float a)
     internalState.clearColorValue = createBGRA(r * 255, g * 255, b * 255, a * 255);
 }
 
-uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int stride, RendererTextureType type, bool isSrgb, bool copyData, const char* debugName, bool worldTerrainMipmaps)
+uint32_t Renderer::createTexture(uint8_t *data, size_t width, size_t height, int stride, RendererTextureType type, bool isSrgb, bool copyData, const char *debugName, bool worldTerrainMipmaps)
 {
     bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
 
-    if (worldTerrainMipmaps && (!data || !width || !height ||
-        width > UINT16_MAX || height > UINT16_MAX ||
-        stride != 0 || type != RendererTextureType::BGRA || !copyData))
+    if (worldTerrainMipmaps && (!data || !width || !height || width > UINT16_MAX || height > UINT16_MAX || stride != 0 || type != RendererTextureType::BGRA || !copyData))
     {
         ffnx_error("Cannot generate world terrain mipmaps: invalid dimensions, format or upload ownership\n");
         return ret.idx;
@@ -1917,25 +1781,27 @@ uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int
         ffnx_error("World terrain mipmap upload exceeds supported memory size\n");
         return ret.idx;
     }
-	uint32_t uploadSize = stride > 0 ? uint32_t(stride * height) : texInfo.storageSize;
+    uint32_t uploadSize = stride > 0 ? uint32_t(stride * height) : texInfo.storageSize;
 
     // If the texture we are going to create does not fit in memory, return an empty one.
     // Will prevent the game from crashing, while allowing the player to not loose its progress.
     if (doesItFitInMemory(uploadSize) && (data != NULL))
     {
-        const bgfx::Memory* mem;
+        const bgfx::Memory *mem;
 
         if (copyData)
         {
             mem = bgfx::alloc(uploadSize);
             // Protect from crashes
-            if (mem != NULL) {
+            if (mem != NULL)
+            {
                 if (worldTerrainMipmaps)
                     ff7::world::buildPSXWorldMipmaps(mem->data, data, uint32_t(width), uint32_t(height));
                 else
                     bx::memCopy(mem->data, data, uploadSize);
             }
-            else if (worldTerrainMipmaps) {
+            else if (worldTerrainMipmaps)
+            {
                 ffnx_error("Cannot allocate world terrain mipmap upload (%u bytes)\n", uploadSize);
                 return ret.idx;
             }
@@ -1947,31 +1813,15 @@ uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int
 
         uint64_t flags = BGFX_SAMPLER_NONE;
 
-        if (isSrgb && !worldTerrainMipmaps) flags |= BGFX_TEXTURE_SRGB;
-        else flags |= BGFX_TEXTURE_NONE;
+        if (isSrgb && !worldTerrainMipmaps)
+            flags |= BGFX_TEXTURE_SRGB;
+        else
+            flags |= BGFX_TEXTURE_NONE;
 
-        ret = bgfx::createTexture2D(
-            width,
-            height,
-            worldTerrainMipmaps,
-            1,
-            texFormat,
-            flags,
-            stride > 0 ? NULL : mem
-        );
+        ret = bgfx::createTexture2D(width, height, worldTerrainMipmaps, 1, texFormat, flags, stride > 0 ? NULL : mem);
 
         if (stride > 0)
-            bgfx::updateTexture2D(
-                ret,
-                0,
-                0,
-                0,
-                0,
-                width,
-                height,
-                mem,
-                stride
-            );
+            bgfx::updateTexture2D(ret, 0, 0, 0, 0, width, height, mem, stride);
 
         if (worldTerrainMipmaps)
         {
@@ -1984,7 +1834,8 @@ uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int
         if (bgfx::isValid(ret) && debugName != nullptr && debugName[0] != '\0')
             bgfx::setName(ret, debugName);
 
-        if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from data with stride %u\n", __func__, ret.idx, width, height, stride);
+        if (trace_all || trace_renderer)
+            ffnx_trace("Renderer::%s: %u => %ux%u from data with stride %u\n", __func__, ret.idx, width, height, stride);
     }
     else if (worldTerrainMipmaps)
     {
@@ -1994,20 +1845,20 @@ uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int
     return ret.idx;
 };
 
-uint32_t Renderer::createTexture(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb)
+uint32_t Renderer::createTexture(char *filename, uint32_t *width, uint32_t *height, uint32_t *mipCount, bool isSrgb)
 {
     bgfx::TextureHandle handle = createTextureHandle(filename, width, height, mipCount, isSrgb);
     return handle.idx;
 }
 
-bimg::ImageContainer* Renderer::createImageContainer(const char* filename, bimg::TextureFormat::Enum targetFormat)
+bimg::ImageContainer *Renderer::createImageContainer(const char *filename, bimg::TextureFormat::Enum targetFormat)
 {
     return loadImageContainer(&defaultAllocator, filename, targetFormat);
 }
 
-bimg::ImageContainer* Renderer::createImageContainer(cmrc::file* file, bimg::TextureFormat::Enum targetFormat)
+bimg::ImageContainer *Renderer::createImageContainer(cmrc::file *file, bimg::TextureFormat::Enum targetFormat)
 {
-    bimg::ImageContainer* img = nullptr;
+    bimg::ImageContainer *img = nullptr;
 
     if (file->size() > 0)
     {
@@ -2017,10 +1868,10 @@ bimg::ImageContainer* Renderer::createImageContainer(cmrc::file* file, bimg::Tex
     return img;
 }
 
-bgfx::TextureHandle Renderer::createTextureHandle(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb)
+bgfx::TextureHandle Renderer::createTextureHandle(char *filename, uint32_t *width, uint32_t *height, uint32_t *mipCount, bool isSrgb)
 {
     bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
-    bimg::ImageContainer* img = createImageContainer(filename);
+    bimg::ImageContainer *img = createImageContainer(filename);
 
     if (img != nullptr)
     {
@@ -2028,33 +1879,20 @@ bgfx::TextureHandle Renderer::createTextureHandle(char* filename, uint32_t* widt
         {
             uint64_t flags = BGFX_SAMPLER_NONE;
 
-            if (isSrgb) flags |= BGFX_TEXTURE_SRGB;
-            else flags |= BGFX_TEXTURE_NONE;
+            if (isSrgb)
+                flags |= BGFX_TEXTURE_SRGB;
+            else
+                flags |= BGFX_TEXTURE_NONE;
 
-            const bgfx::Memory* mem = bgfx::makeRef(img->m_data, img->m_size, RendererReleaseImageContainer, img);
+            const bgfx::Memory *mem = bgfx::makeRef(img->m_data, img->m_size, RendererReleaseImageContainer, img);
             if (img->m_cubeMap)
             {
-                ret = bgfx::createTextureCube(
-                    img->m_width,
-                    1 < img->m_numMips,
-                    img->m_numLayers,
-                    bgfx::TextureFormat::Enum(img->m_format),
-                    flags,
-                    mem
-                );
+                ret = bgfx::createTextureCube(img->m_width, 1 < img->m_numMips, img->m_numLayers, bgfx::TextureFormat::Enum(img->m_format), flags, mem);
             }
             else
             {
 
-                ret = bgfx::createTexture2D(
-                    img->m_width,
-                    img->m_height,
-                    1 < img->m_numMips,
-                    img->m_numLayers,
-                    bgfx::TextureFormat::Enum(img->m_format),
-                    flags,
-                    mem
-                );
+                ret = bgfx::createTexture2D(img->m_width, img->m_height, 1 < img->m_numMips, img->m_numLayers, bgfx::TextureFormat::Enum(img->m_format), flags, mem);
             }
 
             *width = img->m_width;
@@ -2064,17 +1902,18 @@ bgfx::TextureHandle Renderer::createTextureHandle(char* filename, uint32_t* widt
             if (bgfx::isValid(ret) && filename != nullptr)
                 bgfx::setName(ret, filename);
 
-            if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, width, height, filename);
+            if (trace_all || trace_renderer)
+                ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, width, height, filename);
         }
     }
 
     return ret;
 }
 
-bgfx::TextureHandle Renderer::createTextureHandle(cmrc::file* file, char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb)
+bgfx::TextureHandle Renderer::createTextureHandle(cmrc::file *file, char *filename, uint32_t *width, uint32_t *height, uint32_t *mipCount, bool isSrgb)
 {
     bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
-    bimg::ImageContainer* img = createImageContainer(file);
+    bimg::ImageContainer *img = createImageContainer(file);
 
     if (img != nullptr)
     {
@@ -2082,33 +1921,20 @@ bgfx::TextureHandle Renderer::createTextureHandle(cmrc::file* file, char* filena
         {
             uint64_t flags = BGFX_SAMPLER_NONE;
 
-            if (isSrgb) flags |= BGFX_TEXTURE_SRGB;
-            else flags |= BGFX_TEXTURE_NONE;
+            if (isSrgb)
+                flags |= BGFX_TEXTURE_SRGB;
+            else
+                flags |= BGFX_TEXTURE_NONE;
 
-            const bgfx::Memory* mem = bgfx::makeRef(img->m_data, img->m_size, RendererReleaseImageContainer, img);
+            const bgfx::Memory *mem = bgfx::makeRef(img->m_data, img->m_size, RendererReleaseImageContainer, img);
             if (img->m_cubeMap)
             {
-                ret = bgfx::createTextureCube(
-                    img->m_width,
-                    1 < img->m_numMips,
-                    img->m_numLayers,
-                    bgfx::TextureFormat::Enum(img->m_format),
-                    flags,
-                    mem
-                );
+                ret = bgfx::createTextureCube(img->m_width, 1 < img->m_numMips, img->m_numLayers, bgfx::TextureFormat::Enum(img->m_format), flags, mem);
             }
             else
             {
 
-                ret = bgfx::createTexture2D(
-                    img->m_width,
-                    img->m_height,
-                    1 < img->m_numMips,
-                    img->m_numLayers,
-                    bgfx::TextureFormat::Enum(img->m_format),
-                    flags,
-                    mem
-                );
+                ret = bgfx::createTexture2D(img->m_width, img->m_height, 1 < img->m_numMips, img->m_numLayers, bgfx::TextureFormat::Enum(img->m_format), flags, mem);
             }
 
             *width = img->m_width;
@@ -2118,38 +1944,34 @@ bgfx::TextureHandle Renderer::createTextureHandle(cmrc::file* file, char* filena
             if (bgfx::isValid(ret) && filename != nullptr)
                 bgfx::setName(ret, filename);
 
-            if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, width, height, filename);
+            if (trace_all || trace_renderer)
+                ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, width, height, filename);
         }
     }
 
     return ret;
 }
 
-uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t* height, bool isSrgb)
+uint32_t Renderer::createTextureLibPng(char *filename, uint32_t *width, uint32_t *height, bool isSrgb)
 {
     bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
-    bimg::ImageContainer* img = loadPng(&defaultAllocator, filename);
+    bimg::ImageContainer *img = loadPng(&defaultAllocator, filename);
 
-    if (img == nullptr) {
+    if (img == nullptr)
+    {
         return ret.idx;
     }
 
-    const bgfx::Memory* mem = bgfx::makeRef(img->m_data, img->m_size, RendererReleaseImageContainer, img);
+    const bgfx::Memory *mem = bgfx::makeRef(img->m_data, img->m_size, RendererReleaseImageContainer, img);
 
     uint64_t flags = BGFX_SAMPLER_NONE;
 
-    if (isSrgb) flags |= BGFX_TEXTURE_SRGB;
-    else flags |= BGFX_TEXTURE_NONE;
+    if (isSrgb)
+        flags |= BGFX_TEXTURE_SRGB;
+    else
+        flags |= BGFX_TEXTURE_NONE;
 
-    ret = bgfx::createTexture2D(
-        img->m_width,
-        img->m_height,
-        false,
-        1,
-        bgfx::TextureFormat::Enum(img->m_format),
-        flags,
-        mem
-    );
+    ret = bgfx::createTexture2D(img->m_width, img->m_height, false, 1, bgfx::TextureFormat::Enum(img->m_format), flags, mem);
 
     *width = img->m_width;
     *height = img->m_height;
@@ -2157,26 +1979,20 @@ uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t
     if (bgfx::isValid(ret) && filename != nullptr)
         bgfx::setName(ret, filename);
 
-    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, *width, *height, filename);
+    if (trace_all || trace_renderer)
+        ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, *width, *height, filename);
 
     return ret.idx;
 }
 
-bool Renderer::saveTexture(const char* filename, uint32_t width, uint32_t height, const void* data)
+bool Renderer::saveTexture(const char *filename, uint32_t width, uint32_t height, const void *data)
 {
-    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %ux%u with filename %s\n", __func__, width, height, filename);
+    if (trace_all || trace_renderer)
+        ffnx_trace("Renderer::%s: %ux%u with filename %s\n", __func__, width, height, filename);
 
     if (bx::open(&defaultWriter, filename, false))
     {
-        bimg::imageWritePng(
-            &defaultWriter,
-            width,
-            height,
-            width * 4,
-            data,
-            bimg::TextureFormat::BGRA8,
-            false
-        );
+        bimg::imageWritePng(&defaultWriter, width, height, width * 4, data, bimg::TextureFormat::BGRA8, false);
 
         bx::close(&defaultWriter);
 
@@ -2191,29 +2007,34 @@ void Renderer::deleteTexture(uint16_t rt)
     worldTerrainTextures.erase(rt);
     if (rt > 0)
     {
-        bgfx::TextureHandle handle = { rt };
+        bgfx::TextureHandle handle = {rt};
 
-        if (bgfx::isValid(handle)) {
+        if (bgfx::isValid(handle))
+        {
             bgfx::destroy(handle);
 
-            if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u Texture was valid and is now destroyed!\n", __func__, rt);
+            if (trace_all || trace_renderer)
+                ffnx_trace("Renderer::%s: %u Texture was valid and is now destroyed!\n", __func__, rt);
         }
     }
 };
 
 void Renderer::useTexture(uint16_t rt, uint32_t slot)
 {
-    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: [%u] => %u\n", __func__, slot, rt);
+    if (trace_all || trace_renderer)
+        ffnx_trace("Renderer::%s: [%u] => %u\n", __func__, slot, rt);
 
     if (rt > 0)
     {
-        internalState.texHandlers[slot] = { rt };
-        if (slot == RendererTextureSlot::TEX_Y) isTexture(true);
+        internalState.texHandlers[slot] = {rt};
+        if (slot == RendererTextureSlot::TEX_Y)
+            isTexture(true);
     }
     else
     {
         internalState.texHandlers[slot] = BGFX_INVALID_HANDLE;
-        if (slot == RendererTextureSlot::TEX_Y) isTexture(false);
+        if (slot == RendererTextureSlot::TEX_Y)
+            isTexture(false);
     }
 };
 
@@ -2242,7 +2063,8 @@ uint32_t Renderer::createBlitTexture(uint32_t x, uint32_t y, uint32_t width, uin
     memset(pixels->data, 0, pixels->size);
     bgfx::TextureHandle ret = bgfx::createTexture2D(newWidth, newHeight, false, 1, format, BGFX_TEXTURE_BLIT_DST, pixels);
 
-    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => XY(%u,%u) WH(%u,%u)\n", __func__, ret.idx, newX, newY, newWidth, newHeight);
+    if (trace_all || trace_renderer)
+        ffnx_trace("Renderer::%s: %u => XY(%u,%u) WH(%u,%u)\n", __func__, ret.idx, newX, newY, newWidth, newHeight);
 
     return ret.idx;
 }
@@ -2256,7 +2078,8 @@ void Renderer::blitTexture(uint16_t dest, uint32_t x, uint32_t y, uint32_t width
 
     uint16_t dstY = 0;
 
-    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => XY(%u,%u) WH(%u,%u)\n", __func__, dest, newX, newY, newWidth, newHeight);
+    if (trace_all || trace_renderer)
+        ffnx_trace("Renderer::%s: %u => XY(%u,%u) WH(%u,%u)\n", __func__, dest, newX, newY, newWidth, newHeight);
 
     if (getCaps()->originBottomLeft)
     {
@@ -2279,12 +2102,12 @@ void Renderer::blitTexture(uint16_t dest, uint32_t x, uint32_t y, uint32_t width
 
     backendViewId++;
 
-    bgfx::TextureHandle texHandle = { dest };
+    bgfx::TextureHandle texHandle = {dest};
     if (newX < framebufferWidth && newY < framebufferHeight && dstY < newHeight)
     {
         const auto copyWidth = static_cast<uint16_t>(std::min<uint32_t>(newWidth, framebufferWidth - newX));
         const auto copyHeight = static_cast<uint16_t>(std::min<uint32_t>(newHeight - dstY, framebufferHeight - newY));
-        bgfx::blit(backendViewId, {.handle = texHandle, .x = 0, .y = dstY}, {.handle = bgfx::getTexture(backendFrameBuffer, 0), .x = newX, .y = newY, .width = copyWidth, .height = copyHeight} );
+        bgfx::blit(backendViewId, {.handle = texHandle, .x = 0, .y = dstY}, {.handle = bgfx::getTexture(backendFrameBuffer, 0), .x = newX, .y = newY, .width = copyWidth, .height = copyHeight});
     }
     bgfx::touch(backendViewId);
     setClearFlags(false, false);
@@ -2295,7 +2118,8 @@ void Renderer::blitTexture(uint16_t dest, uint32_t x, uint32_t y, uint32_t width
 
 void Renderer::zoomBackendFrameBuffer(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
 {
-    if(!internalState.bHasDrawBeenDone) return;
+    if (!internalState.bHasDrawBeenDone)
+        return;
 
     bgfx::TextureHandle textureHandle = bgfx::createTexture2D(width, height, false, 1, internalState.bIsHDR ? bgfx::TextureFormat::RGB10A2 : bgfx::TextureFormat::RGBA16, BGFX_TEXTURE_BLIT_DST);
 
@@ -2345,10 +2169,7 @@ void Renderer::zoomBackendFrameBuffer(uint16_t x, uint16_t y, uint16_t width, ui
         {x2, y2, 1.0f, 1.0f, 0xff000000, 0, u2, v2},
         {x3, y3, 1.0f, 1.0f, 0xff000000, 0, u3, v3},
     };
-    WORD indices[] = {
-        0, 1, 2,
-        1, 3, 2
-    };
+    WORD indices[] = {0, 1, 2, 1, 3, 2};
 
     backendProgram = RendererProgram::BLIT;
 
@@ -2364,7 +2185,8 @@ void Renderer::zoomBackendFrameBuffer(uint16_t x, uint16_t y, uint16_t width, ui
 
     draw();
 
-    if (bgfx::isValid(textureHandle)) bgfx::destroy(textureHandle);
+    if (bgfx::isValid(textureHandle))
+        bgfx::destroy(textureHandle);
 }
 
 void Renderer::clearDepthBuffer()
@@ -2376,7 +2198,8 @@ void Renderer::clearDepthBuffer()
     bgfx::setViewClear(backendViewId, BGFX_CLEAR_DEPTH);
     bgfx::touch(backendViewId);
 
-    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: Clearing depth\n", __func__, backendViewId);
+    if (trace_all || trace_renderer)
+        ffnx_trace("Renderer::%s: Clearing depth\n", __func__, backendViewId);
 }
 
 void Renderer::isMovie(bool flag)
@@ -2435,27 +2258,32 @@ bool Renderer::isHDR()
     return internalState.bIsHDR;
 }
 
-void Renderer::setMovieYUVFormat(bool eightBit, bool interleaved, bool p010){
+void Renderer::setMovieYUVFormat(bool eightBit, bool interleaved, bool p010)
+{
     internalState.movieYUV8 = eightBit;
     internalState.movieUVInterleaved = interleaved;
     internalState.movieP010 = p010;
 }
 
-void Renderer::setMovieRGB(bool flag, float scaleX, float scaleY){
+void Renderer::setMovieRGB(bool flag, float scaleX, float scaleY)
+{
     internalState.bIsMovieRGB = flag;
     internalState.movieRGBScaleX = scaleX;
     internalState.movieRGBScaleY = scaleY;
 }
 
-void Renderer::setColorMatrix(ColorMatrixType cmtype){
+void Renderer::setColorMatrix(ColorMatrixType cmtype)
+{
     internalState.bIsMovieColorMatrix = cmtype;
 }
 
-void Renderer::setColorGamut(ColorGamutType cgtype){
+void Renderer::setColorGamut(ColorGamutType cgtype)
+{
     internalState.bIsMovieColorGamut = cgtype;
 }
 
-void Renderer::setOverallColorGamut(ColorGamutType cgtype){
+void Renderer::setOverallColorGamut(ColorGamutType cgtype)
+{
     internalState.bIsOverallColorGamut = cgtype;
 }
 
@@ -2486,18 +2314,21 @@ void Renderer::setInterpolationQualifier(RendererInterpolationQualifier qualifie
     {
     case RendererInterpolationQualifier::FLAT:
         backendProgram = RendererProgram::FLAT;
-        if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: FLAT\n", __func__);
+        if (trace_all || trace_renderer)
+            ffnx_trace("Renderer::%s: FLAT\n", __func__);
         break;
     case RendererInterpolationQualifier::SMOOTH:
         backendProgram = RendererProgram::SMOOTH;
-        if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: SMOOTH\n", __func__);
+        if (trace_all || trace_renderer)
+            ffnx_trace("Renderer::%s: SMOOTH\n", __func__);
         break;
     }
 }
 
 void Renderer::setPrimitiveType(RendererPrimitiveType type)
 {
-    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u\n", __func__, type);
+    if (trace_all || trace_renderer)
+        ffnx_trace("Renderer::%s: %u\n", __func__, type);
 
     internalState.primitiveType = type;
 };
@@ -2524,10 +2355,11 @@ void Renderer::doScissorTest(bool flag)
 
 void Renderer::setWireframeMode(bool flag)
 {
-    if (flag) bgfx::setDebug(BGFX_DEBUG_WIREFRAME);
+    if (flag)
+        bgfx::setDebug(BGFX_DEBUG_WIREFRAME);
 }
 
-void Renderer::setViewMatrix(struct matrix* matrix)
+void Renderer::setViewMatrix(struct matrix *matrix)
 {
     ::memcpy(internalState.viewMatrix, &matrix->m[0][0], sizeof(matrix->m));
 
@@ -2535,15 +2367,16 @@ void Renderer::setViewMatrix(struct matrix* matrix)
 
     internalState.isViewMatrixSet = true;
 
-    if (uniform_log) printMatrix(__func__, internalState.viewMatrix);
+    if (uniform_log)
+        printMatrix(__func__, internalState.viewMatrix);
 }
 
-float* Renderer::getViewMatrix()
+float *Renderer::getViewMatrix()
 {
     return internalState.viewMatrix;
 }
 
-float* Renderer::getInvViewMatrix()
+float *Renderer::getInvViewMatrix()
 {
     return internalState.invViewMatrix;
 }
@@ -2562,9 +2395,10 @@ void Renderer::setWorldViewMatrix(struct matrix *matrix, bool calculateNormalMat
 {
     ::memcpy(internalState.worldViewMatrix, &matrix->m[0][0], sizeof(matrix->m));
 
-    if (uniform_log) printMatrix(__func__, internalState.worldViewMatrix);
+    if (uniform_log)
+        printMatrix(__func__, internalState.worldViewMatrix);
 
-    if(calculateNormalMatrix)
+    if (calculateNormalMatrix)
     {
         struct matrix transpose;
         transpose_matrix(matrix, &transpose);
@@ -2577,33 +2411,35 @@ void Renderer::setWorldViewMatrix(struct matrix *matrix, bool calculateNormalMat
 
         ::memcpy(internalState.normalMatrix, &invTranspose.m[0][0], sizeof(invTranspose.m));
 
-        if (uniform_log) printMatrix(__func__, internalState.normalMatrix);
+        if (uniform_log)
+            printMatrix(__func__, internalState.normalMatrix);
     }
 }
 
-float* Renderer::getWorldViewMatrix()
+float *Renderer::getWorldViewMatrix()
 {
     return internalState.worldViewMatrix;
 }
 
-float* Renderer::getNormalMatrix()
+float *Renderer::getNormalMatrix()
 {
     return internalState.normalMatrix;
 }
 
-void Renderer::setD3DViweport(struct matrix* matrix)
+void Renderer::setD3DViweport(struct matrix *matrix)
 {
     ::memcpy(internalState.d3dViewMatrix, &matrix->m[0][0], sizeof(matrix->m));
 
-    if (uniform_log) printMatrix(__func__, internalState.d3dViewMatrix);
+    if (uniform_log)
+        printMatrix(__func__, internalState.d3dViewMatrix);
 };
 
-void Renderer::setD3DProjection(struct matrix* matrix)
+void Renderer::setD3DProjection(struct matrix *matrix)
 {
     ::memcpy(internalState.d3dProjectionMatrix, &matrix->m[0][0], sizeof(matrix->m));
 
     // Modify the projection matrix to prevent stretching
-    if(widescreen_enabled)
+    if (widescreen_enabled)
     {
         float widescreenScale = round(float(game_width) / wide_viewport_width * 100) / 100.f;
         internalState.d3dProjectionMatrix[0] *= widescreenScale;
@@ -2613,8 +2449,8 @@ void Renderer::setD3DProjection(struct matrix* matrix)
     // Modify the projection matrix to extend view distance
     if (enable_worldmap_external_mesh)
     {
-        struct game_mode* mode = getmode_cached();
-        if(mode->driver_mode == MODE_WORLDMAP)
+        struct game_mode *mode = getmode_cached();
+        if (mode->driver_mode == MODE_WORLDMAP)
         {
             const float f_offset = 0.0035f;
             const float n_offset = 0.0f;
@@ -2625,17 +2461,18 @@ void Renderer::setD3DProjection(struct matrix* matrix)
             float f = b / (a + 1.0f) + f_offset;
             float n = b / (a - 1.0f) + n_offset;
 
-            internalState.d3dProjectionMatrix[10] = -(f + n) / (f -n);
-            internalState.d3dProjectionMatrix[11] = -(2*f*n) / (f - n);
+            internalState.d3dProjectionMatrix[10] = -(f + n) / (f - n);
+            internalState.d3dProjectionMatrix[11] = -(2 * f * n) / (f - n);
         }
     }
 
-    if (uniform_log) printMatrix(__func__, internalState.d3dProjectionMatrix);
+    if (uniform_log)
+        printMatrix(__func__, internalState.d3dProjectionMatrix);
 };
 
 uint16_t Renderer::getInternalCoordX(uint16_t inX)
 {
-    if(widescreen_enabled)
+    if (widescreen_enabled)
         return (inX * framebufferWidth) / (wide_viewport_width);
     else
         return (inX * framebufferWidth) / (game_width);
@@ -2678,16 +2515,16 @@ void Renderer::isSmoothSkinning(bool flag)
     internalState.bIsSmoothSkinning = flag;
 }
 
-void Renderer::setSmoothSkinningBoneMatrices(std::array<struct matrix, MAX_BONE_MATRICES>* matrix_palette, size_t joint_count)
+void Renderer::setSmoothSkinningBoneMatrices(std::array<struct matrix, MAX_BONE_MATRICES> *matrix_palette, size_t joint_count)
 {
-    if(matrix_palette != nullptr)
+    if (matrix_palette != nullptr)
     {
         // Only the joints the model actually has are copied and uploaded
         internalState.bone_matrix_count = static_cast<uint16_t>(std::clamp<size_t>(joint_count, 1, MAX_BONE_MATRICES));
 
-        for(int i = 0; i < internalState.bone_matrix_count; ++i)
+        for (int i = 0; i < internalState.bone_matrix_count; ++i)
         {
-            ::memcpy(&internalState.bone_matrices[16*i], &(*matrix_palette)[i].m[0][0], sizeof((*matrix_palette)[i].m));
+            ::memcpy(&internalState.bone_matrices[16 * i], &(*matrix_palette)[i].m[0][0], sizeof((*matrix_palette)[i].m));
         }
     }
 }
@@ -2712,11 +2549,10 @@ bool Renderer::isFogEnabled()
     return internalState.bIsFogEnabled;
 }
 
-void Renderer::setGameLightData(light_data* lightdata)
+void Renderer::setGameLightData(light_data *lightdata)
 {
-    struct game_mode* mode = getmode_cached();
-    internalState.kawaiColorOffset = ff7::field::kawai::post_lighting_color_uniform(current_state.kawai_effect,
-        !ff8 && lightdata && game_lighting != GAME_LIGHTING_ORIGINAL);
+    struct game_mode *mode = getmode_cached();
+    internalState.kawaiColorOffset = ff7::field::kawai::post_lighting_color_uniform(current_state.kawai_effect, !ff8 && lightdata && game_lighting != GAME_LIGHTING_ORIGINAL);
 
     bool useGameLighting = lightdata != nullptr;
     if (enable_worldmap_external_mesh && mode->driver_mode == MODE_WORLDMAP)

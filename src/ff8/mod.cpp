@@ -37,14 +37,16 @@
 
 bx::DefaultAllocator TextureImage::defaultAllocator;
 
-namespace {
+namespace
+{
 constexpr size_t DECODED_IMAGE_CACHE_LIMIT = 128 * 1024 * 1024;
 using DecodedImageCacheKey = std::tuple<std::string, int, int, int, int, bool, std::array<int8_t, 4>>;
 
-struct DecodedImageCacheEntry {
-	TextureImage image;
-	std::list<DecodedImageCacheKey>::iterator recent;
-	size_t size;
+struct DecodedImageCacheEntry
+{
+    TextureImage image;
+    std::list<DecodedImageCacheKey>::iterator recent;
+    size_t size;
 };
 
 std::map<DecodedImageCacheKey, DecodedImageCacheEntry> decodedImageCache;
@@ -55,1256 +57,1225 @@ std::unordered_map<std::string, bool> textureFileCache;
 
 bool battleTextureFileExists(const char *filename)
 {
-	const auto it = textureFileCache.find(filename);
-	if (it != textureFileCache.end()) return it->second;
+    const auto it = textureFileCache.find(filename);
+    if (it != textureFileCache.end())
+        return it->second;
 
-	const bool exists = fileExists(filename);
-	if (textureFileCache.size() >= TEXTURE_FILE_CACHE_LIMIT) textureFileCache.clear();
-	textureFileCache.emplace(filename, exists);
-	return exists;
+    const bool exists = fileExists(filename);
+    if (textureFileCache.size() >= TEXTURE_FILE_CACHE_LIMIT)
+        textureFileCache.clear();
+    textureFileCache.emplace(filename, exists);
+    return exists;
 }
 
 void trimDecodedImageCache(size_t incomingSize)
 {
-	while (!decodedImageCacheRecent.empty() && decodedImageCacheSize + incomingSize > DECODED_IMAGE_CACHE_LIMIT)
-	{
-		auto it = decodedImageCache.find(decodedImageCacheRecent.back());
-		decodedImageCacheSize -= it->second.size;
-		decodedImageCache.erase(it);
-		decodedImageCacheRecent.pop_back();
-	}
+    while (!decodedImageCacheRecent.empty() && decodedImageCacheSize + incomingSize > DECODED_IMAGE_CACHE_LIMIT)
+    {
+        auto it = decodedImageCache.find(decodedImageCacheRecent.back());
+        decodedImageCacheSize -= it->second.size;
+        decodedImageCache.erase(it);
+        decodedImageCacheRecent.pop_back();
+    }
 }
-}
+} // namespace
 
-TextureImage::TextureImage() :
-	_image(nullptr), _scale(1)
+TextureImage::TextureImage() : _image(nullptr), _scale(1)
 {
 }
 
 bool TextureImage::createImage(const char *filename, int originalTexturePixelWidth, int originalTextureHeight, int internalLodScale, int8_t *rgbaModifier, bool useCache)
 {
-	destroyImage();
+    destroyImage();
 
-	DecodedImageCacheKey cacheKey;
-	// Remastered archive images retain their existing loading path.
-	useCache = useCache && strncmp(filename, "zzz://", 6) != 0;
-	if (useCache)
-	{
-		// stat can extract virtual archive entries; cache identity must not probe the filesystem.
-		std::array<int8_t, 4> modifier{};
-		if (rgbaModifier != nullptr) std::copy_n(rgbaModifier, modifier.size(), modifier.begin());
-		cacheKey = {filename, originalTexturePixelWidth, originalTextureHeight, internalLodScale, computeMaxScale(),
-			ff8_remastered_edition, modifier};
-		auto it = decodedImageCache.find(cacheKey);
-		if (it != decodedImageCache.end())
-		{
-			*this = it->second.image;
-			decodedImageCacheRecent.splice(decodedImageCacheRecent.begin(), decodedImageCacheRecent, it->second.recent);
-			if (trace_all || trace_loaders) ffnx_trace("TextureImage::%s: decoded cache hit %s\n", __func__, filename);
-			return true;
-		}
-	}
+    DecodedImageCacheKey cacheKey;
+    // Remastered archive images retain their existing loading path.
+    useCache = useCache && strncmp(filename, "zzz://", 6) != 0;
+    if (useCache)
+    {
+        // stat can extract virtual archive entries; cache identity must not probe the filesystem.
+        std::array<int8_t, 4> modifier{};
+        if (rgbaModifier != nullptr)
+            std::copy_n(rgbaModifier, modifier.size(), modifier.begin());
+        cacheKey = {filename, originalTexturePixelWidth, originalTextureHeight, internalLodScale, computeMaxScale(), ff8_remastered_edition, modifier};
+        auto it = decodedImageCache.find(cacheKey);
+        if (it != decodedImageCache.end())
+        {
+            *this = it->second.image;
+            decodedImageCacheRecent.splice(decodedImageCacheRecent.begin(), decodedImageCacheRecent, it->second.recent);
+            if (trace_all || trace_loaders)
+                ffnx_trace("TextureImage::%s: decoded cache hit %s\n", __func__, filename);
+            return true;
+        }
+    }
 
-	if (decodedImageCacheSize != 0 && !Renderer::doesItFitInMemory(DECODED_IMAGE_CACHE_LIMIT))
-	{
-		clearCache();
-	}
+    if (decodedImageCacheSize != 0 && !Renderer::doesItFitInMemory(DECODED_IMAGE_CACHE_LIMIT))
+    {
+        clearCache();
+    }
 
-	bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::BGRA8;
+    bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::BGRA8;
 
-	const char *extension = strrchr(filename, '.');
-	if (extension != nullptr && stricmp(extension + 1, "png") == 0) {
-		// Load PNG using libPNG
-		setImage(loadPng(&defaultAllocator, filename, targetFormat));
+    const char *extension = strrchr(filename, '.');
+    if (extension != nullptr && stricmp(extension + 1, "png") == 0)
+    {
+        // Load PNG using libPNG
+        setImage(loadPng(&defaultAllocator, filename, targetFormat));
 
-		// Remastered fix (Convert 768x288 to 768x384)
-		if (ff8_remastered_edition && _image != nullptr && _image->m_width == 768 && _image->m_height == 288 && _image->m_width == originalTexturePixelWidth * 3 * 2 && _image->m_height < originalTextureHeight * 3) {
-			bimg::ImageContainer *resizedImage = bimg::imageAlloc(&defaultAllocator, targetFormat, _image->m_width, 384, _image->m_depth, _image->m_numLayers, false, false);
+        // Remastered fix (Convert 768x288 to 768x384)
+        if (ff8_remastered_edition && _image != nullptr && _image->m_width == 768 && _image->m_height == 288 && _image->m_width == originalTexturePixelWidth * 3 * 2 && _image->m_height < originalTextureHeight * 3)
+        {
+            bimg::ImageContainer *resizedImage = bimg::imageAlloc(&defaultAllocator, targetFormat, _image->m_width, 384, _image->m_depth, _image->m_numLayers, false, false);
 
-			if (resizedImage == nullptr) {
-				ffnx_error("%s: cannot resize PNG file %s\n", __func__, filename);
-				destroyImage();
-				return false;
-			}
+            if (resizedImage == nullptr)
+            {
+                ffnx_error("%s: cannot resize PNG file %s\n", __func__, filename);
+                destroyImage();
+                return false;
+            }
 
-			memcpy(resizedImage->m_data, _image->m_data, _image->m_size);
-			memset((uint8_t *)resizedImage->m_data + _image->m_size, 0, (resizedImage->m_height - _image->m_height) * resizedImage->m_width * 4);
+            memcpy(resizedImage->m_data, _image->m_data, _image->m_size);
+            memset((uint8_t *)resizedImage->m_data + _image->m_size, 0, (resizedImage->m_height - _image->m_height) * resizedImage->m_width * 4);
 
-			destroyImage();
-			setImage(resizedImage);
-		}
+            destroyImage();
+            setImage(resizedImage);
+        }
 
-		setLod(0);
-	} else if (extension != nullptr && stricmp(extension + 1, "dds") == 0) {
-		// Load DDS using DirectXTex
-		DirectX::TexMetadata metadata;
-		DirectX::ScratchImage image;
-		if (parseDds(filename, image, metadata)) {
-			int lod = computeLod(originalTexturePixelWidth, metadata.width, metadata.mipLevels, internalLodScale, filename);
-			// Convert only the relevant lod to improve performance
-			setImage(convertDds(&defaultAllocator, image, metadata, targetFormat, lod));
-			image.Release();
-			setLod(0);
-		}
-	} else {
-		setImage(loadImageContainer(&defaultAllocator, filename, targetFormat));
+        setLod(0);
+    }
+    else if (extension != nullptr && stricmp(extension + 1, "dds") == 0)
+    {
+        // Load DDS using DirectXTex
+        DirectX::TexMetadata metadata;
+        DirectX::ScratchImage image;
+        if (parseDds(filename, image, metadata))
+        {
+            int lod = computeLod(originalTexturePixelWidth, metadata.width, metadata.mipLevels, internalLodScale, filename);
+            // Convert only the relevant lod to improve performance
+            setImage(convertDds(&defaultAllocator, image, metadata, targetFormat, lod));
+            image.Release();
+            setLod(0);
+        }
+    }
+    else
+    {
+        setImage(loadImageContainer(&defaultAllocator, filename, targetFormat));
 
-		if (_image != nullptr)
-		{
-			setLod(computeLod(originalTexturePixelWidth, _image->m_width, _image->m_numMips, internalLodScale, filename));
-		}
-	}
+        if (_image != nullptr)
+        {
+            setLod(computeLod(originalTexturePixelWidth, _image->m_width, _image->m_numMips, internalLodScale, filename));
+        }
+    }
 
-	if (_image == nullptr)
-	{
-		return false;
-	}
+    if (_image == nullptr)
+    {
+        return false;
+    }
 
-	uint8_t scale = computeScale(originalTexturePixelWidth, originalTextureHeight, filename);
+    uint8_t scale = computeScale(originalTexturePixelWidth, originalTextureHeight, filename);
 
-	if (trace_all || trace_vram)
-	{
-		ffnx_info("TextureImage::%s: size=%dx%d scaled to %dx%d (x%d) format=%d depth=%d numMips=%d hasAlpha=%d\n", __func__,
-			_image->m_width, _image->m_height, _mip.m_width, _mip.m_height, scale, _mip.m_format, _mip.m_depth, _image->m_numMips, _mip.m_hasAlpha);
-	}
+    if (trace_all || trace_vram)
+    {
+        ffnx_info("TextureImage::%s: size=%dx%d scaled to %dx%d (x%d) format=%d depth=%d numMips=%d hasAlpha=%d\n", __func__, _image->m_width, _image->m_height, _mip.m_width, _mip.m_height, scale, _mip.m_format, _mip.m_depth, _image->m_numMips, _mip.m_hasAlpha);
+    }
 
-	if (scale == 0)
-	{
-		destroyImage();
+    if (scale == 0)
+    {
+        destroyImage();
 
-		return false;
-	}
+        return false;
+    }
 
-	_scale = scale;
+    _scale = scale;
 
-	alterColors(rgbaModifier);
+    alterColors(rgbaModifier);
 
-	if (useCache && _image->m_size <= DECODED_IMAGE_CACHE_LIMIT)
-	{
-		trimDecodedImageCache(_image->m_size);
-		decodedImageCacheRecent.push_front(cacheKey);
-		decodedImageCache.emplace(cacheKey, DecodedImageCacheEntry{*this, decodedImageCacheRecent.begin(), _image->m_size});
-		decodedImageCacheSize += _image->m_size;
-	}
+    if (useCache && _image->m_size <= DECODED_IMAGE_CACHE_LIMIT)
+    {
+        trimDecodedImageCache(_image->m_size);
+        decodedImageCacheRecent.push_front(cacheKey);
+        decodedImageCache.emplace(cacheKey, DecodedImageCacheEntry{*this, decodedImageCacheRecent.begin(), _image->m_size});
+        decodedImageCacheSize += _image->m_size;
+    }
 
-	return true;
+    return true;
 }
 
 void TextureImage::destroyImage()
 {
-	_image.reset();
-	_mip = {};
-	_scale = 1;
+    _image.reset();
+    _mip = {};
+    _scale = 1;
 }
 
 void TextureImage::setImage(bimg::ImageContainer *image)
 {
-	if (image == nullptr) _image.reset();
-	else _image.reset(image, bimg::imageFree);
+    if (image == nullptr)
+        _image.reset();
+    else
+        _image.reset(image, bimg::imageFree);
 }
 
 void TextureImage::clearCache()
 {
-	decodedImageCache.clear();
-	decodedImageCacheRecent.clear();
-	decodedImageCacheSize = 0;
-	textureFileCache.clear();
+    decodedImageCache.clear();
+    decodedImageCacheRecent.clear();
+    decodedImageCacheSize = 0;
+    textureFileCache.clear();
 }
 
 uint32_t *TextureImage::writableData()
 {
-	if (_image == nullptr)
-	{
-		ffnx_error("TextureImage::%s: cannot modify an empty image\n", __func__);
-		return nullptr;
-	}
+    if (_image == nullptr)
+    {
+        ffnx_error("TextureImage::%s: cannot modify an empty image\n", __func__);
+        return nullptr;
+    }
 
-	if (_image.use_count() > 1)
-	{
-		if (!Renderer::doesItFitInMemory(_mip.m_size)) clearCache();
-		if (_image.use_count() > 1)
-		{
-			if (!Renderer::doesItFitInMemory(_mip.m_size))
-			{
-				ffnx_error("TextureImage::%s: not enough memory to copy %dx%d image\n", __func__, _mip.m_width, _mip.m_height);
-				return nullptr;
-			}
-			bimg::ImageContainer *copy = bimg::imageAlloc(&defaultAllocator, _mip.m_format, _mip.m_width, _mip.m_height, 0, 1, false, false, _mip.m_data);
-			if (copy == nullptr)
-			{
-				ffnx_error("TextureImage::%s: cannot copy %dx%d image\n", __func__, _mip.m_width, _mip.m_height);
-				return nullptr;
-			}
-			setImage(copy);
-			setLod(0);
-		}
-	}
+    if (_image.use_count() > 1)
+    {
+        if (!Renderer::doesItFitInMemory(_mip.m_size))
+            clearCache();
+        if (_image.use_count() > 1)
+        {
+            if (!Renderer::doesItFitInMemory(_mip.m_size))
+            {
+                ffnx_error("TextureImage::%s: not enough memory to copy %dx%d image\n", __func__, _mip.m_width, _mip.m_height);
+                return nullptr;
+            }
+            bimg::ImageContainer *copy = bimg::imageAlloc(&defaultAllocator, _mip.m_format, _mip.m_width, _mip.m_height, 0, 1, false, false, _mip.m_data);
+            if (copy == nullptr)
+            {
+                ffnx_error("TextureImage::%s: cannot copy %dx%d image\n", __func__, _mip.m_width, _mip.m_height);
+                return nullptr;
+            }
+            setImage(copy);
+            setLod(0);
+        }
+    }
 
-	return const_cast<uint32_t *>(reinterpret_cast<const uint32_t *>(_mip.m_data));
+    return const_cast<uint32_t *>(reinterpret_cast<const uint32_t *>(_mip.m_data));
 }
 
 void TextureImage::setLod(uint8_t lod)
 {
-	if (_image != nullptr)
-	{
-		bimg::imageGetRawData(*_image, 0, lod, _image->m_data, _image->m_size, _mip);
-	}
+    if (_image != nullptr)
+    {
+        bimg::imageGetRawData(*_image, 0, lod, _image->m_data, _image->m_size, _mip);
+    }
 }
 
 void TextureImage::alterColors(int8_t *rgbaModifier)
 {
-	if (rgbaModifier == nullptr || rgbaModifier[0] == 0 && rgbaModifier[1] == 0 && rgbaModifier[2] == 0 && rgbaModifier[3] == 0)
-	{
-		return;
-	}
+    if (rgbaModifier == nullptr || rgbaModifier[0] == 0 && rgbaModifier[1] == 0 && rgbaModifier[2] == 0 && rgbaModifier[3] == 0)
+    {
+        return;
+    }
 
-	if (trace_all || trace_vram) ffnx_info("%s: rgbaModifier=(%d, %d, %d, %d)\n", __func__, rgbaModifier[0], rgbaModifier[1], rgbaModifier[2], rgbaModifier[3]);
+    if (trace_all || trace_vram)
+        ffnx_info("%s: rgbaModifier=(%d, %d, %d, %d)\n", __func__, rgbaModifier[0], rgbaModifier[1], rgbaModifier[2], rgbaModifier[3]);
 
-	uint32_t *bgra = const_cast<uint32_t *>(reinterpret_cast<const uint32_t *>(_mip.m_data));
+    uint32_t *bgra = const_cast<uint32_t *>(reinterpret_cast<const uint32_t *>(_mip.m_data));
 
-	for (int i = 0; i < _mip.m_width * _mip.m_height; ++i)
-	{
-		int32_t b = (bgra[i] & 0xFF) + rgbaModifier[2],
-			g = ((bgra[i] >> 8) & 0xFF) + rgbaModifier[1],
-			r = ((bgra[i] >> 16) & 0xFF) + rgbaModifier[0],
-			a = ((bgra[i] >> 24) & 0xFF) + rgbaModifier[3];
-		if (r < 0) r = 0;
-		if (g < 0) g = 0;
-		if (b < 0) b = 0;
-		if (a < 0) a = 0;
-		if (r > 255) r = 255;
-		if (g > 255) g = 255;
-		if (b > 255) b = 255;
-		if (a > 255) a = 255;
-		bgra[i] = (b & 0xFF) | ((g & 0xFF) << 8) | ((r & 0xFF) << 16) | ((a & 0xFF) << 24);
-	}
+    for (int i = 0; i < _mip.m_width * _mip.m_height; ++i)
+    {
+        int32_t b = (bgra[i] & 0xFF) + rgbaModifier[2], g = ((bgra[i] >> 8) & 0xFF) + rgbaModifier[1], r = ((bgra[i] >> 16) & 0xFF) + rgbaModifier[0], a = ((bgra[i] >> 24) & 0xFF) + rgbaModifier[3];
+        if (r < 0)
+            r = 0;
+        if (g < 0)
+            g = 0;
+        if (b < 0)
+            b = 0;
+        if (a < 0)
+            a = 0;
+        if (r > 255)
+            r = 255;
+        if (g > 255)
+            g = 255;
+        if (b > 255)
+            b = 255;
+        if (a > 255)
+            a = 255;
+        bgra[i] = (b & 0xFF) | ((g & 0xFF) << 8) | ((r & 0xFF) << 16) | ((a & 0xFF) << 24);
+    }
 }
 
 int TextureImage::computeMaxScale()
 {
-	int resWidth = window_size_x * newRenderer.getScalingFactor(),
-		baseResW = FF8_BASE_RESOLUTION_X;
+    int resWidth = window_size_x * newRenderer.getScalingFactor(), baseResW = FF8_BASE_RESOLUTION_X;
 
-	return std::max(resWidth, FF8_BASE_RESOLUTION_X) / baseResW;
+    return std::max(resWidth, FF8_BASE_RESOLUTION_X) / baseResW;
 }
 
 uint8_t TextureImage::computeLod(int originalTexturePixelWidth, int imageWidth, int numMips, int internalScale, const char *filename) const
 {
-	if (numMips <= 1)
-	{
-		return 0;
-	}
+    if (numMips <= 1)
+    {
+        return 0;
+    }
 
-	int maxScale = computeMaxScale(),
-		maxWidth = originalTexturePixelWidth * maxScale * internalScale;
+    int maxScale = computeMaxScale(), maxWidth = originalTexturePixelWidth * maxScale * internalScale;
 
-	if (trace_all || trace_vram)
-	{
-		ffnx_info("TextureImage::%s: maxScale=%d maxWidth=%d imageWidth=%d\n", __func__, maxScale, maxWidth, imageWidth);
-	}
+    if (trace_all || trace_vram)
+    {
+        ffnx_info("TextureImage::%s: maxScale=%d maxWidth=%d imageWidth=%d\n", __func__, maxScale, maxWidth, imageWidth);
+    }
 
-	for (uint8_t lod = 0; lod < numMips; ++lod)
-	{
-		if (imageWidth <= maxWidth)
-		{
-			return lod;
-		}
+    for (uint8_t lod = 0; lod < numMips; ++lod)
+    {
+        if (imageWidth <= maxWidth)
+        {
+            return lod;
+        }
 
-		imageWidth /= 2;
-	}
+        imageWidth /= 2;
+    }
 
-	ffnx_warning("TextureImage::%s: Cannot detect the LOD of the texture %s\n", __func__, filename);
+    ffnx_warning("TextureImage::%s: Cannot detect the LOD of the texture %s\n", __func__, filename);
 
-	return 0;
+    return 0;
 }
 
 uint8_t TextureImage::computeScale(int sourcePixelW, int sourceH, const char *filename) const
 {
-	int targetPixelW = _mip.m_width, targetH = _mip.m_height;
-	const bool isRemasteredTexture = ff8_remastered_edition && strncmp(filename, "zzz://textures\\", sizeof("zzz://textures\\") - 1) == 0;
-	if (isRemasteredTexture && sourceH == sourcePixelW * 2 && targetPixelW == targetH)
-	{
-		sourceH = sourcePixelW;
-	}
+    int targetPixelW = _mip.m_width, targetH = _mip.m_height;
+    const bool isRemasteredTexture = ff8_remastered_edition && strncmp(filename, "zzz://textures\\", sizeof("zzz://textures\\") - 1) == 0;
+    if (isRemasteredTexture && sourceH == sourcePixelW * 2 && targetPixelW == targetH)
+    {
+        sourceH = sourcePixelW;
+    }
 
-	if (isRemasteredTexture && targetPixelW <= sourcePixelW && targetH <= sourceH)
-	{
-		for (int scale = MAX_SCALE; scale > 0; --scale)
-		{
-			if (targetPixelW % scale == 0 && targetH % scale == 0
-				&& targetPixelW / scale <= sourcePixelW && targetH / scale <= sourceH)
-			{
-				return uint8_t(scale);
-			}
-		}
-	}
+    if (isRemasteredTexture && targetPixelW <= sourcePixelW && targetH <= sourceH)
+    {
+        for (int scale = MAX_SCALE; scale > 0; --scale)
+        {
+            if (targetPixelW % scale == 0 && targetH % scale == 0 && targetPixelW / scale <= sourcePixelW && targetH / scale <= sourceH)
+            {
+                return uint8_t(scale);
+            }
+        }
+    }
 
-	if (isRemasteredTexture
-		&& targetPixelW >= sourcePixelW && targetH >= sourceH
-		&& targetPixelW % sourcePixelW == 0 && targetH % sourceH == 0)
-	{
-		const int horizontalScale = targetPixelW / sourcePixelW;
-		const int verticalScale = targetH / sourceH;
-		if (verticalScale <= MAX_SCALE && horizontalScale > verticalScale
-			&& horizontalScale % verticalScale == 0 && horizontalScale / verticalScale >= 3)
-		{
-			return uint8_t(verticalScale);
-		}
-	}
+    if (isRemasteredTexture && targetPixelW >= sourcePixelW && targetH >= sourceH && targetPixelW % sourcePixelW == 0 && targetH % sourceH == 0)
+    {
+        const int horizontalScale = targetPixelW / sourcePixelW;
+        const int verticalScale = targetH / sourceH;
+        if (verticalScale <= MAX_SCALE && horizontalScale > verticalScale && horizontalScale % verticalScale == 0 && horizontalScale / verticalScale >= 3)
+        {
+            return uint8_t(verticalScale);
+        }
+    }
 
-	if (targetPixelW < sourcePixelW
-		|| targetH < sourceH
-		|| targetPixelW % sourcePixelW != 0)
-	{
-		ffnx_warning("External texture size must be scaled to the original texture size with the same ratio (modded texture size: %dx%d, original texture size: %dx%d, filename=%s)\n", targetPixelW, targetH, sourcePixelW, sourceH, filename);
+    if (targetPixelW < sourcePixelW || targetH < sourceH || targetPixelW % sourcePixelW != 0)
+    {
+        ffnx_warning("External texture size must be scaled to the original texture size with the same ratio (modded texture size: %dx%d, original texture size: %dx%d, filename=%s)\n", targetPixelW, targetH, sourcePixelW, sourceH, filename);
 
-		return 0;
-	}
+        return 0;
+    }
 
-	int scaleW = targetPixelW / sourcePixelW;
+    int scaleW = targetPixelW / sourcePixelW;
 
-	// Some Remastered battle textures use a full 128-row canvas even when the
-	// original TIM only occupies part of it (notably Rinoa's 97-row texture).
-	if (isRemasteredTexture && scaleW % 2 == 0) {
-		int remasteredScale = scaleW / 2;
+    // Some Remastered battle textures use a full 128-row canvas even when the
+    // original TIM only occupies part of it (notably Rinoa's 97-row texture).
+    if (isRemasteredTexture && scaleW % 2 == 0)
+    {
+        int remasteredScale = scaleW / 2;
 
-		if (remasteredScale <= MAX_SCALE && sourceH <= 128 && targetH == 128 * remasteredScale) {
-			return remasteredScale;
-		}
-	}
+        if (remasteredScale <= MAX_SCALE && sourceH <= 128 && targetH == 128 * remasteredScale)
+        {
+            return remasteredScale;
+        }
+    }
 
-	if (targetH % sourceH != 0) {
-		ffnx_warning("External texture size must be scaled to the original texture size with the same ratio (modded texture size: %dx%d, original texture size: %dx%d, filename=%s)\n", targetPixelW, targetH, sourcePixelW, sourceH, filename);
+    if (targetH % sourceH != 0)
+    {
+        ffnx_warning("External texture size must be scaled to the original texture size with the same ratio (modded texture size: %dx%d, original texture size: %dx%d, filename=%s)\n", targetPixelW, targetH, sourcePixelW, sourceH, filename);
 
-		return 0;
-	}
+        return 0;
+    }
 
-	int scaleH = targetH / sourceH;
+    int scaleH = targetH / sourceH;
 
-	// Remastered textures
-	if (scaleW == scaleH * 2)
-	{
-		scaleW = scaleH;
-	}
+    // Remastered textures
+    if (scaleW == scaleH * 2)
+    {
+        scaleW = scaleH;
+    }
 
-	if (scaleW != scaleH)
-	{
-		ffnx_warning("External texture size must have the same ratio as the original texture: (%d / %d) filename=%s\n", sourcePixelW, sourceH, filename);
+    if (scaleW != scaleH)
+    {
+        ffnx_warning("External texture size must have the same ratio as the original texture: (%d / %d) filename=%s\n", sourcePixelW, sourceH, filename);
 
-		return 0;
-	}
+        return 0;
+    }
 
-	if (scaleW > MAX_SCALE)
-	{
-		ffnx_warning("External texture size cannot exceed \"original size * %d\" (scale=%d) filename=%s\n", MAX_SCALE, scaleW, filename);
+    if (scaleW > MAX_SCALE)
+    {
+        ffnx_warning("External texture size cannot exceed \"original size * %d\" (scale=%d) filename=%s\n", MAX_SCALE, scaleW, filename);
 
-		return 0;
-	}
+        return 0;
+    }
 
-	return scaleW;
+    return scaleW;
 }
 
-ModdedTexture::ModdedTexture(const TexturePacker::IdentifiedTexture &originalTexture, bool isInternal):
-	_originalTexture(originalTexture), _isInternal(isInternal)
+ModdedTexture::ModdedTexture(const TexturePacker::IdentifiedTexture &originalTexture, bool isInternal) : _originalTexture(originalTexture), _isInternal(isInternal)
 {
 }
 
 bool ModdedTexture::hasRemasteredArchiveTextureOverride(const char *archiveFilename)
 {
-	if (!ff8_remastered_edition || !g_FF8ZzzArchiveMain.fileExists(archiveFilename))
-	{
-		return false;
-	}
+    if (!ff8_remastered_edition || !g_FF8ZzzArchiveMain.fileExists(archiveFilename))
+    {
+        return false;
+    }
 
-	std::string textureName = archiveFilename;
-	const size_t extensionOffset = textureName.find_last_of('.');
-	if (extensionOffset != std::string::npos)
-	{
-		textureName.resize(extensionOffset);
-	}
+    std::string textureName = archiveFilename;
+    const size_t extensionOffset = textureName.find_last_of('.');
+    if (extensionOffset != std::string::npos)
+    {
+        textureName.resize(extensionOffset);
+    }
 
-	for (const std::string *texturePath : { &override_mod_path, &mod_path })
-	{
-		if (texturePath->empty())
-		{
-			continue;
-		}
+    for (const std::string *texturePath : {&override_mod_path, &mod_path})
+    {
+        if (texturePath->empty())
+        {
+            continue;
+        }
 
-		for (const std::string &extension : mod_ext)
-		{
-			const std::string overrideFilename = std::string(basedir) + "/" + *texturePath + "/" + textureName + "." + extension;
+        for (const std::string &extension : mod_ext)
+        {
+            const std::string overrideFilename = std::string(basedir) + "/" + *texturePath + "/" + textureName + "." + extension;
 
-			if (fileExists(overrideFilename.c_str()))
-			{
-				return true;
-			}
+            if (fileExists(overrideFilename.c_str()))
+            {
+                return true;
+            }
 
-			if (trace_all || trace_loaders) ffnx_warning("Texture does not exist, skipping: %s\n", overrideFilename.c_str());
-		}
-	}
+            if (trace_all || trace_loaders)
+                ffnx_warning("Texture does not exist, skipping: %s\n", overrideFilename.c_str());
+        }
+    }
 
-	return false;
+    return false;
 }
 
 static bool findRemasteredArchiveTexture(const char *name, char *filename, char *foundExtension, bool externalOnly)
 {
-	_snprintf(filename, MAX_PATH, "textures\\%s.png", name);
+    _snprintf(filename, MAX_PATH, "textures\\%s.png", name);
 
-	if (externalOnly ? ModdedTexture::hasRemasteredArchiveTextureOverride(filename)
-		: ff8_remastered_edition && g_FF8ZzzArchiveMain.fileExists(filename))
-	{
-		_snprintf(filename, MAX_PATH, "zzz://textures\\%s.png", name);
+    if (externalOnly ? ModdedTexture::hasRemasteredArchiveTextureOverride(filename) : ff8_remastered_edition && g_FF8ZzzArchiveMain.fileExists(filename))
+    {
+        _snprintf(filename, MAX_PATH, "zzz://textures\\%s.png", name);
 
-		if (trace_all || trace_loaders) ffnx_trace("Using texture: %s\n", filename);
+        if (trace_all || trace_loaders)
+            ffnx_trace("Using texture: %s\n", filename);
 
-		if (foundExtension != nullptr) {
-			strncpy(foundExtension, "png", 3);
-		}
+        if (foundExtension != nullptr)
+        {
+            strncpy(foundExtension, "png", 3);
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	return false;
+    return false;
 }
 
 bool ModdedTexture::findExternalTexture(char *outFilename, uint8_t palette_index, bool hasPal, const char *extension, char *foundExtension) const
 {
-	std::string remasterName = originalTexture().remasteredName();
+    std::string remasterName = originalTexture().remasteredName();
 
-	if (!ff8_remastered_edition || remasterName.empty())
-	{
-		return findExternalTexture(originalTexture().name().c_str(), outFilename, palette_index, hasPal, extension, foundExtension);
-	}
+    if (!ff8_remastered_edition || remasterName.empty())
+    {
+        return findExternalTexture(originalTexture().name().c_str(), outFilename, palette_index, hasPal, extension, foundExtension);
+    }
 
-	size_t pos = remasterName.find("field_hd_new");
-	std::string fallbackName = remasterName;
-	if (pos != std::string::npos)
-	{
-		fallbackName.replace(pos, sizeof("field_hd_new") - 1, "field_hd");
-	}
+    size_t pos = remasterName.find("field_hd_new");
+    std::string fallbackName = remasterName;
+    if (pos != std::string::npos)
+    {
+        fallbackName.replace(pos, sizeof("field_hd_new") - 1, "field_hd");
+    }
 
-	const bool hasFallback = pos != std::string::npos;
+    const bool hasFallback = pos != std::string::npos;
 
-	if (findRemasteredArchiveTexture(remasterName.c_str(), outFilename, foundExtension, true)
-		|| (hasFallback && findRemasteredArchiveTexture(fallbackName.c_str(), outFilename, foundExtension, true))
-		|| findExternalTexture(originalTexture().name().c_str(), outFilename, palette_index, hasPal, extension, foundExtension)
-		|| findRemasteredArchiveTexture(remasterName.c_str(), outFilename, foundExtension, false)
-		|| (hasFallback && findRemasteredArchiveTexture(fallbackName.c_str(), outFilename, foundExtension, false)))
-	{
-		return true;
-	}
+    if (findRemasteredArchiveTexture(remasterName.c_str(), outFilename, foundExtension, true) || (hasFallback && findRemasteredArchiveTexture(fallbackName.c_str(), outFilename, foundExtension, true)) || findExternalTexture(originalTexture().name().c_str(), outFilename, palette_index, hasPal, extension, foundExtension) || findRemasteredArchiveTexture(remasterName.c_str(), outFilename, foundExtension, false) || (hasFallback && findRemasteredArchiveTexture(fallbackName.c_str(), outFilename, foundExtension, false)))
+    {
+        return true;
+    }
 
-	if (trace_all || trace_loaders) ffnx_warning("Texture does not exist, skipping: %s\n", outFilename);
+    if (trace_all || trace_loaders)
+        ffnx_warning("Texture does not exist, skipping: %s\n", outFilename);
 
-	return false;
+    return false;
 }
 
 bool ModdedTexture::findExternalTextureRemastered(const char *name, char *filename, uint8_t palette_index, bool hasPal, const char *extension, char *found_extension)
 {
-	return findRemasteredArchiveTexture(name, filename, found_extension, true)
-		|| findRemasteredArchiveTexture(name, filename, found_extension, false);
+    return findRemasteredArchiveTexture(name, filename, found_extension, true) || findRemasteredArchiveTexture(name, filename, found_extension, false);
 }
 
 bool ModdedTexture::findExternalTexture(const char *name, char *filename, uint8_t palette_index, bool hasPal, const char *extension, char *found_extension)
 {
-	char langPath[16] = "/";
-	const std::string_view textureName(name);
-	const bool cacheLookup = textureName.starts_with("battle/") || textureName.starts_with("magic/");
+    char langPath[16] = "/";
+    const std::string_view textureName(name);
+    const bool cacheLookup = textureName.starts_with("battle/") || textureName.starts_with("magic/");
 
-	if(trace_all || trace_loaders) ffnx_trace("Texture file name (VRAM): %s palette_index=%d hasPal=%d\n", name, palette_index, hasPal);
+    if (trace_all || trace_loaders)
+        ffnx_trace("Texture file name (VRAM): %s palette_index=%d hasPal=%d\n", name, palette_index, hasPal);
 
-	if(save_textures) return false;
+    if (save_textures)
+        return false;
 
-	ff8_fs_lang_string(langPath + 1);
+    ff8_fs_lang_string(langPath + 1);
 
-	for (size_t idx = 0; idx < mod_ext.size(); idx++)
-	{
-		// Force extension
-		if (extension && stricmp(extension, mod_ext[idx].c_str()) != 0)
-		{
-			continue;
-		}
+    for (size_t idx = 0; idx < mod_ext.size(); idx++)
+    {
+        // Force extension
+        if (extension && stricmp(extension, mod_ext[idx].c_str()) != 0)
+        {
+            continue;
+        }
 
-		for (uint8_t lang = 0; lang < 2; lang++)
-		{
-			if (hasPal)
-			{
-				_snprintf(filename, MAX_PATH, "%s/%s%s/%s_%02i.%s", basedir, mod_path.c_str(), langPath, name, palette_index, mod_ext[idx].c_str());
-			}
-			else
-			{
-				_snprintf(filename, MAX_PATH, "%s/%s%s/%s.%s", basedir, mod_path.c_str(), langPath, name, mod_ext[idx].c_str());
-			}
+        for (uint8_t lang = 0; lang < 2; lang++)
+        {
+            if (hasPal)
+            {
+                _snprintf(filename, MAX_PATH, "%s/%s%s/%s_%02i.%s", basedir, mod_path.c_str(), langPath, name, palette_index, mod_ext[idx].c_str());
+            }
+            else
+            {
+                _snprintf(filename, MAX_PATH, "%s/%s%s/%s.%s", basedir, mod_path.c_str(), langPath, name, mod_ext[idx].c_str());
+            }
 
-			if (cacheLookup ? battleTextureFileExists(filename) : fileExists(filename))
-			{
-				if (trace_all || trace_loaders) ffnx_trace("Using texture: %s\n", filename);
+            if (cacheLookup ? battleTextureFileExists(filename) : fileExists(filename))
+            {
+                if (trace_all || trace_loaders)
+                    ffnx_trace("Using texture: %s\n", filename);
 
-				if (found_extension != nullptr) {
-					strncpy(found_extension, mod_ext[idx].c_str(), mod_ext[idx].size());
-				}
+                if (found_extension != nullptr)
+                {
+                    strncpy(found_extension, mod_ext[idx].c_str(), mod_ext[idx].size());
+                }
 
-				return true;
-			}
-			else if (trace_all || trace_loaders)
-			{
-				ffnx_warning("Texture does not exist, skipping: %s\n", filename);
-			}
+                return true;
+            }
+            else if (trace_all || trace_loaders)
+            {
+                ffnx_warning("Texture does not exist, skipping: %s\n", filename);
+            }
 
-			*langPath = '\0';
-		}
+            *langPath = '\0';
+        }
 
-		*langPath = '/';
-	}
+        *langPath = '/';
+    }
 
-	return false;
+    return false;
 }
 
-void ModdedTexture::drawImage(
-	const uint32_t *sourceRgba, int sourceRgbaW, uint8_t sourceScale,
-	uint32_t *targetRgba, int targetRgbaW, uint8_t targetScale,
-	int sourceX, int sourceY, int sourceW, int sourceH,
-	int targetX, int targetY)
+void ModdedTexture::drawImage(const uint32_t *sourceRgba, int sourceRgbaW, uint8_t sourceScale, uint32_t *targetRgba, int targetRgbaW, uint8_t targetScale, int sourceX, int sourceY, int sourceW, int sourceH, int targetX, int targetY)
 {
-	if (targetScale < sourceScale)
-	{
-		return;
-	}
+    if (targetScale < sourceScale)
+    {
+        return;
+    }
 
-	sourceRgbaW *= sourceScale;
-	targetRgbaW *= targetScale;
-	if (targetScale == sourceScale)
-	{
-		const int width = sourceW * sourceScale, height = sourceH * sourceScale;
-		const uint32_t *source = sourceRgba + sourceX * sourceScale + sourceY * sourceScale * sourceRgbaW;
-		uint32_t *target = targetRgba + targetX * targetScale + targetY * targetScale * targetRgbaW;
-		for (int y = 0; y < height; ++y)
-		{
-			for (int x = 0; x < width; ++x)
-			{
-				const uint32_t color = source[x];
-				target[x] = (color & 0xFFFFFF) | ((color & 0xFF000000) >= 0x7F000000 ? 0x7F000000 : 0);
-			}
-			source += sourceRgbaW;
-			target += targetRgbaW;
-		}
-		return;
-	}
-	const uint8_t scaleRatio = targetScale / sourceScale;
+    sourceRgbaW *= sourceScale;
+    targetRgbaW *= targetScale;
+    if (targetScale == sourceScale)
+    {
+        const int width = sourceW * sourceScale, height = sourceH * sourceScale;
+        const uint32_t *source = sourceRgba + sourceX * sourceScale + sourceY * sourceScale * sourceRgbaW;
+        uint32_t *target = targetRgba + targetX * targetScale + targetY * targetScale * targetRgbaW;
+        for (int y = 0; y < height; ++y)
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                const uint32_t color = source[x];
+                target[x] = (color & 0xFFFFFF) | ((color & 0xFF000000) >= 0x7F000000 ? 0x7F000000 : 0);
+            }
+            source += sourceRgbaW;
+            target += targetRgbaW;
+        }
+        return;
+    }
+    const uint8_t scaleRatio = targetScale / sourceScale;
 
-	for (int y = 0; y < sourceH; ++y)
-	{
-		for (int x = 0; x < sourceW; ++x)
-		{
-			const uint32_t *sourceRgbaCur = sourceRgba + (sourceX + x) * sourceScale + (sourceY + y) * sourceScale * sourceRgbaW;
-			uint32_t *targetRgbaCur = targetRgba + (targetX + x) * targetScale + (targetY + y) * targetScale * targetRgbaW;
+    for (int y = 0; y < sourceH; ++y)
+    {
+        for (int x = 0; x < sourceW; ++x)
+        {
+            const uint32_t *sourceRgbaCur = sourceRgba + (sourceX + x) * sourceScale + (sourceY + y) * sourceScale * sourceRgbaW;
+            uint32_t *targetRgbaCur = targetRgba + (targetX + x) * targetScale + (targetY + y) * targetScale * targetRgbaW;
 
-			for (int yPix = 0; yPix < targetScale; ++yPix)
-			{
-				for (int xPix = 0; xPix < targetScale; ++xPix)
-				{
-					uint32_t color = *(sourceRgbaCur + xPix / scaleRatio + yPix / scaleRatio * sourceRgbaW),
-						alpha = color & 0xFF000000;
-					*(targetRgbaCur + xPix + yPix * targetRgbaW) = (color & 0xFFFFFF) | (alpha >= 0x7F000000 ? 0x7F000000 : 0);
-				}
-			}
-		}
-	}
+            for (int yPix = 0; yPix < targetScale; ++yPix)
+            {
+                for (int xPix = 0; xPix < targetScale; ++xPix)
+                {
+                    uint32_t color = *(sourceRgbaCur + xPix / scaleRatio + yPix / scaleRatio * sourceRgbaW), alpha = color & 0xFF000000;
+                    *(targetRgbaCur + xPix + yPix * targetRgbaW) = (color & 0xFFFFFF) | (alpha >= 0x7F000000 ? 0x7F000000 : 0);
+                }
+            }
+        }
+    }
 }
 
-void ModdedTexture::copyRect(
-	const uint32_t *sourceRgba, int sourceRgbaW, uint32_t *targetRgba, int targetRgbaW, uint8_t scale, Tim::Bpp depth,
-	int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY)
+void ModdedTexture::copyRect(const uint32_t *sourceRgba, int sourceRgbaW, uint32_t *targetRgba, int targetRgbaW, uint8_t scale, Tim::Bpp depth, int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY)
 {
-	int sourceX = sourceXBpp2 * (4 >> int(depth)),
-		sourceW = sourceWBpp2 * (4 >> int(depth)) * scale,
-		targetX = targetXBpp2 * (4 >> int(depth));
+    int sourceX = sourceXBpp2 * (4 >> int(depth)), sourceW = sourceWBpp2 * (4 >> int(depth)) * scale, targetX = targetXBpp2 * (4 >> int(depth));
 
-	const uint32_t *source = sourceRgba + (sourceX + sourceY * sourceRgbaW) * scale;
-	uint32_t *target = targetRgba + (targetX + targetY * targetRgbaW) * scale;
+    const uint32_t *source = sourceRgba + (sourceX + sourceY * sourceRgbaW) * scale;
+    uint32_t *target = targetRgba + (targetX + targetY * targetRgbaW) * scale;
 
-	sourceH *= scale;
+    sourceH *= scale;
 
-	for (int y = 0; y < sourceH; ++y)
-	{
-		memmove(target, source, sizeof(uint32_t) * sourceW);
+    for (int y = 0; y < sourceH; ++y)
+    {
+        memmove(target, source, sizeof(uint32_t) * sourceW);
 
-		source += sourceRgbaW;
-		target += targetRgbaW;
-	}
+        source += sourceRgbaW;
+        target += targetRgbaW;
+    }
 }
 
 static std::string remasteredImageName(const std::string &remasteredName, int imageIndex)
 {
-	return remasteredName.substr(0, remasteredName.find_last_of('_') + 1) + std::to_string(imageIndex);
+    return remasteredName.substr(0, remasteredName.find_last_of('_') + 1) + std::to_string(imageIndex);
 }
 
 static std::string remasteredFallbackName(const std::string &remasteredName)
 {
-	std::string fallbackName = remasteredName;
-	const size_t pos = fallbackName.find("field_hd_new");
-	if (pos == std::string::npos)
-	{
-		return std::string();
-	}
+    std::string fallbackName = remasteredName;
+    const size_t pos = fallbackName.find("field_hd_new");
+    if (pos == std::string::npos)
+    {
+        return std::string();
+    }
 
-	return fallbackName.replace(pos, sizeof("field_hd_new") - 1, "field_hd");
+    return fallbackName.replace(pos, sizeof("field_hd_new") - 1, "field_hd");
 }
 
-static std::vector<std::string> remasteredImageNames(const std::string &remasteredName,
-	const remastered_battle_texture::ImageLayout *layout, int modCount)
+static std::vector<std::string> remasteredImageNames(const std::string &remasteredName, const remastered_battle_texture::ImageLayout *layout, int modCount)
 {
-	std::vector<std::string> names;
-	if (layout != nullptr && !layout->paletteLayers.empty())
-	{
-		for (const auto &layer : layout->paletteLayers)
-		{
-			if (layer.firstPaletteId < modCount) names.push_back(remasteredImageName(remasteredName, layer.imageIndex));
-		}
-	}
-	else if (layout != nullptr && layout->palettePageImages)
-	{
-		for (int paletteId = 0; paletteId < std::min(modCount, 4); ++paletteId)
-		{
-			names.push_back(remasteredImageName(remasteredName, paletteId));
-		}
-	}
-	else
-	{
-		names.push_back(remasteredName);
-		const std::string fallbackName = remasteredFallbackName(remasteredName);
-		if (!fallbackName.empty()) names.push_back(fallbackName);
-	}
+    std::vector<std::string> names;
+    if (layout != nullptr && !layout->paletteLayers.empty())
+    {
+        for (const auto &layer : layout->paletteLayers)
+        {
+            if (layer.firstPaletteId < modCount)
+                names.push_back(remasteredImageName(remasteredName, layer.imageIndex));
+        }
+    }
+    else if (layout != nullptr && layout->palettePageImages)
+    {
+        for (int paletteId = 0; paletteId < std::min(modCount, 4); ++paletteId)
+        {
+            names.push_back(remasteredImageName(remasteredName, paletteId));
+        }
+    }
+    else
+    {
+        names.push_back(remasteredName);
+        const std::string fallbackName = remasteredFallbackName(remasteredName);
+        if (!fallbackName.empty())
+            names.push_back(fallbackName);
+    }
 
-	if (layout != nullptr && layout->companionPosition != remastered_battle_texture::CompanionPosition::None)
-	{
-		names.push_back(remasteredImageName(remasteredName, layout->companionIndex));
-	}
+    if (layout != nullptr && layout->companionPosition != remastered_battle_texture::CompanionPosition::None)
+    {
+        names.push_back(remasteredImageName(remasteredName, layout->companionIndex));
+    }
 
-	return names;
+    return names;
 }
 
 static bool findRemasteredTexture(const std::string &remasteredName, char *filename, char *foundExtension)
 {
-	const std::string fallbackName = remasteredFallbackName(remasteredName);
+    const std::string fallbackName = remasteredFallbackName(remasteredName);
 
-	return findRemasteredArchiveTexture(remasteredName.c_str(), filename, foundExtension, true)
-		|| (!fallbackName.empty() && findRemasteredArchiveTexture(fallbackName.c_str(), filename, foundExtension, true))
-		|| findRemasteredArchiveTexture(remasteredName.c_str(), filename, foundExtension, false)
-		|| (!fallbackName.empty() && findRemasteredArchiveTexture(fallbackName.c_str(), filename, foundExtension, false));
+    return findRemasteredArchiveTexture(remasteredName.c_str(), filename, foundExtension, true) || (!fallbackName.empty() && findRemasteredArchiveTexture(fallbackName.c_str(), filename, foundExtension, true)) || findRemasteredArchiveTexture(remasteredName.c_str(), filename, foundExtension, false) || (!fallbackName.empty() && findRemasteredArchiveTexture(fallbackName.c_str(), filename, foundExtension, false));
 }
 
 bool TextureModStandard::createImages(int paletteCount, int internalLodScale, int8_t *rgbaModifier)
 {
-	paletteCount = paletteCount >= 0 ? paletteCount : originalTexture().palette().h(); // Works most of the time
+    paletteCount = paletteCount >= 0 ? paletteCount : originalTexture().palette().h(); // Works most of the time
 
-	if (trace_all || trace_vram) ffnx_trace("TextureModStandard::%s: paletteCount=%d internalLodScale=%d\n", __func__, paletteCount, internalLodScale);
+    if (trace_all || trace_vram)
+        ffnx_trace("TextureModStandard::%s: paletteCount=%d internalLodScale=%d\n", __func__, paletteCount, internalLodScale);
 
-	int modCount = std::max(paletteCount, 1);
-	char filename[MAX_PATH] = {}, *extension = nullptr, found_extension[16] = {};
-	int sourcePixelWidth = originalTexture().texture().pixelW();
-	int sourceHeight = originalTexture().texture().h();
-	const std::string &name = originalTexture().name();
-	const bool useCache = name.starts_with("battle/") || name.starts_with("magic/");
-	const std::string &remasteredName = originalTexture().remasteredName();
-	const remastered_battle_texture::ImageLayout *layout = ff8_remastered_edition && !remasteredName.empty()
-		? remastered_battle_texture::findImageLayout(remasteredName)
-		: nullptr;
+    int modCount = std::max(paletteCount, 1);
+    char filename[MAX_PATH] = {}, *extension = nullptr, found_extension[16] = {};
+    int sourcePixelWidth = originalTexture().texture().pixelW();
+    int sourceHeight = originalTexture().texture().h();
+    const std::string &name = originalTexture().name();
+    const bool useCache = name.starts_with("battle/") || name.starts_with("magic/");
+    const std::string &remasteredName = originalTexture().remasteredName();
+    const remastered_battle_texture::ImageLayout *layout = ff8_remastered_edition && !remasteredName.empty() ? remastered_battle_texture::findImageLayout(remasteredName) : nullptr;
 
-	// Pick one source for the whole texture, so a mod shipping model + classic textures
-	// never gets mixed with the Remastered atlas layout from main.zzz.
-	_usesRemasteredImages = ff8_remastered_edition && !remasteredName.empty();
-	if (_usesRemasteredImages)
-	{
-		bool hasRemasteredOverride = false;
-		for (const std::string &imageName : remasteredImageNames(remasteredName, layout, modCount))
-		{
-			if (hasRemasteredArchiveTextureOverride(("textures\\" + imageName + ".png").c_str()))
-			{
-				hasRemasteredOverride = true;
-				break;
-			}
-		}
+    // Pick one source for the whole texture, so a mod shipping model + classic textures
+    // never gets mixed with the Remastered atlas layout from main.zzz.
+    _usesRemasteredImages = ff8_remastered_edition && !remasteredName.empty();
+    if (_usesRemasteredImages)
+    {
+        bool hasRemasteredOverride = false;
+        for (const std::string &imageName : remasteredImageNames(remasteredName, layout, modCount))
+        {
+            if (hasRemasteredArchiveTextureOverride(("textures\\" + imageName + ".png").c_str()))
+            {
+                hasRemasteredOverride = true;
+                break;
+            }
+        }
 
-		for (int paletteId = 0; !hasRemasteredOverride && paletteId < modCount; ++paletteId)
-		{
-			if (findExternalTexture(name.c_str(), filename, paletteId, true))
-			{
-				_usesRemasteredImages = false;
-				break;
-			}
-		}
-	}
+        for (int paletteId = 0; !hasRemasteredOverride && paletteId < modCount; ++paletteId)
+        {
+            if (findExternalTexture(name.c_str(), filename, paletteId, true))
+            {
+                _usesRemasteredImages = false;
+                break;
+            }
+        }
+    }
 
-	if (!_usesRemasteredImages)
-	{
-		layout = nullptr;
-	}
-	_layout = layout;
-	const bool lazyPalettes = useCache && !_usesRemasteredImages;
+    if (!_usesRemasteredImages)
+    {
+        layout = nullptr;
+    }
+    _layout = layout;
+    const bool lazyPalettes = useCache && !_usesRemasteredImages;
 
-	if (trace_all || trace_vram) ffnx_trace("TextureModStandard::%s: %s uses %s textures\n", __func__, name.c_str(), _usesRemasteredImages ? "remastered" : "classic");
+    if (trace_all || trace_vram)
+        ffnx_trace("TextureModStandard::%s: %s uses %s textures\n", __func__, name.c_str(), _usesRemasteredImages ? "remastered" : "classic");
 
-	if (layout != nullptr && sourcePixelWidth % layout->sourceWidthDivisor == 0
-		&& sourceHeight % layout->sourceHeightDivisor == 0)
-	{
-		sourcePixelWidth /= layout->sourceWidthDivisor;
-		sourceHeight /= layout->sourceHeightDivisor;
-	}
+    if (layout != nullptr && sourcePixelWidth % layout->sourceWidthDivisor == 0 && sourceHeight % layout->sourceHeightDivisor == 0)
+    {
+        sourcePixelWidth /= layout->sourceWidthDivisor;
+        sourceHeight /= layout->sourceHeightDivisor;
+    }
 
-	if (layout != nullptr && !layout->paletteLayers.empty())
-	{
-		for (const auto &layer : layout->paletteLayers)
-		{
-			if (layer.firstPaletteId >= modCount || _textures.find(layer.imageIndex) != _textures.end()) continue;
-			const std::string imageName = remasteredImageName(remasteredName, layer.imageIndex);
-			if (!findExternalTextureRemastered(imageName.c_str(), filename, layer.firstPaletteId, true, extension, found_extension)) continue;
-			extension = found_extension;
-			TextureImage externalTexture;
-			if (externalTexture.createImage(filename, sourcePixelWidth, sourceHeight, internalLodScale, rgbaModifier, useCache))
-				_textures[layer.imageIndex] = externalTexture;
-		}
-	}
+    if (layout != nullptr && !layout->paletteLayers.empty())
+    {
+        for (const auto &layer : layout->paletteLayers)
+        {
+            if (layer.firstPaletteId >= modCount || _textures.find(layer.imageIndex) != _textures.end())
+                continue;
+            const std::string imageName = remasteredImageName(remasteredName, layer.imageIndex);
+            if (!findExternalTextureRemastered(imageName.c_str(), filename, layer.firstPaletteId, true, extension, found_extension))
+                continue;
+            extension = found_extension;
+            TextureImage externalTexture;
+            if (externalTexture.createImage(filename, sourcePixelWidth, sourceHeight, internalLodScale, rgbaModifier, useCache))
+                _textures[layer.imageIndex] = externalTexture;
+        }
+    }
 
-	for (int paletteId = 0; paletteId < modCount && (layout == nullptr || layout->paletteLayers.empty()); ++paletteId) {
-		if (lazyPalettes && !_textures.empty())
-		{
-			_pendingPalettes.insert(uint8_t(paletteId));
-			continue;
-		}
+    for (int paletteId = 0; paletteId < modCount && (layout == nullptr || layout->paletteLayers.empty()); ++paletteId)
+    {
+        if (lazyPalettes && !_textures.empty())
+        {
+            _pendingPalettes.insert(uint8_t(paletteId));
+            continue;
+        }
 
-		bool foundTexture = false;
-		if (layout != nullptr && layout->palettePageImages)
-		{
-			if (paletteId >= 4)
-			{
-				continue;
-			}
+        bool foundTexture = false;
+        if (layout != nullptr && layout->palettePageImages)
+        {
+            if (paletteId >= 4)
+            {
+                continue;
+            }
 
-			const std::string paletteRemasteredName = remasteredImageName(remasteredName, paletteId);
-			foundTexture = findExternalTextureRemastered(paletteRemasteredName.c_str(), filename, paletteId, true, extension, found_extension);
-		}
-		else if (_usesRemasteredImages)
-		{
-			foundTexture = findRemasteredTexture(remasteredName, filename, found_extension);
-		}
-		else
-		{
-			foundTexture = findExternalTexture(name.c_str(), filename, paletteId, true, extension, found_extension);
-		}
-		if (!foundTexture)
-		{
-			continue;
-		}
+            const std::string paletteRemasteredName = remasteredImageName(remasteredName, paletteId);
+            foundTexture = findExternalTextureRemastered(paletteRemasteredName.c_str(), filename, paletteId, true, extension, found_extension);
+        }
+        else if (_usesRemasteredImages)
+        {
+            foundTexture = findRemasteredTexture(remasteredName, filename, found_extension);
+        }
+        else
+        {
+            foundTexture = findExternalTexture(name.c_str(), filename, paletteId, true, extension, found_extension);
+        }
+        if (!foundTexture)
+        {
+            continue;
+        }
 
-		// Force the same extension for every palettes to reduce file existence checks
-		extension = found_extension;
+        // Force the same extension for every palettes to reduce file existence checks
+        extension = found_extension;
 
-		TextureImage externalTexture;
-		if (!externalTexture.createImage(filename, sourcePixelWidth, sourceHeight, internalLodScale, rgbaModifier, useCache))
-		{
-			continue;
-		}
+        TextureImage externalTexture;
+        if (!externalTexture.createImage(filename, sourcePixelWidth, sourceHeight, internalLodScale, rgbaModifier, useCache))
+        {
+            continue;
+        }
 
-		_textures[paletteId] = externalTexture;
-		if (lazyPalettes)
-		{
-			_imageSource.pixelWidth = sourcePixelWidth;
-			_imageSource.height = sourceHeight;
-			_imageSource.internalLodScale = internalLodScale;
-			_imageSource.extension = found_extension;
-			if (rgbaModifier != nullptr) std::copy_n(rgbaModifier, _imageSource.rgbaModifier.size(), _imageSource.rgbaModifier.begin());
-		}
-	}
+        _textures[paletteId] = externalTexture;
+        if (lazyPalettes)
+        {
+            _imageSource.pixelWidth = sourcePixelWidth;
+            _imageSource.height = sourceHeight;
+            _imageSource.internalLodScale = internalLodScale;
+            _imageSource.extension = found_extension;
+            if (rgbaModifier != nullptr)
+                std::copy_n(rgbaModifier, _imageSource.rgbaModifier.size(), _imageSource.rgbaModifier.begin());
+        }
+    }
 
-	if (layout != nullptr && layout->companionPosition != remastered_battle_texture::CompanionPosition::None)
-	{
-		char companionFilename[MAX_PATH] = {};
-		_snprintf(companionFilename, sizeof(companionFilename), "zzz://textures\\%.*s_%d.png",
-			int(remasteredName.find_last_of('_')), remasteredName.c_str(), layout->companionIndex);
-		TextureImage companionImage;
-		if (companionImage.createImage(companionFilename, sourcePixelWidth, sourceHeight, internalLodScale, rgbaModifier))
-		{
-			if (layout->companionPosition == remastered_battle_texture::CompanionPosition::Upper)
-			{
-				_remasteredUpperImage = companionImage;
-			}
-			else
-			{
-				_remasteredLowerImage = companionImage;
-			}
-		}
-	}
+    if (layout != nullptr && layout->companionPosition != remastered_battle_texture::CompanionPosition::None)
+    {
+        char companionFilename[MAX_PATH] = {};
+        _snprintf(companionFilename, sizeof(companionFilename), "zzz://textures\\%.*s_%d.png", int(remasteredName.find_last_of('_')), remasteredName.c_str(), layout->companionIndex);
+        TextureImage companionImage;
+        if (companionImage.createImage(companionFilename, sourcePixelWidth, sourceHeight, internalLodScale, rgbaModifier))
+        {
+            if (layout->companionPosition == remastered_battle_texture::CompanionPosition::Upper)
+            {
+                _remasteredUpperImage = companionImage;
+            }
+            else
+            {
+                _remasteredLowerImage = companionImage;
+            }
+        }
+    }
 
-	return !_textures.empty();
+    return !_textures.empty();
 }
 
 void TextureModStandard::loadImage(uint8_t paletteId) const
 {
-	if (_pendingPalettes.erase(paletteId) == 0) return;
+    if (_pendingPalettes.erase(paletteId) == 0)
+        return;
 
-	char filename[MAX_PATH] = {};
-	if (!findExternalTexture(originalTexture().name().c_str(), filename, paletteId, true, _imageSource.extension.c_str()))
-	{
-		return;
-	}
+    char filename[MAX_PATH] = {};
+    if (!findExternalTexture(originalTexture().name().c_str(), filename, paletteId, true, _imageSource.extension.c_str()))
+    {
+        return;
+    }
 
-	TextureImage image;
-	auto modifier = _imageSource.rgbaModifier;
-	if (image.createImage(filename, _imageSource.pixelWidth, _imageSource.height, _imageSource.internalLodScale, modifier.data(), true))
-	{
-		_textures.emplace(paletteId, image);
-	}
-	else
-	{
-		ffnx_warning("TextureModStandard::%s: cannot load palette %d from %s; using the first image\n", __func__, paletteId, filename);
-	}
+    TextureImage image;
+    auto modifier = _imageSource.rgbaModifier;
+    if (image.createImage(filename, _imageSource.pixelWidth, _imageSource.height, _imageSource.internalLodScale, modifier.data(), true))
+    {
+        _textures.emplace(paletteId, image);
+    }
+    else
+    {
+        ffnx_warning("TextureModStandard::%s: cannot load palette %d from %s; using the first image\n", __func__, paletteId, filename);
+    }
 }
 
 void TextureModStandard::loadAllImages() const
 {
-	while (!_pendingPalettes.empty()) loadImage(*_pendingPalettes.begin());
+    while (!_pendingPalettes.empty())
+        loadImage(*_pendingPalettes.begin());
 }
 
 uint8_t TextureModStandard::computePaletteId(int vramPalXBpp2, int vramPalY) const
 {
-	if (_currentPalette >= 0)
-	{
-		return uint8_t(_currentPalette);
-	}
+    if (_currentPalette >= 0)
+    {
+        return uint8_t(_currentPalette);
+    }
 
-	const TexturePacker::TextureInfos &palette = originalTexture().palette();
-	const remastered_battle_texture::ImageLayout *layout = _layout;
-	if (layout != nullptr && !layout->paletteLayers.empty())
-	{
-		const int paletteOffset = vramPalY - palette.y();
-		return vramPalXBpp2 == palette.x() && paletteOffset >= 0 && paletteOffset < palette.h()
-			? uint8_t(paletteOffset) : uint8_t(-1);
-	}
-	if (vramPalXBpp2 == palette.x())
-	{
-		const int paletteOffset = vramPalY - palette.y();
-		if (layout != nullptr && layout->palettePageImages
-			&& paletteOffset >= 0 && paletteOffset < palette.h())
-		{
-			return uint8_t(paletteOffset);
-		}
-		if (ff8_remastered_edition && palette.h() == 2 && paletteOffset >= 1)
-		{
-			return uint8_t((paletteOffset & 1) == 1 ? 0 : 1);
-		}
-		if (ff8_remastered_edition && paletteOffset >= 1 && paletteOffset <= palette.h())
-		{
-			return uint8_t(paletteOffset - 1);
-		}
-		if (!ff8_remastered_edition && paletteOffset >= 0 && paletteOffset < palette.h())
-		{
-			return uint8_t(paletteOffset);
-		}
-	}
+    const TexturePacker::TextureInfos &palette = originalTexture().palette();
+    const remastered_battle_texture::ImageLayout *layout = _layout;
+    if (layout != nullptr && !layout->paletteLayers.empty())
+    {
+        const int paletteOffset = vramPalY - palette.y();
+        return vramPalXBpp2 == palette.x() && paletteOffset >= 0 && paletteOffset < palette.h() ? uint8_t(paletteOffset) : uint8_t(-1);
+    }
+    if (vramPalXBpp2 == palette.x())
+    {
+        const int paletteOffset = vramPalY - palette.y();
+        if (layout != nullptr && layout->palettePageImages && paletteOffset >= 0 && paletteOffset < palette.h())
+        {
+            return uint8_t(paletteOffset);
+        }
+        if (ff8_remastered_edition && palette.h() == 2 && paletteOffset >= 1)
+        {
+            return uint8_t((paletteOffset & 1) == 1 ? 0 : 1);
+        }
+        if (ff8_remastered_edition && paletteOffset >= 1 && paletteOffset <= palette.h())
+        {
+            return uint8_t(paletteOffset - 1);
+        }
+        if (!ff8_remastered_edition && paletteOffset >= 0 && paletteOffset < palette.h())
+        {
+            return uint8_t(paletteOffset);
+        }
+    }
 
-	return 0;
+    return 0;
 }
 
 const TextureImage &TextureModStandard::textureImage(uint8_t paletteId) const
 {
-	if (trace_all || trace_vram) ffnx_trace("TextureModStandard::%s paletteId=%d\n", __func__, paletteId);
+    if (trace_all || trace_vram)
+        ffnx_trace("TextureModStandard::%s paletteId=%d\n", __func__, paletteId);
 
-	loadImage(paletteId);
-	auto it = _textures.find(paletteId);
+    loadImage(paletteId);
+    auto it = _textures.find(paletteId);
 
-	if (it == _textures.end())
-	{
-		if (trace_all || trace_vram) ffnx_warning("TextureModStandard::%s cannot find image for paletteId=%d, fallback to the first one\n", __func__, paletteId);
+    if (it == _textures.end())
+    {
+        if (trace_all || trace_vram)
+            ffnx_warning("TextureModStandard::%s cannot find image for paletteId=%d, fallback to the first one\n", __func__, paletteId);
 
-		return _textures.begin()->second; // Use the first image
-	}
+        return _textures.begin()->second; // Use the first image
+    }
 
-	return it->second;
+    return it->second;
 }
 
 uint8_t TextureModStandard::scale(int vramPalXBpp2, int vramPalY) const
 {
-	if (trace_all || trace_vram) ffnx_trace("TextureModStandard::%s %s vramPal=(%d, %d) original=(%d, %d)\n", __func__, originalTexture().name().c_str(), vramPalXBpp2, vramPalY, originalTexture().palette().x(), originalTexture().palette().y());
+    if (trace_all || trace_vram)
+        ffnx_trace("TextureModStandard::%s %s vramPal=(%d, %d) original=(%d, %d)\n", __func__, originalTexture().name().c_str(), vramPalXBpp2, vramPalY, originalTexture().palette().x(), originalTexture().palette().y());
 
-	const uint8_t paletteId = computePaletteId(vramPalXBpp2, vramPalY);
-	const auto *layout = _layout;
-	if (layout != nullptr && !layout->paletteLayers.empty())
-	{
-		uint8_t layerScale = 0;
-		for (const auto &layer : layout->paletteLayers)
-		{
-			if (!layer.matchesPalette(paletteId)) continue;
-			if (layout->animationFrameCount > 0 && layer.imageIndex == layout->imageIndex
-				&& (_currentAnimationFrame < 0 || _currentAnimationFrame >= layout->animationFrameCount))
-				continue;
-			const auto image = _textures.find(layer.imageIndex);
-			if (image != _textures.end()) layerScale = std::max(layerScale, image->second.scale());
-		}
-		return layerScale;
-	}
-	if (layout != nullptr && layout->palettePageImages
-		&& (paletteId >= 4
-			|| _textures.find(paletteId) == _textures.end()))
-		return 0;
-	return textureImage(paletteId).scale();
+    const uint8_t paletteId = computePaletteId(vramPalXBpp2, vramPalY);
+    const auto *layout = _layout;
+    if (layout != nullptr && !layout->paletteLayers.empty())
+    {
+        uint8_t layerScale = 0;
+        for (const auto &layer : layout->paletteLayers)
+        {
+            if (!layer.matchesPalette(paletteId))
+                continue;
+            if (layout->animationFrameCount > 0 && layer.imageIndex == layout->imageIndex && (_currentAnimationFrame < 0 || _currentAnimationFrame >= layout->animationFrameCount))
+                continue;
+            const auto image = _textures.find(layer.imageIndex);
+            if (image != _textures.end())
+                layerScale = std::max(layerScale, image->second.scale());
+        }
+        return layerScale;
+    }
+    if (layout != nullptr && layout->palettePageImages && (paletteId >= 4 || _textures.find(paletteId) == _textures.end()))
+        return 0;
+    return textureImage(paletteId).scale();
 }
 
-TexturePacker::TextureTypes TextureModStandard::drawToImage(
-	int offsetX, int offsetY,
-	uint32_t *targetRgba, int targetW, int targetH, uint8_t targetScale, Tim::Bpp targetBpp,
-	int16_t vramPalXBpp2, int16_t vramPalY) const
+TexturePacker::TextureTypes TextureModStandard::drawToImage(int offsetX, int offsetY, uint32_t *targetRgba, int targetW, int targetH, uint8_t targetScale, Tim::Bpp targetBpp, int16_t vramPalXBpp2, int16_t vramPalY) const
 {
-	const TexturePacker::TextureInfos &origTexture = originalTexture().texture();
+    const TexturePacker::TextureInfos &origTexture = originalTexture().texture();
 
-	if (origTexture.bpp() != targetBpp)
-	{
-		return TexturePacker::NoTexture;
-	}
+    if (origTexture.bpp() != targetBpp)
+    {
+        return TexturePacker::NoTexture;
+    }
 
-	int sourceX = offsetX < 0 ? -offsetX : 0,
-		sourceY = offsetY < 0 ? -offsetY : 0,
-		targetX = offsetX > 0 ? offsetX : 0,
-		targetY = offsetY > 0 ? offsetY : 0;
-	const remastered_battle_texture::ImageLayout *layout = _layout;
-	if (layout != nullptr && !layout->paletteLayers.empty())
-	{
-		const uint8_t paletteId = computePaletteId(vramPalXBpp2, vramPalY);
-		bool drawn = false;
-		for (const auto &layer : layout->paletteLayers)
-		{
-			if (!layer.matchesPalette(paletteId)) continue;
-			const bool isAnimatedLayer = layout->animationFrameCount > 0 && layer.imageIndex == layout->imageIndex;
-			if (isAnimatedLayer && (_currentAnimationFrame < 0 || _currentAnimationFrame >= layout->animationFrameCount))
-				continue;
-			const auto image = _textures.find(layer.imageIndex);
-			if (image == _textures.end()) continue;
-			const auto &mip = image->second.mip();
-			const int imageW = mip.m_width / image->second.scale();
-			const int imageH = mip.m_height / image->second.scale();
-			const int frameWidth = isAnimatedLayer ? imageW / layout->animationFrameCount : imageW;
-			const int sourceFrame = isAnimatedLayer
-				? (layout->reverseAnimation ? layout->animationFrameCount - 1 - _currentAnimationFrame : _currentAnimationFrame) : 0;
-			const int layerX = layer.alignRight ? std::max(0, targetW - frameWidth) : 0;
-			const int layerY = layer.alignBottom ? std::max(0, targetH - imageH) : 0;
-			const int width = std::min(frameWidth, targetW - layerX);
-			const int height = std::min(imageH, targetH - layerY);
-			if (width <= 0 || height <= 0) continue;
-			drawImage(reinterpret_cast<const uint32_t *>(mip.m_data), imageW, image->second.scale(),
-				targetRgba, targetW, targetScale, sourceFrame * frameWidth, 0, width, height, layerX, layerY);
-			drawn = true;
-		}
-		return drawn ? TexturePacker::ExternalTexture : TexturePacker::NoTexture;
-	}
-	if (layout != nullptr && layout->useTargetPosition)
-	{
-		sourceX = 0;
-		sourceY = 0;
-		targetX = 0;
-		targetY = 0;
-	}
-	if (_remasteredUpperImage.hasImage())
-	{
-		targetY = int(_remasteredUpperImage.mip().m_height / _remasteredUpperImage.scale());
-	}
+    int sourceX = offsetX < 0 ? -offsetX : 0, sourceY = offsetY < 0 ? -offsetY : 0, targetX = offsetX > 0 ? offsetX : 0, targetY = offsetY > 0 ? offsetY : 0;
+    const remastered_battle_texture::ImageLayout *layout = _layout;
+    if (layout != nullptr && !layout->paletteLayers.empty())
+    {
+        const uint8_t paletteId = computePaletteId(vramPalXBpp2, vramPalY);
+        bool drawn = false;
+        for (const auto &layer : layout->paletteLayers)
+        {
+            if (!layer.matchesPalette(paletteId))
+                continue;
+            const bool isAnimatedLayer = layout->animationFrameCount > 0 && layer.imageIndex == layout->imageIndex;
+            if (isAnimatedLayer && (_currentAnimationFrame < 0 || _currentAnimationFrame >= layout->animationFrameCount))
+                continue;
+            const auto image = _textures.find(layer.imageIndex);
+            if (image == _textures.end())
+                continue;
+            const auto &mip = image->second.mip();
+            const int imageW = mip.m_width / image->second.scale();
+            const int imageH = mip.m_height / image->second.scale();
+            const int frameWidth = isAnimatedLayer ? imageW / layout->animationFrameCount : imageW;
+            const int sourceFrame = isAnimatedLayer ? (layout->reverseAnimation ? layout->animationFrameCount - 1 - _currentAnimationFrame : _currentAnimationFrame) : 0;
+            const int layerX = layer.alignRight ? std::max(0, targetW - frameWidth) : 0;
+            const int layerY = layer.alignBottom ? std::max(0, targetH - imageH) : 0;
+            const int width = std::min(frameWidth, targetW - layerX);
+            const int height = std::min(imageH, targetH - layerY);
+            if (width <= 0 || height <= 0)
+                continue;
+            drawImage(reinterpret_cast<const uint32_t *>(mip.m_data), imageW, image->second.scale(), targetRgba, targetW, targetScale, sourceFrame * frameWidth, 0, width, height, layerX, layerY);
+            drawn = true;
+        }
+        return drawn ? TexturePacker::ExternalTexture : TexturePacker::NoTexture;
+    }
+    if (layout != nullptr && layout->useTargetPosition)
+    {
+        sourceX = 0;
+        sourceY = 0;
+        targetX = 0;
+        targetY = 0;
+    }
+    if (_remasteredUpperImage.hasImage())
+    {
+        targetY = int(_remasteredUpperImage.mip().m_height / _remasteredUpperImage.scale());
+    }
 
-	uint8_t paletteId = computePaletteId(vramPalXBpp2, vramPalY);
-	if (layout != nullptr && layout->palettePageImages)
-	{
-		if (paletteId >= 4 || _textures.find(paletteId) == _textures.end())
-		{
-			return TexturePacker::NoTexture;
-		}
-		layout = remastered_battle_texture::findImageLayout(originalTexture().remasteredName(), paletteId);
-	}
-	const TextureImage &image = textureImage(paletteId);
-	const bimg::ImageMip &mip = image.mip();
-	int imageW = mip.m_width / image.scale(),
-		imageH = mip.m_height / image.scale();
-	if (layout != nullptr && layout->useTargetPosition)
-	{
-		if (layout->alignRight)
-		{
-			targetX = std::max(targetX, targetW - imageW);
-		}
-		if (layout->alignBottom)
-		{
-			targetY = std::max(targetY, targetH - imageH);
-		}
-	}
-	const bool isWideRemasteredResource = _usesRemasteredImages
-		&& imageW >= origTexture.pixelW() * 3
-		&& imageW % origTexture.pixelW() == 0;
-	const int animationFrame = _currentAnimationFrame;
-	const int wideFrameCount = isWideRemasteredResource ? imageW / origTexture.pixelW() : 0;
-	const int wideFrameOffset = isWideRemasteredResource
-		&& animationFrame >= 0 && animationFrame < wideFrameCount
-		? animationFrame * origTexture.pixelW() : 0;
-	int width = isWideRemasteredResource
-		? std::min({ origTexture.pixelW() - sourceX, imageW - wideFrameOffset - sourceX, targetW - targetX })
-		: std::min({ origTexture.pixelW() - sourceX, imageW - sourceX, targetW - targetX }),
-		height = std::min({ origTexture.h() - sourceY, imageH - sourceY, targetH - targetY });
-	if (isWideRemasteredResource)
-	{
-		sourceX += wideFrameOffset;
-	}
-	if (imageH < origTexture.h() && !_remasteredLowerImage.hasImage() && (layout == nullptr || !layout->useTargetPosition))
-	{
-		targetY += origTexture.h() - imageH;
-		height = std::min({ origTexture.h() - sourceY, imageH - sourceY, targetH - targetY });
-	}
+    uint8_t paletteId = computePaletteId(vramPalXBpp2, vramPalY);
+    if (layout != nullptr && layout->palettePageImages)
+    {
+        if (paletteId >= 4 || _textures.find(paletteId) == _textures.end())
+        {
+            return TexturePacker::NoTexture;
+        }
+        layout = remastered_battle_texture::findImageLayout(originalTexture().remasteredName(), paletteId);
+    }
+    const TextureImage &image = textureImage(paletteId);
+    const bimg::ImageMip &mip = image.mip();
+    int imageW = mip.m_width / image.scale(), imageH = mip.m_height / image.scale();
+    if (layout != nullptr && layout->useTargetPosition)
+    {
+        if (layout->alignRight)
+        {
+            targetX = std::max(targetX, targetW - imageW);
+        }
+        if (layout->alignBottom)
+        {
+            targetY = std::max(targetY, targetH - imageH);
+        }
+    }
+    const bool isWideRemasteredResource = _usesRemasteredImages && imageW >= origTexture.pixelW() * 3 && imageW % origTexture.pixelW() == 0;
+    const int animationFrame = _currentAnimationFrame;
+    const int wideFrameCount = isWideRemasteredResource ? imageW / origTexture.pixelW() : 0;
+    const int wideFrameOffset = isWideRemasteredResource && animationFrame >= 0 && animationFrame < wideFrameCount ? animationFrame * origTexture.pixelW() : 0;
+    int width = isWideRemasteredResource ? std::min({origTexture.pixelW() - sourceX, imageW - wideFrameOffset - sourceX, targetW - targetX}) : std::min({origTexture.pixelW() - sourceX, imageW - sourceX, targetW - targetX}), height = std::min({origTexture.h() - sourceY, imageH - sourceY, targetH - targetY});
+    if (isWideRemasteredResource)
+    {
+        sourceX += wideFrameOffset;
+    }
+    if (imageH < origTexture.h() && !_remasteredLowerImage.hasImage() && (layout == nullptr || !layout->useTargetPosition))
+    {
+        targetY += origTexture.h() - imageH;
+        height = std::min({origTexture.h() - sourceY, imageH - sourceY, targetH - targetY});
+    }
 
-	if (width <= 0 || height <= 0)
-	{
-		return TexturePacker::NoTexture;
-	}
+    if (width <= 0 || height <= 0)
+    {
+        return TexturePacker::NoTexture;
+    }
 
-	if (_remasteredUpperImage.hasImage())
-	{
-		const bimg::ImageMip &upperMip = _remasteredUpperImage.mip();
-		const int upperSourceX = sourceX - wideFrameOffset;
-		const int upperWidth = std::min(origTexture.pixelW() - upperSourceX, int(upperMip.m_width / _remasteredUpperImage.scale()) - upperSourceX);
-		const int upperHeight = std::min(origTexture.h() - sourceY, int(upperMip.m_height / _remasteredUpperImage.scale()));
-		if (upperWidth > 0 && upperHeight > 0)
-		{
-			drawImage(
-				reinterpret_cast<const uint32_t *>(upperMip.m_data), upperMip.m_width / _remasteredUpperImage.scale(), _remasteredUpperImage.scale(),
-				targetRgba, targetW, targetScale,
-				upperSourceX, 0, upperWidth, upperHeight,
-				targetX, 0
-			);
-		}
-	}
+    if (_remasteredUpperImage.hasImage())
+    {
+        const bimg::ImageMip &upperMip = _remasteredUpperImage.mip();
+        const int upperSourceX = sourceX - wideFrameOffset;
+        const int upperWidth = std::min(origTexture.pixelW() - upperSourceX, int(upperMip.m_width / _remasteredUpperImage.scale()) - upperSourceX);
+        const int upperHeight = std::min(origTexture.h() - sourceY, int(upperMip.m_height / _remasteredUpperImage.scale()));
+        if (upperWidth > 0 && upperHeight > 0)
+        {
+            drawImage(reinterpret_cast<const uint32_t *>(upperMip.m_data), upperMip.m_width / _remasteredUpperImage.scale(), _remasteredUpperImage.scale(), targetRgba, targetW, targetScale, upperSourceX, 0, upperWidth, upperHeight, targetX, 0);
+        }
+    }
 
-	drawImage(
-		reinterpret_cast<const uint32_t *>(mip.m_data), mip.m_width / image.scale(), image.scale(),
-		targetRgba, targetW, targetScale,
-		sourceX, sourceY, width, height,
-		targetX, targetY
-	);
+    drawImage(reinterpret_cast<const uint32_t *>(mip.m_data), mip.m_width / image.scale(), image.scale(), targetRgba, targetW, targetScale, sourceX, sourceY, width, height, targetX, targetY);
 
-	if (_remasteredLowerImage.hasImage())
-	{
-		const bimg::ImageMip &lowerMip = _remasteredLowerImage.mip();
-		const int lowerWidth = std::min(targetW - targetX, int(lowerMip.m_width / _remasteredLowerImage.scale()));
-		const int lowerY = targetY + imageH;
-		const int lowerHeight = std::min(targetH - lowerY, int(lowerMip.m_height / _remasteredLowerImage.scale()));
-		if (lowerWidth > 0 && lowerHeight > 0)
-		{
-			drawImage(
-				reinterpret_cast<const uint32_t *>(lowerMip.m_data), lowerMip.m_width / _remasteredLowerImage.scale(), _remasteredLowerImage.scale(),
-				targetRgba, targetW, targetScale,
-				0, 0, lowerWidth, lowerHeight,
-				targetX, lowerY
-			);
-		}
-	}
+    if (_remasteredLowerImage.hasImage())
+    {
+        const bimg::ImageMip &lowerMip = _remasteredLowerImage.mip();
+        const int lowerWidth = std::min(targetW - targetX, int(lowerMip.m_width / _remasteredLowerImage.scale()));
+        const int lowerY = targetY + imageH;
+        const int lowerHeight = std::min(targetH - lowerY, int(lowerMip.m_height / _remasteredLowerImage.scale()));
+        if (lowerWidth > 0 && lowerHeight > 0)
+        {
+            drawImage(reinterpret_cast<const uint32_t *>(lowerMip.m_data), lowerMip.m_width / _remasteredLowerImage.scale(), _remasteredLowerImage.scale(), targetRgba, targetW, targetScale, 0, 0, lowerWidth, lowerHeight, targetX, lowerY);
+        }
+    }
 
-	return TexturePacker::ExternalTexture;
+    return TexturePacker::ExternalTexture;
 }
 
 bool TextureModStandard::coversImage(int offsetX, int offsetY, int targetW, int targetH, uint8_t targetScale, Tim::Bpp targetBpp, int16_t vramPalXBpp2, int16_t vramPalY) const
 {
-	const auto &texture = originalTexture().texture();
-	// Remastered layouts may leave gaps between layers or companion images.
-	if (ff8_remastered_edition || texture.bpp() != targetBpp || offsetX > 0 || offsetY > 0)
-	{
-		return false;
-	}
-	const auto &image = textureImage(computePaletteId(vramPalXBpp2, vramPalY));
-	const int imageW = image.mip().m_width / image.scale(), imageH = image.mip().m_height / image.scale();
-	return targetScale >= image.scale() && imageH >= texture.h()
-		&& texture.pixelW() + offsetX >= targetW && texture.h() + offsetY >= targetH
-		&& imageW + offsetX >= targetW && imageH + offsetY >= targetH;
+    const auto &texture = originalTexture().texture();
+    // Remastered layouts may leave gaps between layers or companion images.
+    if (ff8_remastered_edition || texture.bpp() != targetBpp || offsetX > 0 || offsetY > 0)
+    {
+        return false;
+    }
+    const auto &image = textureImage(computePaletteId(vramPalXBpp2, vramPalY));
+    const int imageW = image.mip().m_width / image.scale(), imageH = image.mip().m_height / image.scale();
+    return targetScale >= image.scale() && imageH >= texture.h() && texture.pixelW() + offsetX >= targetW && texture.h() + offsetY >= targetH && imageW + offsetX >= targetW && imageH + offsetY >= targetH;
 }
 
 void TextureModStandard::copyRect(int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY)
 {
-	const TexturePacker::TextureInfos &texture = originalTexture().texture();
+    const TexturePacker::TextureInfos &texture = originalTexture().texture();
 
-	loadAllImages();
-	for (auto &image: _textures)
-	{
-		if (image.second.writableData() == nullptr) return;
-	}
-	for (auto &image: _textures)
-	{
-		const bimg::ImageMip &mip = image.second.mip();
-		ModdedTexture::copyRect(
-			reinterpret_cast<const uint32_t *>(mip.m_data), mip.m_width,
-			image.second.writableData(), mip.m_width,
-			image.second.scale(), texture.bpp(),
-			sourceXBpp2 - texture.x(), sourceY - texture.y(), sourceWBpp2, sourceH,
-			targetXBpp2 - texture.x(), targetY - texture.y()
-		);
-	}
+    loadAllImages();
+    for (auto &image : _textures)
+    {
+        if (image.second.writableData() == nullptr)
+            return;
+    }
+    for (auto &image : _textures)
+    {
+        const bimg::ImageMip &mip = image.second.mip();
+        ModdedTexture::copyRect(reinterpret_cast<const uint32_t *>(mip.m_data), mip.m_width, image.second.writableData(), mip.m_width, image.second.scale(), texture.bpp(), sourceXBpp2 - texture.x(), sourceY - texture.y(), sourceWBpp2, sourceH, targetXBpp2 - texture.x(), targetY - texture.y());
+    }
 }
 
-void TextureModStandard::copyRect(
-	int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY,
-	TextureModStandard &targetTexture)
+void TextureModStandard::copyRect(int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY, TextureModStandard &targetTexture)
 {
-	const TexturePacker::TextureInfos &tex = originalTexture().texture(),
-		&targetTex = targetTexture.originalTexture().texture();
+    const TexturePacker::TextureInfos &tex = originalTexture().texture(), &targetTex = targetTexture.originalTexture().texture();
 
-	if (tex.bpp() != targetTex.bpp()) {
-		return;
-	}
+    if (tex.bpp() != targetTex.bpp())
+    {
+        return;
+    }
 
-	loadAllImages();
-	targetTexture.loadAllImages();
-	std::array<const TextureImage *, MAX_SCALE + 1> lastSource{};
-	for (const auto &image: _textures)
-	{
-		lastSource[image.second.scale()] = &image.second;
-	}
-	for (auto &targetImage: targetTexture._textures)
-	{
-		if (lastSource[targetImage.second.scale()] != nullptr && targetImage.second.writableData() == nullptr) return;
-	}
+    loadAllImages();
+    targetTexture.loadAllImages();
+    std::array<const TextureImage *, MAX_SCALE + 1> lastSource{};
+    for (const auto &image : _textures)
+    {
+        lastSource[image.second.scale()] = &image.second;
+    }
+    for (auto &targetImage : targetTexture._textures)
+    {
+        if (lastSource[targetImage.second.scale()] != nullptr && targetImage.second.writableData() == nullptr)
+            return;
+    }
 
-	const auto copyImage = [&](const TextureImage &image, TextureImage &targetImage)
-	{
-		const auto &mip = image.mip();
-		const auto &targetMip = targetImage.mip();
-		ModdedTexture::copyRect(
-			reinterpret_cast<const uint32_t *>(mip.m_data), mip.m_width,
-			targetImage.writableData(), targetMip.m_width,
-			image.scale(), tex.bpp(),
-			sourceXBpp2 - tex.x(), sourceY - tex.y(), sourceWBpp2, sourceH,
-			targetXBpp2 - targetTex.x(), targetY - targetTex.y()
-		);
-	};
-	if (&targetTexture == this)
-	{
-		for (const auto &image: _textures)
-		{
-			for (auto &targetImage: targetTexture._textures)
-			{
-				if (image.second.scale() == targetImage.second.scale()) copyImage(image.second, targetImage.second);
-			}
-		}
-		return;
-	}
-	// Every matching source writes the same destination rectangle; only the last survives.
-	for (auto &targetImage: targetTexture._textures)
-	{
-		const TextureImage *source = lastSource[targetImage.second.scale()];
-		if (source != nullptr) copyImage(*source, targetImage.second);
-	}
+    const auto copyImage = [&](const TextureImage &image, TextureImage &targetImage) {
+        const auto &mip = image.mip();
+        const auto &targetMip = targetImage.mip();
+        ModdedTexture::copyRect(reinterpret_cast<const uint32_t *>(mip.m_data), mip.m_width, targetImage.writableData(), targetMip.m_width, image.scale(), tex.bpp(), sourceXBpp2 - tex.x(), sourceY - tex.y(), sourceWBpp2, sourceH, targetXBpp2 - targetTex.x(), targetY - targetTex.y());
+    };
+    if (&targetTexture == this)
+    {
+        for (const auto &image : _textures)
+        {
+            for (auto &targetImage : targetTexture._textures)
+            {
+                if (image.second.scale() == targetImage.second.scale())
+                    copyImage(image.second, targetImage.second);
+            }
+        }
+        return;
+    }
+    // Every matching source writes the same destination rectangle; only the last survives.
+    for (auto &targetImage : targetTexture._textures)
+    {
+        const TextureImage *source = lastSource[targetImage.second.scale()];
+        if (source != nullptr)
+            copyImage(*source, targetImage.second);
+    }
 }
 
 void TextureModStandard::forceCurrentPalette(int8_t currentPalette)
 {
-	if (currentPalette < 0)
-	{
-		_currentPalette = -1;
-		return;
-	}
+    if (currentPalette < 0)
+    {
+        _currentPalette = -1;
+        return;
+    }
 
-	loadImage(uint8_t(currentPalette));
-	if (_textures.contains(currentPalette)) {
-		_currentPalette = currentPalette;
-	}
+    loadImage(uint8_t(currentPalette));
+    if (_textures.contains(currentPalette))
+    {
+        _currentPalette = currentPalette;
+    }
 }
 
 void TextureModStandard::setCurrentAnimationFrame(int frameId)
 {
-	_currentAnimationFrame = frameId;
+    _currentAnimationFrame = frameId;
 }
 
-TextureBackground::TextureBackground(
-	const TexturePacker::IdentifiedTexture &originalTexture,
-	const std::vector<Tile> &mapTiles
-) : ModdedTexture(originalTexture), _mapTiles(mapTiles)
+TextureBackground::TextureBackground(const TexturePacker::IdentifiedTexture &originalTexture, const std::vector<Tile> &mapTiles) : ModdedTexture(originalTexture), _mapTiles(mapTiles)
 {
 }
 
 bool TextureBackground::createImages(const char *extension, char *foundExtension)
 {
-	size_t size = _mapTiles.size();
+    size_t size = _mapTiles.size();
 
-	_colsCount = size / (TEXTURE_HEIGHT / TILE_SIZE) + int(size % (TEXTURE_HEIGHT / TILE_SIZE) != 0);
+    _colsCount = size / (TEXTURE_HEIGHT / TILE_SIZE) + int(size % (TEXTURE_HEIGHT / TILE_SIZE) != 0);
 
-	char filename[MAX_PATH] = {};
+    char filename[MAX_PATH] = {};
 
-	if (!findExternalTexture(filename, 0, false, extension, foundExtension))
-	{
-		return false;
-	}
+    if (!findExternalTexture(filename, 0, false, extension, foundExtension))
+    {
+        return false;
+    }
 
-	if (!_texture.createImage(filename, _colsCount * TILE_SIZE, TEXTURE_HEIGHT))
-	{
-		return false;
-	}
+    if (!_texture.createImage(filename, _colsCount * TILE_SIZE, TEXTURE_HEIGHT))
+    {
+        return false;
+    }
 
-	// Build tileIdsByPosition for fast lookup
-	_tileIdsByTextureId.reserve(size);
+    // Build tileIdsByPosition for fast lookup
+    _tileIdsByTextureId.reserve(size);
 
-	_usedBpps = 0; // 1: 4-bit, 2: 8-bit, 4: 16-bit
-	size_t tileId = 0;
-	for (const Tile &tile: _mapTiles) {
-		const uint8_t texId = tile.texID & 0xF;
-		const uint8_t bpp = (tile.texID >> 7) & 3;
-		const uint16_t key = uint16_t(texId) | (uint16_t(tile.srcX / TILE_SIZE) << 4) | (uint16_t(tile.srcY / TILE_SIZE) << 8) | (uint16_t(bpp) << 12);
-		_usedBpps |= 1 << bpp;
+    _usedBpps = 0; // 1: 4-bit, 2: 8-bit, 4: 16-bit
+    size_t tileId = 0;
+    for (const Tile &tile : _mapTiles)
+    {
+        const uint8_t texId = tile.texID & 0xF;
+        const uint8_t bpp = (tile.texID >> 7) & 3;
+        const uint16_t key = uint16_t(texId) | (uint16_t(tile.srcX / TILE_SIZE) << 4) | (uint16_t(tile.srcY / TILE_SIZE) << 8) | (uint16_t(bpp) << 12);
+        _usedBpps |= 1 << bpp;
 
-		auto it = _tileIdsByTextureId.find(key);
-		// Remove some duplicates (but keep those which render differently)
-		if (it == _tileIdsByTextureId.end() || ! ff8_background_tiles_looks_alike(tile, _mapTiles.at(it->second))) {
-			_tileIdsByTextureId.insert(std::pair<uint16_t, size_t>(key, tileId));
-		}
-		++tileId;
-	}
+        auto it = _tileIdsByTextureId.find(key);
+        // Remove some duplicates (but keep those which render differently)
+        if (it == _tileIdsByTextureId.end() || !ff8_background_tiles_looks_alike(tile, _mapTiles.at(it->second)))
+        {
+            _tileIdsByTextureId.insert(std::pair<uint16_t, size_t>(key, tileId));
+        }
+        ++tileId;
+    }
 
-	return true;
+    return true;
 }
 
 bool TextureBackground::isBpp(Tim::Bpp bpp) const
 {
-	return true;
+    return true;
 }
 
-TexturePacker::TextureTypes TextureBackground::drawToImage(
-	int offsetX, int offsetY,
-	uint32_t *targetRgba, int targetW, int targetH, uint8_t targetScale, Tim::Bpp targetBpp,
-	int16_t vramPalXBpp2, int16_t vramPalY) const
+TexturePacker::TextureTypes TextureBackground::drawToImage(int offsetX, int offsetY, uint32_t *targetRgba, int targetW, int targetH, uint8_t targetScale, Tim::Bpp targetBpp, int16_t vramPalXBpp2, int16_t vramPalY) const
 {
-	const bimg::ImageMip &mip = _texture.mip();
-	const uint32_t *imgData = reinterpret_cast<const uint32_t *>(mip.m_data);
-	const uint8_t imgScale = _texture.scale();
-	const uint32_t imgWidth = mip.m_width / imgScale;
+    const bimg::ImageMip &mip = _texture.mip();
+    const uint32_t *imgData = reinterpret_cast<const uint32_t *>(mip.m_data);
+    const uint8_t imgScale = _texture.scale();
+    const uint32_t imgWidth = mip.m_width / imgScale;
 
-	const uint8_t cols = targetW / TILE_SIZE, rows = targetH / TILE_SIZE;
-	const uint8_t colsBpp = TILE_SIZE / (1 << uint16_t(targetBpp));
-	const uint8_t paletteId = vramPalY - 232 - 8; // The palette always is at (0, 232) and the first 8 palettes are unused
-	const uint8_t initialTextureId = -offsetX / (4 >> uint16_t(targetBpp)) / TEXTURE_WIDTH_BPP16;
+    const uint8_t cols = targetW / TILE_SIZE, rows = targetH / TILE_SIZE;
+    const uint8_t colsBpp = TILE_SIZE / (1 << uint16_t(targetBpp));
+    const uint8_t paletteId = vramPalY - 232 - 8; // The palette always is at (0, 232) and the first 8 palettes are unused
+    const uint8_t initialTextureId = -offsetX / (4 >> uint16_t(targetBpp)) / TEXTURE_WIDTH_BPP16;
 
-	for (uint8_t y = 0; y < 16; ++y) {
-		for (uint8_t x = 0; x < 16; ++x) {
-			const uint8_t textureId = initialTextureId + x / colsBpp;
-			const uint8_t textureX = x % colsBpp;
-			const uint16_t key = uint16_t(textureId) | (uint16_t(textureX) << 4) | (uint16_t(y) << 8) | (uint16_t(targetBpp) << 12);
-			auto [begin, end] = _tileIdsByTextureId.equal_range(key);
-			if (begin == end) {
-				if (trace_all || trace_vram) ffnx_warning("TextureBackground::%s: No tile found for textureId=%d x=%d y=%d targetBpp=%d paletteId=%d\n", __func__, textureId, textureX, y, targetBpp, paletteId);
+    for (uint8_t y = 0; y < 16; ++y)
+    {
+        for (uint8_t x = 0; x < 16; ++x)
+        {
+            const uint8_t textureId = initialTextureId + x / colsBpp;
+            const uint8_t textureX = x % colsBpp;
+            const uint16_t key = uint16_t(textureId) | (uint16_t(textureX) << 4) | (uint16_t(y) << 8) | (uint16_t(targetBpp) << 12);
+            auto [begin, end] = _tileIdsByTextureId.equal_range(key);
+            if (begin == end)
+            {
+                if (trace_all || trace_vram)
+                    ffnx_warning("TextureBackground::%s: No tile found for textureId=%d x=%d y=%d targetBpp=%d paletteId=%d\n", __func__, textureId, textureX, y, targetBpp, paletteId);
 
-				continue;
-			}
+                continue;
+            }
 
-			const size_t tileIdDefault = begin->second;
-			std::vector<size_t> matched;
+            const size_t tileIdDefault = begin->second;
+            std::vector<size_t> matched;
 
-			// When matching multiple tiles for the same texture part, try to choose the good tile
-			for (const std::pair<uint16_t, size_t> &pair: std::ranges::subrange{begin, end}) {
-				const Tile &tile = _mapTiles.at(pair.second);
-				uint8_t palId = (tile.palID >> 6) & 0xF;
+            // When matching multiple tiles for the same texture part, try to choose the good tile
+            for (const std::pair<uint16_t, size_t> &pair : std::ranges::subrange{begin, end})
+            {
+                const Tile &tile = _mapTiles.at(pair.second);
+                uint8_t palId = (tile.palID >> 6) & 0xF;
 
-				if (targetBpp != Tim::Bpp16 && paletteId != palId) {
-					continue;
-				}
+                if (targetBpp != Tim::Bpp16 && paletteId != palId)
+                {
+                    continue;
+                }
 
-				/* if (tile.parameter != 255) {
+                /* if (tile.parameter != 255) {
 					if (tile.parameter < *ff8_externals.field_state_background_count) {
 						const ff8_field_state_background *field_state_backgrounds = *ff8_externals.field_state_backgrounds;
 
@@ -1318,80 +1289,60 @@ TexturePacker::TextureTypes TextureBackground::drawToImage(
 					}
 				} */
 
-				matched.push_back(pair.second);
-			}
+                matched.push_back(pair.second);
+            }
 
-			size_t matchedCount = matched.size(),
-				tileId = matchedCount > 0 ? matched.at(0) : tileIdDefault;
+            size_t matchedCount = matched.size(), tileId = matchedCount > 0 ? matched.at(0) : tileIdDefault;
 
-			if (matchedCount > 1) {
-				if (trace_all || trace_vram) ffnx_warning("TextureBackground::%s: tile %d conflict\n", __func__, tileIdDefault);
-			}
+            if (matchedCount > 1)
+            {
+                if (trace_all || trace_vram)
+                    ffnx_warning("TextureBackground::%s: tile %d conflict\n", __func__, tileIdDefault);
+            }
 
-			const int col = tileId % _colsCount, row = tileId / _colsCount;
+            const int col = tileId % _colsCount, row = tileId / _colsCount;
 
-			drawImage(
-				imgData, imgWidth, imgScale,
-				targetRgba, targetW, targetScale,
-				col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE,
-				x * TILE_SIZE, y * TILE_SIZE
-			);
-		}
-	}
+            drawImage(imgData, imgWidth, imgScale, targetRgba, targetW, targetScale, col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE, x * TILE_SIZE, y * TILE_SIZE);
+        }
+    }
 
-	return TexturePacker::ExternalTexture;
+    return TexturePacker::ExternalTexture;
 }
 
-TextureRawImage::TextureRawImage(
-	const TexturePacker::IdentifiedTexture &originalTexture,
-	uint32_t *imageData, int imageWidth, int imageHeight
-) : ModdedTexture(originalTexture, true), _image(imageData), _width(imageWidth), _height(imageHeight),
-	_scale(computeScale())
+TextureRawImage::TextureRawImage(const TexturePacker::IdentifiedTexture &originalTexture, uint32_t *imageData, int imageWidth, int imageHeight) : ModdedTexture(originalTexture, true), _image(imageData), _width(imageWidth), _height(imageHeight), _scale(computeScale())
 {
 }
 
 TextureRawImage::~TextureRawImage()
 {
-	if (_image != nullptr) {
-		driver_free(_image);
-	}
+    if (_image != nullptr)
+    {
+        driver_free(_image);
+    }
 }
 
 uint8_t TextureRawImage::computeScale() const
 {
-	return _height / originalTexture().texture().h();
+    return _height / originalTexture().texture().h();
 }
 
-TexturePacker::TextureTypes TextureRawImage::drawToImage(
-	int offsetX, int offsetY,
-	uint32_t *targetRgba, int targetW, int targetH, uint8_t targetScale, Tim::Bpp targetBpp,
-	int16_t vramPalXBpp2, int16_t vramPalY) const
+TexturePacker::TextureTypes TextureRawImage::drawToImage(int offsetX, int offsetY, uint32_t *targetRgba, int targetW, int targetH, uint8_t targetScale, Tim::Bpp targetBpp, int16_t vramPalXBpp2, int16_t vramPalY) const
 {
-	const TexturePacker::TextureInfos &origTexture = originalTexture().texture();
+    const TexturePacker::TextureInfos &origTexture = originalTexture().texture();
 
-	if (origTexture.bpp() != targetBpp)
-	{
-		return TexturePacker::NoTexture;
-	}
+    if (origTexture.bpp() != targetBpp)
+    {
+        return TexturePacker::NoTexture;
+    }
 
-	int sourceX = offsetX < 0 ? -offsetX : 0,
-		sourceY = offsetY < 0 ? -offsetY : 0,
-		targetX = offsetX > 0 ? offsetX : 0,
-		targetY = offsetY > 0 ? offsetY : 0,
-		width = std::min(origTexture.pixelW() - sourceX, targetW - targetX),
-		height = std::min(origTexture.h() - sourceY, targetH - targetY);
+    int sourceX = offsetX < 0 ? -offsetX : 0, sourceY = offsetY < 0 ? -offsetY : 0, targetX = offsetX > 0 ? offsetX : 0, targetY = offsetY > 0 ? offsetY : 0, width = std::min(origTexture.pixelW() - sourceX, targetW - targetX), height = std::min(origTexture.h() - sourceY, targetH - targetY);
 
-	if (width <= 0 || height <= 0)
-	{
-		return TexturePacker::NoTexture;
-	}
+    if (width <= 0 || height <= 0)
+    {
+        return TexturePacker::NoTexture;
+    }
 
-	drawImage(
-		_image, _width / _scale, _scale,
-		targetRgba, targetW, targetScale,
-		sourceX, sourceY, width, height,
-		targetX, targetY
-	);
+    drawImage(_image, _width / _scale, _scale, targetRgba, targetW, targetScale, sourceX, sourceY, width, height, targetX, targetY);
 
-	return TexturePacker::InternalTexture;
+    return TexturePacker::InternalTexture;
 }

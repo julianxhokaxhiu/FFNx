@@ -41,16 +41,14 @@ int Hext::getAddress(std::string token)
     if (ends_with(sparts[0], "^"))
     {
         std::stringstream ss;
-        int *ptr = (int*)(std::stoi(sparts[0].substr(0, sparts[0].length() - 1), nullptr, 16) + inGlobalOffset);
+        int *ptr = (int *)(std::stoi(sparts[0].substr(0, sparts[0].length() - 1), nullptr, 16) + inGlobalOffset);
         ss << std::hex << *ptr;
         sparts[0] = ss.str();
     }
 
     for (auto &part : sparts)
     {
-        iparts.push_back(
-            std::stoi(part, nullptr, 16)
-        );
+        iparts.push_back(std::stoi(part, nullptr, 16));
     }
 
     ret = iparts[0];
@@ -137,7 +135,8 @@ bool Hext::parseComment(std::string token)
 {
     if (isMultilineComment)
     {
-        if (ends_with(token, "}}")) isMultilineComment = false;
+        if (ends_with(token, "}}"))
+            isMultilineComment = false;
         return true;
     }
 
@@ -147,9 +146,12 @@ bool Hext::parseComment(std::string token)
         return true;
     }
 
-    if (starts_with(token, "#")) return true;
-    if (starts_with(token, "{")) return true;
-    if (starts_with(token, ".")) return true;
+    if (starts_with(token, "#"))
+        return true;
+    if (starts_with(token, "{"))
+        return true;
+    if (starts_with(token, "."))
+        return true;
 
     return false;
 }
@@ -217,28 +219,35 @@ void Hext::apply(std::string filename)
 
     while (std::getline(ifs, line))
     {
-        if (line.empty()) continue;
+        if (line.empty())
+            continue;
 
         // Check if delayed, if so it should not be applied
-        if (hasCheckpoint(line)) {
+        if (hasCheckpoint(line))
+        {
             ifs.close();
             return;
         }
 
         // Check if is a comment
-        if (parseComment(line)) continue;
+        if (parseComment(line))
+            continue;
 
         // Check if is a command
-        if (parseCommands(line)) continue;
+        if (parseCommands(line))
+            continue;
 
         // Check if is a global offset
-        if (parseGlobalOffset(line)) continue;
+        if (parseGlobalOffset(line))
+            continue;
 
         // Check if is a memory permission range
-        if (parseMemoryPermission(line)) continue;
+        if (parseMemoryPermission(line))
+            continue;
 
         // Check if is a memory patch instruction
-        if (parseMemoryPatch(line)) continue;
+        if (parseMemoryPatch(line))
+            continue;
     }
 
     ifs.close();
@@ -255,13 +264,16 @@ void Hext::applyDelayed(std::string filename, std::string checkpoint)
 
     while (std::getline(ifs, line))
     {
-        if (line.empty()) continue;
+        if (line.empty())
+            continue;
 
         // Check if is a comment
-        if (parseComment(line)) continue;
+        if (parseComment(line))
+            continue;
 
         // Check if is a delayed patch.
-        if (parseCheckpoint(line, checkpoint)) {
+        if (parseCheckpoint(line, checkpoint))
+        {
             matchCheckpoint = true;
 
             continue;
@@ -270,16 +282,20 @@ void Hext::applyDelayed(std::string filename, std::string checkpoint)
         if (matchCheckpoint)
         {
             // Check if is a command
-            if (parseCommands(line)) continue;
+            if (parseCommands(line))
+                continue;
 
             // Check if is a global offset
-            if (parseGlobalOffset(line)) continue;
+            if (parseGlobalOffset(line))
+                continue;
 
             // Check if is a memory permission range
-            if (parseMemoryPermission(line)) continue;
+            if (parseMemoryPermission(line))
+                continue;
 
             // Check if is a memory patch instruction
-            if (parseMemoryPatch(line)) continue;
+            if (parseMemoryPatch(line))
+                continue;
         }
         else
         {
@@ -289,7 +305,8 @@ void Hext::applyDelayed(std::string filename, std::string checkpoint)
 
     ifs.close();
 
-    if (matchCheckpoint) ffnx_trace("Applied delayed Hext patch: %s\n", filename.c_str());
+    if (matchCheckpoint)
+        ffnx_trace("Applied delayed Hext patch: %s\n", filename.c_str());
 }
 
 void Hext::applyAll(std::string checkpoint)
@@ -298,9 +315,10 @@ void Hext::applyAll(std::string checkpoint)
     {
         if (!checkpoint.empty())
         {
-            for (const auto& entry : std::filesystem::directory_iterator(hext_patching_path))
+            for (const auto &entry : std::filesystem::directory_iterator(hext_patching_path))
             {
-                if (entry.is_regular_file()) {
+                if (entry.is_regular_file())
+                {
                     applyDelayed(entry.path().string(), checkpoint);
                 }
 
@@ -309,9 +327,10 @@ void Hext::applyAll(std::string checkpoint)
         }
         else
         {
-            for (const auto& entry : std::filesystem::directory_iterator(hext_patching_path))
+            for (const auto &entry : std::filesystem::directory_iterator(hext_patching_path))
             {
-                if (entry.is_regular_file()) {
+                if (entry.is_regular_file())
+                {
                     apply(entry.path().string());
                 }
 

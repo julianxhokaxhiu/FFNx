@@ -21,66 +21,62 @@
 
 #pragma once
 
-#define DEG2RAD(X) ((X) * (M_PI/180.0f))
+#define DEG2RAD(X) ((X) * (M_PI / 180.0f))
 
 struct matrix
 {
-	union
-	{
-		struct
-		{
-			float _11;
-			float _12;
-			float _13;
-			float _14;
-			float _21;
-			float _22;
-			float _23;
-			float _24;
-			float _31;
-			float _32;
-			float _33;
-			float _34;
-			float _41;
-			float _42;
-			float _43;
-			float _44;
-		};
+    union {
+        struct
+        {
+            float _11;
+            float _12;
+            float _13;
+            float _14;
+            float _21;
+            float _22;
+            float _23;
+            float _24;
+            float _31;
+            float _32;
+            float _33;
+            float _34;
+            float _41;
+            float _42;
+            float _43;
+            float _44;
+        };
 
-		float m[4][4];
-	};
+        float m[4][4];
+    };
 };
 
-template <typename T>
-struct vector2
+template <typename T> struct vector2
 {
-	T x;
-	T y;
+    T x;
+    T y;
 };
 
-template <typename T>
-struct vector3
+template <typename T> struct vector3
 {
-	T x;
-	T y;
-	T z;
+    T x;
+    T y;
+    T z;
 };
 
-template <typename T>
-struct vector4
+template <typename T> struct vector4
 {
-	T x;
-	T y;
-	T z;
-	T w;
+    T x;
+    T y;
+    T z;
+    T w;
 };
 
 struct point4d
 {
-	float x;
-	float y;
-	float z;
-	float w;
+    float x;
+    float y;
+    float z;
+    float w;
 };
 
 void add_vector(vector3<float> *a, vector3<float> *b, vector3<float> *dest);

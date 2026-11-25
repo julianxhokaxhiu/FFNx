@@ -19,6 +19,6 @@ struct ff7_game_obj;
 
 namespace ff7::starfield
 {
-    void init(ff7_game_obj *game_object);
-    bool is_active();
-}
+void init(ff7_game_obj *game_object);
+bool is_active();
+} // namespace ff7::starfield

@@ -10,6 +10,26 @@ Another example: if FF8 is looking for `c:/data/en/FIELD/mapdata/bc/bccent12/bcc
 this mode will make it open `direct/en/FIELD/mapdata/bc/bccent12/bccent12.msd` if it exists.
 If it does not exist, it will retry without the lang directory `direct/FIELD/mapdata/bc/bccent12/bccent12.msd`
 
+## FF8 Remastered model overrides
+
+When running FF8 Remastered, loose `.mch` and `chara.one` model files can be placed
+under `<direct_mode_path>/remastered/`, preserving their archive-relative paths.
+The language-specific path is checked first, then the path without the language:
+
+```text
+direct/remastered/<lang>/<archive-relative model path>
+direct/remastered/<archive-relative model path>
+```
+
+These overrides have the highest priority, including over loose classic `.mch`
+files under the game's `data/` directory. They retain Remastered model scaling
+and automatic Remastered HD texture selection, subject to the existing texture
+settings. Use this folder for Remastered-format models, not classic models.
+
+Other FF8 editions ignore this folder. Existing overrides outside `remastered/`
+keep their classic behavior. If no Remastered model override exists, the existing
+lookup order is unchanged.
+
 ## FF8 battle model chunks
 
 A battle model file can also be replaced section by section, so a mod ships only the sections it changes

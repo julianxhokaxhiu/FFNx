@@ -49,20 +49,22 @@
 #include "../../ff8/remaster.h"
 
 /* a STREAMFILE that operates via standard IO using a buffer */
-struct ZZZ_STREAMFILE {
-    STREAMFILE vt;          /* callbacks */
+struct ZZZ_STREAMFILE
+{
+    STREAMFILE vt; /* callbacks */
 
-    Zzz::File* infile;      /* actual FILE */
-    offv_t offset;          /* last read offset (info) */
-    offv_t buf_offset;      /* current buffer data start */
-    uint8_t* buf;           /* data buffer */
-    size_t buf_size;        /* max buffer size */
-    size_t valid_size;      /* current buffer size */
+    Zzz::File *infile; /* actual FILE */
+    offv_t offset;     /* last read offset (info) */
+    offv_t buf_offset; /* current buffer data start */
+    uint8_t *buf;      /* data buffer */
+    size_t buf_size;   /* max buffer size */
+    size_t valid_size; /* current buffer size */
 };
 
-size_t zzz_read(ZZZ_STREAMFILE* sf, uint8_t* dst, offv_t offset, size_t length)
+size_t zzz_read(ZZZ_STREAMFILE *sf, uint8_t *dst, offv_t offset, size_t length)
 {
-    if (trace_all) ffnx_trace("%s: %s\n", __func__, sf->infile->fileName());
+    if (trace_all)
+        ffnx_trace("%s: %s\n", __func__, sf->infile->fileName());
     size_t read_total = 0;
 
     if (dst == nullptr || length <= 0 || offset < 0)
@@ -77,7 +79,8 @@ size_t zzz_read(ZZZ_STREAMFILE* sf, uint8_t* dst, offv_t offset, size_t length)
         int buf_into = int(offset - sf->buf_offset);
 
         buf_limit = sf->valid_size - buf_into;
-        if (buf_limit > length) {
+        if (buf_limit > length)
+        {
             buf_limit = length;
         }
 
@@ -107,7 +110,8 @@ size_t zzz_read(ZZZ_STREAMFILE* sf, uint8_t* dst, offv_t offset, size_t length)
         length_to_read = length > sf->buf_size ? sf->buf_size : length;
 
         /* give up on partial reads (EOF) */
-        if (sf->valid_size < length_to_read) {
+        if (sf->valid_size < length_to_read)
+        {
             memcpy(dst, sf->buf, sf->valid_size);
             offset += sf->valid_size;
             read_total += sf->valid_size;
@@ -126,17 +130,17 @@ size_t zzz_read(ZZZ_STREAMFILE* sf, uint8_t* dst, offv_t offset, size_t length)
     return read_total;
 }
 
-size_t zzz_get_size(ZZZ_STREAMFILE* sf)
+size_t zzz_get_size(ZZZ_STREAMFILE *sf)
 {
     return sf->infile->size();
 }
 
-offv_t zzz_get_offset(ZZZ_STREAMFILE* sf)
+offv_t zzz_get_offset(ZZZ_STREAMFILE *sf)
 {
     return sf->infile->relativePos();
 }
 
-void zzz_get_name(ZZZ_STREAMFILE* sf, char* name, size_t name_size)
+void zzz_get_name(ZZZ_STREAMFILE *sf, char *name, size_t name_size)
 {
     int copy_size = sf->infile->fileNameSize() + 1;
     if (copy_size > name_size)
@@ -146,48 +150,53 @@ void zzz_get_name(ZZZ_STREAMFILE* sf, char* name, size_t name_size)
 
     memcpy(name, sf->infile->fileName(), copy_size);
     name[copy_size - 1] = '\0';
-    if (trace_all) ffnx_trace("%s: %s %d %d %s\n", __func__, name, copy_size, name_size, sf->infile->fileName());
+    if (trace_all)
+        ffnx_trace("%s: %s %d %d %s\n", __func__, name, copy_size, name_size, sf->infile->fileName());
 }
 
-STREAMFILE* zzz_open(ZZZ_STREAMFILE* sf, const char* const filename, size_t buf_size)
+STREAMFILE *zzz_open(ZZZ_STREAMFILE *sf, const char *const filename, size_t buf_size)
 {
-    if (trace_all || trace_files) ffnx_trace("%s: %s\n", __func__, filename);
+    if (trace_all || trace_files)
+        ffnx_trace("%s: %s\n", __func__, filename);
     return open_ZZZ_STREAMFILE(filename, buf_size);
 }
 
-void zzz_close(ZZZ_STREAMFILE* sf)
+void zzz_close(ZZZ_STREAMFILE *sf)
 {
-    if (trace_all || trace_files) ffnx_trace("%s: %s\n", __func__, sf->infile->fileName());
+    if (trace_all || trace_files)
+        ffnx_trace("%s: %s\n", __func__, sf->infile->fileName());
     Zzz::closeFile(sf->infile);
     delete[] sf->buf;
     delete sf;
 }
 
-STREAMFILE* open_ZZZ_STREAMFILE(const char* const filename, size_t buf_size)
+STREAMFILE *open_ZZZ_STREAMFILE(const char *const filename, size_t buf_size)
 {
-    if (trace_all || trace_files) ffnx_trace("%s: %s\n", __func__, filename);
+    if (trace_all || trace_files)
+        ffnx_trace("%s: %s\n", __func__, filename);
     if (filename == nullptr)
     {
         return nullptr;
     }
 
-    Zzz::File* zzz_file = g_FF8ZzzArchiveOther.openFile(filename);
+    Zzz::File *zzz_file = g_FF8ZzzArchiveOther.openFile(filename);
 
-    if (zzz_file == nullptr) {
+    if (zzz_file == nullptr)
+    {
         return nullptr;
     }
 
-    uint8_t* buf = new uint8_t[buf_size];
+    uint8_t *buf = new uint8_t[buf_size];
     memset(buf, 0, buf_size);
 
-    ZZZ_STREAMFILE* this_sf = new ZZZ_STREAMFILE();
+    ZZZ_STREAMFILE *this_sf = new ZZZ_STREAMFILE();
 
-    this_sf->vt.read = (size_t (*)(STREAMFILE*, uint8_t*, offv_t, size_t))zzz_read;
-    this_sf->vt.get_size = (size_t (*)(STREAMFILE*))zzz_get_size;
-    this_sf->vt.get_offset = (offv_t (*)(STREAMFILE*))zzz_get_offset;
-    this_sf->vt.get_name = (void (*)(STREAMFILE*, char*, size_t))zzz_get_name;
-    this_sf->vt.open = (STREAMFILE* (*)(STREAMFILE*, const char* const, size_t))zzz_open;
-    this_sf->vt.close = (void (*)(STREAMFILE*))zzz_close;
+    this_sf->vt.read = (size_t (*)(STREAMFILE *, uint8_t *, offv_t, size_t))zzz_read;
+    this_sf->vt.get_size = (size_t (*)(STREAMFILE *))zzz_get_size;
+    this_sf->vt.get_offset = (offv_t (*)(STREAMFILE *))zzz_get_offset;
+    this_sf->vt.get_name = (void (*)(STREAMFILE *, char *, size_t))zzz_get_name;
+    this_sf->vt.open = (STREAMFILE * (*)(STREAMFILE *, const char *const, size_t)) zzz_open;
+    this_sf->vt.close = (void (*)(STREAMFILE *))zzz_close;
 
     this_sf->infile = zzz_file;
     this_sf->buf_size = buf_size;

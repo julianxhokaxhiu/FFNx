@@ -58,26 +58,26 @@
 #define FF8_BATTLE_FILES_ARRAY_LEN 1117
 // c0m file range to add.
 #define FF8_FIRST_NEW_C0M 144
-#define FF8_LAST_NEW_C0M  199
+#define FF8_LAST_NEW_C0M 199
 #define FF8_NEW_C0M_COUNT (FF8_LAST_NEW_C0M - FF8_FIRST_NEW_C0M + 1) // 56
 // com_id = c0m# + 16, so the new monsters use com_id 160..215.
 #define FF8_FIRST_NEW_COM_ID (FF8_FIRST_NEW_C0M + 16) // 160
-#define FF8_LAST_NEW_COM_ID  (FF8_LAST_NEW_C0M + 16)  // 215
+#define FF8_LAST_NEW_COM_ID (FF8_LAST_NEW_C0M + 16)   // 215
 // The loader adds 150 to com_id, so com_id 160..215 arrive as file indices
 // 310..365 (D0C on retail); the hook remaps those onto the appended entries.
 #define FF8_FIRST_NEW_FILE_INDEX (FF8_FIRST_NEW_COM_ID + 150) // 310
-#define FF8_LAST_NEW_FILE_INDEX  (FF8_LAST_NEW_COM_ID + 150)  // 365
+#define FF8_LAST_NEW_FILE_INDEX (FF8_LAST_NEW_COM_ID + 150)   // 365
 
 // Where we move SG_ENEMY_SCANNED_ONCE: field vars 785..816 (8 DWORDs, enough for all 256
 // com_ids), in free savemap space. 753..784 are taken by AddMoreMagic.
-#define FF8_SCANNED_ONCE_RELOCATE_VAR  785
+#define FF8_SCANNED_ONCE_RELOCATE_VAR 785
 #define FF8_SCANNED_ONCE_RELOCATE_SIZE 32
 static_assert(FF8_SCANNED_ONCE_RELOCATE_SIZE >= 32, "must cover the full 0..255 com_id byte range (8 DWORDs)");
 
 // scene.out record layout: 128 bytes each, enemy_com_value[8] at offset 56.
-#define FF8_SCENE_OUT_RECORD_SIZE            128
+#define FF8_SCENE_OUT_RECORD_SIZE 128
 #define FF8_SCENE_OUT_ENEMY_COM_VALUE_OFFSET 56
-#define FF8_SCENE_OUT_ENEMY_SLOTS            8
+#define FF8_SCENE_OUT_ENEMY_SLOTS 8
 
 // Backing store for the appended filenames; the table holds pointers into it
 // for the whole session, so it stays static.
@@ -88,37 +88,37 @@ static char ff8_extended_c0m_names[FF8_NEW_C0M_COUNT][12]; // "C0M199.DAT" + NUL
 // c0m144..c0m199 - remap it onto the appended entries and forward the rest.
 static int ff8_battle_monster_load_file(int fileIndex, void *dst)
 {
-	if (fileIndex >= FF8_FIRST_NEW_FILE_INDEX && fileIndex <= FF8_LAST_NEW_FILE_INDEX)
-		fileIndex = FF8_BATTLE_FILES_ARRAY_LEN + (fileIndex - FF8_FIRST_NEW_FILE_INDEX);
+    if (fileIndex >= FF8_FIRST_NEW_FILE_INDEX && fileIndex <= FF8_LAST_NEW_FILE_INDEX)
+        fileIndex = FF8_BATTLE_FILES_ARRAY_LEN + (fileIndex - FF8_FIRST_NEW_FILE_INDEX);
 
-	return ((int (*)(int, void *))ff8_externals.battle_load_file_sub_508480)(fileIndex, dst);
+    return ((int (*)(int, void *))ff8_externals.battle_load_file_sub_508480)(fileIndex, dst);
 }
 
 // File size on disk, from the two places FFNx serves loose battle files: the
 // "direct" override folder first, then the plain extracted layout.
 static bool ff8_get_battle_file_size_on_disk(const char *relative_path, uint32_t *size_out)
 {
-	char full_path[MAX_PATH];
+    char full_path[MAX_PATH];
 
-	snprintf(full_path, sizeof(full_path), "%s/direct/%s", ff8_externals.app_path, relative_path);
-	FILE *file = fopen(full_path, "rb");
-	if (file == nullptr)
-	{
-		snprintf(full_path, sizeof(full_path), "%s/%s", ff8_externals.app_path, relative_path);
-		file = fopen(full_path, "rb");
-		if (file == nullptr)
-			return false;
-	}
+    snprintf(full_path, sizeof(full_path), "%s/direct/%s", ff8_externals.app_path, relative_path);
+    FILE *file = fopen(full_path, "rb");
+    if (file == nullptr)
+    {
+        snprintf(full_path, sizeof(full_path), "%s/%s", ff8_externals.app_path, relative_path);
+        file = fopen(full_path, "rb");
+        if (file == nullptr)
+            return false;
+    }
 
-	fseek(file, 0, SEEK_END);
-	long file_size = ftell(file);
-	fclose(file);
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fclose(file);
 
-	if (file_size <= 0)
-		return false;
+    if (file_size <= 0)
+        return false;
 
-	*size_out = (uint32_t)file_size;
-	return true;
+    *size_out = (uint32_t)file_size;
+    return true;
 }
 
 // True if any encounter in scene.out uses a new monster (com_id >= 160) - the
@@ -128,33 +128,31 @@ static bool ff8_get_battle_file_size_on_disk(const char *relative_path, uint32_t
 // needed so vanilla keeps its scanned-once field where save editors expect it.
 static bool ff8_scene_out_uses_new_monsters()
 {
-	char scene_out_filename[] = "battle/scene.out";
-	uint32_t file_size;
-	if (!ff8_get_battle_file_size_on_disk(scene_out_filename, &file_size))
-		return false;
+    char scene_out_filename[] = "battle/scene.out";
+    uint32_t file_size;
+    if (!ff8_get_battle_file_size_on_disk(scene_out_filename, &file_size))
+        return false;
 
-	uint8_t *scene_out = new uint8_t[file_size];
-	uint32_t read_size = ff8_externals.sm_pc_read(scene_out_filename, scene_out);
-	if (read_size > file_size)
-		read_size = file_size;
+    uint8_t *scene_out = new uint8_t[file_size];
+    uint32_t read_size = ff8_externals.sm_pc_read(scene_out_filename, scene_out);
+    if (read_size > file_size)
+        read_size = file_size;
 
-	bool uses_new_monsters = false;
-	for (uint32_t offset = FF8_SCENE_OUT_ENEMY_COM_VALUE_OFFSET;
-		!uses_new_monsters && offset + FF8_SCENE_OUT_ENEMY_SLOTS <= read_size;
-		offset += FF8_SCENE_OUT_RECORD_SIZE)
-	{
-		for (int slot = 0; slot < FF8_SCENE_OUT_ENEMY_SLOTS; ++slot)
-		{
-			if (scene_out[offset + slot] >= FF8_FIRST_NEW_COM_ID)
-			{
-				uses_new_monsters = true;
-				break;
-			}
-		}
-	}
+    bool uses_new_monsters = false;
+    for (uint32_t offset = FF8_SCENE_OUT_ENEMY_COM_VALUE_OFFSET; !uses_new_monsters && offset + FF8_SCENE_OUT_ENEMY_SLOTS <= read_size; offset += FF8_SCENE_OUT_RECORD_SIZE)
+    {
+        for (int slot = 0; slot < FF8_SCENE_OUT_ENEMY_SLOTS; ++slot)
+        {
+            if (scene_out[offset + slot] >= FF8_FIRST_NEW_COM_ID)
+            {
+                uses_new_monsters = true;
+                break;
+            }
+        }
+    }
 
-	delete[] scene_out;
-	return uses_new_monsters;
+    delete[] scene_out;
+    return uses_new_monsters;
 }
 
 // Moves SG_ENEMY_SCANNED_ONCE to a bigger block so com_id/32 stays in bounds
@@ -162,31 +160,30 @@ static bool ff8_scene_out_uses_new_monsters()
 // uses a new monster.
 static void ff8_relocate_enemy_scanned_once()
 {
-	if (!ff8_externals.field_vars_stack_1CFE9B8
-		|| !ff8_externals.battle_enemy_scanned_read_operand
-		|| !ff8_externals.battle_enemy_scanned_write_operand)
-		return;
+    if (!ff8_externals.field_vars_stack_1CFE9B8 || !ff8_externals.battle_enemy_scanned_read_operand || !ff8_externals.battle_enemy_scanned_write_operand)
+        return;
 
-	uint32_t to = ff8_externals.field_vars_stack_1CFE9B8 + FF8_SCANNED_ONCE_RELOCATE_VAR;
+    uint32_t to = ff8_externals.field_vars_stack_1CFE9B8 + FF8_SCANNED_ONCE_RELOCATE_VAR;
 
-	patch_code_dword(ff8_externals.battle_enemy_scanned_read_operand, to);
-	patch_code_dword(ff8_externals.battle_enemy_scanned_write_operand, to);
+    patch_code_dword(ff8_externals.battle_enemy_scanned_read_operand, to);
+    patch_code_dword(ff8_externals.battle_enemy_scanned_write_operand, to);
 
-	if (trace_all) ffnx_trace("Extra battle monsters: Scan scanned-once bitfield relocated to var %d.\n", FF8_SCANNED_ONCE_RELOCATE_VAR);
+    if (trace_all)
+        ffnx_trace("Extra battle monsters: Scan scanned-once bitfield relocated to var %d.\n", FF8_SCANNED_ONCE_RELOCATE_VAR);
 }
 
 static void ff8_extend_battle_actor_sounds()
 {
-	static uint32_t extended_actor_sounds[FF8_BATTLE_ACTOR_SOUND_ROWS][FF8_BATTLE_ACTOR_SOUND_SLOTS] = {};
-	if (ff8_externals.battle_actor_sounds == nullptr || ff8_externals.battle_actor_sounds == extended_actor_sounds)
-		return;
+    static uint32_t extended_actor_sounds[FF8_BATTLE_ACTOR_SOUND_ROWS][FF8_BATTLE_ACTOR_SOUND_SLOTS] = {};
+    if (ff8_externals.battle_actor_sounds == nullptr || ff8_externals.battle_actor_sounds == extended_actor_sounds)
+        return;
 
-	memcpy_code((uint32_t)extended_actor_sounds, ff8_externals.battle_actor_sounds, FF8_FIRST_NEW_COM_ID * sizeof(extended_actor_sounds[0]));
-	patch_code_dword(ff8_externals.battle_actor_sound + 0x81, (uint32_t)extended_actor_sounds);
-	patch_code_dword(ff8_externals.battle_actor_sound_3d + 0x9E, (uint32_t)extended_actor_sounds);
-	patch_code_dword(ff8_externals.battle_actor_sound_3d + 0xDC, (uint32_t)extended_actor_sounds);
-	patch_code_byte(ff8_externals.battle_actor_sound + 0x13, FF8_BATTLE_ACTOR_SOUND_ROWS);
-	ff8_externals.battle_actor_sounds = extended_actor_sounds;
+    memcpy_code((uint32_t)extended_actor_sounds, ff8_externals.battle_actor_sounds, FF8_FIRST_NEW_COM_ID * sizeof(extended_actor_sounds[0]));
+    patch_code_dword(ff8_externals.battle_actor_sound + 0x81, (uint32_t)extended_actor_sounds);
+    patch_code_dword(ff8_externals.battle_actor_sound_3d + 0x9E, (uint32_t)extended_actor_sounds);
+    patch_code_dword(ff8_externals.battle_actor_sound_3d + 0xDC, (uint32_t)extended_actor_sounds);
+    patch_code_byte(ff8_externals.battle_actor_sound + 0x13, FF8_BATTLE_ACTOR_SOUND_ROWS);
+    ff8_externals.battle_actor_sounds = extended_actor_sounds;
 }
 
 // Scan frames each target with a 16-byte camera row per com_id, but its table
@@ -196,20 +193,20 @@ static void ff8_extend_battle_actor_sounds()
 
 struct ff8_scan_camera_row
 {
-	int16_t distance;
-	int16_t offset_x;
-	int16_t offset_y;
-	int16_t model_offset_y;
-	int16_t aim_at_model;
-	int16_t view_offset_y;
-	uint8_t can_pitch;
-	uint8_t can_yaw;
-	uint8_t short_scan_orbit;
-	uint8_t padding;
+    int16_t distance;
+    int16_t offset_x;
+    int16_t offset_y;
+    int16_t model_offset_y;
+    int16_t aim_at_model;
+    int16_t view_offset_y;
+    uint8_t can_pitch;
+    uint8_t can_yaw;
+    uint8_t short_scan_orbit;
+    uint8_t padding;
 };
 static_assert(sizeof(ff8_scan_camera_row) == FF8_SCAN_CAMERA_ROW_SIZE, "Scan camera rows are 16 bytes");
 
-static const ff8_scan_camera_row ff8_scan_camera_default_row = { -0x1200, 0x200, -0x280, 0x280, 1, 0, 1, 1, 1, 0 };
+static const ff8_scan_camera_row ff8_scan_camera_default_row = {-0x1200, 0x200, -0x280, 0x280, 1, 0, 1, 1, 1, 0};
 
 static uint32_t ff8_scan_original_camera_row[2];
 static ff8_scan_camera_row ff8_scan_camera_rows[2][FF8_SCAN_CAMERA_ROWS];
@@ -217,108 +214,110 @@ static bool ff8_scan_camera_extended[2] = {};
 
 static int ff8_scan_camera_row_index(int lookup, int slot)
 {
-	uint8_t com_id = ((uint8_t *)ff8_externals.battle_entities_1D27BCB)[(int16_t)slot * FF8_BATTLE_SLOT_DATA_SIZE];
+    uint8_t com_id = ((uint8_t *)ff8_externals.battle_entities_1D27BCB)[(int16_t)slot * FF8_BATTLE_SLOT_DATA_SIZE];
 
-	if (com_id >= FF8_FIRST_NEW_COM_ID)
-		return FF8_SCAN_CAMERA_VANILLA_ROWS + (com_id - FF8_FIRST_NEW_COM_ID);
+    if (com_id >= FF8_FIRST_NEW_COM_ID)
+        return FF8_SCAN_CAMERA_VANILLA_ROWS + (com_id - FF8_FIRST_NEW_COM_ID);
 
-	return ((int (*)(int))ff8_scan_original_camera_row[lookup])(slot);
+    return ((int (*)(int))ff8_scan_original_camera_row[lookup])(slot);
 }
 
 static int ff8_scan_camera_row_index_39(int slot)
 {
-	return ff8_scan_camera_row_index(0, slot);
+    return ff8_scan_camera_row_index(0, slot);
 }
 
 static int ff8_scan_camera_row_index_67(int slot)
 {
-	return ff8_scan_camera_row_index(1, slot);
+    return ff8_scan_camera_row_index(1, slot);
 }
 
 static void ff8_extend_scan_camera_rows(int lookup, uint32_t get_camera_row, int (*row_index)(int), ff8_scan_camera_row *rows)
 {
-	if (get_camera_row == 0 || ff8_externals.battle_entities_1D27BCB == 0)
-		return;
+    if (get_camera_row == 0 || ff8_externals.battle_entities_1D27BCB == 0)
+        return;
 
-	ff8_scan_original_camera_row[lookup] = get_relative_call(get_camera_row, 0xA);
+    ff8_scan_original_camera_row[lookup] = get_relative_call(get_camera_row, 0xA);
 
-	memcpy_code((uint32_t)rows, (void *)get_absolute_value(get_camera_row, 0x23), FF8_SCAN_CAMERA_VANILLA_ROWS * sizeof(rows[0]));
-	for (int row = FF8_SCAN_CAMERA_VANILLA_ROWS; row < FF8_SCAN_CAMERA_ROWS; ++row)
-		rows[row] = ff8_scan_camera_default_row;
+    memcpy_code((uint32_t)rows, (void *)get_absolute_value(get_camera_row, 0x23), FF8_SCAN_CAMERA_VANILLA_ROWS * sizeof(rows[0]));
+    for (int row = FF8_SCAN_CAMERA_VANILLA_ROWS; row < FF8_SCAN_CAMERA_ROWS; ++row)
+        rows[row] = ff8_scan_camera_default_row;
 
-	replace_call(get_camera_row + 0xA, (void *)row_index);
-	patch_code_dword(get_camera_row + 0x23, (uint32_t)rows);
-	ff8_scan_camera_extended[lookup] = true;
+    replace_call(get_camera_row + 0xA, (void *)row_index);
+    patch_code_dword(get_camera_row + 0x23, (uint32_t)rows);
+    ff8_scan_camera_extended[lookup] = true;
 }
 
 static void ff8_extend_scan_camera()
 {
-	ff8_extend_scan_camera_rows(0, ff8_externals.scan_get_camera_row, ff8_scan_camera_row_index_39, ff8_scan_camera_rows[0]);
-	ff8_extend_scan_camera_rows(1, ff8_externals.scan2_get_camera_row, ff8_scan_camera_row_index_67, ff8_scan_camera_rows[1]);
+    ff8_extend_scan_camera_rows(0, ff8_externals.scan_get_camera_row, ff8_scan_camera_row_index_39, ff8_scan_camera_rows[0]);
+    ff8_extend_scan_camera_rows(1, ff8_externals.scan2_get_camera_row, ff8_scan_camera_row_index_67, ff8_scan_camera_rows[1]);
 }
 
 const uint8_t *ff8_get_scan_camera_rows()
 {
-	return ff8_scan_camera_extended[0] ? (const uint8_t *)ff8_scan_camera_rows[0] : nullptr;
+    return ff8_scan_camera_extended[0] ? (const uint8_t *)ff8_scan_camera_rows[0] : nullptr;
 }
 
 void ff8_set_scan_camera_rows(const uint8_t *rows)
 {
-	// Both Scan effects carry the same table, so one file feeds both.
-	for (int lookup = 0; lookup < 2; ++lookup)
-		if (ff8_scan_camera_extended[lookup])
-			memcpy_code((uint32_t)ff8_scan_camera_rows[lookup], (void *)rows, sizeof(ff8_scan_camera_rows[lookup]));
+    // Both Scan effects carry the same table, so one file feeds both.
+    for (int lookup = 0; lookup < 2; ++lookup)
+        if (ff8_scan_camera_extended[lookup])
+            memcpy_code((uint32_t)ff8_scan_camera_rows[lookup], (void *)rows, sizeof(ff8_scan_camera_rows[lookup]));
 }
 
 void ff8_battle_monsters_init()
 {
-	ff8_extend_battle_actor_sounds();
-	ff8_extend_scan_camera();
+    ff8_extend_battle_actor_sounds();
+    ff8_extend_scan_camera();
 
-	if (!ff8_externals.battle_monster_file_load_call_site || !ff8_externals.battle_load_file_sub_508480)
-	{
-		if (trace_all) ffnx_trace("Extra battle monsters (c0m144-c0m199): unsupported game version, skipping.\n");
-		return;
-	}
+    if (!ff8_externals.battle_monster_file_load_call_site || !ff8_externals.battle_load_file_sub_508480)
+    {
+        if (trace_all)
+            ffnx_trace("Extra battle monsters (c0m144-c0m199): unsupported game version, skipping.\n");
+        return;
+    }
 
-	if (ff8_externals.battle_filenames == nullptr)
-	{
-		if (trace_all) ffnx_trace("Extra battle monsters: battle_filenames not resolved, skipping.\n");
-		return;
-	}
+    if (ff8_externals.battle_filenames == nullptr)
+    {
+        if (trace_all)
+            ffnx_trace("Extra battle monsters: battle_filenames not resolved, skipping.\n");
+        return;
+    }
 
-	// 1) Build the extended table (original entries + 56 new ones) and give it
-	//    to battle_filenames. One-time allocation, never freed, like the exe's
-	//    own static table.
-	char **extended_filenames = (char **)driver_malloc((FF8_BATTLE_FILES_ARRAY_LEN + FF8_NEW_C0M_COUNT) * sizeof(char *));
-	if (extended_filenames == nullptr)
-		return;
+    // 1) Build the extended table (original entries + 56 new ones) and give it
+    //    to battle_filenames. One-time allocation, never freed, like the exe's
+    //    own static table.
+    char **extended_filenames = (char **)driver_malloc((FF8_BATTLE_FILES_ARRAY_LEN + FF8_NEW_C0M_COUNT) * sizeof(char *));
+    if (extended_filenames == nullptr)
+        return;
 
-	memcpy(extended_filenames, ff8_externals.battle_filenames, FF8_BATTLE_FILES_ARRAY_LEN * sizeof(char *));
-	for (uint32_t i = 0; i < FF8_NEW_C0M_COUNT; ++i)
-	{
-		snprintf(ff8_extended_c0m_names[i], sizeof(ff8_extended_c0m_names[i]), "C0M%03d.DAT", FF8_FIRST_NEW_C0M + i);
-		extended_filenames[FF8_BATTLE_FILES_ARRAY_LEN + i] = ff8_extended_c0m_names[i];
-	}
-	ff8_externals.battle_filenames = extended_filenames;
+    memcpy(extended_filenames, ff8_externals.battle_filenames, FF8_BATTLE_FILES_ARRAY_LEN * sizeof(char *));
+    for (uint32_t i = 0; i < FF8_NEW_C0M_COUNT; ++i)
+    {
+        snprintf(ff8_extended_c0m_names[i], sizeof(ff8_extended_c0m_names[i]), "C0M%03d.DAT", FF8_FIRST_NEW_C0M + i);
+        extended_filenames[FF8_BATTLE_FILES_ARRAY_LEN + i] = ff8_extended_c0m_names[i];
+    }
+    ff8_externals.battle_filenames = extended_filenames;
 
-	//    Repoint the loader's array base at it (the disp32 of
-	//    mov ebx, BattleFilesArray[eax*4], at battle_open_file + 0x11). FFNx's
-	//    vram.cpp hooks read battle_filenames, so they pick it up too.
-	patch_code_dword(ff8_externals.battle_open_file + 0x11, (DWORD)(uintptr_t)ff8_externals.battle_filenames);
+    //    Repoint the loader's array base at it (the disp32 of
+    //    mov ebx, BattleFilesArray[eax*4], at battle_open_file + 0x11). FFNx's
+    //    vram.cpp hooks read battle_filenames, so they pick it up too.
+    patch_code_dword(ff8_externals.battle_open_file + 0x11, (DWORD)(uintptr_t)ff8_externals.battle_filenames);
 
-	// 2) Redirect the loader's file-load call to our hook.
-	replace_call(ff8_externals.battle_monster_file_load_call_site, (void *)&ff8_battle_monster_load_file);
+    // 2) Redirect the loader's file-load call to our hook.
+    replace_call(ff8_externals.battle_monster_file_load_call_site, (void *)&ff8_battle_monster_load_file);
 
-	// 3) Fix the Scan overflow, but only if scene.out actually uses a new
-	//    monster - vanilla never reaches com_id 160, so its field is already safe.
-	bool uses_new_monsters = ff8_scene_out_uses_new_monsters();
+    // 3) Fix the Scan overflow, but only if scene.out actually uses a new
+    //    monster - vanilla never reaches com_id 160, so its field is already safe.
+    bool uses_new_monsters = ff8_scene_out_uses_new_monsters();
 
-	if (uses_new_monsters)
-		ff8_relocate_enemy_scanned_once();
+    if (uses_new_monsters)
+        ff8_relocate_enemy_scanned_once();
 
-	// Only log when a mod actually uses the new monsters; the table is extended
-	// everywhere, so staying quiet on vanilla keeps this out of everyone's log.
-	if (uses_new_monsters && trace_all)
-		ffnx_trace("Extra battle monsters enabled: c0m%03d-c0m%03d usable via enemy_com_value %d-%d.\n", FF8_FIRST_NEW_C0M, FF8_LAST_NEW_C0M, FF8_FIRST_NEW_COM_ID, FF8_LAST_NEW_COM_ID);
+    // Only log when a mod actually uses the new monsters; the table is extended
+    // everywhere, so staying quiet on vanilla keeps this out of everyone's log.
+    if (uses_new_monsters && trace_all)
+        ffnx_trace("Extra battle monsters enabled: c0m%03d-c0m%03d usable via enemy_com_value %d-%d.\n", FF8_FIRST_NEW_C0M, FF8_LAST_NEW_C0M, FF8_FIRST_NEW_COM_ID, FF8_LAST_NEW_COM_ID);
 }

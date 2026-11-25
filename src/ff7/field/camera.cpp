@@ -24,17 +24,17 @@
 
 namespace ff7::field
 {
-    Camera camera;
+Camera camera;
 
-    void Camera::setScrollingDir(float x, float y)
-    {
-        scrollingDir.x = x;
-        scrollingDir.y = y;
-    }
-
-    void Camera::setScrollingOffset(float x, float y)
-    {
-        scrollingOffset.x = x;
-        scrollingOffset.y = y;
-    }
+void Camera::setScrollingDir(float x, float y)
+{
+    scrollingDir.x = x;
+    scrollingDir.y = y;
 }
+
+void Camera::setScrollingOffset(float x, float y)
+{
+    scrollingOffset.x = x;
+    scrollingOffset.y = y;
+}
+} // namespace ff7::field

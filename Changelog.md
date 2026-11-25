@@ -17,6 +17,7 @@
 - Core: Fix Universal Button Prompts rendering incorrectly in World game mode
 - Core: Fix Safer Sephiroth missing eyes and mouth in death animation ( https://github.com/julianxhokaxhiu/FFNx/issues/1057 )
 - Core: Fix field transitions and background rendering, for eg. Whirlwind Maze illusion ( https://github.com/julianxhokaxhiu/FFNx/issues/1103 )
+- Core: Restore FF7's stock battle shadows with PSX-style shadows when Advanced Lighting is off ( https://github.com/julianxhokaxhiu/FFNx/issues/1104 )
 - Core: gltf animations no longer need one key per game frame; idles loop on their own and animation switches blend ( https://github.com/julianxhokaxhiu/FFNx/pull/1078 )
 - Renderer: Restore PSX-style field facial lighting and texture modulation across all `game_lighting` modes, including scripted colors and fades ( https://github.com/julianxhokaxhiu/FFNx/issues/1095 )
 - Cheats: Add support to skip credits using the Skip FMV cheat shortcut
@@ -33,6 +34,7 @@
 - Core: Fix the missing sword slash on Gilgamesh's Masamune, the Eden sparkles drawn off screen and the long spikes Magic Summon throws across the screen ( https://github.com/julianxhokaxhiu/FFNx/pull/1088 )
 - Core: Fix the world map check that lifts the camera when terrain hides the player: it tested a point near the top-left corner of the screen instead of the player ( https://github.com/julianxhokaxhiu/FFNx/pull/1089 )
 - Direct mode: Add the chunk feature for the character and weapon battle files (dXcNNN.dat, dXwNNN.dat), see [Direct mode](docs/mods/direct_mode.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/1074 )
+- Direct mode: Allow to override Remastered models for FF8R edition, see [Direct mode](docs/mods/direct_mode.md)
 - Renderer: Preserve PSX texture-page coordinates, fixing battle effects sampling past their image edges, including Tonberry's Doink bubble ( https://github.com/julianxhokaxhiu/FFNx/issues/1073 )
 - Renderer: Restore world-map UV precision automatically without affecting unrelated polygons. The `ff8_fix_uv_coords_precision` option is no longer needed and is ignored.
 - Renderer: Fix UV gemotry for Roads and Rail tracks in World

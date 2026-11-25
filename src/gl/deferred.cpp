@@ -45,845 +45,897 @@ uint32_t num_sorted_deferred;
 int lastBlitDrawCallIndex = -1;
 
 // save a draw call for later processing
-uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex* vertices, struct vector3<float>* normals, uint32_t vertexcount, WORD* indices, uint32_t count, struct boundingbox* boundingbox, struct light_data* lightdata, uint32_t clip, uint32_t mipmap)
+uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, struct vector3<float> *normals, uint32_t vertexcount, WORD *indices, uint32_t count, struct boundingbox *boundingbox, struct light_data *lightdata, uint32_t clip, uint32_t mipmap)
 {
-	if (ff8 || !enable_lighting)
-	{
-		return false;
-	}
+    if (ff8 || !enable_lighting)
+    {
+        return false;
+    }
 
-	if (trace_all) ffnx_trace("gl_defer_draw: call with primitivetype: %u - vertextype: %u - vertexcount: %u - count: %u - clip: %d - mipmap: %d\n", primitivetype, vertextype, vertexcount, count, clip, mipmap);
+    if (trace_all)
+        ffnx_trace("gl_defer_draw: call with primitivetype: %u - vertextype: %u - vertexcount: %u - count: %u - clip: %d - mipmap: %d\n", primitivetype, vertextype, vertexcount, count, clip, mipmap);
 
-	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+    if (!deferred_draws)
+        deferred_draws = (deferred_draw *)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
 
-	// global disable
-	if (nodefer) {
-		if (trace_all) ffnx_trace("gl_defer_draw: nodefer true\n");
-		return false;
-	}
+    // global disable
+    if (nodefer)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_draw: nodefer true\n");
+        return false;
+    }
 
-	if (num_deferred + 1 > DEFERRED_MAX)
-	{
-		if (trace_all) ffnx_trace("gl_defer_draw: deferred draw queue overflow - num_deferred: %u - count: %u - DEFERRED_MAX: %u\n", num_deferred, count, DEFERRED_MAX);
-		return false;
-	}
+    if (num_deferred + 1 > DEFERRED_MAX)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_draw: deferred draw queue overflow - num_deferred: %u - count: %u - DEFERRED_MAX: %u\n", num_deferred, count, DEFERRED_MAX);
+        return false;
+    }
 
-	uint32_t defer = num_deferred;
+    uint32_t defer = num_deferred;
 
-	deferred_draws[defer].count = count;
-	deferred_draws[defer].clip = clip;
-	deferred_draws[defer].mipmap = mipmap;
-	deferred_draws[defer].primitivetype = primitivetype;
-	deferred_draws[defer].vertextype = vertextype;
-	deferred_draws[defer].vertexcount = vertexcount;
-	deferred_draws[defer].indices = (WORD*)driver_malloc(sizeof(*indices) * count);
-	deferred_draws[defer].vertices = (nvertex*)driver_malloc(sizeof(*vertices) * vertexcount);
-	deferred_draws[defer].draw_call_type = DCT_DRAW;
-	if(enable_time_cycle)
-		deferred_draws[defer].is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
-	if(enable_worldmap_external_mesh)
-		deferred_draws[defer].is_fog_enabled = newRenderer.isFogEnabled();
-	gl_save_state(&deferred_draws[defer].state);
+    deferred_draws[defer].count = count;
+    deferred_draws[defer].clip = clip;
+    deferred_draws[defer].mipmap = mipmap;
+    deferred_draws[defer].primitivetype = primitivetype;
+    deferred_draws[defer].vertextype = vertextype;
+    deferred_draws[defer].vertexcount = vertexcount;
+    deferred_draws[defer].indices = (WORD *)driver_malloc(sizeof(*indices) * count);
+    deferred_draws[defer].vertices = (nvertex *)driver_malloc(sizeof(*vertices) * vertexcount);
+    deferred_draws[defer].draw_call_type = DCT_DRAW;
+    if (enable_time_cycle)
+        deferred_draws[defer].is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
+    if (enable_worldmap_external_mesh)
+        deferred_draws[defer].is_fog_enabled = newRenderer.isFogEnabled();
+    gl_save_state(&deferred_draws[defer].state);
 
-	memcpy(deferred_draws[defer].indices, indices, sizeof(*indices) * count);
-	memcpy(deferred_draws[defer].vertices, vertices, sizeof(*vertices) * vertexcount);
+    memcpy(deferred_draws[defer].indices, indices, sizeof(*indices) * count);
+    memcpy(deferred_draws[defer].vertices, vertices, sizeof(*vertices) * vertexcount);
 
-	if (boundingbox)
-	{
-		deferred_draws[defer].boundingbox = (struct boundingbox*)driver_malloc(sizeof(struct boundingbox));
+    if (boundingbox)
+    {
+        deferred_draws[defer].boundingbox = (struct boundingbox *)driver_malloc(sizeof(struct boundingbox));
 
-		deferred_draws[defer].boundingbox->min_x = boundingbox->min_x;
-		deferred_draws[defer].boundingbox->min_y = boundingbox->min_y;
-		deferred_draws[defer].boundingbox->min_z = boundingbox->min_z;
+        deferred_draws[defer].boundingbox->min_x = boundingbox->min_x;
+        deferred_draws[defer].boundingbox->min_y = boundingbox->min_y;
+        deferred_draws[defer].boundingbox->min_z = boundingbox->min_z;
 
-		deferred_draws[defer].boundingbox->max_x = boundingbox->max_x;
-		deferred_draws[defer].boundingbox->max_y = boundingbox->max_y;
-		deferred_draws[defer].boundingbox->max_z = boundingbox->max_z;
-	}
-	else // calculate AABB if no bounding box found
-	{
-		deferred_draws[defer].boundingbox = (struct boundingbox*)driver_malloc(sizeof(struct boundingbox));
+        deferred_draws[defer].boundingbox->max_x = boundingbox->max_x;
+        deferred_draws[defer].boundingbox->max_y = boundingbox->max_y;
+        deferred_draws[defer].boundingbox->max_z = boundingbox->max_z;
+    }
+    else // calculate AABB if no bounding box found
+    {
+        deferred_draws[defer].boundingbox = (struct boundingbox *)driver_malloc(sizeof(struct boundingbox));
 
-		deferred_draws[defer].boundingbox->min_x = FLT_MAX;
-		deferred_draws[defer].boundingbox->min_y = FLT_MAX;
-		deferred_draws[defer].boundingbox->min_z = FLT_MAX;
+        deferred_draws[defer].boundingbox->min_x = FLT_MAX;
+        deferred_draws[defer].boundingbox->min_y = FLT_MAX;
+        deferred_draws[defer].boundingbox->min_z = FLT_MAX;
 
-		deferred_draws[defer].boundingbox->max_x = FLT_MIN;
-		deferred_draws[defer].boundingbox->max_y = FLT_MIN;
-		deferred_draws[defer].boundingbox->max_z = FLT_MIN;
+        deferred_draws[defer].boundingbox->max_x = FLT_MIN;
+        deferred_draws[defer].boundingbox->max_y = FLT_MIN;
+        deferred_draws[defer].boundingbox->max_z = FLT_MIN;
 
-		for (int i = 0; i < vertexcount; ++i)
-		{
-			float vx = vertices[i]._.x;
-			float vy = vertices[i]._.y;
-			float vz = vertices[i]._.z;
+        for (int i = 0; i < vertexcount; ++i)
+        {
+            float vx = vertices[i]._.x;
+            float vy = vertices[i]._.y;
+            float vz = vertices[i]._.z;
 
-			deferred_draws[defer].boundingbox->min_x = std::min(deferred_draws[defer].boundingbox->min_x, vx);
-			deferred_draws[defer].boundingbox->min_y = std::min(deferred_draws[defer].boundingbox->min_y, vy);
-			deferred_draws[defer].boundingbox->min_z = std::min(deferred_draws[defer].boundingbox->min_z, vz);
+            deferred_draws[defer].boundingbox->min_x = std::min(deferred_draws[defer].boundingbox->min_x, vx);
+            deferred_draws[defer].boundingbox->min_y = std::min(deferred_draws[defer].boundingbox->min_y, vy);
+            deferred_draws[defer].boundingbox->min_z = std::min(deferred_draws[defer].boundingbox->min_z, vz);
 
-			deferred_draws[defer].boundingbox->max_x = std::max(deferred_draws[defer].boundingbox->max_x, vx);
-			deferred_draws[defer].boundingbox->max_y = std::max(deferred_draws[defer].boundingbox->max_y, vy);
-			deferred_draws[defer].boundingbox->max_z = std::max(deferred_draws[defer].boundingbox->max_z, vz);
-		}
-	}
+            deferred_draws[defer].boundingbox->max_x = std::max(deferred_draws[defer].boundingbox->max_x, vx);
+            deferred_draws[defer].boundingbox->max_y = std::max(deferred_draws[defer].boundingbox->max_y, vy);
+            deferred_draws[defer].boundingbox->max_z = std::max(deferred_draws[defer].boundingbox->max_z, vz);
+        }
+    }
 
-	if (normals)
-	{
-		deferred_draws[defer].normals = (vector3<float>*)driver_malloc(sizeof(*normals) * vertexcount);
-		memcpy(deferred_draws[defer].normals, normals, sizeof(*normals) * vertexcount);
-	}
+    if (normals)
+    {
+        deferred_draws[defer].normals = (vector3<float> *)driver_malloc(sizeof(*normals) * vertexcount);
+        memcpy(deferred_draws[defer].normals, normals, sizeof(*normals) * vertexcount);
+    }
 
-	if(lightdata)
-	{
-		deferred_draws[defer].lightdata = (struct light_data*)driver_malloc(sizeof(struct light_data));
-		memcpy(deferred_draws[defer].lightdata, lightdata, sizeof(struct light_data));
-	}
+    if (lightdata)
+    {
+        deferred_draws[defer].lightdata = (struct light_data *)driver_malloc(sizeof(struct light_data));
+        memcpy(deferred_draws[defer].lightdata, lightdata, sizeof(struct light_data));
+    }
 
-	num_deferred++;
+    num_deferred++;
 
-	if (trace_all) ffnx_trace("gl_defer_draw: return true\n");
+    if (trace_all)
+        ffnx_trace("gl_defer_draw: return true\n");
 
-	return true;
+    return true;
 }
 
 uint32_t gl_defer_blit_framebuffer(struct texture_set *texture_set, struct tex_header *tex_header)
 {
-	if (ff8 || !enable_lighting)
-	{
-		return false;
-	}
+    if (ff8 || !enable_lighting)
+    {
+        return false;
+    }
 
-	if (trace_all) ffnx_trace("gl_defer_blit_framebuffer_buffer");
+    if (trace_all)
+        ffnx_trace("gl_defer_blit_framebuffer_buffer");
 
-	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+    if (!deferred_draws)
+        deferred_draws = (deferred_draw *)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
 
-	// global disable
-	if (nodefer) {
-		if (trace_all) ffnx_trace("gl_defer_draw: nodefer true\n");
-		return false;
-	}
+    // global disable
+    if (nodefer)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_draw: nodefer true\n");
+        return false;
+    }
 
-	if (num_deferred + 1 > DEFERRED_MAX)
-	{
-		if (trace_all) ffnx_trace("gl_defer_blit_framebuffer_buffer: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
-		return false;
-	}
+    if (num_deferred + 1 > DEFERRED_MAX)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_blit_framebuffer_buffer: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+        return false;
+    }
 
-	uint32_t defer = num_deferred;
+    uint32_t defer = num_deferred;
 
-	deferred_draws[defer].fb_texture_set = texture_set;
-	deferred_draws[defer].fb_tex_header = tex_header;
-	deferred_draws[defer].draw_call_type = DCT_BLIT;
-	lastBlitDrawCallIndex = defer;
+    deferred_draws[defer].fb_texture_set = texture_set;
+    deferred_draws[defer].fb_tex_header = tex_header;
+    deferred_draws[defer].draw_call_type = DCT_BLIT;
+    lastBlitDrawCallIndex = defer;
 
-	num_deferred++;
+    num_deferred++;
 
-	if (trace_all) ffnx_trace("gl_defer_blit_framebuffer_buffer: return true\n");
+    if (trace_all)
+        ffnx_trace("gl_defer_blit_framebuffer_buffer: return true\n");
 
-	return true;
+    return true;
 }
 
 uint32_t gl_defer_clear_buffer(uint32_t clear_color, uint32_t clear_depth, struct game_obj *game_object)
 {
-	if (ff8 || !enable_lighting)
-	{
-		return false;
-	}
+    if (ff8 || !enable_lighting)
+    {
+        return false;
+    }
 
-	if (trace_all) ffnx_trace("gl_defer_clear_buffer");
+    if (trace_all)
+        ffnx_trace("gl_defer_clear_buffer");
 
-	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+    if (!deferred_draws)
+        deferred_draws = (deferred_draw *)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
 
-	// global disable
-	if (nodefer) {
-		if (trace_all) ffnx_trace("gl_defer_clear_buffer: nodefer true\n");
-		return false;
-	}
+    // global disable
+    if (nodefer)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_clear_buffer: nodefer true\n");
+        return false;
+    }
 
-	if (num_deferred + 1 > DEFERRED_MAX)
-	{
-		if (trace_all) ffnx_trace("gl_defer_clear_buffer: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
-		return false;
-	}
+    if (num_deferred + 1 > DEFERRED_MAX)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_clear_buffer: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+        return false;
+    }
 
-	uint32_t defer = num_deferred;
+    uint32_t defer = num_deferred;
 
-	deferred_draws[defer].clear_color = clear_color;
-	deferred_draws[defer].clear_depth = clear_depth;
-	deferred_draws[defer].game_object = game_object;
-	deferred_draws[defer].draw_call_type = DCT_CLEAR;
+    deferred_draws[defer].clear_color = clear_color;
+    deferred_draws[defer].clear_depth = clear_depth;
+    deferred_draws[defer].game_object = game_object;
+    deferred_draws[defer].draw_call_type = DCT_CLEAR;
 
-	num_deferred++;
+    num_deferred++;
 
-	if (trace_all) ffnx_trace("gl_defer_clear_buffer: return true\n");
+    if (trace_all)
+        ffnx_trace("gl_defer_clear_buffer: return true\n");
 
-	return true;
+    return true;
 }
 
 uint32_t gl_defer_yuv_frame(uint32_t buffer_index)
 {
-	if (ff8 || !enable_lighting)
-	{
-		return false;
-	}
+    if (ff8 || !enable_lighting)
+    {
+        return false;
+    }
 
-	if (trace_all) ffnx_trace("gl_defer_yuv_frame");
+    if (trace_all)
+        ffnx_trace("gl_defer_yuv_frame");
 
-	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+    if (!deferred_draws)
+        deferred_draws = (deferred_draw *)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
 
-	// global disable
-	if (nodefer) {
-		if (trace_all) ffnx_trace("gl_defer_yuv_frame: nodefer true\n");
-		return false;
-	}
+    // global disable
+    if (nodefer)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_yuv_frame: nodefer true\n");
+        return false;
+    }
 
-	if (num_deferred + 1 > DEFERRED_MAX)
-	{
-		if (trace_all) ffnx_trace("gl_defer_yuv_frame: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
-		return false;
-	}
+    if (num_deferred + 1 > DEFERRED_MAX)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_yuv_frame: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+        return false;
+    }
 
-	uint32_t defer = num_deferred;
+    uint32_t defer = num_deferred;
 
-	deferred_draws[defer].movie_buffer_index = buffer_index;
-	deferred_draws[defer].draw_call_type = DCT_DRAW_MOVIE;
+    deferred_draws[defer].movie_buffer_index = buffer_index;
+    deferred_draws[defer].draw_call_type = DCT_DRAW_MOVIE;
 
-	num_deferred++;
+    num_deferred++;
 
-	if (trace_all) ffnx_trace("gl_defer_yuv_frame: return true\n");
+    if (trace_all)
+        ffnx_trace("gl_defer_yuv_frame: return true\n");
 
-	return true;
+    return true;
 }
 
 uint32_t gl_defer_zoom()
 {
-	if (ff8 || !enable_lighting)
-	{
-		return false;
-	}
+    if (ff8 || !enable_lighting)
+    {
+        return false;
+    }
 
-	if (trace_all) ffnx_trace("gl_defer_zoom");
+    if (trace_all)
+        ffnx_trace("gl_defer_zoom");
 
-	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+    if (!deferred_draws)
+        deferred_draws = (deferred_draw *)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
 
-	// global disable
-	if (nodefer) {
-		if (trace_all) ffnx_trace("gl_defer_zoom: nodefer true\n");
-		return false;
-	}
+    // global disable
+    if (nodefer)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_zoom: nodefer true\n");
+        return false;
+    }
 
-	if (num_deferred + 1 > DEFERRED_MAX)
-	{
-		if (trace_all) ffnx_trace("gl_defer_zoom: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
-		return false;
-	}
+    if (num_deferred + 1 > DEFERRED_MAX)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_zoom: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+        return false;
+    }
 
-	uint32_t defer = num_deferred;
+    uint32_t defer = num_deferred;
 
-	deferred_draws[defer].draw_call_type = DCT_ZOOM;
+    deferred_draws[defer].draw_call_type = DCT_ZOOM;
 
-	num_deferred++;
+    num_deferred++;
 
-	if (trace_all) ffnx_trace("gl_defer_zoom: return true\n");
+    if (trace_all)
+        ffnx_trace("gl_defer_zoom: return true\n");
 
-	return true;
+    return true;
 }
 
-uint32_t gl_defer_external_mesh(ExternalMesh* externalMesh, struct light_data* lightdata)
+uint32_t gl_defer_external_mesh(ExternalMesh *externalMesh, struct light_data *lightdata)
 {
-	if (ff8 || !enable_lighting)
-	{
-		return false;
-	}
+    if (ff8 || !enable_lighting)
+    {
+        return false;
+    }
 
-	if (trace_all) ffnx_trace("gl_defer_external_mesh");
+    if (trace_all)
+        ffnx_trace("gl_defer_external_mesh");
 
-	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+    if (!deferred_draws)
+        deferred_draws = (deferred_draw *)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
 
-	// global disable
-	if (nodefer) {
-		if (trace_all) ffnx_trace("gl_defer_external_mesh: nodefer true\n");
-		return false;
-	}
+    // global disable
+    if (nodefer)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_external_mesh: nodefer true\n");
+        return false;
+    }
 
-	if (num_deferred + 1 > DEFERRED_MAX)
-	{
-		if (trace_all) ffnx_trace("gl_defer_external_mesh: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
-		return false;
-	}
+    if (num_deferred + 1 > DEFERRED_MAX)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_external_mesh: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+        return false;
+    }
 
-	uint32_t defer = num_deferred;
+    uint32_t defer = num_deferred;
 
-	deferred_draws[defer].draw_call_type = DCT_EXTERNAL_MESH;
-	deferred_draws[defer].is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
-	deferred_draws[defer].is_fog_enabled = newRenderer.isFogEnabled();
-	deferred_draws[defer].external_mesh = externalMesh;
-	if(lightdata) 
-	{
-		deferred_draws[defer].lightdata = (struct light_data*)driver_malloc(sizeof(struct light_data));
-		memcpy(deferred_draws[defer].lightdata, lightdata, sizeof(struct light_data));
-	}
-	deferred_draws[defer].vertextype = VERTEX;
-	gl_save_state(&deferred_draws[defer].state);
+    deferred_draws[defer].draw_call_type = DCT_EXTERNAL_MESH;
+    deferred_draws[defer].is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
+    deferred_draws[defer].is_fog_enabled = newRenderer.isFogEnabled();
+    deferred_draws[defer].external_mesh = externalMesh;
+    if (lightdata)
+    {
+        deferred_draws[defer].lightdata = (struct light_data *)driver_malloc(sizeof(struct light_data));
+        memcpy(deferred_draws[defer].lightdata, lightdata, sizeof(struct light_data));
+    }
+    deferred_draws[defer].vertextype = VERTEX;
+    gl_save_state(&deferred_draws[defer].state);
 
-	num_deferred++;
+    num_deferred++;
 
-	if (trace_all) ffnx_trace("gl_defer_external_mesh: return true\n");
+    if (trace_all)
+        ffnx_trace("gl_defer_external_mesh: return true\n");
 
-	return true;
+    return true;
 }
 
 uint32_t gl_defer_world_external_mesh()
 {
-	if (ff8 || !enable_lighting)
-	{
-		return false;
-	}
+    if (ff8 || !enable_lighting)
+    {
+        return false;
+    }
 
-	if (trace_all) ffnx_trace("gl_defer_world_external_mesh");
+    if (trace_all)
+        ffnx_trace("gl_defer_world_external_mesh");
 
-	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+    if (!deferred_draws)
+        deferred_draws = (deferred_draw *)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
 
-	// global disable
-	if (nodefer) {
-		if (trace_all) ffnx_trace("gl_defer_world_external_mesh: nodefer true\n");
-		return false;
-	}
+    // global disable
+    if (nodefer)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_world_external_mesh: nodefer true\n");
+        return false;
+    }
 
-	if (num_deferred + 1 > DEFERRED_MAX)
-	{
-		if (trace_all) ffnx_trace("gl_defer_world_external_mesh: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
-		return false;
-	}
+    if (num_deferred + 1 > DEFERRED_MAX)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_world_external_mesh: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+        return false;
+    }
 
-	uint32_t defer = num_deferred;
+    uint32_t defer = num_deferred;
 
-	deferred_draws[defer].draw_call_type = DCT_WORLD_EXTERNAL_MESH;
-	deferred_draws[defer].is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
-	deferred_draws[defer].is_fog_enabled = newRenderer.isFogEnabled();
+    deferred_draws[defer].draw_call_type = DCT_WORLD_EXTERNAL_MESH;
+    deferred_draws[defer].is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
+    deferred_draws[defer].is_fog_enabled = newRenderer.isFogEnabled();
 
-	num_deferred++;
+    num_deferred++;
 
-	if (trace_all) ffnx_trace("gl_defer_world_external_mesh: return true\n");
+    if (trace_all)
+        ffnx_trace("gl_defer_world_external_mesh: return true\n");
 
-	return true;
+    return true;
 }
 
 uint32_t gl_defer_cloud_external_mesh()
 {
-	if (ff8 || !enable_lighting)
-	{
-		return false;
-	}
+    if (ff8 || !enable_lighting)
+    {
+        return false;
+    }
 
-	if (trace_all) ffnx_trace("gl_defer_cloud_external_mesh");
+    if (trace_all)
+        ffnx_trace("gl_defer_cloud_external_mesh");
 
-	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+    if (!deferred_draws)
+        deferred_draws = (deferred_draw *)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
 
-	// global disable
-	if (nodefer) {
-		if (trace_all) ffnx_trace("gl_defer_cloud_external_mesh: nodefer true\n");
-		return false;
-	}
+    // global disable
+    if (nodefer)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_cloud_external_mesh: nodefer true\n");
+        return false;
+    }
 
-	if (num_deferred + 1 > DEFERRED_MAX)
-	{
-		if (trace_all) ffnx_trace("gl_defer_cloud_external_mesh: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
-		return false;
-	}
+    if (num_deferred + 1 > DEFERRED_MAX)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_cloud_external_mesh: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+        return false;
+    }
 
-	uint32_t defer = num_deferred;
+    uint32_t defer = num_deferred;
 
-	deferred_draws[defer].draw_call_type = DCT_CLOUD_EXTERNAL_MESH;
-	deferred_draws[defer].is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
-	deferred_draws[defer].is_fog_enabled = newRenderer.isFogEnabled();
+    deferred_draws[defer].draw_call_type = DCT_CLOUD_EXTERNAL_MESH;
+    deferred_draws[defer].is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
+    deferred_draws[defer].is_fog_enabled = newRenderer.isFogEnabled();
 
-	num_deferred++;
+    num_deferred++;
 
-	if (trace_all) ffnx_trace("gl_defer_cloud_external_mesh: return true\n");
+    if (trace_all)
+        ffnx_trace("gl_defer_cloud_external_mesh: return true\n");
 
-	return true;
+    return true;
 }
 
 uint32_t gl_defer_battle_depth_clear()
 {
-	if (ff8 || !enable_lighting)
-	{
-		return false;
-	}
+    if (ff8 || !enable_lighting)
+    {
+        return false;
+    }
 
-	if (trace_all) ffnx_trace("gl_defer_battle_depth_clear");
+    if (trace_all)
+        ffnx_trace("gl_defer_battle_depth_clear");
 
-	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+    if (!deferred_draws)
+        deferred_draws = (deferred_draw *)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
 
-	// global disable
-	if (nodefer) {
-		if (trace_all) ffnx_trace("gl_defer_battle_depth_clear: nodefer true\n");
-		return false;
-	}
+    // global disable
+    if (nodefer)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_battle_depth_clear: nodefer true\n");
+        return false;
+    }
 
-	if (num_deferred + 1 > DEFERRED_MAX)
-	{
-		if (trace_all) ffnx_trace("gl_defer_battle_depth_clear: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
-		return false;
-	}
+    if (num_deferred + 1 > DEFERRED_MAX)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_battle_depth_clear: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+        return false;
+    }
 
-	uint32_t defer = num_deferred;
+    uint32_t defer = num_deferred;
 
-	deferred_draws[defer].draw_call_type = DCT_BATTLE_DEPTH_CLEAR;
+    deferred_draws[defer].draw_call_type = DCT_BATTLE_DEPTH_CLEAR;
 
-	num_deferred++;
+    num_deferred++;
 
-	if (trace_all) ffnx_trace("gl_defer_battle_depth_clear: return true\n");
+    if (trace_all)
+        ffnx_trace("gl_defer_battle_depth_clear: return true\n");
 
-	return true;
+    return true;
 }
 
 // re-order and save a draw call for later processing
 uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, uint32_t clip, uint32_t mipmap, uint32_t force_defer)
 {
-	uint32_t tri;
-	uint32_t mode = getmode_cached()->driver_mode;
-	uint32_t *tri_deferred;
-	float *tri_z;
-	uint32_t defer_index = 0;
+    uint32_t tri;
+    uint32_t mode = getmode_cached()->driver_mode;
+    uint32_t *tri_deferred;
+    float *tri_z;
+    uint32_t defer_index = 0;
 
-	if (trace_all) ffnx_trace("gl_defer_sorted_draw: call with primitivetype: %u - vertextype: %u - vertexcount: %u - count: %u - clip: %d - mipmap: %d\n", primitivetype, vertextype, vertexcount, count, clip, mipmap);
+    if (trace_all)
+        ffnx_trace("gl_defer_sorted_draw: call with primitivetype: %u - vertextype: %u - vertexcount: %u - count: %u - clip: %d - mipmap: %d\n", primitivetype, vertextype, vertexcount, count, clip, mipmap);
 
-	if(!deferred_sorted_draws) deferred_sorted_draws = (deferred_sorted_draw*)driver_calloc(sizeof(*deferred_sorted_draws), DEFERRED_MAX);
+    if (!deferred_sorted_draws)
+        deferred_sorted_draws = (deferred_sorted_draw *)driver_calloc(sizeof(*deferred_sorted_draws), DEFERRED_MAX);
 
-	// global disable
-	if (nodefer) {
-		if (trace_all) ffnx_trace("gl_defer_sorted_draw: nodefer true\n");
-		return false;
-	}
+    // global disable
+    if (nodefer)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_sorted_draw: nodefer true\n");
+        return false;
+    }
 
-	if (!force_defer)
-	{
-		// output will not be consistent if depth testing is disabled, this call
-		// cannot be re-ordered
-		if(!current_state.depthtest)
-		{
-			if (trace_all) ffnx_trace("gl_defer_sorted_draw: depthtest false\n");
-			return false;
-		}
+    if (!force_defer)
+    {
+        // output will not be consistent if depth testing is disabled, this call
+        // cannot be re-ordered
+        if (!current_state.depthtest)
+        {
+            if (trace_all)
+                ffnx_trace("gl_defer_sorted_draw: depthtest false\n");
+            return false;
+        }
 
-		// framebuffer textures should not be re-ordered
-		if(current_state.fb_texture)
-		{
-			if (trace_all) ffnx_trace("gl_defer_sorted_draw: fb_texture true\n");
-			return false;
-		}
+        // framebuffer textures should not be re-ordered
+        if (current_state.fb_texture)
+        {
+            if (trace_all)
+                ffnx_trace("gl_defer_sorted_draw: fb_texture true\n");
+            return false;
+        }
 
-		if(current_state.blend_mode != BLEND_NONE)
-		{
-			if (trace_all) ffnx_trace("gl_defer_sorted_draw: blend_mode != BLEND_NONE - blend_mode: %u\n", current_state.blend_mode);
-			if(current_state.blend_mode != BLEND_AVG)
-			{
-				if (trace_all) ffnx_trace("gl_defer_sorted_draw: blend_mode != BLEND_AVG - blend_mode: %u\n", current_state.blend_mode);
-				// be conservative with non-standard blending modes
-				if (mode != MODE_MENU && mode != MODE_MAIN_MENU && mode != MODE_BATTLE) {
-					if (trace_all) ffnx_trace("gl_defer_sorted_draw: mode != MODE_MENU && mode != MODE_BATTLE - mode: %u\n", mode);
-					return false;
-				}
-			}
-		}
-		else
-		{
-			if (!current_state.texture_set)
-			{
-				if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture_set false\n");
-				return false;
-			}
-			else
-			{
-				VOBJ(texture_set, texture_set, current_state.texture_set);
-				VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
+        if (current_state.blend_mode != BLEND_NONE)
+        {
+            if (trace_all)
+                ffnx_trace("gl_defer_sorted_draw: blend_mode != BLEND_NONE - blend_mode: %u\n", current_state.blend_mode);
+            if (current_state.blend_mode != BLEND_AVG)
+            {
+                if (trace_all)
+                    ffnx_trace("gl_defer_sorted_draw: blend_mode != BLEND_AVG - blend_mode: %u\n", current_state.blend_mode);
+                // be conservative with non-standard blending modes
+                if (mode != MODE_MENU && mode != MODE_MAIN_MENU && mode != MODE_BATTLE)
+                {
+                    if (trace_all)
+                        ffnx_trace("gl_defer_sorted_draw: mode != MODE_MENU && mode != MODE_BATTLE - mode: %u\n", mode);
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            if (!current_state.texture_set)
+            {
+                if (trace_all)
+                    ffnx_trace("gl_defer_sorted_draw: texture_set false\n");
+                return false;
+            }
+            else
+            {
+                VOBJ(texture_set, texture_set, current_state.texture_set);
+                VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
 
-				if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture_set true for texture %s%d\n", VREF(tex_header, file.pc_name), VREF(tex_header, palette_index));
+                if (trace_all)
+                    ffnx_trace("gl_defer_sorted_draw: texture_set true for texture %s%d\n", VREF(tex_header, file.pc_name), VREF(tex_header, palette_index));
 
-				// texture format does not support alpha, re-order is not necessary
-				if (!VREF(texture_set, ogl.external) && VREF(tex_header, tex_format.alpha_bits) < 2) {
-					if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture format does not support alpha, re-order is not necessary\n");
-					return false;
-				}
-			}
-		}
+                // texture format does not support alpha, re-order is not necessary
+                if (!VREF(texture_set, ogl.external) && VREF(tex_header, tex_format.alpha_bits) < 2)
+                {
+                    if (trace_all)
+                        ffnx_trace("gl_defer_sorted_draw: texture format does not support alpha, re-order is not necessary\n");
+                    return false;
+                }
+            }
+        }
 
-		// quads are used for some GUI elements, we do not need to re-order these
-		if (primitivetype != RendererPrimitiveType::PT_TRIANGLES) {
-			if (trace_all) ffnx_trace("gl_defer_sorted_draw: primitivetype != TRIANGLES\n");
-			return false;
-		}
-	}
+        // quads are used for some GUI elements, we do not need to re-order these
+        if (primitivetype != RendererPrimitiveType::PT_TRIANGLES)
+        {
+            if (trace_all)
+                ffnx_trace("gl_defer_sorted_draw: primitivetype != TRIANGLES\n");
+            return false;
+        }
+    }
 
-	if(num_sorted_deferred + count / 3 > DEFERRED_MAX)
-	{
-		if (trace_all) ffnx_trace("gl_defer_sorted_draw: deferred draw queue overflow - num_sorted_deferred: %u - count: %u - DEFERRED_MAX: %u\n", num_sorted_deferred, count, DEFERRED_MAX);
-		return false;
-	}
+    if (num_sorted_deferred + count / 3 > DEFERRED_MAX)
+    {
+        if (trace_all)
+            ffnx_trace("gl_defer_sorted_draw: deferred draw queue overflow - num_sorted_deferred: %u - count: %u - DEFERRED_MAX: %u\n", num_sorted_deferred, count, DEFERRED_MAX);
+        return false;
+    }
 
-	tri_deferred = (uint32_t*)driver_calloc(sizeof(*tri_deferred), count / 3);
-	tri_z = (float*)driver_calloc(sizeof(*tri_z), count / 3);
+    tri_deferred = (uint32_t *)driver_calloc(sizeof(*tri_deferred), count / 3);
+    tri_z = (float *)driver_calloc(sizeof(*tri_z), count / 3);
 
-	// calculate screen space average Z coordinate for each triangle
-	for(tri = 0; tri < count / 3; tri++)
-	{
-		uint32_t i;
+    // calculate screen space average Z coordinate for each triangle
+    for (tri = 0; tri < count / 3; tri++)
+    {
+        uint32_t i;
 
-		for(i = 0; i < 3; i++)
-		{
-			if(vertextype == TLVERTEX) tri_z[tri] += vertices[indices[tri * 3 + i]]._.z;
-			else
-			{
-				struct point4d world;
-				struct point4d proj;
-				struct point4d view;
-				transform_point_w(&current_state.world_view_matrix, &vertices[indices[tri * 3 + i]]._, &world);
-				transform_point4d(&current_state.d3dprojection_matrix, &world, &proj);
-				transform_point4d(&d3dviewport_matrix, &proj, &view);
-				tri_z[tri] += view.z / view.w;
-			}
-		}
+        for (i = 0; i < 3; i++)
+        {
+            if (vertextype == TLVERTEX)
+                tri_z[tri] += vertices[indices[tri * 3 + i]]._.z;
+            else
+            {
+                struct point4d world;
+                struct point4d proj;
+                struct point4d view;
+                transform_point_w(&current_state.world_view_matrix, &vertices[indices[tri * 3 + i]]._, &world);
+                transform_point4d(&current_state.d3dprojection_matrix, &world, &proj);
+                transform_point4d(&d3dviewport_matrix, &proj, &view);
+                tri_z[tri] += view.z / view.w;
+            }
+        }
 
-		tri_z[tri] /= 3.0f;
-	}
+        tri_z[tri] /= 3.0f;
+    }
 
-	// arrange triangles into layers based on Z coordinates calculated above
-	// each layer will be drawn separately
-	while(defer_index < count / 3)
-	{
-		float z = tri_z[defer_index];
-		uint32_t tri_num = 0;
-		uint32_t defer = num_sorted_deferred;
-		uint32_t vert_index = 0;
+    // arrange triangles into layers based on Z coordinates calculated above
+    // each layer will be drawn separately
+    while (defer_index < count / 3)
+    {
+        float z = tri_z[defer_index];
+        uint32_t tri_num = 0;
+        uint32_t defer = num_sorted_deferred;
+        uint32_t vert_index = 0;
 
-		for(tri = 0; tri < count / 3; tri++) if(tri_z[tri] == z) tri_num++;
+        for (tri = 0; tri < count / 3; tri++)
+            if (tri_z[tri] == z)
+                tri_num++;
 
-		deferred_sorted_draws[defer].deferred_draw.count = tri_num * 3;
-		deferred_sorted_draws[defer].deferred_draw.clip = clip;
-		deferred_sorted_draws[defer].deferred_draw.mipmap = mipmap;
-		deferred_sorted_draws[defer].deferred_draw.primitivetype = primitivetype;
-		deferred_sorted_draws[defer].deferred_draw.vertextype = vertextype;
-		deferred_sorted_draws[defer].deferred_draw.vertexcount = tri_num * 3;
-		deferred_sorted_draws[defer].deferred_draw.indices = (WORD*)driver_malloc(sizeof(*indices) * tri_num * 3);
-		deferred_sorted_draws[defer].deferred_draw.vertices = (nvertex*)driver_malloc(sizeof(*vertices) * tri_num * 3);
-		gl_save_state(&deferred_sorted_draws[defer].deferred_draw.state);
-		deferred_sorted_draws[defer].drawn = false;
-		deferred_sorted_draws[defer].z = z;
-		if(enable_time_cycle)
-				deferred_sorted_draws[defer].deferred_draw.is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
-		deferred_sorted_draws[defer].deferred_draw.is_fog_enabled = false;
+        deferred_sorted_draws[defer].deferred_draw.count = tri_num * 3;
+        deferred_sorted_draws[defer].deferred_draw.clip = clip;
+        deferred_sorted_draws[defer].deferred_draw.mipmap = mipmap;
+        deferred_sorted_draws[defer].deferred_draw.primitivetype = primitivetype;
+        deferred_sorted_draws[defer].deferred_draw.vertextype = vertextype;
+        deferred_sorted_draws[defer].deferred_draw.vertexcount = tri_num * 3;
+        deferred_sorted_draws[defer].deferred_draw.indices = (WORD *)driver_malloc(sizeof(*indices) * tri_num * 3);
+        deferred_sorted_draws[defer].deferred_draw.vertices = (nvertex *)driver_malloc(sizeof(*vertices) * tri_num * 3);
+        gl_save_state(&deferred_sorted_draws[defer].deferred_draw.state);
+        deferred_sorted_draws[defer].drawn = false;
+        deferred_sorted_draws[defer].z = z;
+        if (enable_time_cycle)
+            deferred_sorted_draws[defer].deferred_draw.is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
+        deferred_sorted_draws[defer].deferred_draw.is_fog_enabled = false;
 
-		for(tri = 0; tri < count / 3 && vert_index < tri_num * 3; tri++)
-		{
-			if(tri_z[tri] == z)
-			{
-				memcpy(&deferred_sorted_draws[defer].deferred_draw.vertices[vert_index + 0], &vertices[indices[tri * 3 + 0]], sizeof(*vertices));
-				memcpy(&deferred_sorted_draws[defer].deferred_draw.vertices[vert_index + 1], &vertices[indices[tri * 3 + 1]], sizeof(*vertices));
-				memcpy(&deferred_sorted_draws[defer].deferred_draw.vertices[vert_index + 2], &vertices[indices[tri * 3 + 2]], sizeof(*vertices));
-				deferred_sorted_draws[defer].deferred_draw.indices[vert_index + 0] = vert_index + 0;
-				deferred_sorted_draws[defer].deferred_draw.indices[vert_index + 1] = vert_index + 1;
-				deferred_sorted_draws[defer].deferred_draw.indices[vert_index + 2] = vert_index + 2;
+        for (tri = 0; tri < count / 3 && vert_index < tri_num * 3; tri++)
+        {
+            if (tri_z[tri] == z)
+            {
+                memcpy(&deferred_sorted_draws[defer].deferred_draw.vertices[vert_index + 0], &vertices[indices[tri * 3 + 0]], sizeof(*vertices));
+                memcpy(&deferred_sorted_draws[defer].deferred_draw.vertices[vert_index + 1], &vertices[indices[tri * 3 + 1]], sizeof(*vertices));
+                memcpy(&deferred_sorted_draws[defer].deferred_draw.vertices[vert_index + 2], &vertices[indices[tri * 3 + 2]], sizeof(*vertices));
+                deferred_sorted_draws[defer].deferred_draw.indices[vert_index + 0] = vert_index + 0;
+                deferred_sorted_draws[defer].deferred_draw.indices[vert_index + 1] = vert_index + 1;
+                deferred_sorted_draws[defer].deferred_draw.indices[vert_index + 2] = vert_index + 2;
 
-				vert_index += 3;
+                vert_index += 3;
 
-				tri_deferred[tri] = true;
-			}
-		}
+                tri_deferred[tri] = true;
+            }
+        }
 
-		if(vert_index < tri_num * 3) ffnx_error("deferred draw z mismatch\n");
+        if (vert_index < tri_num * 3)
+            ffnx_error("deferred draw z mismatch\n");
 
-		num_sorted_deferred++;
+        num_sorted_deferred++;
 
-		while(defer_index < count / 3 && tri_deferred[defer_index]) defer_index++;
-	}
+        while (defer_index < count / 3 && tri_deferred[defer_index])
+            defer_index++;
+    }
 
-	driver_free(tri_deferred);
-	driver_free(tri_z);
+    driver_free(tri_deferred);
+    driver_free(tri_z);
 
-	if (trace_all) ffnx_trace("gl_defer_sorted_draw: return true\n");
+    if (trace_all)
+        ffnx_trace("gl_defer_sorted_draw: return true\n");
 
-	return true;
+    return true;
 }
 
 // draw deferred models
 void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 {
-	struct driver_state saved_state;
+    struct driver_state saved_state;
 
-	bool isFieldShadowDrawn = false;
+    bool isFieldShadowDrawn = false;
 
-	if (num_deferred == 0) {
-		if (trace_all) ffnx_trace("gl_draw_deferred: num_deferred == 0\n");
-		return;
-	}
+    if (num_deferred == 0)
+    {
+        if (trace_all)
+            ffnx_trace("gl_draw_deferred: num_deferred == 0\n");
+        return;
+    }
 
-	gl_save_state(&saved_state);
+    gl_save_state(&saved_state);
 
-	nodefer = true;
+    nodefer = true;
 
-	for (int i = 0; i < num_deferred; ++i)
-	{
-		if(enable_time_cycle)
-			newRenderer.setTimeFilterEnabled(deferred_draws[i].is_time_filter_enabled);
+    for (int i = 0; i < num_deferred; ++i)
+    {
+        if (enable_time_cycle)
+            newRenderer.setTimeFilterEnabled(deferred_draws[i].is_time_filter_enabled);
 
-		if(enable_worldmap_external_mesh)
-			newRenderer.setFogEnabled(deferred_draws[i].is_fog_enabled);
+        if (enable_worldmap_external_mesh)
+            newRenderer.setFogEnabled(deferred_draws[i].is_fog_enabled);
 
-		if(deferred_draws[i].draw_call_type == DCT_CLEAR)
-		{
-			common_clear(deferred_draws[i].clear_color, deferred_draws[i].clear_depth, true, deferred_draws[i].game_object);
-			continue;
-		} else if(deferred_draws[i].draw_call_type == DCT_BLIT)
-		{
-			blit_framebuffer_texture(deferred_draws[i].fb_texture_set, deferred_draws[i].fb_tex_header);
-			continue;
-		}
-		else if(deferred_draws[i].draw_call_type == DCT_DRAW_MOVIE)
-		{
-			draw_yuv_frame(deferred_draws[i].movie_buffer_index);
-			continue;
-		}
-		else if(deferred_draws[i].draw_call_type == DCT_ZOOM)
-		{
-			widescreen.zoomBackground();
-			continue;
-		}
-		else if(deferred_draws[i].draw_call_type == DCT_BATTLE_DEPTH_CLEAR)
-		{
-			ff7::battle::battle_depth_clear();
-			continue;
-		}
-		else if(deferred_draws[i].draw_call_type == DCT_WORLD_EXTERNAL_MESH)
-		{
-			ff7::world::worldRenderer.drawWorldMapExternalMesh();
-			continue;
-		}
-		else if(deferred_draws[i].draw_call_type == DCT_CLOUD_EXTERNAL_MESH)
-		{
-			ff7::world::worldRenderer.drawCloudsAndMeteorExternalMesh(*ff7_externals.is_meteor_flag_on_E2AAE4);
-			continue;
-		}
+        if (deferred_draws[i].draw_call_type == DCT_CLEAR)
+        {
+            common_clear(deferred_draws[i].clear_color, deferred_draws[i].clear_depth, true, deferred_draws[i].game_object);
+            continue;
+        }
+        else if (deferred_draws[i].draw_call_type == DCT_BLIT)
+        {
+            blit_framebuffer_texture(deferred_draws[i].fb_texture_set, deferred_draws[i].fb_tex_header);
+            continue;
+        }
+        else if (deferred_draws[i].draw_call_type == DCT_DRAW_MOVIE)
+        {
+            draw_yuv_frame(deferred_draws[i].movie_buffer_index);
+            continue;
+        }
+        else if (deferred_draws[i].draw_call_type == DCT_ZOOM)
+        {
+            widescreen.zoomBackground();
+            continue;
+        }
+        else if (deferred_draws[i].draw_call_type == DCT_BATTLE_DEPTH_CLEAR)
+        {
+            ff7::battle::battle_depth_clear();
+            continue;
+        }
+        else if (deferred_draws[i].draw_call_type == DCT_WORLD_EXTERNAL_MESH)
+        {
+            ff7::world::worldRenderer.drawWorldMapExternalMesh();
+            continue;
+        }
+        else if (deferred_draws[i].draw_call_type == DCT_CLOUD_EXTERNAL_MESH)
+        {
+            ff7::world::worldRenderer.drawCloudsAndMeteorExternalMesh(*ff7_externals.is_meteor_flag_on_E2AAE4);
+            continue;
+        }
 
-		if (deferred_draws[i].vertices == nullptr && deferred_draws[i].draw_call_type != DCT_EXTERNAL_MESH)
-		{
-			continue;
-		}
+        if (deferred_draws[i].vertices == nullptr && deferred_draws[i].draw_call_type != DCT_EXTERNAL_MESH)
+        {
+            continue;
+        }
 
-		if (shadow_callback != nullptr && !isFieldShadowDrawn && deferred_draws[i].vertextype != TLVERTEX)
-		{
-			newRenderer.setD3DProjection(&deferred_draws[i].state.d3dprojection_matrix);
-			newRenderer.setD3DViweport(&d3dviewport_matrix);
+        if (shadow_callback != nullptr && !isFieldShadowDrawn && deferred_draws[i].vertextype != TLVERTEX)
+        {
+            newRenderer.setD3DProjection(&deferred_draws[i].state.d3dprojection_matrix);
+            newRenderer.setD3DViweport(&d3dviewport_matrix);
 
-			(*shadow_callback)();
-			isFieldShadowDrawn = true;
-		}
+            (*shadow_callback)();
+            isFieldShadowDrawn = true;
+        }
 
-		if(deferred_draws[i].draw_call_type == DCT_EXTERNAL_MESH)
-		{
-			gl_load_state(&deferred_draws[i].state, false);
-			gl_draw_external_mesh(deferred_draws[i].external_mesh, deferred_draws[i].lightdata);
-			continue;
-		}
-		else
-		{
-			gl_load_state(&deferred_draws[i].state);
-			gl_draw_indexed_primitive(deferred_draws[i].primitivetype,
-				deferred_draws[i].vertextype,
-				deferred_draws[i].vertices,
-				i > lastBlitDrawCallIndex ? deferred_draws[i].normals : 0,
-				deferred_draws[i].vertexcount,
-				deferred_draws[i].indices,
-				deferred_draws[i].count,
-				0,
-				deferred_draws[i].boundingbox,
-				deferred_draws[i].lightdata,
-				deferred_draws[i].clip,
-				deferred_draws[i].mipmap
-			);
-		}
+        if (deferred_draws[i].draw_call_type == DCT_EXTERNAL_MESH)
+        {
+            gl_load_state(&deferred_draws[i].state, false);
+            gl_draw_external_mesh(deferred_draws[i].external_mesh, deferred_draws[i].lightdata);
+            continue;
+        }
+        else
+        {
+            gl_load_state(&deferred_draws[i].state);
+            gl_draw_indexed_primitive(deferred_draws[i].primitivetype, deferred_draws[i].vertextype, deferred_draws[i].vertices, i > lastBlitDrawCallIndex ? deferred_draws[i].normals : 0, deferred_draws[i].vertexcount, deferred_draws[i].indices, deferred_draws[i].count, 0, deferred_draws[i].boundingbox, deferred_draws[i].lightdata, deferred_draws[i].clip, deferred_draws[i].mipmap);
+        }
 
-		++stats.deferred;
+        ++stats.deferred;
 
-		driver_free(deferred_draws[i].vertices);
-		deferred_draws[i].vertices = nullptr;
-		driver_free(deferred_draws[i].indices);
-		deferred_draws[i].indices = nullptr;
-		driver_free(deferred_draws[i].normals);
-		deferred_draws[i].normals = nullptr;
-		driver_free(deferred_draws[i].boundingbox);
-		deferred_draws[i].boundingbox = nullptr;
-		driver_free(deferred_draws[i].lightdata);
-		deferred_draws[i].lightdata = nullptr;
-	}
+        driver_free(deferred_draws[i].vertices);
+        deferred_draws[i].vertices = nullptr;
+        driver_free(deferred_draws[i].indices);
+        deferred_draws[i].indices = nullptr;
+        driver_free(deferred_draws[i].normals);
+        deferred_draws[i].normals = nullptr;
+        driver_free(deferred_draws[i].boundingbox);
+        deferred_draws[i].boundingbox = nullptr;
+        driver_free(deferred_draws[i].lightdata);
+        deferred_draws[i].lightdata = nullptr;
+    }
 
-	num_deferred = 0;
-	lastBlitDrawCallIndex = -1;
+    num_deferred = 0;
+    lastBlitDrawCallIndex = -1;
 
-	nodefer = false;
+    nodefer = false;
 
-	gl_load_state(&saved_state);
+    gl_load_state(&saved_state);
 }
 
 struct boundingbox calculateSceneAabb()
 {
-	struct boundingbox sceneAabb;
-	sceneAabb.min_x = FLT_MAX;
-	sceneAabb.min_y = FLT_MAX;
-	sceneAabb.min_z = FLT_MAX;
-	sceneAabb.max_x = FLT_MIN;
-	sceneAabb.max_y = FLT_MIN;
-	sceneAabb.max_z = FLT_MIN;
-	for (int i = 0; i < num_deferred; ++i)
-	{
-		if (deferred_draws[i].vertextype == TLVERTEX)
-		{
-			continue;
-		}
-		if (deferred_draws[i].normals == nullptr || deferred_draws[i].count == 3)
-		{
-			continue;
-		}
+    struct boundingbox sceneAabb;
+    sceneAabb.min_x = FLT_MAX;
+    sceneAabb.min_y = FLT_MAX;
+    sceneAabb.min_z = FLT_MAX;
+    sceneAabb.max_x = FLT_MIN;
+    sceneAabb.max_y = FLT_MIN;
+    sceneAabb.max_z = FLT_MIN;
+    for (int i = 0; i < num_deferred; ++i)
+    {
+        if (deferred_draws[i].vertextype == TLVERTEX)
+        {
+            continue;
+        }
+        if (deferred_draws[i].normals == nullptr || deferred_draws[i].count == 3)
+        {
+            continue;
+        }
 
-		struct boundingbox* bb = deferred_draws[i].boundingbox;
-		if (bb)
-		{
-			vector3<float> corners[8] = { {bb->min_x, bb->min_y, bb->min_z},
-									   {bb->min_x, bb->min_y, bb->max_z},
-			                           {bb->min_x, bb->max_y, bb->min_z},
-			                           {bb->min_x, bb->max_y, bb->max_z},
-			                           {bb->max_x, bb->min_y, bb->min_z},
-			                           {bb->max_x, bb->min_y, bb->max_z},
-			                           {bb->max_x, bb->max_y, bb->min_z},
-			                           {bb->max_x, bb->max_y, bb->max_z} };
+        struct boundingbox *bb = deferred_draws[i].boundingbox;
+        if (bb)
+        {
+            vector3<float> corners[8] = {{bb->min_x, bb->min_y, bb->min_z}, {bb->min_x, bb->min_y, bb->max_z}, {bb->min_x, bb->max_y, bb->min_z}, {bb->min_x, bb->max_y, bb->max_z}, {bb->max_x, bb->min_y, bb->min_z}, {bb->max_x, bb->min_y, bb->max_z}, {bb->max_x, bb->max_y, bb->min_z}, {bb->max_x, bb->max_y, bb->max_z}};
 
-			struct matrix worldViewMatrix = deferred_draws[i].state.world_view_matrix;
-			for (int j = 0; j < 8; ++j)
-			{
-				vector3<float> cornerViewSpace;
-				transform_point(&worldViewMatrix, &corners[j], &cornerViewSpace);
+            struct matrix worldViewMatrix = deferred_draws[i].state.world_view_matrix;
+            for (int j = 0; j < 8; ++j)
+            {
+                vector3<float> cornerViewSpace;
+                transform_point(&worldViewMatrix, &corners[j], &cornerViewSpace);
 
-				sceneAabb.min_x = std::min(sceneAabb.min_x, cornerViewSpace.x);
-				sceneAabb.min_y = std::min(sceneAabb.min_y, cornerViewSpace.y);
-				sceneAabb.min_z = std::min(sceneAabb.min_z, cornerViewSpace.z);
+                sceneAabb.min_x = std::min(sceneAabb.min_x, cornerViewSpace.x);
+                sceneAabb.min_y = std::min(sceneAabb.min_y, cornerViewSpace.y);
+                sceneAabb.min_z = std::min(sceneAabb.min_z, cornerViewSpace.z);
 
-				sceneAabb.max_x = std::max(sceneAabb.max_x, cornerViewSpace.x);
-				sceneAabb.max_y = std::max(sceneAabb.max_y, cornerViewSpace.y);
-				sceneAabb.max_z = std::max(sceneAabb.max_z, cornerViewSpace.z);
-			}
-		}
-	}
+                sceneAabb.max_x = std::max(sceneAabb.max_x, cornerViewSpace.x);
+                sceneAabb.max_y = std::max(sceneAabb.max_y, cornerViewSpace.y);
+                sceneAabb.max_z = std::max(sceneAabb.max_z, cornerViewSpace.z);
+            }
+        }
+    }
 
-	return sceneAabb;
+    return sceneAabb;
 }
 
 // draw all the layers we've accumulated in the correct order and reset queue
 void gl_draw_sorted_deferred(bool defer_to_lighting)
 {
-	struct driver_state saved_state;
+    struct driver_state saved_state;
 
-	if (num_sorted_deferred == 0) {
-		if (trace_all) ffnx_trace("gl_draw_sorted_deferred: num_sorted_deferred == 0\n");
-		return;
-	}
+    if (num_sorted_deferred == 0)
+    {
+        if (trace_all)
+            ffnx_trace("gl_draw_sorted_deferred: num_sorted_deferred == 0\n");
+        return;
+    }
 
-	gl_save_state(&saved_state);
+    gl_save_state(&saved_state);
 
-	const uint32_t saved_nodefer = nodefer;
-	nodefer = !defer_to_lighting;
+    const uint32_t saved_nodefer = nodefer;
+    nodefer = !defer_to_lighting;
 
-	stats.deferred += num_sorted_deferred;
+    stats.deferred += num_sorted_deferred;
 
-	while(true)
-	{
-		uint32_t i;
-		double z = -1.0;
-		uint32_t next = -1;
+    while (true)
+    {
+        uint32_t i;
+        double z = -1.0;
+        uint32_t next = -1;
 
-		for(i = 0; i < num_sorted_deferred; i++)
-		{
-			if(deferred_sorted_draws[i].z > z && !deferred_sorted_draws[i].drawn)
-			{
-				next = i;
-				z = deferred_sorted_draws[i].z;
-			}
-		}
+        for (i = 0; i < num_sorted_deferred; i++)
+        {
+            if (deferred_sorted_draws[i].z > z && !deferred_sorted_draws[i].drawn)
+            {
+                next = i;
+                z = deferred_sorted_draws[i].z;
+            }
+        }
 
-		if(next == -1) break;
+        if (next == -1)
+            break;
 
-		gl_load_state(&deferred_sorted_draws[next].deferred_draw.state);
-		internal_set_renderstate(V_DEPTHTEST, 1, 0);
-		internal_set_renderstate(V_DEPTHMASK, 1, 0);
+        gl_load_state(&deferred_sorted_draws[next].deferred_draw.state);
+        internal_set_renderstate(V_DEPTHTEST, 1, 0);
+        internal_set_renderstate(V_DEPTHMASK, 1, 0);
 
-		if(enable_time_cycle)
-			newRenderer.setTimeFilterEnabled(deferred_sorted_draws[next].deferred_draw.is_time_filter_enabled);
+        if (enable_time_cycle)
+            newRenderer.setTimeFilterEnabled(deferred_sorted_draws[next].deferred_draw.is_time_filter_enabled);
 
-		gl_draw_indexed_primitive(deferred_sorted_draws[next].deferred_draw.primitivetype,
-								  deferred_sorted_draws[next].deferred_draw.vertextype,
-								  deferred_sorted_draws[next].deferred_draw.vertices,
-								  0,
-								  deferred_sorted_draws[next].deferred_draw.vertexcount,
-								  deferred_sorted_draws[next].deferred_draw.indices,
-								  deferred_sorted_draws[next].deferred_draw.count,
-								  0,
-								  0,
-								  0,
-								  deferred_sorted_draws[next].deferred_draw.clip,
-								  deferred_sorted_draws[next].deferred_draw.mipmap
-								  );
+        gl_draw_indexed_primitive(deferred_sorted_draws[next].deferred_draw.primitivetype, deferred_sorted_draws[next].deferred_draw.vertextype, deferred_sorted_draws[next].deferred_draw.vertices, 0, deferred_sorted_draws[next].deferred_draw.vertexcount, deferred_sorted_draws[next].deferred_draw.indices, deferred_sorted_draws[next].deferred_draw.count, 0, 0, 0, deferred_sorted_draws[next].deferred_draw.clip, deferred_sorted_draws[next].deferred_draw.mipmap);
 
-		driver_free(deferred_sorted_draws[next].deferred_draw.vertices);
-		driver_free(deferred_sorted_draws[next].deferred_draw.indices);
-		deferred_sorted_draws[next].drawn = true;
-	}
+        driver_free(deferred_sorted_draws[next].deferred_draw.vertices);
+        driver_free(deferred_sorted_draws[next].deferred_draw.indices);
+        deferred_sorted_draws[next].drawn = true;
+    }
 
-	num_sorted_deferred = 0;
+    num_sorted_deferred = 0;
 
-	nodefer = saved_nodefer;
+    nodefer = saved_nodefer;
 
-	gl_load_state(&saved_state);
+    gl_load_state(&saved_state);
 }
 
 // a texture is being unloaded, invalidate any pending draw calls associated
 // with it and perform the necessary cleanup
 void gl_check_deferred(struct texture_set *texture_set)
 {
-	uint32_t i;
+    uint32_t i;
 
-	for (i = 0; i < num_deferred; i++)
-	{
-		if (deferred_draws[i].state.texture_set == texture_set)
-		{
-			driver_free(deferred_draws[i].vertices);
-			deferred_draws[i].vertices = nullptr;
-			driver_free(deferred_draws[i].indices);
-			deferred_draws[i].indices = nullptr;
-			driver_free(deferred_draws[i].normals);
-			deferred_draws[i].normals = nullptr;
-			driver_free(deferred_draws[i].boundingbox);
-			deferred_draws[i].boundingbox = nullptr;
-			driver_free(deferred_draws[i].lightdata);
-			deferred_draws[i].lightdata = nullptr;
-		}
-	}
+    for (i = 0; i < num_deferred; i++)
+    {
+        if (deferred_draws[i].state.texture_set == texture_set)
+        {
+            driver_free(deferred_draws[i].vertices);
+            deferred_draws[i].vertices = nullptr;
+            driver_free(deferred_draws[i].indices);
+            deferred_draws[i].indices = nullptr;
+            driver_free(deferred_draws[i].normals);
+            deferred_draws[i].normals = nullptr;
+            driver_free(deferred_draws[i].boundingbox);
+            deferred_draws[i].boundingbox = nullptr;
+            driver_free(deferred_draws[i].lightdata);
+            deferred_draws[i].lightdata = nullptr;
+        }
+    }
 
-	for(i = 0; i < num_sorted_deferred; i++)
-	{
-		if(deferred_sorted_draws[i].deferred_draw.state.texture_set == texture_set)
-		{
-			driver_free(deferred_sorted_draws[i].deferred_draw.vertices);
-			driver_free(deferred_sorted_draws[i].deferred_draw.indices);
-			deferred_sorted_draws[i].drawn = true;
-		}
-	}
+    for (i = 0; i < num_sorted_deferred; i++)
+    {
+        if (deferred_sorted_draws[i].deferred_draw.state.texture_set == texture_set)
+        {
+            driver_free(deferred_sorted_draws[i].deferred_draw.vertices);
+            driver_free(deferred_sorted_draws[i].deferred_draw.indices);
+            deferred_sorted_draws[i].drawn = true;
+        }
+    }
 }
 
 void gl_cleanup_deferred()
 {
-	driver_free(deferred_draws);
-	deferred_draws = nullptr;
-	driver_free(deferred_sorted_draws);
-	deferred_sorted_draws = nullptr;
+    driver_free(deferred_draws);
+    deferred_draws = nullptr;
+    driver_free(deferred_sorted_draws);
+    deferred_sorted_draws = nullptr;
 }

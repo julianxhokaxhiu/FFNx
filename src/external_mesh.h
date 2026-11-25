@@ -49,7 +49,7 @@ struct Shape
     std::vector<uint32_t> indices;
     vector3<float> min;
     vector3<float> max;
-    Material* pMaterial = nullptr;
+    Material *pMaterial = nullptr;
     bool isDoubleSided = false;
 };
 
@@ -69,7 +69,7 @@ struct Skin
     std::string current_anim;
     int current_frame = 0;
     int current_frame_count = 0; // Frame count of the game's current animation (.a)
-    float current_clock = 0.0f; // Seconds since the game switched to the current animation
+    float current_clock = 0.0f;  // Seconds since the game switched to the current animation
 };
 
 struct KeyFrame
@@ -106,11 +106,11 @@ struct AnimationPosition
     float time = 0.0f;
 };
 
-AnimationPosition getAnimationPosition(const Animation& anim, int frame, int frameCount, float clockSeconds);
-vector3<float> sampleTranslation(const std::vector<float>& times, const std::vector<vector3<float>>& values, const AnimationPosition& position, const vector3<float>& fallback);
-vector4<float> sampleRotation(const std::vector<float>& times, const std::vector<vector4<float>>& values, const AnimationPosition& position, const vector4<float>& fallback);
-vector3<float> lerpTranslation(const vector3<float>& a, const vector3<float>& b, float blend);
-vector4<float> slerpRotation(const vector4<float>& a, vector4<float> b, float blend);
+AnimationPosition getAnimationPosition(const Animation &anim, int frame, int frameCount, float clockSeconds);
+vector3<float> sampleTranslation(const std::vector<float> &times, const std::vector<vector3<float>> &values, const AnimationPosition &position, const vector3<float> &fallback);
+vector4<float> sampleRotation(const std::vector<float> &times, const std::vector<vector4<float>> &values, const AnimationPosition &position, const vector4<float> &fallback);
+vector3<float> lerpTranslation(const vector3<float> &a, const vector3<float> &b, float blend);
+vector4<float> slerpRotation(const vector4<float> &a, vector4<float> b, float blend);
 
 // Animation switches blend from the previous pose over this long instead of snapping
 constexpr float EXTERNAL_MESH_SWITCH_BLEND_SECONDS = 0.15f;
@@ -118,21 +118,21 @@ float getSwitchBlendWeight(float clockSeconds);
 
 class ExternalMesh
 {
-public:
-    bool importExternalMeshGltfFile(char* file_path, char* tex_path, bool isZUp = false);
-    uint32_t fillExternalMeshVertexBuffer(struct nvertex* inVertex, struct vector3<float>* normals, struct vector4<float>* joints, struct vector4<float>* weights, uint32_t inCount);
-    uint32_t fillExternalMeshIndexBuffer(uint32_t* inIndex, uint32_t inCount);
+  public:
+    bool importExternalMeshGltfFile(char *file_path, char *tex_path, bool isZUp = false);
+    uint32_t fillExternalMeshVertexBuffer(struct nvertex *inVertex, struct vector3<float> *normals, struct vector4<float> *joints, struct vector4<float> *weights, uint32_t inCount);
+    uint32_t fillExternalMeshIndexBuffer(uint32_t *inIndex, uint32_t inCount);
     void updateExternalMeshBuffers();
     void bindField3dVertexBuffer(uint32_t offset, uint32_t inCount);
     void bindField3dIndexBuffer(uint32_t offset, uint32_t inCount);
     void clearExternalMesh3dBuffers();
     void unloadExternalMesh();
-    bool getRootMotionMatrix(const std::string& animName, int frame, int frameCount, float clockSeconds, float translationScale, struct matrix* outMatrix);
-    float getAnimationClock(const std::string& animName);
-    void blendJointPose(size_t jointIndex, size_t jointCount, float clockSeconds, vector3<float>& translation, vector4<float>& rotation);
+    bool getRootMotionMatrix(const std::string &animName, int frame, int frameCount, float clockSeconds, float translationScale, struct matrix *outMatrix);
+    float getAnimationClock(const std::string &animName);
+    void blendJointPose(size_t jointIndex, size_t jointCount, float clockSeconds, vector3<float> &translation, vector4<float> &rotation);
 
     std::vector<Shape> shapes;
-	std::map<std::string, Material> materials;
+    std::map<std::string, Material> materials;
     std::vector<Skin> skins;
     std::map<std::string, Animation> animations;
 
@@ -149,13 +149,14 @@ public:
     vector3<float> lastRootTranslation = {}, blendFromRootTranslation = {};
     vector4<float> lastRootRotation = {}, blendFromRootRotation = {};
     bool lastHasRoot = false, blendFromHasRoot = false;
-private:
-    void loadConfig(const std::string& path);
+
+  private:
+    void loadConfig(const std::string &path);
 
     int getTextureCount(std::string tex_name);
     int getFrameInterval(std::string tex_name);
 
-private:
+  private:
     // Config
     toml::parse_result config;
 

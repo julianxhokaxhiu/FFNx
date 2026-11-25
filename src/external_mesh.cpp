@@ -36,16 +36,17 @@
 
 // Name used to find an image's DDS files: its file name without extension
 // (e.g. "textures/cloud_0.png" -> "cloud_0"), or its name when it has no file
-static std::string getImageTextureName(const cgltf_image* image)
+static std::string getImageTextureName(const cgltf_image *image)
 {
-    if (image == nullptr) return "";
+    if (image == nullptr)
+        return "";
 
     std::string path = image->uri != nullptr ? image->uri : (image->name != nullptr ? image->name : "");
     std::string filename = path.substr(path.find_last_of("/") + 1);
     return filename.substr(0, filename.find_last_of("."));
 }
 
-void createJointHierarchy(Skin* pSkin, int parentIndex, cgltf_node* pJointNode, int* curIndex)
+void createJointHierarchy(Skin *pSkin, int parentIndex, cgltf_node *pJointNode, int *curIndex)
 {
     Joint outJoint;
 
@@ -69,51 +70,52 @@ void createJointHierarchy(Skin* pSkin, int parentIndex, cgltf_node* pJointNode, 
     for (int i = 0; i < pJointNode->children_count; ++i)
     {
         createJointHierarchy(pSkin, newParentIndex, pJointNode->children[i], curIndex);
-    }    
+    }
 }
 
-bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, bool isZUp)
+bool ExternalMesh::importExternalMeshGltfFile(char *file_path, char *tex_path, bool isZUp)
 {
-	cgltf_options options = {0};
-	cgltf_data* data = NULL;
-	cgltf_result result = cgltf_parse_file(&options, file_path, &data);
-	if (result != cgltf_result_success)
-	{
-		ffnx_error("External mesh: could not parse %s (cgltf error %d)\n", file_path, result);
-		return false;
-	}
+    cgltf_options options = {0};
+    cgltf_data *data = NULL;
+    cgltf_result result = cgltf_parse_file(&options, file_path, &data);
+    if (result != cgltf_result_success)
+    {
+        ffnx_error("External mesh: could not parse %s (cgltf error %d)\n", file_path, result);
+        return false;
+    }
 
-	result = cgltf_load_buffers(&options, data, file_path);
-	if (result != cgltf_result_success)
-	{
-		ffnx_error("External mesh: could not load buffers for %s (cgltf error %d)\n", file_path, result);
-		cgltf_free(data);
-		return false;
-	}
+    result = cgltf_load_buffers(&options, data, file_path);
+    if (result != cgltf_result_success)
+    {
+        ffnx_error("External mesh: could not load buffers for %s (cgltf error %d)\n", file_path, result);
+        cgltf_free(data);
+        return false;
+    }
 
     std::string modelPath = file_path;
     std::string modelFolder = modelPath.substr(0, modelPath.find_last_of("/") + 1);
-    std::string modelFilename =  modelPath.substr(modelPath.find_last_of("/") + 1);
-    std::string modelFilenameWithoutExt =  modelFilename.substr(0, modelFilename.find_last_of("."));
+    std::string modelFilename = modelPath.substr(modelPath.find_last_of("/") + 1);
+    std::string modelFilenameWithoutExt = modelFilename.substr(0, modelFilename.find_last_of("."));
     std::string configPath = modelFolder + modelFilenameWithoutExt + "_config.toml";
     loadConfig(configPath);
 
-	for (size_t i = 0; i < data->textures_count; i++)
-	{
-		auto texture = data->textures[i];
-		std::string name = getImageTextureName(texture.image);
-		if (name.empty()) continue;
+    for (size_t i = 0; i < data->textures_count; i++)
+    {
+        auto texture = data->textures[i];
+        std::string name = getImageTextureName(texture.image);
+        if (name.empty())
+            continue;
 
-		std::string texFullPath = tex_path + name + ".dds";
+        std::string texFullPath = tex_path + name + ".dds";
 
         std::string modPath = !override_mod_path.empty() ? override_mod_path : mod_path;
 
         Material candidateMaterial;
 
         auto pair = materials.emplace(name, candidateMaterial);
-        if(pair.second)
+        if (pair.second)
         {
-            auto& material = (*pair.first).second;
+            auto &material = (*pair.first).second;
             uint32_t width, height, mipCount = 0;
 
             char full_tex_path[512];
@@ -139,10 +141,11 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
                         _snprintf(full_tex_path, sizeof(full_tex_path), "%s/%s/world/%s.dds", basedir, modPath.c_str(), name.data());
 
                     textureHandle = newRenderer.createTextureHandle(texFullPath.data(), &width, &height, &mipCount);
-                    if (!textureHandle.idx) textureHandle = BGFX_INVALID_HANDLE;
+                    if (!textureHandle.idx)
+                        textureHandle = BGFX_INVALID_HANDLE;
                 }
 
-                if(bgfx::isValid(textureHandle))
+                if (bgfx::isValid(textureHandle))
                 {
                     material.baseColorTexHandles.push_back(textureHandle);
                 }
@@ -150,95 +153,98 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 
             std::string nmlTexFullPath = tex_path + name + "_nml.dds";
             auto nmlTextureHandle = newRenderer.createTextureHandle(nmlTexFullPath.data(), &width, &height, &mipCount, false);
-            if (!nmlTextureHandle.idx) nmlTextureHandle = BGFX_INVALID_HANDLE;
-            if(bgfx::isValid(nmlTextureHandle))
+            if (!nmlTextureHandle.idx)
+                nmlTextureHandle = BGFX_INVALID_HANDLE;
+            if (bgfx::isValid(nmlTextureHandle))
             {
                 material.normalTexHandles.push_back(nmlTextureHandle);
             }
 
             std::string pbrTexFullPath = tex_path + name + "_pbr.dds";
             auto pbrTextureHandle = newRenderer.createTextureHandle(pbrTexFullPath.data(), &width, &height, &mipCount, false);
-            if (!pbrTextureHandle.idx) pbrTextureHandle = BGFX_INVALID_HANDLE;
-            if(bgfx::isValid(pbrTextureHandle))
+            if (!pbrTextureHandle.idx)
+                pbrTextureHandle = BGFX_INVALID_HANDLE;
+            if (bgfx::isValid(pbrTextureHandle))
             {
                 material.pbrTexHandles.push_back(pbrTextureHandle);
             }
         }
-	}
+    }
 
-	for (size_t i = 0; i < data->meshes_count; i++)
-	{
-		cgltf_mesh mesh = data->meshes[i];
+    for (size_t i = 0; i < data->meshes_count; i++)
+    {
+        cgltf_mesh mesh = data->meshes[i];
 
-		for (size_t j = 0; j < mesh.primitives_count; j++)
-		{
-			Shape outShape;
+        for (size_t j = 0; j < mesh.primitives_count; j++)
+        {
+            Shape outShape;
 
-			cgltf_primitive primitive = mesh.primitives[j];
-			auto indexCount = primitive.indices->count;
-			auto vertexCount = 0;
+            cgltf_primitive primitive = mesh.primitives[j];
+            auto indexCount = primitive.indices->count;
+            auto vertexCount = 0;
 
-			float* posBuffer = nullptr;
-			float* normalBuffer = nullptr;
-			float* uvBuffer = nullptr;
-			float* colorBuffer = nullptr;
-            byte* jointsBuffer = nullptr;
-            float * weightsBuffer = nullptr;
-			for (size_t k = 0; k < primitive.attributes_count; k++)
-			{
-				cgltf_attribute attr = primitive.attributes[k];
+            float *posBuffer = nullptr;
+            float *normalBuffer = nullptr;
+            float *uvBuffer = nullptr;
+            float *colorBuffer = nullptr;
+            byte *jointsBuffer = nullptr;
+            float *weightsBuffer = nullptr;
+            for (size_t k = 0; k < primitive.attributes_count; k++)
+            {
+                cgltf_attribute attr = primitive.attributes[k];
 
-				if(strcmp(attr.name, "POSITION") == 0)
-				{
-					vertexCount = attr.data->count;
-					posBuffer = (float*)((char*)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
-					outShape.min.x = attr.data->min[0];
-					outShape.min.y = attr.data->min[1];
-					outShape.min.z = attr.data->min[2];
-					outShape.max.x = attr.data->max[0];
-					outShape.max.y = attr.data->max[1];
-					outShape.max.z = attr.data->max[2];
-				}
-				else if(strcmp(attr.name, "NORMAL") == 0)
-				{
-					normalBuffer = (float*)((char*)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
-				}
-				else if(strcmp(attr.name, "TEXCOORD_0") == 0)
-				{
-					uvBuffer = (float*)((char*)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
-				}
-				else if(strcmp(attr.name, "COLOR_0") == 0)
-				{
-					colorBuffer = (float*)((char*)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
-				}
-                else if(strcmp(attr.name, "JOINTS_0") == 0)
-				{
-					jointsBuffer = (byte*)((char*)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
-				}
-                else if(strcmp(attr.name, "WEIGHTS_0") == 0)
-				{
-					weightsBuffer = (float*)((char*)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
-				}
-			}
+                if (strcmp(attr.name, "POSITION") == 0)
+                {
+                    vertexCount = attr.data->count;
+                    posBuffer = (float *)((char *)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
+                    outShape.min.x = attr.data->min[0];
+                    outShape.min.y = attr.data->min[1];
+                    outShape.min.z = attr.data->min[2];
+                    outShape.max.x = attr.data->max[0];
+                    outShape.max.y = attr.data->max[1];
+                    outShape.max.z = attr.data->max[2];
+                }
+                else if (strcmp(attr.name, "NORMAL") == 0)
+                {
+                    normalBuffer = (float *)((char *)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
+                }
+                else if (strcmp(attr.name, "TEXCOORD_0") == 0)
+                {
+                    uvBuffer = (float *)((char *)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
+                }
+                else if (strcmp(attr.name, "COLOR_0") == 0)
+                {
+                    colorBuffer = (float *)((char *)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
+                }
+                else if (strcmp(attr.name, "JOINTS_0") == 0)
+                {
+                    jointsBuffer = (byte *)((char *)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
+                }
+                else if (strcmp(attr.name, "WEIGHTS_0") == 0)
+                {
+                    weightsBuffer = (float *)((char *)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
+                }
+            }
 
             auto material = primitive.material;
             outShape.isDoubleSided = material != nullptr && material->double_sided;
 
-			// Look the texture up by the same name its DDS files were loaded under
-			auto texture = material != nullptr ? material->pbr_metallic_roughness.base_color_texture.texture : nullptr;
-			if(texture != nullptr)
-			{
-				std::string texName = getImageTextureName(texture->image);
-				if(materials.contains(texName)) outShape.pMaterial = &materials[texName];
-			}
+            // Look the texture up by the same name its DDS files were loaded under
+            auto texture = material != nullptr ? material->pbr_metallic_roughness.base_color_texture.texture : nullptr;
+            if (texture != nullptr)
+            {
+                std::string texName = getImageTextureName(texture->image);
+                if (materials.contains(texName))
+                    outShape.pMaterial = &materials[texName];
+            }
 
-			// Parts without a material are drawn white
-			const cgltf_float defaultBaseColorFactor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-			const cgltf_float* baseColorFactor = material != nullptr ? material->pbr_metallic_roughness.base_color_factor : defaultBaseColorFactor;
-			for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
-			{
-				struct nvertex vertex;
-				vertex._.x = posBuffer[3 * vertexIndex];
+            // Parts without a material are drawn white
+            const cgltf_float defaultBaseColorFactor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+            const cgltf_float *baseColorFactor = material != nullptr ? material->pbr_metallic_roughness.base_color_factor : defaultBaseColorFactor;
+            for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
+            {
+                struct nvertex vertex;
+                vertex._.x = posBuffer[3 * vertexIndex];
                 if (isZUp)
                 {
                     vertex._.y = posBuffer[3 * vertexIndex + 1];
@@ -250,45 +256,45 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
                     vertex._.z = posBuffer[3 * vertexIndex + 1];
                 }
 
-				vertex.color.w = 1.0f;
-				vertex.color.r = static_cast<char>(baseColorFactor[0] * 255);
-				vertex.color.g = static_cast<char>(baseColorFactor[1] * 255);
-				vertex.color.b = static_cast<char>(baseColorFactor[2] * 255);
-				vertex.color.a = static_cast<char>(baseColorFactor[3] * 255);
+                vertex.color.w = 1.0f;
+                vertex.color.r = static_cast<char>(baseColorFactor[0] * 255);
+                vertex.color.g = static_cast<char>(baseColorFactor[1] * 255);
+                vertex.color.b = static_cast<char>(baseColorFactor[2] * 255);
+                vertex.color.a = static_cast<char>(baseColorFactor[3] * 255);
 
                 if (uvBuffer != nullptr)
                 {
-				    vertex.u = uvBuffer[2 * vertexIndex];
-				    vertex.v = uvBuffer[2 * vertexIndex + 1];
+                    vertex.u = uvBuffer[2 * vertexIndex];
+                    vertex.v = uvBuffer[2 * vertexIndex + 1];
                 }
                 else
                 {
                     vertex.u = 0.0f;
-				    vertex.v = 0.0f;
+                    vertex.v = 0.0f;
                 }
 
-				outShape.vertices.push_back(vertex);
+                outShape.vertices.push_back(vertex);
 
-				struct vector3<float> normal;
+                struct vector3<float> normal;
 
-				normal.x = normalBuffer[3 * vertexIndex];
+                normal.x = normalBuffer[3 * vertexIndex];
                 if (isZUp)
                 {
                     normal.y = normalBuffer[3 * vertexIndex + 1];
-				    normal.z = normalBuffer[3 * vertexIndex + 2];
+                    normal.z = normalBuffer[3 * vertexIndex + 2];
                 }
                 else
                 {
                     normal.y = normalBuffer[3 * vertexIndex + 2];
-				    normal.z = normalBuffer[3 * vertexIndex + 1];
+                    normal.z = normalBuffer[3 * vertexIndex + 1];
                 }
 
-				outShape.normals.push_back(normal);
+                outShape.normals.push_back(normal);
 
                 if (jointsBuffer != nullptr)
                 {
                     struct vector4<float> joints;
-         
+
                     joints.x = jointsBuffer[4 * vertexIndex];
                     joints.y = jointsBuffer[4 * vertexIndex + 1];
                     joints.z = jointsBuffer[4 * vertexIndex + 2];
@@ -308,34 +314,35 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 
                     outShape.weights.push_back(weights);
                 }
-			}
+            }
 
-			if(primitive.indices->component_type == cgltf_component_type_r_16u)
-			{
-				auto indexBuffer = (unsigned short*)((char*)primitive.indices->buffer_view->buffer->data + primitive.indices->buffer_view->offset);
+            if (primitive.indices->component_type == cgltf_component_type_r_16u)
+            {
+                auto indexBuffer = (unsigned short *)((char *)primitive.indices->buffer_view->buffer->data + primitive.indices->buffer_view->offset);
 
-				for (int id = 0; id < indexCount; ++id)
-				{
-					outShape.indices.push_back(indexBuffer[id]);
-				}
-			}else if(primitive.indices->component_type == cgltf_component_type_r_32u)
-			{
-				auto indexBuffer = (unsigned int*)((char*)primitive.indices->buffer_view->buffer->data + primitive.indices->buffer_view->offset);
-				for (int id = 0; id < indexCount; ++id)
-				{
-					outShape.indices.push_back(indexBuffer[id]);
-				}
-			}
+                for (int id = 0; id < indexCount; ++id)
+                {
+                    outShape.indices.push_back(indexBuffer[id]);
+                }
+            }
+            else if (primitive.indices->component_type == cgltf_component_type_r_32u)
+            {
+                auto indexBuffer = (unsigned int *)((char *)primitive.indices->buffer_view->buffer->data + primitive.indices->buffer_view->offset);
+                for (int id = 0; id < indexCount; ++id)
+                {
+                    outShape.indices.push_back(indexBuffer[id]);
+                }
+            }
 
             fillExternalMeshVertexBuffer(outShape.vertices.data(), outShape.normals.data(), outShape.joints.data(), outShape.weights.data(), outShape.vertices.size());
             fillExternalMeshIndexBuffer(outShape.indices.data(), outShape.indices.size());
 
             shapes.push_back(outShape);
-		}
-	}
+        }
+    }
 
     for (size_t i = 0; i < data->skins_count; i++)
-	{
+    {
         Skin outSkin;
 
         cgltf_skin skin = data->skins[i];
@@ -349,11 +356,11 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 
         auto joint_count = outSkin.joints.size();
         for (size_t j = 0; j < joint_count; j++)
-		{
-            auto inverseBindPoseMatrixBuffer = (float*)((char*)skin.inverse_bind_matrices->buffer_view->buffer->data + skin.inverse_bind_matrices->buffer_view->offset);
+        {
+            auto inverseBindPoseMatrixBuffer = (float *)((char *)skin.inverse_bind_matrices->buffer_view->buffer->data + skin.inverse_bind_matrices->buffer_view->offset);
             memcpy(outSkin.joints[j].inverseBindPoseMatrix, &inverseBindPoseMatrixBuffer[16 * j], sizeof(float) * 16);
         }
-		/*for (size_t j = 0; j < skin.joints_count; j++)
+        /*for (size_t j = 0; j < skin.joints_count; j++)
 		{
 			Joint outJoint;
 
@@ -376,13 +383,13 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 
     // The skeleton's root node is the non-joint parent of its top joint. Its channels carry the root motion
     // (the height that stands the model on the floor, moves like jumps)
-    cgltf_node* rootNode = nullptr;
+    cgltf_node *rootNode = nullptr;
     if (data->skins_count > 0)
     {
-        const cgltf_skin& skin = data->skins[0];
+        const cgltf_skin &skin = data->skins[0];
         for (size_t j = 0; j < skin.joints_count && rootNode == nullptr; j++)
         {
-            cgltf_node* parent = skin.joints[j]->parent;
+            cgltf_node *parent = skin.joints[j]->parent;
             if (parent != nullptr && std::find(skin.joints, skin.joints + skin.joints_count, parent) == skin.joints + skin.joints_count)
                 rootNode = parent;
         }
@@ -391,7 +398,8 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
     for (size_t i = 0; i < data->animations_count; i++)
     {
         cgltf_animation anim = data->animations[i];
-        if (anim.name == nullptr) continue;
+        if (anim.name == nullptr)
+            continue;
 
         // Matched case-insensitively against the game's animation names
         std::string animFullName = anim.name;
@@ -399,7 +407,7 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
         std::transform(animName.begin(), animName.end(), animName.begin(), [](unsigned char c) { return std::toupper(c); });
 
         Animation outAnim;
-        
+
         int jointCount = skins[0].joints.size();
         outAnim.keyFrames.resize(jointCount);
         for (size_t j = 0; j < anim.channels_count; j++)
@@ -410,14 +418,14 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
             for (int jointIndex = 0; jointIndex < jointCount; ++jointIndex)
             {
                 auto joint = skins[0].joints[jointIndex];
-                if(channel.target_node->name == joint.name)
+                if (channel.target_node->name == joint.name)
                 {
                     targetJointIndex = jointIndex;
                     break;
                 }
             }
 
-            float* samplerBuffer = (float*)((char*)channel.sampler->output->buffer_view->buffer->data + channel.sampler->output->buffer_view->offset);
+            float *samplerBuffer = (float *)((char *)channel.sampler->output->buffer_view->buffer->data + channel.sampler->output->buffer_view->offset);
 
             // Key times, used to stretch the animation when its key count differs from the game's frame count
             std::vector<float> keyTimes(channel.sampler->input->count);
@@ -426,42 +434,44 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 
             if (!keyTimes.empty())
             {
-                if (outAnim.keyCount == 0 || keyTimes.front() < outAnim.startTime) outAnim.startTime = keyTimes.front();
-                if (outAnim.keyCount == 0 || keyTimes.back() > outAnim.endTime) outAnim.endTime = keyTimes.back();
+                if (outAnim.keyCount == 0 || keyTimes.front() < outAnim.startTime)
+                    outAnim.startTime = keyTimes.front();
+                if (outAnim.keyCount == 0 || keyTimes.back() > outAnim.endTime)
+                    outAnim.endTime = keyTimes.back();
                 outAnim.keyCount = std::max(outAnim.keyCount, keyTimes.size());
             }
 
-            if(targetJointIndex == -1)
+            if (targetJointIndex == -1)
             {
                 if (rootNode != nullptr && channel.target_node == rootNode)
                 {
                     if (channel.target_path == cgltf_animation_path_type_translation)
                     {
                         for (int k = 0; k < channel.sampler->output->count; ++k)
-                            outAnim.rootTranslation.push_back({ samplerBuffer[k * 3 + 0], samplerBuffer[k * 3 + 1], samplerBuffer[k * 3 + 2] });
+                            outAnim.rootTranslation.push_back({samplerBuffer[k * 3 + 0], samplerBuffer[k * 3 + 1], samplerBuffer[k * 3 + 2]});
                         outAnim.rootTranslationTimes = keyTimes;
                     }
                     else if (channel.target_path == cgltf_animation_path_type_rotation)
                     {
                         for (int k = 0; k < channel.sampler->output->count; ++k)
-                            outAnim.rootRotation.push_back({ samplerBuffer[k * 4 + 0], samplerBuffer[k * 4 + 1], samplerBuffer[k * 4 + 2], samplerBuffer[k * 4 + 3] });
+                            outAnim.rootRotation.push_back({samplerBuffer[k * 4 + 0], samplerBuffer[k * 4 + 1], samplerBuffer[k * 4 + 2], samplerBuffer[k * 4 + 3]});
                         outAnim.rootRotationTimes = keyTimes;
                     }
                 }
 
                 continue;
             }
-        
-            KeyFrame& outKeyFrame = outAnim.keyFrames[targetJointIndex];
+
+            KeyFrame &outKeyFrame = outAnim.keyFrames[targetJointIndex];
             if (channel.target_path == cgltf_animation_path_type_translation)
-            {     
+            {
                 for (int k = 0; k < channel.sampler->output->count; ++k)
                 {
                     vector3<float> translation;
                     translation.x = samplerBuffer[k * 3 + 0];
                     translation.y = samplerBuffer[k * 3 + 1];
                     translation.z = samplerBuffer[k * 3 + 2];
-                    outKeyFrame.translation.push_back(translation);  
+                    outKeyFrame.translation.push_back(translation);
                 }
                 outKeyFrame.translationTimes = keyTimes;
                 outKeyFrame.targetJointIndex = targetJointIndex;
@@ -469,7 +479,7 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
             }
             else if (channel.target_path == cgltf_animation_path_type_rotation)
             {
-                //KeyFrame outKeyFrame;
+                // KeyFrame outKeyFrame;
                 for (int k = 0; k < channel.sampler->output->count; ++k)
                 {
                     vector4<float> rotation;
@@ -477,10 +487,10 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
                     rotation.y = samplerBuffer[k * 4 + 1];
                     rotation.z = samplerBuffer[k * 4 + 2];
                     rotation.w = samplerBuffer[k * 4 + 3];
-                    outKeyFrame.rotation.push_back(rotation);  
+                    outKeyFrame.rotation.push_back(rotation);
                 }
                 outKeyFrame.rotationTimes = keyTimes;
-            }        
+            }
         }
 
         animations[animName] = outAnim;
@@ -490,12 +500,13 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 
     cgltf_free(data);
 
-	return true;
+    return true;
 }
 
-uint32_t ExternalMesh::fillExternalMeshVertexBuffer(struct nvertex* inVertex, struct vector3<float>* normals, struct vector4<float>* joints, struct vector4<float>* weights, uint32_t inCount)
+uint32_t ExternalMesh::fillExternalMeshVertexBuffer(struct nvertex *inVertex, struct vector3<float> *normals, struct vector4<float> *joints, struct vector4<float> *weights, uint32_t inCount)
 {
-    if (!bgfx::isValid(vertexBufferHandle)) vertexBufferHandle = bgfx::createDynamicVertexBuffer(inCount, newRenderer.GetVertexLayout(), BGFX_BUFFER_ALLOW_RESIZE);
+    if (!bgfx::isValid(vertexBufferHandle))
+        vertexBufferHandle = bgfx::createDynamicVertexBuffer(inCount, newRenderer.GetVertexLayout(), BGFX_BUFFER_ALLOW_RESIZE);
 
     uint32_t currentOffset = vertexBufferData.size();
 
@@ -534,16 +545,19 @@ uint32_t ExternalMesh::fillExternalMeshVertexBuffer(struct nvertex* inVertex, st
             vertexBufferData[currentOffset + idx].bone_weights[3] = weights[idx].w;
         }
 
-        if (vertex_log && idx == 0) ffnx_trace("%s: %u [XYZW(%f, %f, %f, %f), BGRA(%08x), UV(%f, %f)]\n", __func__, idx, vertexBufferData[currentOffset + idx].x, vertexBufferData[currentOffset + idx].y, vertexBufferData[currentOffset + idx].z, vertexBufferData[currentOffset + idx].w, vertexBufferData[currentOffset + idx].bgra, vertexBufferData[currentOffset + idx].u, vertexBufferData[currentOffset + idx].v);
-        if (vertex_log && idx == 1) ffnx_trace("%s: See the rest on RenderDoc.\n", __func__);
+        if (vertex_log && idx == 0)
+            ffnx_trace("%s: %u [XYZW(%f, %f, %f, %f), BGRA(%08x), UV(%f, %f)]\n", __func__, idx, vertexBufferData[currentOffset + idx].x, vertexBufferData[currentOffset + idx].y, vertexBufferData[currentOffset + idx].z, vertexBufferData[currentOffset + idx].w, vertexBufferData[currentOffset + idx].bgra, vertexBufferData[currentOffset + idx].u, vertexBufferData[currentOffset + idx].v);
+        if (vertex_log && idx == 1)
+            ffnx_trace("%s: See the rest on RenderDoc.\n", __func__);
     }
 
     return currentOffset;
 };
 
-uint32_t ExternalMesh::fillExternalMeshIndexBuffer(uint32_t* inIndex, uint32_t inCount)
+uint32_t ExternalMesh::fillExternalMeshIndexBuffer(uint32_t *inIndex, uint32_t inCount)
 {
-    if (!bgfx::isValid(indexBufferHandle)) indexBufferHandle = bgfx::createDynamicIndexBuffer(inCount, BGFX_BUFFER_ALLOW_RESIZE | BGFX_BUFFER_INDEX32);
+    if (!bgfx::isValid(indexBufferHandle))
+        indexBufferHandle = bgfx::createDynamicIndexBuffer(inCount, BGFX_BUFFER_ALLOW_RESIZE | BGFX_BUFFER_INDEX32);
 
     uint32_t currentOffset = indexBufferData.size();
 
@@ -557,23 +571,9 @@ uint32_t ExternalMesh::fillExternalMeshIndexBuffer(uint32_t* inIndex, uint32_t i
 
 void ExternalMesh::updateExternalMeshBuffers()
 {
-    bgfx::update(
-        vertexBufferHandle,
-        0,
-        bgfx::copy(
-            vertexBufferData.data(),
-            vectorSizeOf(vertexBufferData)
-        )
-    );
+    bgfx::update(vertexBufferHandle, 0, bgfx::copy(vertexBufferData.data(), vectorSizeOf(vertexBufferData)));
 
-    bgfx::update(
-        indexBufferHandle,
-        0,
-        bgfx::copy(
-            indexBufferData.data(),
-            vectorSizeOf(indexBufferData)
-        )
-    );
+    bgfx::update(indexBufferHandle, 0, bgfx::copy(indexBufferData.data(), vectorSizeOf(indexBufferData)));
 }
 
 void ExternalMesh::bindField3dVertexBuffer(uint32_t offset, uint32_t inCount)
@@ -597,19 +597,19 @@ void ExternalMesh::clearExternalMesh3dBuffers()
 
 void ExternalMesh::unloadExternalMesh()
 {
-    for (const auto& mat : materials)
+    for (const auto &mat : materials)
     {
-        for (const auto& tex : mat.second.baseColorTexHandles)
+        for (const auto &tex : mat.second.baseColorTexHandles)
         {
             if (bgfx::isValid(tex))
                 bgfx::destroy(tex);
         }
-        for (const auto& tex : mat.second.normalTexHandles)
+        for (const auto &tex : mat.second.normalTexHandles)
         {
             if (bgfx::isValid(tex))
                 bgfx::destroy(tex);
         }
-        for (const auto& tex : mat.second.pbrTexHandles)
+        for (const auto &tex : mat.second.pbrTexHandles)
         {
             if (bgfx::isValid(tex))
                 bgfx::destroy(tex);
@@ -620,7 +620,7 @@ void ExternalMesh::unloadExternalMesh()
     clearExternalMesh3dBuffers();
 }
 
-void ExternalMesh::loadConfig(const std::string& path)
+void ExternalMesh::loadConfig(const std::string &path)
 {
     try
     {
@@ -635,9 +635,10 @@ void ExternalMesh::loadConfig(const std::string& path)
 int ExternalMesh::getTextureCount(std::string tex_name)
 {
     auto node = config[tex_name];
-    if(node)
+    if (node)
     {
-        if (auto sub_node = node["num_textures"]) return sub_node.value_or(0);
+        if (auto sub_node = node["num_textures"])
+            return sub_node.value_or(0);
     }
 
     return 1;
@@ -646,9 +647,10 @@ int ExternalMesh::getTextureCount(std::string tex_name)
 int ExternalMesh::getFrameInterval(std::string tex_name)
 {
     auto node = config[tex_name];
-    if(node)
+    if (node)
     {
-        if (auto sub_node = node["frame_interval"]) return sub_node.value_or(0);
+        if (auto sub_node = node["frame_interval"])
+            return sub_node.value_or(0);
     }
 
     return 0;
@@ -657,13 +659,15 @@ int ExternalMesh::getFrameInterval(std::string tex_name)
 // Builds the game's root matrix for this frame (as its root animation would) from the gltf root node's keys.
 // translationScale converts gltf units to the game's, normally the scale the mesh is drawn with.
 // Returns false when the animation doesn't animate the root node, so the game's own root motion is used.
-bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, int frameCount, float clockSeconds, float translationScale, struct matrix* outMatrix)
+bool ExternalMesh::getRootMotionMatrix(const std::string &animName, int frame, int frameCount, float clockSeconds, float translationScale, struct matrix *outMatrix)
 {
     auto it = animations.find(animName);
-    if (it == animations.end()) return false;
+    if (it == animations.end())
+        return false;
 
-    const Animation& anim = it->second;
-    if (anim.rootTranslation.empty() || anim.rootRotation.empty()) return false;
+    const Animation &anim = it->second;
+    if (anim.rootTranslation.empty() || anim.rootRotation.empty())
+        return false;
 
     AnimationPosition position = getAnimationPosition(anim, frame, frameCount, clockSeconds);
     auto t = sampleTranslation(anim.rootTranslationTimes, anim.rootTranslation, position, anim.rootTranslation.front());
@@ -680,15 +684,11 @@ bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, i
     lastHasRoot = true;
 
     // glTF rotation as a column-vector matrix
-    float r[3][3] = {
-        { 1 - 2 * (q.y * q.y + q.z * q.z), 2 * (q.x * q.y - q.z * q.w), 2 * (q.x * q.z + q.y * q.w) },
-        { 2 * (q.x * q.y + q.z * q.w), 1 - 2 * (q.x * q.x + q.z * q.z), 2 * (q.y * q.z - q.x * q.w) },
-        { 2 * (q.x * q.z - q.y * q.w), 2 * (q.y * q.z + q.x * q.w), 1 - 2 * (q.x * q.x + q.y * q.y) }
-    };
+    float r[3][3] = {{1 - 2 * (q.y * q.y + q.z * q.z), 2 * (q.x * q.y - q.z * q.w), 2 * (q.x * q.z + q.y * q.w)}, {2 * (q.x * q.y + q.z * q.w), 1 - 2 * (q.x * q.x + q.z * q.z), 2 * (q.y * q.z - q.x * q.w)}, {2 * (q.x * q.z - q.y * q.w), 2 * (q.y * q.z + q.x * q.w), 1 - 2 * (q.x * q.x + q.y * q.y)}};
 
     // glTF -> game: a 180 degree turn around Z (X and Y mirrored) for both the rotation and the translation.
     // The game's matrices are row-vector, so the rotation is stored transposed.
-    const float flip[3] = { -1.0f, -1.0f, 1.0f };
+    const float flip[3] = {-1.0f, -1.0f, 1.0f};
     for (int row = 0; row < 3; ++row)
         for (int col = 0; col < 3; ++col)
             outMatrix->m[col][row] = flip[row] * r[row][col];
@@ -705,7 +705,7 @@ bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, i
 }
 
 // Seconds since the game switched this model to animName (restarts on every switch)
-float ExternalMesh::getAnimationClock(const std::string& animName)
+float ExternalMesh::getAnimationClock(const std::string &animName)
 {
     auto now = std::chrono::steady_clock::now();
 
@@ -727,7 +727,7 @@ float ExternalMesh::getAnimationClock(const std::string& animName)
     return std::chrono::duration<float>(now - clockStart).count();
 }
 
-AnimationPosition getAnimationPosition(const Animation& anim, int frame, int frameCount, float clockSeconds)
+AnimationPosition getAnimationPosition(const Animation &anim, int frame, int frameCount, float clockSeconds)
 {
     AnimationPosition position;
 
@@ -758,7 +758,7 @@ AnimationPosition getAnimationPosition(const Animation& anim, int frame, int fra
 }
 
 // The two keys around a time, and how far the time is between them (0 = first, 1 = second)
-static void findKeys(const std::vector<float>& times, size_t valueCount, float time, size_t& first, size_t& second, float& blend)
+static void findKeys(const std::vector<float> &times, size_t valueCount, float time, size_t &first, size_t &second, float &blend)
 {
     size_t count = std::min(times.size(), valueCount);
 
@@ -781,9 +781,10 @@ static void findKeys(const std::vector<float>& times, size_t valueCount, float t
     blend = span > 0.0f ? (time - times[first]) / span : 0.0f;
 }
 
-vector3<float> sampleTranslation(const std::vector<float>& times, const std::vector<vector3<float>>& values, const AnimationPosition& position, const vector3<float>& fallback)
+vector3<float> sampleTranslation(const std::vector<float> &times, const std::vector<vector3<float>> &values, const AnimationPosition &position, const vector3<float> &fallback)
 {
-    if (values.empty()) return fallback;
+    if (values.empty())
+        return fallback;
 
     if (position.useKeyIndex || times.empty())
         return values[std::clamp(position.keyIndex, 0, static_cast<int>(values.size()) - 1)];
@@ -795,9 +796,10 @@ vector3<float> sampleTranslation(const std::vector<float>& times, const std::vec
     return lerpTranslation(values[first], values[second], blend);
 }
 
-vector4<float> sampleRotation(const std::vector<float>& times, const std::vector<vector4<float>>& values, const AnimationPosition& position, const vector4<float>& fallback)
+vector4<float> sampleRotation(const std::vector<float> &times, const std::vector<vector4<float>> &values, const AnimationPosition &position, const vector4<float> &fallback)
 {
-    if (values.empty()) return fallback;
+    if (values.empty())
+        return fallback;
 
     if (position.useKeyIndex || times.empty())
         return values[std::clamp(position.keyIndex, 0, static_cast<int>(values.size()) - 1)];
@@ -809,18 +811,18 @@ vector4<float> sampleRotation(const std::vector<float>& times, const std::vector
     return slerpRotation(values[first], values[second], blend);
 }
 
-vector3<float> lerpTranslation(const vector3<float>& a, const vector3<float>& b, float blend)
+vector3<float> lerpTranslation(const vector3<float> &a, const vector3<float> &b, float blend)
 {
-    return { a.x + (b.x - a.x) * blend, a.y + (b.y - a.y) * blend, a.z + (b.z - a.z) * blend };
+    return {a.x + (b.x - a.x) * blend, a.y + (b.y - a.y) * blend, a.z + (b.z - a.z) * blend};
 }
 
-vector4<float> slerpRotation(const vector4<float>& a, vector4<float> b, float blend)
+vector4<float> slerpRotation(const vector4<float> &a, vector4<float> b, float blend)
 {
     // Spherical interpolation along the shorter way around
     float cosAngle = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
     if (cosAngle < 0.0f)
     {
-        b = { -b.x, -b.y, -b.z, -b.w };
+        b = {-b.x, -b.y, -b.z, -b.w};
         cosAngle = -cosAngle;
     }
 
@@ -833,7 +835,7 @@ vector4<float> slerpRotation(const vector4<float>& a, vector4<float> b, float bl
         weightB = std::sin(blend * angle) / sinAngle;
     }
 
-    vector4<float> result = { a.x * weightA + b.x * weightB, a.y * weightA + b.y * weightB, a.z * weightA + b.z * weightB, a.w * weightA + b.w * weightB };
+    vector4<float> result = {a.x * weightA + b.x * weightB, a.y * weightA + b.y * weightB, a.z * weightA + b.z * weightB, a.w * weightA + b.w * weightB};
     float length = std::sqrt(result.x * result.x + result.y * result.y + result.z * result.z + result.w * result.w);
     if (length > 0.0f)
     {
@@ -848,14 +850,15 @@ vector4<float> slerpRotation(const vector4<float>& a, vector4<float> b, float bl
 // How far a switch between animations has blended from the previous pose (0) to the new animation (1)
 float getSwitchBlendWeight(float clockSeconds)
 {
-    if (clockSeconds >= EXTERNAL_MESH_SWITCH_BLEND_SECONDS) return 1.0f;
+    if (clockSeconds >= EXTERNAL_MESH_SWITCH_BLEND_SECONDS)
+        return 1.0f;
 
     float progress = std::max(clockSeconds, 0.0f) / EXTERNAL_MESH_SWITCH_BLEND_SECONDS;
     return progress * progress * (3.0f - 2.0f * progress); // Eases in and out
 }
 
 // Blends a joint's sampled pose with the pose shown before an animation switch, and remembers the result
-void ExternalMesh::blendJointPose(size_t jointIndex, size_t jointCount, float clockSeconds, vector3<float>& translation, vector4<float>& rotation)
+void ExternalMesh::blendJointPose(size_t jointIndex, size_t jointCount, float clockSeconds, vector3<float> &translation, vector4<float> &rotation)
 {
     float blendWeight = getSwitchBlendWeight(clockSeconds);
     if (blendWeight < 1.0f && jointIndex < blendFromTranslation.size() && jointIndex < blendFromRotation.size())
@@ -864,8 +867,10 @@ void ExternalMesh::blendJointPose(size_t jointIndex, size_t jointCount, float cl
         rotation = slerpRotation(blendFromRotation[jointIndex], rotation, blendWeight);
     }
 
-    if (lastTranslation.size() != jointCount) lastTranslation.resize(jointCount);
-    if (lastRotation.size() != jointCount) lastRotation.resize(jointCount);
+    if (lastTranslation.size() != jointCount)
+        lastTranslation.resize(jointCount);
+    if (lastRotation.size() != jointCount)
+        lastRotation.resize(jointCount);
     lastTranslation[jointIndex] = translation;
     lastRotation[jointIndex] = rotation;
 }

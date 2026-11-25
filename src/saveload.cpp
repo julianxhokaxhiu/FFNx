@@ -36,314 +36,327 @@
 #include <filesystem>
 // -------------------------------------------
 
-std::map<uint16_t, std::string> additional_textures = {
-	{RendererTextureSlot::TEX_NML, "nml"},
-	{RendererTextureSlot::TEX_PBR, "pbr"}
-};
+std::map<uint16_t, std::string> additional_textures = {{RendererTextureSlot::TEX_NML, "nml"}, {RendererTextureSlot::TEX_PBR, "pbr"}};
 
 void make_path(const char *name)
 {
-	const char *next = name;
+    const char *next = name;
 
-	while((next = strchr(next, '/')))
-	{
-		char tmp[128];
+    while ((next = strchr(next, '/')))
+    {
+        char tmp[128];
 
-		while(next[0] == '/') next++;
+        while (next[0] == '/')
+            next++;
 
-		strncpy(tmp, name, next - name);
-		tmp[next - name] = 0;
+        strncpy(tmp, name, next - name);
+        tmp[next - name] = 0;
 
-		_mkdir(tmp);
-	}
+        _mkdir(tmp);
+    }
 }
 
 void normalize_path(char *name)
 {
-	if (ff8)
-	{
-		int idx = 0;
-		while (name[idx] != 0)
-		{
-			if (name[idx] == '\\') name[idx] = '/';
-			idx++;
-		}
-	}
+    if (ff8)
+    {
+        int idx = 0;
+        while (name[idx] != 0)
+        {
+            if (name[idx] == '\\')
+                name[idx] = '/';
+            idx++;
+        }
+    }
 }
 
 static std::string make_texture_filename(const void *data, uint32_t dataSize, uint32_t palette_index, const char *name, bool is_animated, const char *outputDirectory)
 {
-	char filename[sizeof(basedir) + 1024] = {};
+    char filename[sizeof(basedir) + 1024] = {};
 
-	if (is_animated)
-	{
-		const uint64_t hash = XXH3_64bits(data, dataSize);
-		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.png", basedir, outputDirectory, name, palette_index, hash);
-	}
-	else if (palette_index == uint32_t(-1))
-	{
-		_snprintf(filename, sizeof(filename), "%s/%s/%s.png", basedir, outputDirectory, name);
-	}
-	else if (palette_index & 0x40000000)
-	{
-		_snprintf(filename, sizeof(filename), "%s/%s/%s_%u_%u.png", basedir, outputDirectory, name, (palette_index & 0x7FFF), ((palette_index & 0x3FFFFFFF) >> 15) & 0x7FFF);
-	}
-	else
-	{
-		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.png", basedir, outputDirectory, name, palette_index);
-	}
+    if (is_animated)
+    {
+        const uint64_t hash = XXH3_64bits(data, dataSize);
+        _snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.png", basedir, outputDirectory, name, palette_index, hash);
+    }
+    else if (palette_index == uint32_t(-1))
+    {
+        _snprintf(filename, sizeof(filename), "%s/%s/%s.png", basedir, outputDirectory, name);
+    }
+    else if (palette_index & 0x40000000)
+    {
+        _snprintf(filename, sizeof(filename), "%s/%s/%s_%u_%u.png", basedir, outputDirectory, name, (palette_index & 0x7FFF), ((palette_index & 0x3FFFFFFF) >> 15) & 0x7FFF);
+    }
+    else
+    {
+        _snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.png", basedir, outputDirectory, name, palette_index);
+    }
 
-	normalize_path(filename);
-	return filename;
+    normalize_path(filename);
+    return filename;
 }
 
 std::string get_gpu_texture_name(const void *data, uint32_t dataSize, uint32_t palette_index, const char *name, bool is_animated)
 {
-	const std::string filename = make_texture_filename(data, dataSize, palette_index, name, is_animated, "dump/gpu");
-	return std::filesystem::path(filename).stem().string();
+    const std::string filename = make_texture_filename(data, dataSize, palette_index, name, is_animated, "dump/gpu");
+    return std::filesystem::path(filename).stem().string();
 }
 
 static void save_texture_to_directory(const void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, const char *name, bool is_animated, const char *outputDirectory)
 {
-	const std::string filename = make_texture_filename(data, dataSize, palette_index, name, is_animated, outputDirectory);
+    const std::string filename = make_texture_filename(data, dataSize, palette_index, name, is_animated, outputDirectory);
 
-	make_path(filename.c_str());
+    make_path(filename.c_str());
 
-	if (!fileExists(filename.c_str()))
-	{
-		if (!newRenderer.saveTexture(filename.c_str(), width, height, data)) ffnx_error("Save texture failed for the file [ %s ].\n", filename.c_str());
-	}
-	else
-		ffnx_warning("Save texture skipped because the file [ %s ] already exists.\n", filename.c_str());
+    if (!fileExists(filename.c_str()))
+    {
+        if (!newRenderer.saveTexture(filename.c_str(), width, height, data))
+            ffnx_error("Save texture failed for the file [ %s ].\n", filename.c_str());
+    }
+    else
+        ffnx_warning("Save texture skipped because the file [ %s ] already exists.\n", filename.c_str());
 }
 
 void save_texture(const void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, const char *name, bool is_animated)
 {
-	if (!save_textures && !save_textures_legacy) {
-		ffnx_warning("Save texture skipped because the option \"save_textures\" is disabled (name=%s).\n", name);
-		return;
-	}
+    if (!save_textures && !save_textures_legacy)
+    {
+        ffnx_warning("Save texture skipped because the option \"save_textures\" is disabled (name=%s).\n", name);
+        return;
+    }
 
-	save_texture_to_directory(data, dataSize, width, height, palette_index, name, is_animated, mod_path.c_str());
+    save_texture_to_directory(data, dataSize, width, height, palette_index, name, is_animated, mod_path.c_str());
 }
 
 void save_gpu_texture(const void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, const char *name, bool is_animated)
 {
-	save_texture_to_directory(data, dataSize, width, height, palette_index, name, is_animated, "dump/gpu");
+    save_texture_to_directory(data, dataSize, width, height, palette_index, name, is_animated, "dump/gpu");
 }
 
-uint32_t load_texture_helper(char* name, uint32_t* width, uint32_t* height, bool useLibPng, bool isSrgb)
+uint32_t load_texture_helper(char *name, uint32_t *width, uint32_t *height, bool useLibPng, bool isSrgb)
 {
-	uint32_t ret = 0;
+    uint32_t ret = 0;
 
-	normalize_path(name);
+    normalize_path(name);
 
-	if (useLibPng)
-		ret = newRenderer.createTextureLibPng(name, width, height, isSrgb);
-	else
-	{
-		uint32_t mipCount = 0;
-		ret = newRenderer.createTexture(name, width, height, &mipCount, isSrgb);
-	}
+    if (useLibPng)
+        ret = newRenderer.createTextureLibPng(name, width, height, isSrgb);
+    else
+    {
+        uint32_t mipCount = 0;
+        ret = newRenderer.createTexture(name, width, height, &mipCount, isSrgb);
+    }
 
-	if (ret)
-	{
-		if (trace_all || trace_loaders) ffnx_trace("Using texture: %s (textureId=%d)\n", name, ret);
-	}
+    if (ret)
+    {
+        if (trace_all || trace_loaders)
+            ffnx_trace("Using texture: %s (textureId=%d)\n", name, ret);
+    }
 
-	return ret;
+    return ret;
 }
 
-uint32_t load_normal_texture(const void* data, uint32_t dataSize, const char* name, uint32_t palette_index, uint32_t* width, uint32_t* height, struct gl_texture_set* gl_set, std::string tex_path)
+uint32_t load_normal_texture(const void *data, uint32_t dataSize, const char *name, uint32_t palette_index, uint32_t *width, uint32_t *height, struct gl_texture_set *gl_set, std::string tex_path)
 {
-	uint32_t ret = 0;
-	char filename[sizeof(basedir) + 1024]{ 0 };
+    uint32_t ret = 0;
+    char filename[sizeof(basedir) + 1024]{0};
 
-	for (int idx = 0; idx < mod_ext.size(); idx++)
-	{
-		if (palette_index == uint32_t(-1))
-		{
-			_snprintf(filename, sizeof(filename), "%s/%s/%s.%s", basedir, tex_path.c_str(), name, mod_ext[idx].c_str());
-		}
-		else if ((palette_index & 0xC0000000) == 0xC0000000) // Remastered
-		{
-			_snprintf(filename, sizeof(filename), "%s/%s/%s/%u.%s", basedir, tex_path.c_str(), name, palette_index & 0xFFFF, mod_ext[idx].c_str());
-		}
-		else if (palette_index & 0x40000000)
-		{
-			_snprintf(filename, sizeof(filename), "%s/%s/%s_%u_%u.%s", basedir, tex_path.c_str(), name, (palette_index & 0x7FFF), ((palette_index & 0x3FFFFFFF) >> 15) & 0x7FFF, mod_ext[idx].c_str());
-		}
-		else
-		{
-			_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, tex_path.c_str(), name, palette_index, mod_ext[idx].c_str());
-		}
+    for (int idx = 0; idx < mod_ext.size(); idx++)
+    {
+        if (palette_index == uint32_t(-1))
+        {
+            _snprintf(filename, sizeof(filename), "%s/%s/%s.%s", basedir, tex_path.c_str(), name, mod_ext[idx].c_str());
+        }
+        else if ((palette_index & 0xC0000000) == 0xC0000000) // Remastered
+        {
+            _snprintf(filename, sizeof(filename), "%s/%s/%s/%u.%s", basedir, tex_path.c_str(), name, palette_index & 0xFFFF, mod_ext[idx].c_str());
+        }
+        else if (palette_index & 0x40000000)
+        {
+            _snprintf(filename, sizeof(filename), "%s/%s/%s_%u_%u.%s", basedir, tex_path.c_str(), name, (palette_index & 0x7FFF), ((palette_index & 0x3FFFFFFF) >> 15) & 0x7FFF, mod_ext[idx].c_str());
+        }
+        else
+        {
+            _snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, tex_path.c_str(), name, palette_index, mod_ext[idx].c_str());
+        }
 
-		ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png", true);
+        ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png", true);
 
-		if(ret)
-		{
-			if (trace_all) ffnx_trace("Created external texture: %u from %s\n", ret, filename);
-			break;
-		}
-	}
+        if (ret)
+        {
+            if (trace_all)
+                ffnx_trace("Created external texture: %u from %s\n", ret, filename);
+            break;
+        }
+    }
 
-	if(!ret)
-	{
-		if(palette_index != uint32_t(-1) && (palette_index & 0x3FFFFFFF) != 0)
-		{
-			if(trace_all || show_missing_textures) ffnx_info("No external texture found [%s], falling back to palette 0\n", filename);
-			if(gl_set->default_texture_id)
-			{
-				return gl_set->default_texture_id;
-			}
-			else
-			{
-				gl_set->default_texture_id = load_normal_texture(data, dataSize, name, (palette_index & 0xC0000000) == 0xC0000000 ? -1 : (palette_index & 0x40000000), width, height, gl_set, tex_path);
+    if (!ret)
+    {
+        if (palette_index != uint32_t(-1) && (palette_index & 0x3FFFFFFF) != 0)
+        {
+            if (trace_all || show_missing_textures)
+                ffnx_info("No external texture found [%s], falling back to palette 0\n", filename);
+            if (gl_set->default_texture_id)
+            {
+                return gl_set->default_texture_id;
+            }
+            else
+            {
+                gl_set->default_texture_id = load_normal_texture(data, dataSize, name, (palette_index & 0xC0000000) == 0xC0000000 ? -1 : (palette_index & 0x40000000), width, height, gl_set, tex_path);
 
-				return gl_set->default_texture_id;
-			}
-		}
-		else
-		{
-			if(trace_all || show_missing_textures) ffnx_info("No external texture found [%s], switching back to the internal one.\n", filename);
-			return 0;
-		}
-	}
-	else
-	{
-		// Load additional textures
-		for (const auto& it : additional_textures)
-		{
-			for (int idx = 0; idx < mod_ext.size(); idx++)
-			{
-				if (palette_index == uint32_t(-1))
-				{
-					_snprintf(filename, sizeof(filename), "%s/%s/%s_%s.%s", basedir, tex_path.c_str(), name, it.second.c_str(), mod_ext[idx].c_str());
-				}
-				else if (palette_index & 0x40000000)
-				{
-					_snprintf(filename, sizeof(filename), "%s/%s/%s_%u_%u_%s.%s", basedir, tex_path.c_str(), name, (palette_index & 0x7FFF), ((palette_index & 0x3FFFFFFF) >> 15) & 0x7FFF, it.second.c_str(), mod_ext[idx].c_str());
-				}
-				else
-				{
-					_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%s.%s", basedir, tex_path.c_str(), name, palette_index, it.second.c_str(), mod_ext[idx].c_str());
-				}
+                return gl_set->default_texture_id;
+            }
+        }
+        else
+        {
+            if (trace_all || show_missing_textures)
+                ffnx_info("No external texture found [%s], switching back to the internal one.\n", filename);
+            return 0;
+        }
+    }
+    else
+    {
+        // Load additional textures
+        for (const auto &it : additional_textures)
+        {
+            for (int idx = 0; idx < mod_ext.size(); idx++)
+            {
+                if (palette_index == uint32_t(-1))
+                {
+                    _snprintf(filename, sizeof(filename), "%s/%s/%s_%s.%s", basedir, tex_path.c_str(), name, it.second.c_str(), mod_ext[idx].c_str());
+                }
+                else if (palette_index & 0x40000000)
+                {
+                    _snprintf(filename, sizeof(filename), "%s/%s/%s_%u_%u_%s.%s", basedir, tex_path.c_str(), name, (palette_index & 0x7FFF), ((palette_index & 0x3FFFFFFF) >> 15) & 0x7FFF, it.second.c_str(), mod_ext[idx].c_str());
+                }
+                else
+                {
+                    _snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%s.%s", basedir, tex_path.c_str(), name, palette_index, it.second.c_str(), mod_ext[idx].c_str());
+                }
 
-				if (fileExists(filename))
-				{
-					if (gl_set->additional_textures.count(it.first)) newRenderer.deleteTexture(gl_set->additional_textures[it.first]);
-					gl_set->additional_textures[it.first] = load_texture_helper(filename, width, height, mod_ext[idx] == "png", false);
-					break;
-				}
-				else if (trace_all || show_missing_textures)
-				{
-					ffnx_trace("Could not find [ %s ].\n", filename);
-				}
-			}
-		}
-	}
+                if (fileExists(filename))
+                {
+                    if (gl_set->additional_textures.count(it.first))
+                        newRenderer.deleteTexture(gl_set->additional_textures[it.first]);
+                    gl_set->additional_textures[it.first] = load_texture_helper(filename, width, height, mod_ext[idx] == "png", false);
+                    break;
+                }
+                else if (trace_all || show_missing_textures)
+                {
+                    ffnx_trace("Could not find [ %s ].\n", filename);
+                }
+            }
+        }
+    }
 
-	return ret;
+    return ret;
 }
 
-uint32_t load_animated_texture(const void* data, uint32_t dataSize, const char* name, uint32_t palette_index, uint32_t* width, uint32_t* height, struct gl_texture_set* gl_set, std::string tex_path)
+uint32_t load_animated_texture(const void *data, uint32_t dataSize, const char *name, uint32_t palette_index, uint32_t *width, uint32_t *height, struct gl_texture_set *gl_set, std::string tex_path)
 {
-	uint32_t ret = 0;
-	char filename[sizeof(basedir) + 1024]{ 0 };
-	uint64_t hash = XXH3_64bits(data, dataSize);
-	char texture_key[1024] { 0 };
-	_snprintf(texture_key, sizeof(texture_key), "%s_%02i_%llx", name, palette_index, hash);
+    uint32_t ret = 0;
+    char filename[sizeof(basedir) + 1024]{0};
+    uint64_t hash = XXH3_64bits(data, dataSize);
+    char texture_key[1024]{0};
+    _snprintf(texture_key, sizeof(texture_key), "%s_%02i_%llx", name, palette_index, hash);
 
-	// If texture has been cached, return immediately its handler
-	if (gl_set->animated_textures.contains(texture_key))
-	{
-		return gl_set->animated_textures[texture_key];
-	}
+    // If texture has been cached, return immediately its handler
+    if (gl_set->animated_textures.contains(texture_key))
+    {
+        return gl_set->animated_textures[texture_key];
+    }
 
-	// Check for animated texture with hash
-	for (int idx = 0; idx < mod_ext.size(); idx++)
-	{
-		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.%s", basedir, tex_path.c_str(), name, palette_index, hash, mod_ext[idx].c_str());
+    // Check for animated texture with hash
+    for (int idx = 0; idx < mod_ext.size(); idx++)
+    {
+        _snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.%s", basedir, tex_path.c_str(), name, palette_index, hash, mod_ext[idx].c_str());
 
-		ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png", true);
+        ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png", true);
 
-		if(ret)
-		{
-			if(trace_all) ffnx_trace("Created animated external texture: %u from %s\n", ret, filename);
-			gl_set->animated_textures[texture_key] = ret;
-			return ret;
-		}
+        if (ret)
+        {
+            if (trace_all)
+                ffnx_trace("Created animated external texture: %u from %s\n", ret, filename);
+            gl_set->animated_textures[texture_key] = ret;
+            return ret;
+        }
 
-		if (trace_all || show_missing_textures) ffnx_trace("Could not find animated texture [ %s ].\n", filename);
-	}
+        if (trace_all || show_missing_textures)
+            ffnx_trace("Could not find animated texture [ %s ].\n", filename);
+    }
 
-	// If animated texture not found, check for base texture
-	for (int idx = 0; idx < mod_ext.size(); idx++)
-	{
-		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, tex_path.c_str(), name, palette_index, mod_ext[idx].c_str());
+    // If animated texture not found, check for base texture
+    for (int idx = 0; idx < mod_ext.size(); idx++)
+    {
+        _snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, tex_path.c_str(), name, palette_index, mod_ext[idx].c_str());
 
-		ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png", true);
+        ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png", true);
 
-		if(ret)
-		{
-			if(trace_all) ffnx_trace("Created external texture: %u from %s\n", ret, filename);
-			gl_set->animated_textures[texture_key] = ret;
-			return ret;
-		}
+        if (ret)
+        {
+            if (trace_all)
+                ffnx_trace("Created external texture: %u from %s\n", ret, filename);
+            gl_set->animated_textures[texture_key] = ret;
+            return ret;
+        }
 
-		if (trace_all || show_missing_textures) ffnx_trace("Could not find base texture [ %s ].\n", filename);
-	}
+        if (trace_all || show_missing_textures)
+            ffnx_trace("Could not find base texture [ %s ].\n", filename);
+    }
 
-	// Finally, if everything fails, return the one with palette index 0 or no texture
-	if(palette_index != 0)
-	{
-		if(trace_all || show_missing_textures) ffnx_info("No external texture found, falling back to palette 0\n");
-		if(gl_set->default_texture_id)
-		{
-			ret = gl_set->default_texture_id;
-		}
-		else
-		{
-			ret = load_animated_texture(data, dataSize, name, 0, width, height, gl_set, tex_path);
-			gl_set->default_texture_id = ret;
-		}
-		if(ret) gl_set->animated_textures[texture_key] = ret;
-		return ret;
-	}
-	else
-	{
-		if(tex_path == mod_path) // Are we on the last lookup layer?
-		{
-			if(trace_all || show_missing_textures) ffnx_info("No external texture found, switching back to the internal one.\n");
-			gl_set->animated_textures[texture_key] = 0; // short circuit and prevent further lookups
-		}
-		else if(trace_all || show_missing_textures) ffnx_info("No external texture found.\n");
+    // Finally, if everything fails, return the one with palette index 0 or no texture
+    if (palette_index != 0)
+    {
+        if (trace_all || show_missing_textures)
+            ffnx_info("No external texture found, falling back to palette 0\n");
+        if (gl_set->default_texture_id)
+        {
+            ret = gl_set->default_texture_id;
+        }
+        else
+        {
+            ret = load_animated_texture(data, dataSize, name, 0, width, height, gl_set, tex_path);
+            gl_set->default_texture_id = ret;
+        }
+        if (ret)
+            gl_set->animated_textures[texture_key] = ret;
+        return ret;
+    }
+    else
+    {
+        if (tex_path == mod_path) // Are we on the last lookup layer?
+        {
+            if (trace_all || show_missing_textures)
+                ffnx_info("No external texture found, switching back to the internal one.\n");
+            gl_set->animated_textures[texture_key] = 0; // short circuit and prevent further lookups
+        }
+        else if (trace_all || show_missing_textures)
+            ffnx_info("No external texture found.\n");
 
-		return 0;
-	}
-
+        return 0;
+    }
 }
 
-uint32_t load_texture(const void* data, uint32_t dataSize, const char* name, uint32_t palette_index, uint32_t* width, uint32_t* height, struct gl_texture_set* gl_set)
+uint32_t load_texture(const void *data, uint32_t dataSize, const char *name, uint32_t palette_index, uint32_t *width, uint32_t *height, struct gl_texture_set *gl_set)
 {
-	uint32_t ret = 0;
+    uint32_t ret = 0;
 
-	if(gl_set->is_animated)
-	{
-		if (!override_mod_path.empty())
-			ret = load_animated_texture(data, dataSize, name, palette_index, width, height, gl_set, override_mod_path);
+    if (gl_set->is_animated)
+    {
+        if (!override_mod_path.empty())
+            ret = load_animated_texture(data, dataSize, name, palette_index, width, height, gl_set, override_mod_path);
 
-		if (ret == 0)
-			ret = load_animated_texture(data, dataSize, name, palette_index, width, height, gl_set, mod_path);
-	}
-	else
-	{
-		if (!override_mod_path.empty())
-			ret = load_normal_texture(data, dataSize, name, palette_index, width, height, gl_set, override_mod_path);
+        if (ret == 0)
+            ret = load_animated_texture(data, dataSize, name, palette_index, width, height, gl_set, mod_path);
+    }
+    else
+    {
+        if (!override_mod_path.empty())
+            ret = load_normal_texture(data, dataSize, name, palette_index, width, height, gl_set, override_mod_path);
 
-		if (ret == 0)
-			ret = load_normal_texture(data, dataSize, name, palette_index, width, height, gl_set, mod_path);
-	}
+        if (ret == 0)
+            ret = load_normal_texture(data, dataSize, name, palette_index, width, height, gl_set, mod_path);
+    }
 
-	return ret;
+    return ret;
 }

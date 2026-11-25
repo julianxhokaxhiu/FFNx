@@ -30,4 +30,4 @@ void save_texture(const void *data, uint32_t dataSize, uint32_t width, uint32_t 
 void save_gpu_texture(const void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, const char *name, bool is_animated);
 std::string get_gpu_texture_name(const void *data, uint32_t dataSize, uint32_t palette_index, const char *name, bool is_animated);
 uint32_t load_texture_helper(char *name, uint32_t *width, uint32_t *height, bool useLibPng, bool isSrgb);
-uint32_t load_texture(const void *data, uint32_t dataSize, const char *name, uint32_t palette_index, uint32_t *width, uint32_t *height, struct gl_texture_set* gl_set);
+uint32_t load_texture(const void *data, uint32_t dataSize, const char *name, uint32_t palette_index, uint32_t *width, uint32_t *height, struct gl_texture_set *gl_set);

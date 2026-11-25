@@ -26,59 +26,59 @@
 
 class GameHacks
 {
-private:
-	uint16_t hold_input_for_frames = 0;
-	bool enable_hold_input = true;
+  private:
+    uint16_t hold_input_for_frames = 0;
+    bool enable_hold_input = true;
 
-	bool speedhack_enabled;
-	double speedhack_current_speed;
-	bool battle_wanted = true;
-	bool auto_attack_mode = false;
+    bool speedhack_enabled;
+    double speedhack_current_speed;
+    bool battle_wanted = true;
+    bool auto_attack_mode = false;
 
-	// SPEEDHACK
-	void toggleSpeedhack();
-	void resetSpeedhack();
-	void increaseSpeedhack();
-	void decreaseSpeedhack();
+    // SPEEDHACK
+    void toggleSpeedhack();
+    void resetSpeedhack();
+    void increaseSpeedhack();
+    void decreaseSpeedhack();
 
-	// BATTLE
-	void toggleBattleMode();
-	void toggleAutoAttackMode();
-	void toggleMusicOnBattlePause();
+    // BATTLE
+    void toggleBattleMode();
+    void toggleAutoAttackMode();
+    void toggleMusicOnBattlePause();
 
-	// MOVIES
-	void skipMovies();
+    // MOVIES
+    void skipMovies();
 
-	// SOFT RESET
-	void softReset();
+    // SOFT RESET
+    void softReset();
 
-	// INPUT VALIDATION
-	void holdInput();
-	void drawnInput();
+    // INPUT VALIDATION
+    void holdInput();
+    void drawnInput();
 
-	// VOICE AUTO TEXT
-	void toggleAutoText();
+    // VOICE AUTO TEXT
+    void toggleAutoText();
 
-public:
-	void init();
+  public:
+    void init();
 
-	// GLOBALS
-	void processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam);
-	void processGamepadInput();
+    // GLOBALS
+    void processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam);
+    void processGamepadInput();
 
-	// SPEEDHACK
-	double getCurrentSpeedhack();
+    // SPEEDHACK
+    double getCurrentSpeedhack();
 
-	// BATTLE
-	bool wantsBattle();
-	bool isAutoAttack();
+    // BATTLE
+    bool wantsBattle();
+    bool isAutoAttack();
 
-	// INPUT VALIDATION
-	bool canInputBeProcessed();
+    // INPUT VALIDATION
+    bool canInputBeProcessed();
 
-private:
-	bool isKeyboardShortcutMode = false;
-	bool isGamepadShortcutMode = false;
+  private:
+    bool isKeyboardShortcutMode = false;
+    bool isGamepadShortcutMode = false;
 };
 
 extern GameHacks gamehacks;

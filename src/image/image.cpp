@@ -31,12 +31,12 @@
 #include "../renderer.h"
 #include "log.h"
 
-static void LibPngErrorCb(png_structp png_ptr, const char* error)
+static void LibPngErrorCb(png_structp png_ptr, const char *error)
 {
     ffnx_error("libpng error: %s\n", error);
 }
 
-static void LibPngWarningCb(png_structp png_ptr, const char* warning)
+static void LibPngWarningCb(png_structp png_ptr, const char *warning)
 {
     ffnx_info("libpng warning: %s\n", warning);
 }
@@ -48,14 +48,15 @@ void read_png_file(png_structp png_ptr, png_bytep data, size_t size)
 
     int32_t r = bx::read(reader, data, size, &err);
 
-    if (!err.isOk() || r != size) {
+    if (!err.isOk() || r != size)
+    {
         png_error(png_ptr, "Cannot read data");
     }
 }
 
 class Win32PngReader : public bx::ReaderI
 {
-public:
+  public:
     explicit Win32PngReader(HANDLE file) : file(file)
     {
     }
@@ -68,60 +69,68 @@ public:
     int32_t read(void *data, int32_t size, bx::Error *err) override
     {
         DWORD bytesRead = 0;
-        if (!ReadFile(file, data, size, &bytesRead, nullptr)) {
+        if (!ReadFile(file, data, size, &bytesRead, nullptr))
+        {
             return 0;
         }
         return bytesRead;
     }
 
-private:
+  private:
     HANDLE file;
 };
 
 static HANDLE openPngWin32(const char *filename)
 {
     int filenameLength = MultiByteToWideChar(CP_ACP, 0, filename, -1, nullptr, 0);
-    if (filenameLength == 0) {
+    if (filenameLength == 0)
+    {
         return INVALID_HANDLE_VALUE;
     }
 
     std::vector<wchar_t> wideFilename(filenameLength);
-    if (MultiByteToWideChar(CP_ACP, 0, filename, -1, wideFilename.data(), filenameLength) == 0) {
+    if (MultiByteToWideChar(CP_ACP, 0, filename, -1, wideFilename.data(), filenameLength) == 0)
+    {
         return INVALID_HANDLE_VALUE;
     }
 
-    return CreateFileW(wideFilename.data(), GENERIC_READ, FILE_SHARE_READ, nullptr,
-        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    return CreateFileW(wideFilename.data(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 }
 
 bimg::ImageContainer *loadPng(bx::AllocatorI *allocator, const char *filename, bimg::TextureFormat::Enum targetFormat)
 {
     bimg::ImageContainer *ret = nullptr;
 
-    if (ff8_remastered_edition && strncmp(filename, "zzz://", 6) == 0) {
-        if (strncmp(filename + 6, "textures\\", sizeof("textures\\") - 1) == 0
-            || strncmp(filename + 6, "textures/", sizeof("textures/") - 1) == 0) {
+    if (ff8_remastered_edition && strncmp(filename, "zzz://", 6) == 0)
+    {
+        if (strncmp(filename + 6, "textures\\", sizeof("textures\\") - 1) == 0 || strncmp(filename + 6, "textures/", sizeof("textures/") - 1) == 0)
+        {
             std::string textureName = filename + 6;
             const size_t extensionOffset = textureName.find_last_of('.');
-            if (extensionOffset != std::string::npos) {
+            if (extensionOffset != std::string::npos)
+            {
                 textureName.resize(extensionOffset);
             }
 
-            for (const std::string *texturePath : { &override_mod_path, &mod_path }) {
-                if (texturePath->empty()) {
+            for (const std::string *texturePath : {&override_mod_path, &mod_path})
+            {
+                if (texturePath->empty())
+                {
                     continue;
                 }
 
-                for (const std::string &extension : mod_ext) {
+                for (const std::string &extension : mod_ext)
+                {
                     const std::string overrideFilename = std::string(basedir) + "/" + *texturePath + "/" + textureName + "." + extension;
-                    ret = stricmp(extension.c_str(), "png") == 0
-                        ? loadPng(allocator, overrideFilename.c_str(), targetFormat)
-                        : loadImageContainer(allocator, overrideFilename.c_str(), targetFormat);
-                    if (ret != nullptr) {
-                        if (trace_all || trace_loaders) ffnx_trace("%s: overriding %s with %s\n", __func__, filename, overrideFilename.c_str());
+                    ret = stricmp(extension.c_str(), "png") == 0 ? loadPng(allocator, overrideFilename.c_str(), targetFormat) : loadImageContainer(allocator, overrideFilename.c_str(), targetFormat);
+                    if (ret != nullptr)
+                    {
+                        if (trace_all || trace_loaders)
+                            ffnx_trace("%s: overriding %s with %s\n", __func__, filename, overrideFilename.c_str());
                         return ret;
                     }
-                    if (trace_all || trace_loaders || show_missing_textures) {
+                    if (trace_all || trace_loaders || show_missing_textures)
+                    {
                         ffnx_warning("Could not load external texture: %s\n", overrideFilename.c_str());
                     }
                 }
@@ -130,22 +139,28 @@ bimg::ImageContainer *loadPng(bx::AllocatorI *allocator, const char *filename, b
 
         Zzz::File *zzzFile = g_FF8ZzzArchiveMain.openFile(filename + 6);
 
-        if (zzzFile == nullptr) {
+        if (zzzFile == nullptr)
+        {
             return nullptr;
         }
 
-        if (trace_all || trace_loaders) ffnx_trace("%s: %s\n", __func__, filename);
+        if (trace_all || trace_loaders)
+            ffnx_trace("%s: %s\n", __func__, filename);
 
         ret = loadPng(allocator, zzzFile, targetFormat);
 
         Zzz::closeFile(zzzFile);
-    } else {
+    }
+    else
+    {
         HANDLE file = openPngWin32(filename);
-        if (file == INVALID_HANDLE_VALUE) {
+        if (file == INVALID_HANDLE_VALUE)
+        {
             return nullptr;
         }
 
-        if (trace_all || trace_loaders) ffnx_trace("%s: %s\n", __func__, filename);
+        if (trace_all || trace_loaders)
+            ffnx_trace("%s: %s\n", __func__, filename);
 
         Win32PngReader reader(file);
         ret = loadPng(allocator, &reader, targetFormat);
@@ -165,7 +180,7 @@ bimg::ImageContainer *loadPng(bx::AllocatorI *allocator, bx::ReaderI *reader, bi
     png_bytepp rowptrs = nullptr;
     size_t rowbytes = 0;
 
-    uint8_t* data = nullptr;
+    uint8_t *data = nullptr;
     size_t datasize = 0;
 
     png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)0, LibPngErrorCb, LibPngWarningCb);
@@ -207,11 +222,13 @@ bimg::ImageContainer *loadPng(bx::AllocatorI *allocator, bx::ReaderI *reader, bi
     // Scale a 16-bit depth file down to 8-bit, accurately.
     png_set_scale_16(png_ptr);
 
-    if (targetFormat == bimg::TextureFormat::BGRA8) {
+    if (targetFormat == bimg::TextureFormat::BGRA8)
+    {
         png_set_bgr(png_ptr);
     }
 
-    if ((trace_all || trace_loaders) && (png_get_bit_depth(png_ptr, info_ptr) != 8 || png_get_color_type(png_ptr, info_ptr) != PNG_COLOR_TYPE_RGBA)) {
+    if ((trace_all || trace_loaders) && (png_get_bit_depth(png_ptr, info_ptr) != 8 || png_get_color_type(png_ptr, info_ptr) != PNG_COLOR_TYPE_RGBA))
+    {
         ffnx_warning("%s: PNG format is not RGBA32, it will be converted automatically (bit_depth=%d color_type=%X)\n", __func__, png_get_bit_depth(png_ptr, info_ptr), png_get_color_type(png_ptr, info_ptr));
     }
 
@@ -228,7 +245,8 @@ bimg::ImageContainer *loadPng(bx::AllocatorI *allocator, bx::ReaderI *reader, bi
 
     datasize = rowbytes * _height;
 
-    if (trace_all || trace_loaders) ffnx_trace("%s: data_size=%d width=%d height=%d bit_depth=%d color_type=%X\n", __func__, datasize, _width, _height, bit_depth, color_type);
+    if (trace_all || trace_loaders)
+        ffnx_trace("%s: data_size=%d width=%d height=%d bit_depth=%d color_type=%X\n", __func__, datasize, _width, _height, bit_depth, color_type);
 
     if (color_type != PNG_COLOR_TYPE_RGBA || bit_depth != 8)
     {
@@ -241,7 +259,8 @@ bimg::ImageContainer *loadPng(bx::AllocatorI *allocator, bx::ReaderI *reader, bi
 
     bimg::ImageContainer *image = bimg::imageAlloc(allocator, targetFormat == bimg::TextureFormat::Count ? bimg::TextureFormat::RGBA8 : targetFormat, _width, _height, 0, 1, false, false);
 
-    if (image == nullptr) {
+    if (image == nullptr)
+    {
         png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
         return nullptr;
@@ -270,10 +289,7 @@ bool parseDds(const char *filename, DirectX::ScratchImage &image, DirectX::TexMe
 
     mbstowcs(filenameW, filename, MAX_PATH);
 
-    HRESULT hr = DirectX::LoadFromDDSFile(
-        filenameW,
-        DirectX::DDS_FLAGS_NONE, &metadata, image
-    );
+    HRESULT hr = DirectX::LoadFromDDSFile(filenameW, DirectX::DDS_FLAGS_NONE, &metadata, image);
     if (FAILED(hr) || image.GetImageCount() == 0)
     {
         ffnx_error("%s: Load DDS from file error (%d)\n", __func__, HRESULT_CODE(hr));
@@ -294,9 +310,12 @@ bimg::ImageContainer *convertDds(bx::AllocatorI *allocator, DirectX::ScratchImag
     const DirectX::Image &mainImage = image.GetImages()[lod];
     DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-    if (targetFormat == bimg::TextureFormat::BGRA8) {
+    if (targetFormat == bimg::TextureFormat::BGRA8)
+    {
         format = DXGI_FORMAT_B8G8R8A8_UNORM;
-    } else {
+    }
+    else
+    {
         targetFormat = bimg::TextureFormat::RGBA8;
     }
 
@@ -314,7 +333,8 @@ bimg::ImageContainer *convertDds(bx::AllocatorI *allocator, DirectX::ScratchImag
     }
     else
     {
-        if (!Renderer::doesItFitInMemory(mainImage.rowPitch * mainImage.height + 1)) {
+        if (!Renderer::doesItFitInMemory(mainImage.rowPitch * mainImage.height + 1))
+        {
             return nullptr;
         }
 
@@ -330,7 +350,8 @@ bimg::ImageContainer *convertDds(bx::AllocatorI *allocator, DirectX::ScratchImag
 
     const DirectX::Image &mainImage2 = out.GetImages()[0];
 
-    if (!Renderer::doesItFitInMemory(mainImage2.rowPitch * mainImage2.height + 1)) {
+    if (!Renderer::doesItFitInMemory(mainImage2.rowPitch * mainImage2.height + 1))
+    {
         return nullptr;
     }
 
@@ -339,7 +360,7 @@ bimg::ImageContainer *convertDds(bx::AllocatorI *allocator, DirectX::ScratchImag
 
 bimg::ImageContainer *loadImageContainer(bx::AllocatorI *allocator, const char *filename, bimg::TextureFormat::Enum targetFormat)
 {
-    FILE* file = fopen(filename, "rb");
+    FILE *file = fopen(filename, "rb");
 
     if (!file)
     {
@@ -347,14 +368,14 @@ bimg::ImageContainer *loadImageContainer(bx::AllocatorI *allocator, const char *
     }
 
     size_t filesize = 0;
-    char* buffer = nullptr;
+    char *buffer = nullptr;
 
     fseek(file, 0, SEEK_END);
     filesize = ftell(file);
 
     if (Renderer::doesItFitInMemory(filesize + 1))
     {
-        buffer = (char*)driver_malloc(filesize + 1);
+        buffer = (char *)driver_malloc(filesize + 1);
         fseek(file, 0, SEEK_SET);
         fread(buffer, filesize, 1, file);
     }
@@ -366,7 +387,7 @@ bimg::ImageContainer *loadImageContainer(bx::AllocatorI *allocator, const char *
         return nullptr;
     }
 
-    bimg::ImageContainer* img = bimg::imageParse(allocator, buffer, filesize + 1, targetFormat);
+    bimg::ImageContainer *img = bimg::imageParse(allocator, buffer, filesize + 1, targetFormat);
 
     driver_free(buffer);
 

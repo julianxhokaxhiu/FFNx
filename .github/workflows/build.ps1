@@ -77,8 +77,17 @@ cmd.exe /c "call $vcpkgRoot\bootstrap-vcpkg.bat"
 
 vcpkg integrate install
 
-# Start the build
+# Configure the project
 cmake --preset "${env:_RELEASE_CONFIGURATION}" -D_DLL_VERSION="$env:_BUILD_VERSION"
+
+# Check files are indented correctly
+cmake --build --preset "${env:_RELEASE_CONFIGURATION}" --target fmt-check
+if ($LASTEXITCODE -ne 0)
+{
+  throw "Formatting check failed. Run cmake --build --preset ${env:_RELEASE_CONFIGURATION} --target fmt and commit the changes."
+}
+
+# Build the project
 cmake --build --preset "${env:_RELEASE_CONFIGURATION}"
 
 # Start the packaging

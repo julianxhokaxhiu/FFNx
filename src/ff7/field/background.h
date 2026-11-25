@@ -27,28 +27,21 @@
 
 namespace ff7::field
 {
-    constexpr float INVALID_VALUE = -1000000;
+constexpr float INVALID_VALUE = -1000000;
 
-    vector2<float>
-        field_curr_delta_world_pos,
-        last_valid_scripted_field_delta_world_pos,
-        field_3d_world_pos,
-        bg_main_layer_pos,
-        bg_layer3_pos,
-        bg_layer4_pos,
-        cursor_position;
+vector2<float> field_curr_delta_world_pos, last_valid_scripted_field_delta_world_pos, field_3d_world_pos, bg_main_layer_pos, bg_layer3_pos, bg_layer4_pos, cursor_position;
 
-    void ff7_field_update_background_smooth();
-    void ff7_field_update_background_original();
-    void ff7_field_set_world_coordinate_640EB7();
-    void ff7_field_submit_draw_arrow(field_arrow_graphics_data* arrow_data);
-    void ff7_field_submit_draw_cursor(field_arrow_graphics_data* arrow_data);
-    void draw_gray_quads_sub_644E90();
-    void reset_background_tile_order();
-    bool draw_background_effects(ff7_game_obj* game_object, uint16_t first_page, uint16_t end_page,
-        uint16_t extra_first_page, uint16_t extra_end_page);
-    inline bool is_position_valid(vector2<float> position) {
-        return position.x != INVALID_VALUE && position.y != INVALID_VALUE;
-    }
-
+void ff7_field_update_background_smooth();
+void ff7_field_update_background_original();
+void ff7_field_set_world_coordinate_640EB7();
+void ff7_field_submit_draw_arrow(field_arrow_graphics_data *arrow_data);
+void ff7_field_submit_draw_cursor(field_arrow_graphics_data *arrow_data);
+void draw_gray_quads_sub_644E90();
+void reset_background_tile_order();
+bool draw_background_effects(ff7_game_obj *game_object, uint16_t first_page, uint16_t end_page, uint16_t extra_first_page, uint16_t extra_end_page);
+inline bool is_position_valid(vector2<float> position)
+{
+    return position.x != INVALID_VALUE && position.y != INVALID_VALUE;
 }
+
+} // namespace ff7::field

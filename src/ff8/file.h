@@ -44,14 +44,14 @@ int ff8_write(int fd, void *buffer, unsigned int bufferSize);
 __int32 ff8_lseek(int fd, __int32 offset, int whence);
 __int32 ff8_filelength(int fd);
 int ff8_close(int fd);
-bool ff8_is_direct_file(int fd);
+bool ff8_is_classic_direct_file(int fd);
 // stdio (low level)
 FILE *ff8_fopen(const char *fileName, const char *mode);
 
 // FF8 (opens direct file or FS archive)
 ff8_file *ff8_open_file(ff8_file_context *infos, const char *fs_path);
-uint32_t(*ff8_read_file)(uint32_t count, void* buffer, struct ff8_file* file);
-void (*ff8_close_file)(struct ff8_file* file);
+uint32_t (*ff8_read_file)(uint32_t count, void *buffer, struct ff8_file *file);
+void (*ff8_close_file)(struct ff8_file *file);
 
 void ff8_fs_lang_string(char *data);
 

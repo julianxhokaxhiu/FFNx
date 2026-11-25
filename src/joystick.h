@@ -29,37 +29,37 @@
 // the joystick class (DirectInput)
 class Joystick
 {
-private:
-  LPDIRECTINPUT8 dev = nullptr;                          // dinput interface
-  LPDIRECTINPUTDEVICE8 gameController = nullptr;         // the actual joystick device
-  LPDIRECTINPUTEFFECT  gameControllerEffect = nullptr;   // force feedback effect object
-  DIDEVICEOBJECTINSTANCE gameControllerInfo;             // the device object info
-  DIDEVCAPS caps;                                        // the device capabilities
-  DIJOYSTATE2 currentState;			                         // the state of the joystick in the current frame
+  private:
+    LPDIRECTINPUT8 dev = nullptr;                       // dinput interface
+    LPDIRECTINPUTDEVICE8 gameController = nullptr;      // the actual joystick device
+    LPDIRECTINPUTEFFECT gameControllerEffect = nullptr; // force feedback effect object
+    DIDEVICEOBJECTINSTANCE gameControllerInfo;          // the device object info
+    DIDEVCAPS caps;                                     // the device capabilities
+    DIJOYSTATE2 currentState;                           // the state of the joystick in the current frame
 
-  BOOL enumerateGameControllers(LPCDIDEVICEINSTANCE devInst);
-  std::vector<LPDIRECTINPUTDEVICE8> gameControllers;	// a vector of all available game controllers
+    BOOL enumerateGameControllers(LPCDIDEVICEINSTANCE devInst);
+    std::vector<LPDIRECTINPUTDEVICE8> gameControllers; // a vector of all available game controllers
 
-  BOOL isXInputDevice(const GUID *pGuidProductFromDirectInput);
+    BOOL isXInputDevice(const GUID *pGuidProductFromDirectInput);
 
-  static BOOL CALLBACK staticEnumerateGameControllers(LPCDIDEVICEINSTANCE devInst, LPVOID pvRef);
-  static BOOL CALLBACK staticSetGameControllerProperties(LPCDIDEVICEOBJECTINSTANCE devObjInst, LPVOID pvRef);
+    static BOOL CALLBACK staticEnumerateGameControllers(LPCDIDEVICEINSTANCE devInst, LPVOID pvRef);
+    static BOOL CALLBACK staticSetGameControllerProperties(LPCDIDEVICEOBJECTINSTANCE devObjInst, LPVOID pvRef);
 
-  BOOL gameControllerSupportsVibration = false;
+    BOOL gameControllerSupportsVibration = false;
 
-public:
-  LPDIJOYSTATE2 GetState();
-  LPDIDEVCAPS GetCaps();
-  bool CheckConnection();
-  bool Refresh();
-  bool HasAnalogTriggers();
-  bool HasForceFeedback();
-  void Clean();
-  void Vibrate(WORD leftMotorSpeed, WORD rightMotorSpeed);
-  bool IsIdle();
+  public:
+    LPDIJOYSTATE2 GetState();
+    LPDIDEVCAPS GetCaps();
+    bool CheckConnection();
+    bool Refresh();
+    bool HasAnalogTriggers();
+    bool HasForceFeedback();
+    void Clean();
+    void Vibrate(WORD leftMotorSpeed, WORD rightMotorSpeed);
+    bool IsIdle();
 
-  LONG GetDeadZone(float percent);
-  DWORD GetMaxVibration();
+    LONG GetDeadZone(float percent);
+    DWORD GetMaxVibration();
 };
 
 extern Joystick joystick;

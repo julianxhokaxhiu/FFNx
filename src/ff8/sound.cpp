@@ -35,16 +35,16 @@
 // The projection calls get the coordinates back in pixels, like the game's own divided-by-8 projection does.
 static int project_pixels(void *position, int16_t *sxy, int *p, int *flag)
 {
-	const int otz = ff8_externals.project_screen_position(position, sxy, p, flag);
+    const int otz = ff8_externals.project_screen_position(position, sxy, p, flag);
 
-	sxy[0] = int16_t(sxy[0] >> 3);
-	sxy[1] = int16_t(sxy[1] >> 3);
+    sxy[0] = int16_t(sxy[0] >> 3);
+    sxy[1] = int16_t(sxy[1] >> 3);
 
-	return otz;
+    return otz;
 }
 
 void ff8_sound_init()
 {
-	replace_call(ff8_externals.battle_actor_sound_pan + BATTLE_PAN_PROJECT, project_pixels);
-	replace_call(ff8_externals.field_footstep_sound + FIELD_FOOTSTEP_PROJECT, project_pixels);
+    replace_call(ff8_externals.battle_actor_sound_pan + BATTLE_PAN_PROJECT, project_pixels);
+    replace_call(ff8_externals.field_footstep_sound + FIELD_FOOTSTEP_PROJECT, project_pixels);
 }

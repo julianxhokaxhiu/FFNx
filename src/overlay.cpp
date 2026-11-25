@@ -39,12 +39,12 @@ inline bool Overlay::IsVkDown(int vk)
 // Updates the mouse position
 void Overlay::UpdateMousePos()
 {
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO &io = ImGui::GetIO();
 
     // Set OS mouse position if requested (rarely used, only when ImGuiConfigFlags_NavEnableSetMousePos is enabled by user)
     if (io.WantSetMousePos)
     {
-        POINT pos = { (int)io.MousePos.x, (int)io.MousePos.y };
+        POINT pos = {(int)io.MousePos.x, (int)io.MousePos.y};
         ::ClientToScreen(gameHwnd, &pos);
         ::SetCursorPos(pos.x, pos.y);
     }
@@ -61,7 +61,7 @@ void Overlay::UpdateMousePos()
 // Sets the cursor icon
 bool Overlay::UpdateMouseCursor()
 {
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO &io = ImGui::GetIO();
     if (io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange)
         return false;
 
@@ -77,15 +77,33 @@ bool Overlay::UpdateMouseCursor()
         LPTSTR win32_cursor = IDC_ARROW;
         switch (imgui_cursor)
         {
-        case ImGuiMouseCursor_Arrow:        win32_cursor = IDC_ARROW; break;
-        case ImGuiMouseCursor_TextInput:    win32_cursor = IDC_IBEAM; break;
-        case ImGuiMouseCursor_ResizeAll:    win32_cursor = IDC_SIZEALL; break;
-        case ImGuiMouseCursor_ResizeEW:     win32_cursor = IDC_SIZEWE; break;
-        case ImGuiMouseCursor_ResizeNS:     win32_cursor = IDC_SIZENS; break;
-        case ImGuiMouseCursor_ResizeNESW:   win32_cursor = IDC_SIZENESW; break;
-        case ImGuiMouseCursor_ResizeNWSE:   win32_cursor = IDC_SIZENWSE; break;
-        case ImGuiMouseCursor_Hand:         win32_cursor = IDC_HAND; break;
-        case ImGuiMouseCursor_NotAllowed:   win32_cursor = IDC_NO; break;
+        case ImGuiMouseCursor_Arrow:
+            win32_cursor = IDC_ARROW;
+            break;
+        case ImGuiMouseCursor_TextInput:
+            win32_cursor = IDC_IBEAM;
+            break;
+        case ImGuiMouseCursor_ResizeAll:
+            win32_cursor = IDC_SIZEALL;
+            break;
+        case ImGuiMouseCursor_ResizeEW:
+            win32_cursor = IDC_SIZEWE;
+            break;
+        case ImGuiMouseCursor_ResizeNS:
+            win32_cursor = IDC_SIZENS;
+            break;
+        case ImGuiMouseCursor_ResizeNESW:
+            win32_cursor = IDC_SIZENESW;
+            break;
+        case ImGuiMouseCursor_ResizeNWSE:
+            win32_cursor = IDC_SIZENWSE;
+            break;
+        case ImGuiMouseCursor_Hand:
+            win32_cursor = IDC_HAND;
+            break;
+        case ImGuiMouseCursor_NotAllowed:
+            win32_cursor = IDC_NO;
+            break;
         }
         ::SetCursor(::LoadCursor(NULL, win32_cursor));
     }
@@ -94,7 +112,7 @@ bool Overlay::UpdateMouseCursor()
 
 void Overlay::Update()
 {
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO &io = ImGui::GetIO();
     IM_ASSERT(io.Fonts->IsBuilt() && "Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame().");
 
     // Block keys from reaching the game engine if the debug windows need input
@@ -107,7 +125,7 @@ void Overlay::Update()
 
     // Setup time step
     INT64 current_time;
-    ::QueryPerformanceCounter((LARGE_INTEGER*)&current_time);
+    ::QueryPerformanceCounter((LARGE_INTEGER *)&current_time);
     io.DeltaTime = (float)(current_time - g_Time) / g_TicksPerSecond;
     g_Time = current_time;
 
@@ -129,16 +147,16 @@ void Overlay::Update()
     }
 }
 
-void Overlay::Render(ImDrawData* drawData)
+void Overlay::Render(ImDrawData *drawData)
 {
-    const ImGuiIO& io = ImGui::GetIO();
+    const ImGuiIO &io = ImGui::GetIO();
     const float width = io.DisplaySize.x;
     const float height = io.DisplaySize.y;
 
     bgfx::setViewName(IMGUI_VIEW_ID, "ImGui");
     bgfx::setViewMode(IMGUI_VIEW_ID, bgfx::ViewMode::Sequential);
 
-    const bgfx::Caps* caps = bgfx::getCaps();
+    const bgfx::Caps *caps = bgfx::getCaps();
     {
         float ortho[16];
         bx::mtxOrtho(ortho, 0.0f, width, height, 0.0f, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
@@ -148,18 +166,20 @@ void Overlay::Render(ImDrawData* drawData)
 
     for (int32_t ii = 0, num = drawData->CmdListsCount; ii < num; ++ii)
     {
-        const ImDrawList* drawList = drawData->CmdLists[ii];
+        const ImDrawList *drawList = drawData->CmdLists[ii];
         uint32_t numVertices = (uint32_t)drawList->VtxBuffer.size();
         uint32_t numIndices = (uint32_t)drawList->IdxBuffer.size();
 
         bgfx::TransientVertexBuffer vb;
-        if (bgfx::getAvailTransientVertexBuffer(drawList->VtxBuffer.Size, imguiVertexLayout)) {
+        if (bgfx::getAvailTransientVertexBuffer(drawList->VtxBuffer.Size, imguiVertexLayout))
+        {
             bgfx::allocTransientVertexBuffer(&vb, drawList->VtxBuffer.Size, imguiVertexLayout);
             memcpy(vb.data, drawList->VtxBuffer.Data, drawList->VtxBuffer.Size * sizeof(ImDrawVert));
         }
 
         bgfx::TransientIndexBuffer ib;
-        if (bgfx::getAvailTransientIndexBuffer(drawList->IdxBuffer.Size)) {
+        if (bgfx::getAvailTransientIndexBuffer(drawList->IdxBuffer.Size))
+        {
             bgfx::allocTransientIndexBuffer(&ib, drawList->IdxBuffer.Size);
             memcpy(ib.data, drawList->IdxBuffer.Data, drawList->IdxBuffer.Size * sizeof(ImDrawIdx));
         }
@@ -173,22 +193,23 @@ void Overlay::Render(ImDrawData* drawData)
             }
             else if (0 != cmd.ElemCount)
             {
-                uint64_t state = 0
-                    | BGFX_STATE_WRITE_RGB
-                    | BGFX_STATE_WRITE_A
-                    | BGFX_STATE_MSAA
-                    ;
+                uint64_t state = 0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_MSAA;
 
                 bgfx::TextureHandle th = m_texture;
                 bgfx::ProgramHandle program = m_program;
 
                 if (NULL != cmd.GetTexID())
                 {
-                    union { ImTextureID ptr; struct { bgfx::TextureHandle handle; uint8_t flags; uint8_t mip; } s; } texture = { cmd.GetTexID() };
-                    state |= 0 != (texture.s.flags)
-                        ? BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
-                        : BGFX_STATE_NONE
-                        ;
+                    union {
+                        ImTextureID ptr;
+                        struct
+                        {
+                            bgfx::TextureHandle handle;
+                            uint8_t flags;
+                            uint8_t mip;
+                        } s;
+                    } texture = {cmd.GetTexID()};
+                    state |= 0 != (texture.s.flags) ? BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA) : BGFX_STATE_NONE;
                     th = texture.s.handle;
                 }
                 else
@@ -198,10 +219,7 @@ void Overlay::Render(ImDrawData* drawData)
 
                 const uint16_t xx = uint16_t(bx::max(cmd.ClipRect.x, 0.0f));
                 const uint16_t yy = uint16_t(bx::max(cmd.ClipRect.y, 0.0f));
-                bgfx::setScissor(xx, yy
-                    , uint16_t(bx::min(cmd.ClipRect.z, 65535.0f) - xx)
-                    , uint16_t(bx::min(cmd.ClipRect.w, 65535.0f) - yy)
-                );
+                bgfx::setScissor(xx, yy, uint16_t(bx::min(cmd.ClipRect.z, 65535.0f) - xx), uint16_t(bx::min(cmd.ClipRect.w, 65535.0f) - yy));
 
                 bgfx::setState(state);
                 bgfx::setTexture(0, s_tex, th);
@@ -221,9 +239,9 @@ bool Overlay::init(bgfx::ProgramHandle program, int width, int height)
 
     if (!IMGUI_CHECKVERSION())
         return false;
-    if (!::QueryPerformanceFrequency((LARGE_INTEGER*)&g_TicksPerSecond))
+    if (!::QueryPerformanceFrequency((LARGE_INTEGER *)&g_TicksPerSecond))
         return false;
-    if (!::QueryPerformanceCounter((LARGE_INTEGER*)&g_Time))
+    if (!::QueryPerformanceCounter((LARGE_INTEGER *)&g_Time))
         return false;
 
     ImGui::CreateContext();
@@ -231,9 +249,9 @@ bool Overlay::init(bgfx::ProgramHandle program, int width, int height)
     ImGui::SetNextWindowBgAlpha(0.3f);
 
     // Setup back-end capabilities flags
-    ImGuiIO& io = ImGui::GetIO();
-    io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;         // We can honor GetMouseCursor() values (optional)
-    io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests (optional, rarely used)
+    ImGuiIO &io = ImGui::GetIO();
+    io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors; // We can honor GetMouseCursor() values (optional)
+    io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;  // We can honor io.WantSetMousePos requests (optional, rarely used)
     io.BackendPlatformName = "imgui_impl_win32";
     ImGui::GetMainViewport()->PlatformHandleRaw = gameHwnd;
 
@@ -272,27 +290,14 @@ bool Overlay::init(bgfx::ProgramHandle program, int width, int height)
 
     // Load fonts
     // Build texture atlas
-    unsigned char* pixels;
+    unsigned char *pixels;
     int twidth, theight;
     io.Fonts->GetTexDataAsRGBA32(&pixels, &twidth, &theight);
 
-    const bgfx::Memory* mem = bgfx::makeRef(pixels, twidth * theight * 4);
-    m_texture = bgfx::createTexture2D(
-        twidth
-        , theight
-        , false
-        , 1
-        , bgfx::TextureFormat::BGRA8
-        , 0
-        , mem
-    );
+    const bgfx::Memory *mem = bgfx::makeRef(pixels, twidth * theight * 4);
+    m_texture = bgfx::createTexture2D(twidth, theight, false, 1, bgfx::TextureFormat::BGRA8, 0, mem);
 
-    imguiVertexLayout
-        .begin()
-        .add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
-        .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-        .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
-        .end();
+    imguiVertexLayout.begin().add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float).add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float).add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true).end();
 
     nxRegisterMouseListener(this);
     nxRegisterKeyListener(this);
@@ -300,7 +305,8 @@ bool Overlay::init(bgfx::ProgramHandle program, int width, int height)
     return true;
 }
 
-void Overlay::drawMainWindow() {
+void Overlay::drawMainWindow()
+{
     if (!ImGui::Begin("DevTools", &visible, ImGuiWindowFlags_::ImGuiWindowFlags_MenuBar))
     {
         ImGui::End();
@@ -313,8 +319,10 @@ void Overlay::drawMainWindow() {
         {
             ImGui::MenuItem("Memory Debug", NULL, &mem_edit.Open);
             ImGui::MenuItem("Field Debug", NULL, &field_debug_open);
-            if (!ff8) ImGui::MenuItem("Lighting Debug", NULL, &lighting_debug_open);
-            if (ff8) ImGui::MenuItem("World Debug", NULL, &world_debug_open);
+            if (!ff8)
+                ImGui::MenuItem("Lighting Debug", NULL, &lighting_debug_open);
+            if (ff8)
+                ImGui::MenuItem("World Debug", NULL, &world_debug_open);
             ImGui::EndMenu();
         }
         ImGui::EndMenuBar();
@@ -334,12 +342,17 @@ void Overlay::draw()
         drawMainWindow();
         if (mem_edit.Open)
         {
-            if (!ff8) mem_edit.DrawWindow("Memory Editor", (void*)0x401000, 0xF52000 - 0x401000, 0x401000);
-            else mem_edit.DrawWindow("Memory Editor", (void*)0x401000, 0x27A0000 - 0x401000, 0x401000);
+            if (!ff8)
+                mem_edit.DrawWindow("Memory Editor", (void *)0x401000, 0xF52000 - 0x401000, 0x401000);
+            else
+                mem_edit.DrawWindow("Memory Editor", (void *)0x401000, 0x27A0000 - 0x401000, 0x401000);
         }
-        if (field_debug_open) field_debug(&field_debug_open);
-        if (!ff8 && lighting_debug_open) lighting_debug(&lighting_debug_open);
-        if (ff8 && world_debug_open) world_debug(&world_debug_open);
+        if (field_debug_open)
+            field_debug(&field_debug_open);
+        if (!ff8 && lighting_debug_open)
+            lighting_debug(&lighting_debug_open);
+        if (ff8 && world_debug_open)
+            world_debug(&world_debug_open);
     }
 
     ImGui::Render();

@@ -27,34 +27,35 @@
 
 namespace SoLoud
 {
-	class OpenPsf : public AudioSource
-	{
-	public:
-		Psf* stream;
-		unsigned int mSampleCount;
+class OpenPsf : public AudioSource
+{
+  public:
+    Psf *stream;
+    unsigned int mSampleCount;
 
-		OpenPsf();
-		virtual ~OpenPsf();
-		static bool is_our_path(const char* aFilename);
-		result load(const char* aFilename, bool suppressOpeningSilence = false);
+    OpenPsf();
+    virtual ~OpenPsf();
+    static bool is_our_path(const char *aFilename);
+    result load(const char *aFilename, bool suppressOpeningSilence = false);
 
-		virtual AudioSourceInstance* createInstance();
-		time getLength();
-	};
-
-	class OpenPsfInstance : public AudioSourceInstance
-	{
-		size_t mStreamBufferSize;
-		int16_t* mStreamBuffer;
-		OpenPsf* mParent;
-		unsigned int mOffset;
-		bool ended;
-	public:
-		OpenPsfInstance(OpenPsf* aParent);
-		virtual ~OpenPsfInstance();
-		virtual unsigned int getAudio(float* aBuffer, unsigned int aSamplesToRead, unsigned int aBufferSize);
-		virtual result rewind();
-		virtual result seek(double aSeconds, float *mScratch, unsigned int mScratchSize);
-		virtual bool hasEnded();
-	};
+    virtual AudioSourceInstance *createInstance();
+    time getLength();
 };
+
+class OpenPsfInstance : public AudioSourceInstance
+{
+    size_t mStreamBufferSize;
+    int16_t *mStreamBuffer;
+    OpenPsf *mParent;
+    unsigned int mOffset;
+    bool ended;
+
+  public:
+    OpenPsfInstance(OpenPsf *aParent);
+    virtual ~OpenPsfInstance();
+    virtual unsigned int getAudio(float *aBuffer, unsigned int aSamplesToRead, unsigned int aBufferSize);
+    virtual result rewind();
+    virtual result seek(double aSeconds, float *mScratch, unsigned int mScratchSize);
+    virtual bool hasEnded();
+};
+}; // namespace SoLoud

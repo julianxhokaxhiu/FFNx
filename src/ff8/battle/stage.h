@@ -27,7 +27,8 @@
 
 #include <vector>
 
-struct FF8StageTriangle {
+struct FF8StageTriangle
+{
     uint16_t faceA, faceB, faceC;
     uint8_t u1, v1;
     uint8_t u2, v2;
@@ -39,7 +40,8 @@ struct FF8StageTriangle {
     uint8_t instruction;
 };
 
-struct FF8StageQuad {
+struct FF8StageQuad
+{
     uint16_t faceA, faceB, faceC, faceD;
     uint8_t u1, v1;
     uint16_t pal_id; // 6 bits = Always 15 | 4 bits = PaletteID | 6 bits = Always 0
@@ -52,7 +54,8 @@ struct FF8StageQuad {
     uint8_t instruction;
 };
 
-struct Stage {
+struct Stage
+{
     std::vector<FF8StageTriangle> triangles;
     std::vector<FF8StageQuad> quads;
 };

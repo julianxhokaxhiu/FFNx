@@ -27,197 +27,201 @@
 
 #include "redirect.h"
 
-int attempt_redirection(const char* in, char* out, size_t size, bool wantsSteamPath)
+int attempt_redirection(const char *in, char *out, size_t size, bool wantsSteamPath)
 {
-	std::string newIn(in);
+    std::string newIn(in);
 
-	if (!ff8)
-	{
-		std::transform(newIn.begin(), newIn.end(), newIn.begin(), ::tolower);
-	}
+    if (!ff8)
+    {
+        std::transform(newIn.begin(), newIn.end(), newIn.begin(), ::tolower);
+    }
 
-	bool isSavegame = !ff8 && strstr(newIn.data(), ".ff7") != NULL;
-	bool isCacheFile = !ff8 && strstr(newIn.data(), ".p") != NULL;
+    bool isSavegame = !ff8 && strstr(newIn.data(), ".ff7") != NULL;
+    bool isCacheFile = !ff8 && strstr(newIn.data(), ".p") != NULL;
 
-	if (wantsSteamPath && !fileExists(in))
-	{
-		if (
-			strcmp(newIn.data(), "scene.bin") == 0 ||
-			strcmp(newIn.data(), "camdat0.bin") == 0 ||
-			strcmp(newIn.data(), "camdat1.bin") == 0 ||
-			strcmp(newIn.data(), "camdat2.bin") == 0 ||
-			strcmp(newIn.data(), "co.bin") == 0
-			)
-		{
-			get_data_lang_path(out);
-			PathAppendA(out, R"(battle)");
-			PathAppendA(out, newIn.data());
+    if (wantsSteamPath && !fileExists(in))
+    {
+        if (strcmp(newIn.data(), "scene.bin") == 0 || strcmp(newIn.data(), "camdat0.bin") == 0 || strcmp(newIn.data(), "camdat1.bin") == 0 || strcmp(newIn.data(), "camdat2.bin") == 0 || strcmp(newIn.data(), "co.bin") == 0)
+        {
+            get_data_lang_path(out);
+            PathAppendA(out, R"(battle)");
+            PathAppendA(out, newIn.data());
 
-			if (!fileExists(out))
-				return 1;
-		}
-		else
-		{
-			const char* pos = strstr(newIn.data(), "data");
+            if (!fileExists(out))
+                return 1;
+        }
+        else
+        {
+            const char *pos = strstr(newIn.data(), "data");
 
-			if (pos != NULL)
-			{
-				pos += 5;
-			}
-			else
-			{
-				// Search for the last '\' character and get a pointer to the next char
-				pos = strrchr(in, 92);
+            if (pos != NULL)
+            {
+                pos += 5;
+            }
+            else
+            {
+                // Search for the last '\' character and get a pointer to the next char
+                pos = strrchr(in, 92);
 
-				if (pos != NULL) pos += 1;
-			}
+                if (pos != NULL)
+                    pos += 1;
+            }
 
-			get_data_lang_path(out);
-			if (pos != NULL) PathAppendA(out, pos);
+            get_data_lang_path(out);
+            if (pos != NULL)
+                PathAppendA(out, pos);
 
-			if ((!fileExists(out) || pos == NULL))
-			{
-				// If steam edition, do one more try in the user data path
-				if (steam_edition) get_userdata_path(out, size, isSavegame);
-				else strcpy(out, "");
+            if ((!fileExists(out) || pos == NULL))
+            {
+                // If steam edition, do one more try in the user data path
+                if (steam_edition)
+                    get_userdata_path(out, size, isSavegame);
+                else
+                    strcpy(out, "");
 
-				if (isCacheFile)
-				{
-					if (steam_edition)
-					{
-						PathAppendA(out, "cache");
-						std::filesystem::create_directories(out);
-					}
-					PathAppendA(out, newIn.data());
-				}
-				else
-				{
-					if (isSavegame)
-					{
-						if (steam_edition)
-						{
-							pos = strrchr(newIn.data(), 47) + 1;
-							PathAppendA(out, pos);
-						}
-						else
-							PathAppendA(out, newIn.data());
-					}
-					else
-					{
-						PathAppendA(out, pos);
-						if (!fileExists(out))
-							return 1;
-					}
-				}
-			}
-		}
+                if (isCacheFile)
+                {
+                    if (steam_edition)
+                    {
+                        PathAppendA(out, "cache");
+                        std::filesystem::create_directories(out);
+                    }
+                    PathAppendA(out, newIn.data());
+                }
+                else
+                {
+                    if (isSavegame)
+                    {
+                        if (steam_edition)
+                        {
+                            pos = strrchr(newIn.data(), 47) + 1;
+                            PathAppendA(out, pos);
+                        }
+                        else
+                            PathAppendA(out, newIn.data());
+                    }
+                    else
+                    {
+                        PathAppendA(out, pos);
+                        if (!fileExists(out))
+                            return 1;
+                    }
+                }
+            }
+        }
 
-		if (trace_all || trace_files) ffnx_trace("Redirected: %s -> %s\n", newIn.data(), out);
+        if (trace_all || trace_files)
+            ffnx_trace("Redirected: %s -> %s\n", newIn.data(), out);
 
-		return 0;
-	}
-	else
-	{
-		if (isSavegame && !save_path.empty())
-		{
-			char* pos = strrchr(newIn.data(), 47);
+        return 0;
+    }
+    else
+    {
+        if (isSavegame && !save_path.empty())
+        {
+            char *pos = strrchr(newIn.data(), 47);
 
-			// This case may happen if we have already redirected the path
-			if (strstr(newIn.data(), "save/save") == NULL)
-			{
-				// Allow the game to continue by forward the redirected path again
-				strcpy(out, newIn.data());
-			}
-			// This one means we still have to redirect it
-			else if (pos != NULL)
-			{
-				strcpy(out, basedir);
-				PathAppendA(out, save_path.c_str());
-				PathAppendA(out, ++pos);
+            // This case may happen if we have already redirected the path
+            if (strstr(newIn.data(), "save/save") == NULL)
+            {
+                // Allow the game to continue by forward the redirected path again
+                strcpy(out, newIn.data());
+            }
+            // This one means we still have to redirect it
+            else if (pos != NULL)
+            {
+                strcpy(out, basedir);
+                PathAppendA(out, save_path.c_str());
+                PathAppendA(out, ++pos);
 
-				if (trace_all || trace_files) ffnx_trace("Redirected: %s -> %s\n", newIn.data(), out);
-			}
+                if (trace_all || trace_files)
+                    ffnx_trace("Redirected: %s -> %s\n", newIn.data(), out);
+            }
 
-			// Always return as found in order to allow non existing save files to be saved under the new redirected path
-			return 0;
-		}
-		else if (!isCacheFile)
-		{
-			const char* pos = ff8 ? newIn.data() : strstr(newIn.data(), "data");
+            // Always return as found in order to allow non existing save files to be saved under the new redirected path
+            return 0;
+        }
+        else if (!isCacheFile)
+        {
+            const char *pos = ff8 ? newIn.data() : strstr(newIn.data(), "data");
 
-			if (pos != NULL)
-			{
-				pos += ff8 ? 0 : 5;
-			}
-			else
-			{
-				// Search for the last '\' character and get a pointer to the next char
-				pos = strrchr(newIn.data(), 92);
+            if (pos != NULL)
+            {
+                pos += ff8 ? 0 : 5;
+            }
+            else
+            {
+                // Search for the last '\' character and get a pointer to the next char
+                pos = strrchr(newIn.data(), 92);
 
-				if (pos != NULL) pos += 1;
-			}
+                if (pos != NULL)
+                    pos += 1;
+            }
 
-			strcpy(out, basedir);
-			PathAppendA(out, override_path.c_str());
-			if (pos != NULL)
-				PathAppendA(out, pos);
-			else
-			{
-				PathAppendA(out, R"(battle)");
-				PathAppendA(out, newIn.data());
-			}
+            strcpy(out, basedir);
+            PathAppendA(out, override_path.c_str());
+            if (pos != NULL)
+                PathAppendA(out, pos);
+            else
+            {
+                PathAppendA(out, R"(battle)");
+                PathAppendA(out, newIn.data());
+            }
 
-			if (!fileExists(out))
-				return -1;
+            if (!fileExists(out))
+                return -1;
 
-			if (trace_all || trace_files) ffnx_trace("Redirected: %s -> %s\n", newIn.data(), out);
+            if (trace_all || trace_files)
+                ffnx_trace("Redirected: %s -> %s\n", newIn.data(), out);
 
-			return 0;
-		}
-	}
+            return 0;
+        }
+    }
 
-	return -1;
+    return -1;
 }
 
-int redirect_path_with_override(const char* in, char* out, size_t out_size)
+int redirect_path_with_override(const char *in, char *out, size_t out_size)
 {
-	char _newFilename[MAX_PATH]{ 0 };
+    char _newFilename[MAX_PATH]{0};
 
-	// Attempt another redirection based on Steam/eStore logic
-	int redirect_status = attempt_redirection(in, _newFilename, sizeof(_newFilename), steam_edition || estore_edition || ff7_2026_rerelease);
+    // Attempt another redirection based on Steam/eStore logic
+    int redirect_status = attempt_redirection(in, _newFilename, sizeof(_newFilename), steam_edition || estore_edition || ff7_2026_rerelease);
 
-	// File was found
-	if (redirect_status == 0)
-	{
-		// Attemp override redirection on top of Steam/eStore new path
-		redirect_status = attempt_redirection(_newFilename, out, out_size);
+    // File was found
+    if (redirect_status == 0)
+    {
+        // Attemp override redirection on top of Steam/eStore new path
+        redirect_status = attempt_redirection(_newFilename, out, out_size);
 
-		if (redirect_status == -1)
-		{
-			if (trace_all || trace_files) ffnx_trace("Redirection attempted, but file was not found: %s -> %s\n", in, _newFilename);
+        if (redirect_status == -1)
+        {
+            if (trace_all || trace_files)
+                ffnx_trace("Redirection attempted, but file was not found: %s -> %s\n", in, _newFilename);
 
-			// If was not found, use original redirected path
-			strcpy(out, _newFilename);
-		}
-	}
-	// File was not found
-	else if (redirect_status == -1)
-	{
-		// Attemp override redirection on top of classic path
-		redirect_status = attempt_redirection(in, out, out_size);
+            // If was not found, use original redirected path
+            strcpy(out, _newFilename);
+        }
+    }
+    // File was not found
+    else if (redirect_status == -1)
+    {
+        // Attemp override redirection on top of classic path
+        redirect_status = attempt_redirection(in, out, out_size);
 
-		if (redirect_status == -1)
-		{
-			if (trace_all || trace_files) ffnx_trace("Redirection attempted, but file was not found: %s -> %s\n", in, out);
+        if (redirect_status == -1)
+        {
+            if (trace_all || trace_files)
+                ffnx_trace("Redirection attempted, but file was not found: %s -> %s\n", in, out);
 
-			// If was not found, use original filename
-			strcpy(out, in);
-		}
-	}
-	else
-	{
-		strcpy_s(out, out_size, in);
-	}
+            // If was not found, use original filename
+            strcpy(out, in);
+        }
+    }
+    else
+    {
+        strcpy_s(out, out_size, in);
+    }
 
-	return redirect_status;
+    return redirect_status;
 }

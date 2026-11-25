@@ -43,13 +43,13 @@ enum DebugOutput
 
 struct walkmeshEdge
 {
-    int v0;                      // edge vertex index 0
-    int v1;                      // edge vertex index 1
-    int ov;                      // opposite vertex index
-    int prevEdge;                // previous vertex index
-    int nextEdge;	             // next vertex index
-    bool isBorder;               // border edge flag
-    vector3<float> perpDir;      // perpendicular direction
+    int v0;                 // edge vertex index 0
+    int v1;                 // edge vertex index 1
+    int ov;                 // opposite vertex index
+    int prevEdge;           // previous vertex index
+    int nextEdge;           // next vertex index
+    bool isBorder;          // border edge flag
+    vector3<float> perpDir; // perpendicular direction
 };
 
 struct LightingState
@@ -60,20 +60,20 @@ struct LightingState
     float lightViewProjMatrix[16];
     float lightViewProjTexMatrix[16];
 
-    float lightingSettings[4] = { 1.0, 1.0, 1.0, 0.0 };
-    float lightDirData[4] = { 0.3, -1.0, -0.3, 0.0 };
-    float lightData[4] = { 1.0, 1.0, 1.0, 4.0 };
-    float ambientLightData[4] = { 1.0, 1.0, 1.0, 1.0 };
-    float materialData[4] = { 0.7, 0.5, 0.1, 0.0 };
-    float materialScaleData[4] = { 1.0, 1.0, 1.0, 1.0 };
-    float shadowData[4] = { 0.001, 0.0, 0.0, 2048.0 };
-    float fieldShadowData[4] = { 0.3, 1000.0, 100.0, 0.0 };
-    float iblData[4] = { 1.0, 0.0, 0.0, 0.0 };
+    float lightingSettings[4] = {1.0, 1.0, 1.0, 0.0};
+    float lightDirData[4] = {0.3, -1.0, -0.3, 0.0};
+    float lightData[4] = {1.0, 1.0, 1.0, 4.0};
+    float ambientLightData[4] = {1.0, 1.0, 1.0, 1.0};
+    float materialData[4] = {0.7, 0.5, 0.1, 0.0};
+    float materialScaleData[4] = {1.0, 1.0, 1.0, 1.0};
+    float shadowData[4] = {0.001, 0.0, 0.0, 2048.0};
+    float fieldShadowData[4] = {0.3, 1000.0, 100.0, 0.0};
+    float iblData[4] = {1.0, 0.0, 0.0, 0.0};
 
-    float lightingDebugData[4] = { 0.0, 0.0, 0.0, 0.0 };
+    float lightingDebugData[4] = {0.0, 0.0, 0.0, 0.0};
 
     // Light Direction
-    vector3<float> worldLightRot = { 60.0, 60.0, 0.0 };
+    vector3<float> worldLightRot = {60.0, 60.0, 0.0};
 
     // Shadowmap face culling
     bool isShadowMapFaceCullingEnabled = false;
@@ -93,7 +93,7 @@ struct LightingState
 
 class Lighting
 {
-private:
+  private:
     LightingState lightingState;
 
     // Config
@@ -104,33 +104,33 @@ private:
     std::vector<nvertex> walkMeshVertices;
     std::vector<WORD> walkMeshIndices;
 
-    auto getConfigEntry(char* key);
+    auto getConfigEntry(char *key);
 
     void loadConfig();
     void initParamsFromConfig();
 
     void ff7_load_ibl();
 
-    void ff7_create_walkmesh(std::vector<struct walkmeshEdge>& edges);
+    void ff7_create_walkmesh(std::vector<struct walkmeshEdge> &edges);
 
-    void extractWalkmeshBorderData(std::vector<struct walkmeshEdge>& edges);
-    void createWalkmeshBorderExtrusionData(std::vector<struct walkmeshEdge>& edges);
-    void createWalkmeshBorder(std::vector<struct walkmeshEdge>& edges, float extrudeSize);
-    struct boundingbox calcFieldSceneAabb(struct boundingbox* sceneAbb);
+    void extractWalkmeshBorderData(std::vector<struct walkmeshEdge> &edges);
+    void createWalkmeshBorderExtrusionData(std::vector<struct walkmeshEdge> &edges);
+    void createWalkmeshBorder(std::vector<struct walkmeshEdge> &edges, float extrudeSize);
+    struct boundingbox calcFieldSceneAabb(struct boundingbox *sceneAbb);
 
-public:
+  public:
     void init();
     void reload();
     void save();
 
-    void updateLightMatrices(const vector3<float>& center);
-    void draw(struct game_obj* game_object);
+    void updateLightMatrices(const vector3<float> &center);
+    void draw(struct game_obj *game_object);
 
-    const LightingState& getLightingState();
+    const LightingState &getLightingState();
 
     // Config
     std::string getConfigGroup();
-    void setConfigEntry(const char* key, auto value);
+    void setConfigEntry(const char *key, auto value);
 
     // Lighting
     void setPbrTextureEnabled(bool isEnabled);
@@ -148,7 +148,7 @@ public:
     void setAmbientLightColor(float r, float g, float b);
     vector3<float> getAmbientLightColor();
     void setIblMipCount(int mipCount);
-    bool isDisabledLightingTexture(const std::string& textureName);
+    bool isDisabledLightingTexture(const std::string &textureName);
 
     // Material
     void setRoughness(float roughness);
@@ -194,8 +194,8 @@ public:
     float getWalkmeshExtrudeSize();
     void setWalkmeshPosOffset(float size);
     float getWalkmeshPosOffset();
-    const std::vector<nvertex>& getWalkmeshVertices();
-    const std::vector<WORD>& getWalkmeshIndices();
+    const std::vector<nvertex> &getWalkmeshVertices();
+    const std::vector<WORD> &getWalkmeshIndices();
 
     // Lighting Debug
     void setHide2dEnabled(bool isEnabled);
@@ -208,17 +208,17 @@ public:
 
 inline void Lighting::setConfigEntry(const char *key, auto value)
 {
-	std::string groupKey = getConfigGroup();
+    std::string groupKey = getConfigGroup();
 
-	if (!groupKey.empty())
-	{
-		if (config.contains(groupKey))
-			config[groupKey].as_table()->insert_or_assign(key, value);
-		else
-			config.insert_or_assign(groupKey, toml::table{ {key, value} });
-	}
-	else
-		config.insert_or_assign(key, value);
+    if (!groupKey.empty())
+    {
+        if (config.contains(groupKey))
+            config[groupKey].as_table()->insert_or_assign(key, value);
+        else
+            config.insert_or_assign(groupKey, toml::table{{key, value}});
+    }
+    else
+        config.insert_or_assign(key, value);
 }
 
 void drawFieldShadowCallback();

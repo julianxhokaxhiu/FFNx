@@ -30,33 +30,35 @@
 
 namespace ff7::field
 {
-    inline void ff7_field_initialize_variables()
+inline void ff7_field_initialize_variables()
+{
+    ff7_handle_KAWAI_reset();
+    ((void (*)())ff7_externals.field_initialize_variables)();
+
+    field_3d_world_pos = {INVALID_VALUE, INVALID_VALUE};
+    bg_main_layer_pos = {INVALID_VALUE, INVALID_VALUE};
+    bg_layer3_pos = {INVALID_VALUE, INVALID_VALUE};
+    bg_layer4_pos = {INVALID_VALUE, INVALID_VALUE};
+    field_curr_delta_world_pos = {INVALID_VALUE, INVALID_VALUE};
+    cursor_position = {INVALID_VALUE, INVALID_VALUE};
+
+    // reset movement frame index for all models
+    for (auto &external_data : external_model_data)
     {
-        ff7_handle_KAWAI_reset();
-        ((void(*)())ff7_externals.field_initialize_variables)();
-
-        field_3d_world_pos = {INVALID_VALUE, INVALID_VALUE};
-        bg_main_layer_pos = {INVALID_VALUE, INVALID_VALUE};
-        bg_layer3_pos = {INVALID_VALUE, INVALID_VALUE};
-        bg_layer4_pos = {INVALID_VALUE, INVALID_VALUE};
-        field_curr_delta_world_pos = {INVALID_VALUE, INVALID_VALUE};
-        cursor_position = {INVALID_VALUE, INVALID_VALUE};
-
-        // reset movement frame index for all models
-        for(auto &external_data : external_model_data){
-            external_data.moveFrameIndex = 0;
-            external_data.rotationMoveFrameIndex = 0;
-            external_data.prevCollisionRadius = 0;
-
-        }
-        ff7_field_reset_blink_frames();
-
-        // Fix woa_* animation after battle by resetting bg position at field enter
-        if (*common_externals.current_field_id == 710 || *common_externals.current_field_id == 711) {
-            (*ff7_externals.field_triggers_header)->bg4_pos_x = 0;
-            (*ff7_externals.field_triggers_header)->bg4_pos_y = 0;
-        }
-
-        if(widescreen_enabled || enable_uncrop) widescreen.initParamsFromConfig();
+        external_data.moveFrameIndex = 0;
+        external_data.rotationMoveFrameIndex = 0;
+        external_data.prevCollisionRadius = 0;
     }
+    ff7_field_reset_blink_frames();
+
+    // Fix woa_* animation after battle by resetting bg position at field enter
+    if (*common_externals.current_field_id == 710 || *common_externals.current_field_id == 711)
+    {
+        (*ff7_externals.field_triggers_header)->bg4_pos_x = 0;
+        (*ff7_externals.field_triggers_header)->bg4_pos_y = 0;
+    }
+
+    if (widescreen_enabled || enable_uncrop)
+        widescreen.initParamsFromConfig();
 }
+} // namespace ff7::field

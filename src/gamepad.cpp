@@ -30,7 +30,7 @@ int Gamepad::GetPort() const
     return cId + 1;
 }
 
-XINPUT_GAMEPAD* Gamepad::GetState()
+XINPUT_GAMEPAD *Gamepad::GetState()
 {
     return &state.Gamepad;
 }
@@ -101,8 +101,10 @@ bool Gamepad::Refresh()
         leftStickX = (abs(normLX) < deadzoneX ? 0 : (abs(normLX) - deadzoneX) * (normLX / abs(normLX)));
         leftStickY = (abs(normLY) < deadzoneY ? 0 : (abs(normLY) - deadzoneY) * (normLY / abs(normLY)));
 
-        if (deadzoneX > 0) leftStickX *= 1 / (1 - deadzoneX);
-        if (deadzoneY > 0) leftStickY *= 1 / (1 - deadzoneY);
+        if (deadzoneX > 0)
+            leftStickX *= 1 / (1 - deadzoneX);
+        if (deadzoneY > 0)
+            leftStickY *= 1 / (1 - deadzoneY);
 
         float normRX = fmaxf(-1, (float)state.Gamepad.sThumbRX / 32767);
         float normRY = fmaxf(-1, (float)state.Gamepad.sThumbRY / 32767);
@@ -110,8 +112,10 @@ bool Gamepad::Refresh()
         rightStickX = (abs(normRX) < deadzoneX ? 0 : (abs(normRX) - deadzoneX) * (normRX / abs(normRX)));
         rightStickY = (abs(normRY) < deadzoneY ? 0 : (abs(normRY) - deadzoneY) * (normRY / abs(normRY)));
 
-        if (deadzoneX > 0) rightStickX *= 1 / (1 - deadzoneX);
-        if (deadzoneY > 0) rightStickY *= 1 / (1 - deadzoneY);
+        if (deadzoneX > 0)
+            rightStickX *= 1 / (1 - deadzoneX);
+        if (deadzoneY > 0)
+            rightStickY *= 1 / (1 - deadzoneY);
 
         leftTrigger = (float)state.Gamepad.bLeftTrigger / 255;
         rightTrigger = (float)state.Gamepad.bRightTrigger / 255;
@@ -128,22 +132,5 @@ bool Gamepad::IsPressed(WORD button) const
 
 bool Gamepad::IsIdle()
 {
-  return  !(gamepad.leftStickY > 0.5f || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_UP)) &&
-          !(gamepad.leftStickY < -0.5f || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_DOWN)) &&
-          !(gamepad.leftStickX < -0.5f || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_LEFT)) &&
-          !(gamepad.leftStickX > 0.5f || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_RIGHT)) &&
-          !gamepad.IsPressed(XINPUT_GAMEPAD_X) &&
-          !gamepad.IsPressed(XINPUT_GAMEPAD_A) &&
-          !gamepad.IsPressed(XINPUT_GAMEPAD_B) &&
-          !gamepad.IsPressed(XINPUT_GAMEPAD_Y) &&
-          !gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_SHOULDER)&&
-          !gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_SHOULDER) &&
-          !(gamepad.leftTrigger > 0.85f) &&
-          !(gamepad.rightTrigger > 0.85f) &&
-          !gamepad.IsPressed(XINPUT_GAMEPAD_BACK) &&
-          !gamepad.IsPressed(XINPUT_GAMEPAD_START) &&
-          !gamepad.IsPressed(XINPUT_GAMEPAD_START) &&
-          !gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_THUMB) &&
-          !gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB) &&
-          !gamepad.IsPressed(0x400);
+    return !(gamepad.leftStickY > 0.5f || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_UP)) && !(gamepad.leftStickY < -0.5f || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_DOWN)) && !(gamepad.leftStickX < -0.5f || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_LEFT)) && !(gamepad.leftStickX > 0.5f || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_RIGHT)) && !gamepad.IsPressed(XINPUT_GAMEPAD_X) && !gamepad.IsPressed(XINPUT_GAMEPAD_A) && !gamepad.IsPressed(XINPUT_GAMEPAD_B) && !gamepad.IsPressed(XINPUT_GAMEPAD_Y) && !gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_SHOULDER) && !gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_SHOULDER) && !(gamepad.leftTrigger > 0.85f) && !(gamepad.rightTrigger > 0.85f) && !gamepad.IsPressed(XINPUT_GAMEPAD_BACK) && !gamepad.IsPressed(XINPUT_GAMEPAD_START) && !gamepad.IsPressed(XINPUT_GAMEPAD_START) && !gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_THUMB) && !gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB) && !gamepad.IsPressed(0x400);
 }

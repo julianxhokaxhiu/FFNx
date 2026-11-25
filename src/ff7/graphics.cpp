@@ -46,1161 +46,1273 @@
 
 void destroy_d3d2_indexed_primitive(struct indexed_primitive *ip)
 {
-	if(!ip) return;
+    if (!ip)
+        return;
 
-	ff7::world::forget_model_lighting(ip);
-	if(ip->vertices) external_free(ip->vertices);
-	if(ip->indices) external_free(ip->indices);
+    ff7::world::forget_model_lighting(ip);
+    if (ip->vertices)
+        external_free(ip->vertices);
+    if (ip->indices)
+        external_free(ip->indices);
 
-	external_free(ip);
+    external_free(ip);
 }
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *_hundred_data, struct p_group *_group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object)
 {
-	struct indexed_primitive *ip;
-	struct p_hundred *hundred_data;
-	struct p_group *group_data;
-	uint32_t numvert;
-	uint32_t numpoly;
-	uint32_t offvert;
-	uint32_t offpoly;
-	uint32_t offtex;
-	uint32_t i;
+    struct indexed_primitive *ip;
+    struct p_hundred *hundred_data;
+    struct p_group *group_data;
+    uint32_t numvert;
+    uint32_t numpoly;
+    uint32_t offvert;
+    uint32_t offpoly;
+    uint32_t offtex;
+    uint32_t i;
 
-	if(!polygon_data) return false;
-	if(!polygon_set->indexed_primitives) return false;
-	if(group_num >= polygon_data->numgroups) return false;
+    if (!polygon_data)
+        return false;
+    if (!polygon_set->indexed_primitives)
+        return false;
+    if (group_num >= polygon_data->numgroups)
+        return false;
 
-	ip = (indexed_primitive*)external_calloc(sizeof(*ip), 1);
+    ip = (indexed_primitive *)external_calloc(sizeof(*ip), 1);
 
-	ip->primitivetype = RendererPrimitiveType::PT_TRIANGLES;
-	ip->vertex_size = sizeof(struct nvertex);
+    ip->primitivetype = RendererPrimitiveType::PT_TRIANGLES;
+    ip->vertex_size = sizeof(struct nvertex);
 
-	group_data = &polygon_data->groupdata[group_num];
-	hundred_data = &polygon_data->hundredsdata[group_num];
-	numvert = group_data->numvert;
-	numpoly = group_data->numpoly;
-	offvert = group_data->offvert;
-	offpoly = group_data->offpoly;
-	offtex = group_data->offtex;
+    group_data = &polygon_data->groupdata[group_num];
+    hundred_data = &polygon_data->hundredsdata[group_num];
+    numvert = group_data->numvert;
+    numpoly = group_data->numpoly;
+    offvert = group_data->offvert;
+    offpoly = group_data->offpoly;
+    offtex = group_data->offtex;
 
-	ip->vertexcount = numvert;
-	ip->indexcount = numpoly * 3;
-	ip->vertices = (nvertex*)external_calloc(sizeof(*ip->vertices), ip->vertexcount);
-	ip->indices = (WORD*)external_calloc(sizeof(*ip->indices), ip->indexcount);
+    ip->vertexcount = numvert;
+    ip->indexcount = numpoly * 3;
+    ip->vertices = (nvertex *)external_calloc(sizeof(*ip->vertices), ip->vertexcount);
+    ip->indices = (WORD *)external_calloc(sizeof(*ip->indices), ip->indexcount);
 
-	if(polygon_data->vertextype == 0) ip->vertextype = VERTEX;
-	else if(polygon_data->vertextype == 1) ip->vertextype = LVERTEX;
-	else if(polygon_data->vertextype == 2) ip->vertextype = TLVERTEX;
+    if (polygon_data->vertextype == 0)
+        ip->vertextype = VERTEX;
+    else if (polygon_data->vertextype == 1)
+        ip->vertextype = LVERTEX;
+    else if (polygon_data->vertextype == 2)
+        ip->vertextype = TLVERTEX;
 
-	for(i = 0; i < numvert; i++)
-	{
-		if(polygon_data->vertdata) memcpy(&ip->vertices[i]._, &polygon_data->vertdata[offvert + i], sizeof(ip->vertices[i]._));
-		if(polygon_data->vertexcolordata) memcpy(&ip->vertices[i].color.color, &polygon_data->vertexcolordata[offvert + i], sizeof(ip->vertices[i].color.color));
-		if(group_data->textured && polygon_data->texcoorddata) memcpy(&ip->vertices[i].u, &polygon_data->texcoorddata[offtex + i], sizeof(polygon_data->texcoorddata[i]));
+    for (i = 0; i < numvert; i++)
+    {
+        if (polygon_data->vertdata)
+            memcpy(&ip->vertices[i]._, &polygon_data->vertdata[offvert + i], sizeof(ip->vertices[i]._));
+        if (polygon_data->vertexcolordata)
+            memcpy(&ip->vertices[i].color.color, &polygon_data->vertexcolordata[offvert + i], sizeof(ip->vertices[i].color.color));
+        if (group_data->textured && polygon_data->texcoorddata)
+            memcpy(&ip->vertices[i].u, &polygon_data->texcoorddata[offtex + i], sizeof(polygon_data->texcoorddata[i]));
 
-		if(hundred_data && (hundred_data->field_4 & BIT(V_ALPHABLEND))) ip->vertices[i].color.a = hundred_data->vertex_alpha;
-	}
+        if (hundred_data && (hundred_data->field_4 & BIT(V_ALPHABLEND)))
+            ip->vertices[i].color.a = hundred_data->vertex_alpha;
+    }
 
-	for(i = 0; i < numpoly; i++)
-	{
-		if(polygon_data->polydata)
-		{
-			struct p_polygon *poly_data = &polygon_data->polydata[offpoly + i];
+    for (i = 0; i < numpoly; i++)
+    {
+        if (polygon_data->polydata)
+        {
+            struct p_polygon *poly_data = &polygon_data->polydata[offpoly + i];
 
-			ip->indices[i * 3] = poly_data->vertex1;
-			ip->indices[i * 3 + 1] = poly_data->vertex2;
-			ip->indices[i * 3 + 2] = poly_data->vertex3;
-		}
-	}
+            ip->indices[i * 3] = poly_data->vertex1;
+            ip->indices[i * 3 + 1] = poly_data->vertex2;
+            ip->indices[i * 3 + 2] = poly_data->vertex3;
+        }
+    }
 
-	polygon_set->indexed_primitives[group_num] = ip;
+    polygon_set->indexed_primitives[group_num] = ip;
 
-	return true;
+    return true;
 }
 
 void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object)
 {
-	struct matrix_set *matrix_set;
-	struct struc_49 *struc_49;
-	struct p_hundred *hundred_data = NULL;
-	struct p_group *group_data = NULL;
-	struct matrix *matrix = NULL;
-	struct struc_77 *struc_77;
-	struct indexed_primitive *ip = NULL;
-	struct nvertex *vertices = NULL;
-	struct struc_84 *struc_84;
-	struct struc_186 *struc_186;
-	uint32_t instance_type = -1;
-	uint32_t group_counter = 0;
-	uint32_t instanced = false;
-	uint32_t correct_frame = false;
-	uint32_t instance_transform_mode;
-	struct matrix tmp_matrix;
-	struct matrix *model_matrix = 0;
+    struct matrix_set *matrix_set;
+    struct struc_49 *struc_49;
+    struct p_hundred *hundred_data = NULL;
+    struct p_group *group_data = NULL;
+    struct matrix *matrix = NULL;
+    struct struc_77 *struc_77;
+    struct indexed_primitive *ip = NULL;
+    struct nvertex *vertices = NULL;
+    struct struc_84 *struc_84;
+    struct struc_186 *struc_186;
+    uint32_t instance_type = -1;
+    uint32_t group_counter = 0;
+    uint32_t instanced = false;
+    uint32_t correct_frame = false;
+    uint32_t instance_transform_mode;
+    struct matrix tmp_matrix;
+    struct matrix *model_matrix = 0;
 
-	if(trace_all) ffnx_trace("dll_gfx: field_78 0x%x\n", polygon_set);
+    if (trace_all)
+        ffnx_trace("dll_gfx: field_78 0x%x\n", polygon_set);
 
-	if(!game_object->in_scene) return;
+    if (!game_object->in_scene)
+        return;
 
-	if(!polygon_set) return;
+    if (!polygon_set)
+        return;
 
-	if(!polygon_set->field_0) return;
+    if (!polygon_set->field_0)
+        return;
 
-	if(trace_all) ffnx_trace("field_78: %s (%i groups) (0x%x)\n", polygon_set->polygon_data ? polygon_set->polygon_data->pc_name : "unknown", polygon_set->numgroups, polygon_set);
+    if (trace_all)
+        ffnx_trace("field_78: %s (%i groups) (0x%x)\n", polygon_set->polygon_data ? polygon_set->polygon_data->pc_name : "unknown", polygon_set->numgroups, polygon_set);
 
-	matrix_set = polygon_set->matrix_set;
+    matrix_set = polygon_set->matrix_set;
 
-	if(matrix_set) model_matrix = matrix_set->matrix_view;
+    if (matrix_set)
+        model_matrix = matrix_set->matrix_view;
 
-	struc_49 = &polygon_set->field_14;
+    struc_49 = &polygon_set->field_14;
 
-	if(struc_49->field_0)
-	{
-		instanced = true;
+    if (struc_49->field_0)
+    {
+        instanced = true;
 
-		correct_frame = (struc_49->graphics_instance->frame_counter == struc_49->frame_counter);
+        correct_frame = (struc_49->graphics_instance->frame_counter == struc_49->frame_counter);
 
-		instance_transform_mode = struc_49->field_8;
-		struc_84 = struc_49->struc_84;
+        instance_transform_mode = struc_49->field_8;
+        struc_84 = struc_49->struc_84;
 
-		if(struc_84) instance_type = struc_84->field_4;
+        if (struc_84)
+            instance_type = struc_84->field_4;
 
-		if(trace_all) ffnx_trace("instanced, %s, type %i, transform %i\n", correct_frame ? "correct frame" : "wrong frame", instance_type, instance_transform_mode);
-	}
+        if (trace_all)
+            ffnx_trace("instanced, %s, type %i, transform %i\n", correct_frame ? "correct frame" : "wrong frame", instance_type, instance_transform_mode);
+    }
 
-	if(polygon_set->field_2C) hundred_data = polygon_set->hundred_data;
-	if(polygon_set->polygon_data) group_data = polygon_set->polygon_data->groupdata;
+    if (polygon_set->field_2C)
+        hundred_data = polygon_set->hundred_data;
+    if (polygon_set->polygon_data)
+        group_data = polygon_set->polygon_data->groupdata;
 
-	while(group_counter < polygon_set->numgroups)
-	{
-		uint32_t defer = false;
-		uint32_t zsort = false;
+    while (group_counter < polygon_set->numgroups)
+    {
+        uint32_t defer = false;
+        uint32_t zsort = false;
 
-		struc_84 = struc_49->struc_84;
+        struc_84 = struc_49->struc_84;
 
-		if(polygon_set->indexed_primitives) ip = polygon_set->indexed_primitives[group_counter];
+        if (polygon_set->indexed_primitives)
+            ip = polygon_set->indexed_primitives[group_counter];
 
-		if(ip) vertices = ip->vertices;
+        if (ip)
+            vertices = ip->vertices;
 
-		if(polygon_set->per_group_hundreds) hundred_data = polygon_set->hundred_data_group_array[group_counter];
+        if (polygon_set->per_group_hundreds)
+            hundred_data = polygon_set->hundred_data_group_array[group_counter];
 
-		if(hundred_data)
-		{
-			if(game_object->field_91C && hundred_data->zsort) zsort = true;
-			else if(!game_object->field_928) defer = (hundred_data->options & (BIT(V_ALPHABLEND) | BIT(V_TMAPBLEND)));
-		}
+        if (hundred_data)
+        {
+            if (game_object->field_91C && hundred_data->zsort)
+                zsort = true;
+            else if (!game_object->field_928)
+                defer = (hundred_data->options & (BIT(V_ALPHABLEND) | BIT(V_TMAPBLEND)));
+        }
 
-		if(trace_all) ffnx_trace("group %i: %s, %s\n", group_counter, zsort ? "zsort" : "no zsort", defer ? "deferred" : "not deferred");
+        if (trace_all)
+            ffnx_trace("group %i: %s, %s\n", group_counter, zsort ? "zsort" : "no zsort", defer ? "deferred" : "not deferred");
 
-		if(!defer) common_setrenderstate(hundred_data, (struct game_obj *)game_object);
+        if (!defer)
+            common_setrenderstate(hundred_data, (struct game_obj *)game_object);
 
-		if(matrix_set && matrix_set->matrix_projection) gl_set_d3dprojection_matrix(matrix_set->matrix_projection);
+        if (matrix_set && matrix_set->matrix_projection)
+            gl_set_d3dprojection_matrix(matrix_set->matrix_projection);
 
-		if(instanced)
-		{
-			if(correct_frame)
-			{
-				while(struc_84)
-				{
-					if(trace_all) ffnx_trace("drawing instance 0x%x\n", struc_84);
+        if (instanced)
+        {
+            if (correct_frame)
+            {
+                while (struc_84)
+                {
+                    if (trace_all)
+                        ffnx_trace("drawing instance 0x%x\n", struc_84);
 
-					if(instance_type == 2)
-					{
-						if(instance_transform_mode == 1) matrix = &struc_84->matrix;
-						else if(instance_transform_mode == 2)
-						{
-							multiply_matrix(&struc_84->matrix, game_object->camera_matrix, &tmp_matrix);
-							matrix = &tmp_matrix;
-						}
+                    if (instance_type == 2)
+                    {
+                        if (instance_transform_mode == 1)
+                            matrix = &struc_84->matrix;
+                        else if (instance_transform_mode == 2)
+                        {
+                            multiply_matrix(&struc_84->matrix, game_object->camera_matrix, &tmp_matrix);
+                            matrix = &tmp_matrix;
+                        }
 
-						if(matrix && matrix_set && !zsort) gl_set_worldview_matrix(matrix);
+                        if (matrix && matrix_set && !zsort)
+                            gl_set_worldview_matrix(matrix);
 
-						struc_186 = struc_84->struc_186;
+                        struc_186 = struc_84->struc_186;
 
-						if(struc_186->polytype == 0x11) vertices = struc_186->nvertex_pointer;
-						else ff7_externals.sub_671742(zsort, hundred_data, struc_186);
+                        if (struc_186->polytype == 0x11)
+                            vertices = struc_186->nvertex_pointer;
+                        else
+                            ff7_externals.sub_671742(zsort, hundred_data, struc_186);
 
-						if(zsort) ff7_externals.sub_665D9A(matrix, vertices, ip, hundred_data, struc_186, game_object);
-						else gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, vertices, 0, ip->vertexcount, ip->indices, ip->indexcount, 0, 0, 0, polygon_set->field_4, true);
-					}
-					else if(defer)
-					{
-						struc_77 = (struct struc_77*)ff7_externals.sub_6A2865(game_object->_3dobject_pool);
+                        if (zsort)
+                            ff7_externals.sub_665D9A(matrix, vertices, ip, hundred_data, struc_186, game_object);
+                        else
+                            gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, vertices, 0, ip->vertexcount, ip->indices, ip->indexcount, 0, 0, 0, polygon_set->field_4, true);
+                    }
+                    else if (defer)
+                    {
+                        struc_77 = (struct struc_77 *)ff7_externals.sub_6A2865(game_object->_3dobject_pool);
 
-						if(struc_77)
-						{
-							struc_77->current_group = group_counter;
-							struc_77->polygon_set = (struct polygon_set *)polygon_set;
-							struc_77->hundred_data = hundred_data;
+                        if (struc_77)
+                        {
+                            struc_77->current_group = group_counter;
+                            struc_77->polygon_set = (struct polygon_set *)polygon_set;
+                            struc_77->hundred_data = hundred_data;
 
-							if(polygon_set->has_struc_173) memcpy(&struc_77->struc_173, polygon_set->struc_173, sizeof(*polygon_set->struc_173));
+                            if (polygon_set->has_struc_173)
+                                memcpy(&struc_77->struc_173, polygon_set->struc_173, sizeof(*polygon_set->struc_173));
 
-							struc_77->use_matrix = 0;
-							struc_77->use_matrix_pointer = 0;
+                            struc_77->use_matrix = 0;
+                            struc_77->use_matrix_pointer = 0;
 
-							if(instance_transform_mode == 1)
-							{
-								struc_77->use_matrix_pointer = 1;
-								struc_77->matrix_pointer = &struc_84->matrix;
-							}
+                            if (instance_transform_mode == 1)
+                            {
+                                struc_77->use_matrix_pointer = 1;
+                                struc_77->matrix_pointer = &struc_84->matrix;
+                            }
 
-							else if(instance_transform_mode == 2)
-							{
-								struc_77->use_matrix = 1;
-								multiply_matrix(&struc_84->matrix, game_object->camera_matrix, &struc_77->matrix);
-								ff7_externals.matrix3x4(&struc_77->matrix);
-							}
-						}
-					}
-					else if(instance_type == 0)
-					{
-						if(instance_transform_mode == 1) matrix = &struc_84->matrix;
-						else if(instance_transform_mode == 2)
-						{
-							multiply_matrix(&struc_84->matrix, game_object->camera_matrix, &tmp_matrix);
-							matrix = &tmp_matrix;
-						}
+                            else if (instance_transform_mode == 2)
+                            {
+                                struc_77->use_matrix = 1;
+                                multiply_matrix(&struc_84->matrix, game_object->camera_matrix, &struc_77->matrix);
+                                ff7_externals.matrix3x4(&struc_77->matrix);
+                            }
+                        }
+                    }
+                    else if (instance_type == 0)
+                    {
+                        if (instance_transform_mode == 1)
+                            matrix = &struc_84->matrix;
+                        else if (instance_transform_mode == 2)
+                        {
+                            multiply_matrix(&struc_84->matrix, game_object->camera_matrix, &tmp_matrix);
+                            matrix = &tmp_matrix;
+                        }
 
-						if(ip)
-						{
-							if(zsort) ff7_externals.sub_665793(matrix, 0, ip, polygon_set, hundred_data, group_data, game_object);
-							else
-							{
-								if(matrix && matrix_set) gl_set_worldview_matrix(matrix);
-								gl_draw_without_lighting(ip, polygon_set->polygon_data, nullptr, polygon_set->field_4);
-							}
-						}
-					}
-					else if(instance_type == 1)
-					{
-						if(instance_transform_mode == 1) matrix = &struc_84->matrix;
-						else if(instance_transform_mode == 2)
-						{
-							multiply_matrix(&struc_84->matrix, game_object->camera_matrix, &tmp_matrix);
-							matrix = &tmp_matrix;
-						}
+                        if (ip)
+                        {
+                            if (zsort)
+                                ff7_externals.sub_665793(matrix, 0, ip, polygon_set, hundred_data, group_data, game_object);
+                            else
+                            {
+                                if (matrix && matrix_set)
+                                    gl_set_worldview_matrix(matrix);
+                                gl_draw_without_lighting(ip, polygon_set->polygon_data, nullptr, polygon_set->field_4);
+                            }
+                        }
+                    }
+                    else if (instance_type == 1)
+                    {
+                        if (instance_transform_mode == 1)
+                            matrix = &struc_84->matrix;
+                        else if (instance_transform_mode == 2)
+                        {
+                            multiply_matrix(&struc_84->matrix, game_object->camera_matrix, &tmp_matrix);
+                            matrix = &tmp_matrix;
+                        }
 
-						if(ip)
-						{
-							if(struc_84->struc_173.add_offsets || struc_84->struc_173.field_7)
-							{
-								ff7_externals.sub_68D2B8(group_counter, polygon_set, &struc_84->struc_173);
-								ff7_externals.sub_6B27A9(matrix, ip, polygon_set, hundred_data, group_data, &struc_84->struc_173, game_object);
-							}
-							else
-							{
-								if(zsort) ff7_externals.sub_665793(matrix, 0, ip, polygon_set, hundred_data, group_data, game_object);
-								else
-								{
-									ff7_externals.sub_68D2B8(group_counter, polygon_set, &struc_84->struc_173);
+                        if (ip)
+                        {
+                            if (struc_84->struc_173.add_offsets || struc_84->struc_173.field_7)
+                            {
+                                ff7_externals.sub_68D2B8(group_counter, polygon_set, &struc_84->struc_173);
+                                ff7_externals.sub_6B27A9(matrix, ip, polygon_set, hundred_data, group_data, &struc_84->struc_173, game_object);
+                            }
+                            else
+                            {
+                                if (zsort)
+                                    ff7_externals.sub_665793(matrix, 0, ip, polygon_set, hundred_data, group_data, game_object);
+                                else
+                                {
+                                    ff7_externals.sub_68D2B8(group_counter, polygon_set, &struc_84->struc_173);
 
-									if(matrix && matrix_set) gl_set_worldview_matrix(matrix);
-									gl_draw_without_lighting(ip, polygon_set->polygon_data, nullptr, polygon_set->field_4);
-								}
-							}
-						}
-					}
+                                    if (matrix && matrix_set)
+                                        gl_set_worldview_matrix(matrix);
+                                    gl_draw_without_lighting(ip, polygon_set->polygon_data, nullptr, polygon_set->field_4);
+                                }
+                            }
+                        }
+                    }
 
-					struc_84 = struc_84->next;
-				}
-			}
-		}
-		else
-		{
-			if(trace_all) ffnx_trace("drawing single\n");
+                    struc_84 = struc_84->next;
+                }
+            }
+        }
+        else
+        {
+            if (trace_all)
+                ffnx_trace("drawing single\n");
 
-			if(defer)
-			{
-				struc_77 = (struct struc_77*)ff7_externals.sub_6A2865(game_object->_3dobject_pool);
+            if (defer)
+            {
+                struc_77 = (struct struc_77 *)ff7_externals.sub_6A2865(game_object->_3dobject_pool);
 
-				struc_77->current_group = group_counter;
-				struc_77->polygon_set = (struct polygon_set *)polygon_set;
-				struc_77->hundred_data = hundred_data;
+                struc_77->current_group = group_counter;
+                struc_77->polygon_set = (struct polygon_set *)polygon_set;
+                struc_77->hundred_data = hundred_data;
 
-				if(polygon_set->has_struc_173) memcpy(&struc_77->struc_173, polygon_set->struc_173, sizeof(*polygon_set->struc_173));
+                if (polygon_set->has_struc_173)
+                    memcpy(&struc_77->struc_173, polygon_set->struc_173, sizeof(*polygon_set->struc_173));
 
-				struc_77->use_matrix = 0;
-				struc_77->use_matrix_pointer = 0;
+                struc_77->use_matrix = 0;
+                struc_77->use_matrix_pointer = 0;
 
-				if(matrix_set && matrix_set->matrix_world)
-				{
-					struc_77->use_matrix = 1;
-					memcpy(&struc_77->matrix, matrix_set->matrix_world, sizeof(*matrix_set->matrix_world));
-				}
-			}
-			else
-			{
-				if(ip)
-				{
-					if (zsort)
-						ff7_externals.sub_665793(matrix_set->matrix_world, 0, ip, polygon_set, hundred_data, group_data, game_object);
-					else
-					{
-						if (matrix_set)	gl_set_worldview_matrix(matrix_set->matrix_world);
+                if (matrix_set && matrix_set->matrix_world)
+                {
+                    struc_77->use_matrix = 1;
+                    memcpy(&struc_77->matrix, matrix_set->matrix_world, sizeof(*matrix_set->matrix_world));
+                }
+            }
+            else
+            {
+                if (ip)
+                {
+                    if (zsort)
+                        ff7_externals.sub_665793(matrix_set->matrix_world, 0, ip, polygon_set, hundred_data, group_data, game_object);
+                    else
+                    {
+                        if (matrix_set)
+                            gl_set_worldview_matrix(matrix_set->matrix_world);
 
-						if (enable_lighting)
-						{
-							update_view_matrix(game_object);
-							if(polygon_set->light != nullptr && game_lighting != GAME_LIGHTING_ORIGINAL)
-							{
-								struct light_data lightData;
-								fill_light_data(&lightData, polygon_set);
-								gl_draw_with_lighting(ip, polygon_set->polygon_data, &lightData, polygon_set->field_4);
-							} else 	gl_draw_with_lighting(ip, polygon_set->polygon_data, nullptr, polygon_set->field_4);
-						}
-						else
-						{
-							if(polygon_set->light != nullptr && game_lighting != GAME_LIGHTING_ORIGINAL)
-							{
-								struct light_data lightData;
-								fill_light_data(&lightData, polygon_set);
-								update_view_matrix(game_object);
-								gl_draw_without_lighting(ip, polygon_set->polygon_data, &lightData, polygon_set->field_4);
-							} else gl_draw_without_lighting(ip, polygon_set->polygon_data, nullptr, polygon_set->field_4);
-						}
-					}
-				}
-			}
-		}
+                        if (enable_lighting)
+                        {
+                            update_view_matrix(game_object);
+                            if (polygon_set->light != nullptr && game_lighting != GAME_LIGHTING_ORIGINAL)
+                            {
+                                struct light_data lightData;
+                                fill_light_data(&lightData, polygon_set);
+                                gl_draw_with_lighting(ip, polygon_set->polygon_data, &lightData, polygon_set->field_4);
+                            }
+                            else
+                                gl_draw_with_lighting(ip, polygon_set->polygon_data, nullptr, polygon_set->field_4);
+                        }
+                        else
+                        {
+                            if (polygon_set->light != nullptr && game_lighting != GAME_LIGHTING_ORIGINAL)
+                            {
+                                struct light_data lightData;
+                                fill_light_data(&lightData, polygon_set);
+                                update_view_matrix(game_object);
+                                gl_draw_without_lighting(ip, polygon_set->polygon_data, &lightData, polygon_set->field_4);
+                            }
+                            else
+                                gl_draw_without_lighting(ip, polygon_set->polygon_data, nullptr, polygon_set->field_4);
+                        }
+                    }
+                }
+            }
+        }
 
-		if(hundred_data) hundred_data = &hundred_data[1];
-		if(group_data) group_data = &group_data[1];
+        if (hundred_data)
+            hundred_data = &hundred_data[1];
+        if (group_data)
+            group_data = &group_data[1];
 
-		group_counter++;
-	}
+        group_counter++;
+    }
 }
 
 struct tex_header *sub_673F5C(struct struc_91 *struc91)
 {
-	if(trace_all) ffnx_trace("sub_673F5C: 0x%x\n", struc91);
+    if (trace_all)
+        ffnx_trace("sub_673F5C: 0x%x\n", struc91);
 
-	if(struc91->field_0 == 2) ffnx_glitch_once("unsupported framebuffer operation\n");
+    if (struc91->field_0 == 2)
+        ffnx_glitch_once("unsupported framebuffer operation\n");
 
-	uint32_t x = struc91->x_offset;
-	uint32_t width = struc91->width * struc91->xscale;
-	// Captures precede begin_scene, so the frame-cached mode can still be the previous module.
-	if (widescreen_enabled && getmode()->driver_mode == MODE_SWIRL)
-	{
-		x = std::lround(double(x) * wide_viewport_width / game_width);
-		width = std::lround(double(width) * wide_viewport_width / game_width);
-	}
+    uint32_t x = struc91->x_offset;
+    uint32_t width = struc91->width * struc91->xscale;
+    // Captures precede begin_scene, so the frame-cached mode can still be the previous module.
+    if (widescreen_enabled && getmode()->driver_mode == MODE_SWIRL)
+    {
+        x = std::lround(double(x) * wide_viewport_width / game_width);
+        width = std::lround(double(width) * wide_viewport_width / game_width);
+    }
 
-	return make_framebuffer_tex(struc91->width, struc91->height, x, struc91->y_offset, width, struc91->height * struc91->yscale, struc91->color_key);
+    return make_framebuffer_tex(struc91->width, struc91->height, x, struc91->y_offset, width, struc91->height * struc91->yscale, struc91->color_key);
 }
 
 void draw_single_triangle(struct nvertex *vertices)
 {
-	WORD indices[] = {0, 1, 2};
+    WORD indices[] = {0, 1, 2};
 
-	newRenderer.bindVertexBuffer(vertices, 0, 3);
-	newRenderer.bindIndexBuffer(indices, 3);
+    newRenderer.bindVertexBuffer(vertices, 0, 3);
+    newRenderer.bindIndexBuffer(indices, 3);
 
-	newRenderer.isTLVertex(true);
+    newRenderer.isTLVertex(true);
 
-	newRenderer.draw();
+    newRenderer.draw();
 }
 
 void sub_6B2720(struct indexed_primitive *ip)
 {
-	gl_draw_indexed_primitive(ip->primitivetype, TLVERTEX, ip->vertices, 0, ip->vertexcount, ip->indices, ip->indexcount, 0, 0, 0, true, true);
+    gl_draw_indexed_primitive(ip->primitivetype, TLVERTEX, ip->vertices, 0, ip->vertexcount, ip->indices, ip->indexcount, 0, 0, 0, true, true);
 }
 
 // The gltf model (external mesh) replacing this model's polygons, or nullptr when it has none
-ExternalMesh* getExternalMesh(struct hrc_data *hrc_data)
+ExternalMesh *getExternalMesh(struct hrc_data *hrc_data)
 {
-	ExternalMesh* external_mesh = nullptr;
-	if(hrc_data->bone_list)
-	{
-		struct list_node *bone_list_node;
-		
-		LIST_FOR_EACH(bone_list_node, hrc_data->bone_list)
-		{
-			struct bone_list_member *bone_list_member = (struct bone_list_member *)&bone_list_node->object;
-			if(bone_list_member->bone_type == 1)
-			{
-				uint32_t bone_index = bone_list_member->bone_index;
-				struct hrc_bone *bone = &hrc_data->bones[bone_index];
+    ExternalMesh *external_mesh = nullptr;
+    if (hrc_data->bone_list)
+    {
+        struct list_node *bone_list_node;
 
-				if(bone->rsd_array)
-				{
-					uint32_t i;
-					struct rsd_array_member *rsd_array_member;
+        LIST_FOR_EACH(bone_list_node, hrc_data->bone_list)
+        {
+            struct bone_list_member *bone_list_member = (struct bone_list_member *)&bone_list_node->object;
+            if (bone_list_member->bone_type == 1)
+            {
+                uint32_t bone_index = bone_list_member->bone_index;
+                struct hrc_bone *bone = &hrc_data->bones[bone_index];
 
-					for(i = 0, rsd_array_member = bone->rsd_array; i < bone->num_rsd; i++, rsd_array_member++)
-					{
-						struct ff7_polygon_set *polygon_set;
+                if (bone->rsd_array)
+                {
+                    uint32_t i;
+                    struct rsd_array_member *rsd_array_member;
 
-						if(!rsd_array_member->rsd_data) continue;
+                    for (i = 0, rsd_array_member = bone->rsd_array; i < bone->num_rsd; i++, rsd_array_member++)
+                    {
+                        struct ff7_polygon_set *polygon_set;
 
-						polygon_set = rsd_array_member->rsd_data->polygon_set;
+                        if (!rsd_array_member->rsd_data)
+                            continue;
 
-						if(!polygon_set) continue;
+                        polygon_set = rsd_array_member->rsd_data->polygon_set;
 
-						if(polygon_set->polygon_data->field_48)
-						{
-							external_mesh = reinterpret_cast<ExternalMesh*>(polygon_set->polygon_data->field_48);
-							break;
-						}
-					}
-				}
-			}
-			if (external_mesh)
-			{
-				break;
-			}
-		}
-	}
-	return external_mesh;
+                        if (!polygon_set)
+                            continue;
+
+                        if (polygon_set->polygon_data->field_48)
+                        {
+                            external_mesh = reinterpret_cast<ExternalMesh *>(polygon_set->polygon_data->field_48);
+                            break;
+                        }
+                    }
+                }
+            }
+            if (external_mesh)
+            {
+                break;
+            }
+        }
+    }
+    return external_mesh;
 }
 
 // Name gltf animations are matched against: the 4 characters of the game's .a file name, uppercased
 static std::string get_external_mesh_anim_name(struct anim_header *anim_header)
 {
-	std::string animFullName = anim_header->file.pc_name;
-	if(animFullName.length() < 6) return "";
+    std::string animFullName = anim_header->file.pc_name;
+    if (animFullName.length() < 6)
+        return "";
 
-	std::string animName = animFullName.substr(animFullName.length() - 6, 4);
-	std::transform(animName.begin(), animName.end(), animName.begin(), [](unsigned char c) { return std::toupper(c); });
+    std::string animName = animFullName.substr(animFullName.length() - 6, 4);
+    std::transform(animName.begin(), animName.end(), animName.begin(), [](unsigned char c) { return std::toupper(c); });
 
-	return animName;
+    return animName;
 }
 
 // The struc_110 transforms (scale, matrix, rotation, position) applied on top of a model's root matrix
 static void apply_struc110_transforms(struct matrix *matrix, struct struc_110 *struc_110)
 {
-	if(!struc_110) return;
+    if (!struc_110)
+        return;
 
-	struct matrix scale_matrix;
+    struct matrix scale_matrix;
 
-	if(struc_110->scale_factor != 1.0f)
-	{
-		float scale_factor = struc_110->scale_factor;
+    if (struc_110->scale_factor != 1.0f)
+    {
+        float scale_factor = struc_110->scale_factor;
 
-		matrix->_41 *= scale_factor;
-		matrix->_42 *= scale_factor;
-		matrix->_43 *= scale_factor;
+        matrix->_41 *= scale_factor;
+        matrix->_42 *= scale_factor;
+        matrix->_43 *= scale_factor;
 
-		uniform_scaling_matrix(scale_factor, &scale_matrix);
-		multiply_matrix_unary(matrix, &scale_matrix);
-	}
+        uniform_scaling_matrix(scale_factor, &scale_matrix);
+        multiply_matrix_unary(matrix, &scale_matrix);
+    }
 
-	if(struc_110->scale.x != 1.0f || struc_110->scale.y != 1.0f || struc_110->scale.z != 1.0f)
-	{
-		scaling_matrix(&struc_110->scale, &scale_matrix);
-		multiply_matrix_unary(matrix, &scale_matrix);
+    if (struc_110->scale.x != 1.0f || struc_110->scale.y != 1.0f || struc_110->scale.z != 1.0f)
+    {
+        scaling_matrix(&struc_110->scale, &scale_matrix);
+        multiply_matrix_unary(matrix, &scale_matrix);
 
-		matrix->_41 *= struc_110->scale.x;
-		matrix->_42 *= struc_110->scale.y;
-		matrix->_43 *= struc_110->scale.z;
-	}
+        matrix->_41 *= struc_110->scale.x;
+        matrix->_42 *= struc_110->scale.y;
+        matrix->_43 *= struc_110->scale.z;
+    }
 
-	if(*ff7_externals.model_mode & MDL_USE_STRUC110_MATRIX) multiply_matrix_unary(matrix, &struc_110->matrix);
+    if (*ff7_externals.model_mode & MDL_USE_STRUC110_MATRIX)
+        multiply_matrix_unary(matrix, &struc_110->matrix);
 
-	if(struc_110->rotation.y != 0.0) rotate_matrix_y(DEG2RAD(struc_110->rotation.y), matrix);
-	if(struc_110->rotation.x != 0.0) rotate_matrix_x(DEG2RAD(struc_110->rotation.x), matrix);
-	if(struc_110->rotation.z != 0.0) rotate_matrix_z(DEG2RAD(struc_110->rotation.z), matrix);
+    if (struc_110->rotation.y != 0.0)
+        rotate_matrix_y(DEG2RAD(struc_110->rotation.y), matrix);
+    if (struc_110->rotation.x != 0.0)
+        rotate_matrix_x(DEG2RAD(struc_110->rotation.x), matrix);
+    if (struc_110->rotation.z != 0.0)
+        rotate_matrix_z(DEG2RAD(struc_110->rotation.z), matrix);
 
-	matrix->_41 += struc_110->position.x;
-	matrix->_42 += struc_110->position.y;
-	matrix->_43 += struc_110->position.z;
+    matrix->_41 += struc_110->position.x;
+    matrix->_42 += struc_110->position.y;
+    matrix->_43 += struc_110->position.z;
 }
 
-bool get_model_initial_pose(hrc_data* model, anim_header* animation, std::vector<matrix>& pose)
+bool get_model_initial_pose(hrc_data *model, anim_header *animation, std::vector<matrix> &pose)
 {
-	if (!model || !animation || !animation->num_frames || !animation->anim_frames || !model->bone_list ||
-		(animation->use_matrix_array && !animation->matrix_array))
-	{
-		ffnx_unexpected_once("Cannot prepare model lighting: missing initial animation, matrices or skeleton\n");
-		return false;
-	}
-	auto* frame = &animation->anim_frames[0];
-	const bool alternate = model->field_A4 && *model->field_A4;
-	auto root_animation = alternate ? ff7_externals._root_animation : ff7_externals.root_animation;
-	auto frame_animation = alternate ? ff7_externals._frame_animation : ff7_externals.frame_animation;
-	std::vector<matrix> stack(1);
-	pose.resize(model->num_bones);
-	if (animation->use_matrix_array) stack.back() = animation->matrix_array[0];
-	else root_animation(&stack.back(), frame, animation, model);
-	list_node* node;
-	LIST_FOR_EACH(node, model->bone_list)
-	{
-		auto* entry = reinterpret_cast<bone_list_member*>(&node->object);
-		if (entry->bone_type == 2)
-		{
-			if (stack.size() == 1)
-			{
-				ffnx_unexpected_once("Cannot prepare model lighting: unbalanced skeleton\n");
-				return false;
-			}
-			stack.pop_back();
-			continue;
-		}
-		if (entry->bone_type != 1) continue;
-		if (entry->bone_index >= model->num_bones)
-		{
-			ffnx_unexpected_once("Cannot prepare model lighting: invalid bone index\n");
-			return false;
-		}
-		auto* bone = &model->bones[entry->bone_index];
-		vector3<float> zero{};
-		auto* rotation = entry->bone_index < animation->num_bones ? &frame->data[entry->bone_index] : &zero;
-		matrix local;
-		if (animation->use_matrix_array)
-			local = animation->matrix_array[entry->bone_index + 1];
-		else
-			frame_animation(entry->bone_index, &local, rotation, frame, animation, bone, model);
-		multiply_matrix(&local, &stack.back(), &pose[entry->bone_index]);
-		stack.push_back(pose[entry->bone_index]);
-	}
-	return true;
+    if (!model || !animation || !animation->num_frames || !animation->anim_frames || !model->bone_list || (animation->use_matrix_array && !animation->matrix_array))
+    {
+        ffnx_unexpected_once("Cannot prepare model lighting: missing initial animation, matrices or skeleton\n");
+        return false;
+    }
+    auto *frame = &animation->anim_frames[0];
+    const bool alternate = model->field_A4 && *model->field_A4;
+    auto root_animation = alternate ? ff7_externals._root_animation : ff7_externals.root_animation;
+    auto frame_animation = alternate ? ff7_externals._frame_animation : ff7_externals.frame_animation;
+    std::vector<matrix> stack(1);
+    pose.resize(model->num_bones);
+    if (animation->use_matrix_array)
+        stack.back() = animation->matrix_array[0];
+    else
+        root_animation(&stack.back(), frame, animation, model);
+    list_node *node;
+    LIST_FOR_EACH(node, model->bone_list)
+    {
+        auto *entry = reinterpret_cast<bone_list_member *>(&node->object);
+        if (entry->bone_type == 2)
+        {
+            if (stack.size() == 1)
+            {
+                ffnx_unexpected_once("Cannot prepare model lighting: unbalanced skeleton\n");
+                return false;
+            }
+            stack.pop_back();
+            continue;
+        }
+        if (entry->bone_type != 1)
+            continue;
+        if (entry->bone_index >= model->num_bones)
+        {
+            ffnx_unexpected_once("Cannot prepare model lighting: invalid bone index\n");
+            return false;
+        }
+        auto *bone = &model->bones[entry->bone_index];
+        vector3<float> zero{};
+        auto *rotation = entry->bone_index < animation->num_bones ? &frame->data[entry->bone_index] : &zero;
+        matrix local;
+        if (animation->use_matrix_array)
+            local = animation->matrix_array[entry->bone_index + 1];
+        else
+            frame_animation(entry->bone_index, &local, rotation, frame, animation, bone, model);
+        multiply_matrix(&local, &stack.back(), &pose[entry->bone_index]);
+        stack.push_back(pose[entry->bone_index]);
+    }
+    return true;
 }
 
 void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, struct struc_110 *struc_110, struct hrc_data *hrc_data, struct ff7_game_obj *game_object)
 {
-	struct anim_frame *anim_frame;
-	struct stack *matrix_stack;
-	struct matrix *root_matrix;
-	void (*root_animation_sub)(struct matrix *, struct anim_frame *, struct anim_header *, struct hrc_data *);
-	void (*frame_animation_sub)(uint32_t, struct matrix *, vector3<float> *, struct anim_frame *, struct anim_header *, struct hrc_bone *, struct hrc_data *);
+    struct anim_frame *anim_frame;
+    struct stack *matrix_stack;
+    struct matrix *root_matrix;
+    void (*root_animation_sub)(struct matrix *, struct anim_frame *, struct anim_header *, struct hrc_data *);
+    void (*frame_animation_sub)(uint32_t, struct matrix *, vector3<float> *, struct anim_frame *, struct anim_header *, struct hrc_bone *, struct hrc_data *);
 
-	if(!anim_header) return;
-	if(!hrc_data) return;
-	if(current_frame >= anim_header->num_frames) return;
+    if (!anim_header)
+        return;
+    if (!hrc_data)
+        return;
+    if (current_frame >= anim_header->num_frames)
+        return;
 
-	anim_frame = &anim_header->anim_frames[current_frame];
+    anim_frame = &anim_header->anim_frames[current_frame];
 
-	if(anim_header->use_matrix_array)
-	{
-		anim_header->current_matrix_array = &anim_header->matrix_array[(anim_header->num_bones + 1) * current_frame];
-	}
+    if (anim_header->use_matrix_array)
+    {
+        anim_header->current_matrix_array = &anim_header->matrix_array[(anim_header->num_bones + 1) * current_frame];
+    }
 
-	matrix_stack = game_object->matrix_stack1;
+    matrix_stack = game_object->matrix_stack1;
 
-	ff7_externals.stack_push(matrix_stack);
+    ff7_externals.stack_push(matrix_stack);
 
-	root_matrix = (matrix*)ff7_externals.stack_top(matrix_stack);
+    root_matrix = (matrix *)ff7_externals.stack_top(matrix_stack);
 
-	if(hrc_data->field_A4 && *hrc_data->field_A4)
-	{
-		root_animation_sub = ff7_externals._root_animation;
-		frame_animation_sub = ff7_externals._frame_animation;
-	}
-	else
-	{
-		root_animation_sub = ff7_externals.root_animation;
-		frame_animation_sub = ff7_externals.frame_animation;
-	}
+    if (hrc_data->field_A4 && *hrc_data->field_A4)
+    {
+        root_animation_sub = ff7_externals._root_animation;
+        frame_animation_sub = ff7_externals._frame_animation;
+    }
+    else
+    {
+        root_animation_sub = ff7_externals.root_animation;
+        frame_animation_sub = ff7_externals.frame_animation;
+    }
 
-	root_animation_sub(root_matrix, anim_frame, anim_header, hrc_data);
+    root_animation_sub(root_matrix, anim_frame, anim_header, hrc_data);
 
-	if(hrc_data->flags & 0x400) memcpy(&hrc_data->field_24, root_matrix, sizeof(*root_matrix));
+    if (hrc_data->flags & 0x400)
+        memcpy(&hrc_data->field_24, root_matrix, sizeof(*root_matrix));
 
-	if(struc_110)
-	{
-		struct matrix scale_matrix;
+    if (struc_110)
+    {
+        struct matrix scale_matrix;
 
-		if(struc_110->scale_factor != 1.0f)
-		{
-			float scale_factor = struc_110->scale_factor;
+        if (struc_110->scale_factor != 1.0f)
+        {
+            float scale_factor = struc_110->scale_factor;
 
-			root_matrix->_41 *= scale_factor;
-			root_matrix->_42 *= scale_factor;
-			root_matrix->_43 *= scale_factor;
+            root_matrix->_41 *= scale_factor;
+            root_matrix->_42 *= scale_factor;
+            root_matrix->_43 *= scale_factor;
 
-			uniform_scaling_matrix(scale_factor, &scale_matrix);
-			multiply_matrix_unary(root_matrix, &scale_matrix);
-		}
+            uniform_scaling_matrix(scale_factor, &scale_matrix);
+            multiply_matrix_unary(root_matrix, &scale_matrix);
+        }
 
-		if(struc_110->scale.x != 1.0f || struc_110->scale.y != 1.0f || struc_110->scale.z != 1.0f)
-		{
-			scaling_matrix(&struc_110->scale, &scale_matrix);
-			multiply_matrix_unary(root_matrix, &scale_matrix);
+        if (struc_110->scale.x != 1.0f || struc_110->scale.y != 1.0f || struc_110->scale.z != 1.0f)
+        {
+            scaling_matrix(&struc_110->scale, &scale_matrix);
+            multiply_matrix_unary(root_matrix, &scale_matrix);
 
-			root_matrix->_41 *= struc_110->scale.x;
-			root_matrix->_42 *= struc_110->scale.y;
-			root_matrix->_43 *= struc_110->scale.z;
-		}
+            root_matrix->_41 *= struc_110->scale.x;
+            root_matrix->_42 *= struc_110->scale.y;
+            root_matrix->_43 *= struc_110->scale.z;
+        }
 
-		if(*ff7_externals.model_mode & MDL_USE_STRUC110_MATRIX) multiply_matrix_unary(root_matrix, &struc_110->matrix);
+        if (*ff7_externals.model_mode & MDL_USE_STRUC110_MATRIX)
+            multiply_matrix_unary(root_matrix, &struc_110->matrix);
 
-		if(struc_110->rotation.y != 0.0) rotate_matrix_y(DEG2RAD(struc_110->rotation.y), root_matrix);
-		if(struc_110->rotation.x != 0.0) rotate_matrix_x(DEG2RAD(struc_110->rotation.x), root_matrix);
-		if(struc_110->rotation.z != 0.0) rotate_matrix_z(DEG2RAD(struc_110->rotation.z), root_matrix);
+        if (struc_110->rotation.y != 0.0)
+            rotate_matrix_y(DEG2RAD(struc_110->rotation.y), root_matrix);
+        if (struc_110->rotation.x != 0.0)
+            rotate_matrix_x(DEG2RAD(struc_110->rotation.x), root_matrix);
+        if (struc_110->rotation.z != 0.0)
+            rotate_matrix_z(DEG2RAD(struc_110->rotation.z), root_matrix);
 
-		root_matrix->_41 += struc_110->position.x;
-		root_matrix->_42 += struc_110->position.y;
-		root_matrix->_43 += struc_110->position.z;
-	}
+        root_matrix->_41 += struc_110->position.x;
+        root_matrix->_42 += struc_110->position.y;
+        root_matrix->_43 += struc_110->position.z;
+    }
 
-	if(hrc_data->flags & 0x800) memcpy(&hrc_data->field_64, root_matrix, sizeof(*root_matrix));
+    if (hrc_data->flags & 0x800)
+        memcpy(&hrc_data->field_64, root_matrix, sizeof(*root_matrix));
 
-	if(hrc_data->flags & 0x2000 && struc_110->bone_positions)
-	{
-		struc_110->bone_positions[0].x = root_matrix->_41;
-		struc_110->bone_positions[0].y = root_matrix->_42;
-		struc_110->bone_positions[0].z = root_matrix->_43;
-	}
+    if (hrc_data->flags & 0x2000 && struc_110->bone_positions)
+    {
+        struc_110->bone_positions[0].x = root_matrix->_41;
+        struc_110->bone_positions[0].y = root_matrix->_42;
+        struc_110->bone_positions[0].z = root_matrix->_43;
+    }
 
-	if(hrc_data->bone_list)
-	{
-		struct list_node *bone_list_node;
+    if (hrc_data->bone_list)
+    {
+        struct list_node *bone_list_node;
 
-		LIST_FOR_EACH(bone_list_node, hrc_data->bone_list)
-		{
-			struct bone_list_member *bone_list_member = (struct bone_list_member *)&bone_list_node->object;
+        LIST_FOR_EACH(bone_list_node, hrc_data->bone_list)
+        {
+            struct bone_list_member *bone_list_member = (struct bone_list_member *)&bone_list_node->object;
 
-			if(bone_list_member->bone_type == 1)
-			{
-				uint32_t bone_index = bone_list_member->bone_index;
-				struct hrc_bone *bone = &hrc_data->bones[bone_index];
-				struct matrix *parent_matrix;
-				struct matrix *bone_matrix;
-				vector3<float> *frame_rotation;
-				struct matrix local_matrix;
-				struct matrix eye_matrix;
-				struct matrix *matrix;
-				vector3<float> dummy_point = {0.0f, 0.0f, 0.0f};
+            if (bone_list_member->bone_type == 1)
+            {
+                uint32_t bone_index = bone_list_member->bone_index;
+                struct hrc_bone *bone = &hrc_data->bones[bone_index];
+                struct matrix *parent_matrix;
+                struct matrix *bone_matrix;
+                vector3<float> *frame_rotation;
+                struct matrix local_matrix;
+                struct matrix eye_matrix;
+                struct matrix *matrix;
+                vector3<float> dummy_point = {0.0f, 0.0f, 0.0f};
 
-				parent_matrix = (struct matrix*)ff7_externals.stack_top(matrix_stack);
-				ff7_externals.stack_push(matrix_stack);
-				bone_matrix = (struct matrix*)ff7_externals.stack_top(matrix_stack);
+                parent_matrix = (struct matrix *)ff7_externals.stack_top(matrix_stack);
+                ff7_externals.stack_push(matrix_stack);
+                bone_matrix = (struct matrix *)ff7_externals.stack_top(matrix_stack);
 
-				if(anim_header->num_bones <= bone_index) frame_rotation = &dummy_point;
-				else frame_rotation = &anim_frame->data[bone_index];
+                if (anim_header->num_bones <= bone_index)
+                    frame_rotation = &dummy_point;
+                else
+                    frame_rotation = &anim_frame->data[bone_index];
 
-				frame_animation_sub(bone_index, &local_matrix, frame_rotation, anim_frame, anim_header, bone, hrc_data);
+                frame_animation_sub(bone_index, &local_matrix, frame_rotation, anim_frame, anim_header, bone, hrc_data);
 
-				multiply_matrix(&local_matrix, parent_matrix, bone_matrix);
+                multiply_matrix(&local_matrix, parent_matrix, bone_matrix);
 
-				if(*ff7_externals.model_mode & MDL_USE_CAMERA_MATRIX)
-				{
-					if(hrc_data->flags & 0x4000 && struc_110->bone_matrices) matrix = &struc_110->bone_matrices[bone_index + 1];
-					else matrix = &eye_matrix;
+                if (*ff7_externals.model_mode & MDL_USE_CAMERA_MATRIX)
+                {
+                    if (hrc_data->flags & 0x4000 && struc_110->bone_matrices)
+                        matrix = &struc_110->bone_matrices[bone_index + 1];
+                    else
+                        matrix = &eye_matrix;
 
-					multiply_matrix(bone_matrix, game_object->camera_matrix, matrix);
+                    multiply_matrix(bone_matrix, game_object->camera_matrix, matrix);
 
-					matrix->_14 = 0.0f;
-					matrix->_24 = 0.0f;
-					matrix->_34 = 0.0f;
-					matrix->_44 = 1.0f;
+                    matrix->_14 = 0.0f;
+                    matrix->_24 = 0.0f;
+                    matrix->_34 = 0.0f;
+                    matrix->_44 = 1.0f;
 
-					if(hrc_data->flags & 0x2000 && struc_110->bone_positions)
-					{
-						struc_110->bone_positions[bone_index + 1].x = bone_matrix->_41;
-						struc_110->bone_positions[bone_index + 1].y = bone_matrix->_42;
-						struc_110->bone_positions[bone_index + 1].z = bone_matrix->_43;
-					}
-				}
-				else matrix = bone_matrix;
+                    if (hrc_data->flags & 0x2000 && struc_110->bone_positions)
+                    {
+                        struc_110->bone_positions[bone_index + 1].x = bone_matrix->_41;
+                        struc_110->bone_positions[bone_index + 1].y = bone_matrix->_42;
+                        struc_110->bone_positions[bone_index + 1].z = bone_matrix->_43;
+                    }
+                }
+                else
+                    matrix = bone_matrix;
 
-				if(bone->rsd_array)
-				{
-					uint32_t i;
-					struct rsd_array_member *rsd_array_member;
+                if (bone->rsd_array)
+                {
+                    uint32_t i;
+                    struct rsd_array_member *rsd_array_member;
 
-					for(i = 0, rsd_array_member = bone->rsd_array; i < bone->num_rsd; i++, rsd_array_member++)
-					{
-						struct ff7_polygon_set *polygon_set;
+                    for (i = 0, rsd_array_member = bone->rsd_array; i < bone->num_rsd; i++, rsd_array_member++)
+                    {
+                        struct ff7_polygon_set *polygon_set;
 
-						if(!rsd_array_member->rsd_data) continue;
+                        if (!rsd_array_member->rsd_data)
+                            continue;
 
-						polygon_set = rsd_array_member->rsd_data->polygon_set;
+                        polygon_set = rsd_array_member->rsd_data->polygon_set;
 
-						if(!polygon_set) continue;
+                        if (!polygon_set)
+                            continue;
 
-						common_setmatrix(0, matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
-						// The set keeps one view matrix for the bone matrix copied below (the game's draw passes a stack matrix)
-						if(polygon_set->matrix_set && !polygon_set->matrix_set->matrix_view) polygon_set->matrix_set->matrix_view = (struct matrix*)external_calloc(sizeof(struct matrix), 1);
-						common_setmatrix(1, bone_matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
+                        common_setmatrix(0, matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
+                        // The set keeps one view matrix for the bone matrix copied below (the game's draw passes a stack matrix)
+                        if (polygon_set->matrix_set && !polygon_set->matrix_set->matrix_view)
+                            polygon_set->matrix_set->matrix_view = (struct matrix *)external_calloc(sizeof(struct matrix), 1);
+                        common_setmatrix(1, bone_matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
 
-						if(hrc_data->flags & 0x2000000)
-						{
-							struct ff7_light *light = polygon_set->light;
+                        if (hrc_data->flags & 0x2000000)
+                        {
+                            struct ff7_light *light = polygon_set->light;
 
-							if(light)
-							{
-								if(polygon_set->matrix_set) light->matrix_pointer = polygon_set->matrix_set->matrix_world;
-								else light->matrix_pointer = 0;
+                            if (light)
+                            {
+                                if (polygon_set->matrix_set)
+                                    light->matrix_pointer = polygon_set->matrix_set->matrix_world;
+                                else
+                                    light->matrix_pointer = 0;
 
-								if(light->field_138)
-								{
-									struct matrix tmp;
+                                if (light->field_138)
+                                {
+                                    struct matrix tmp;
 
-									multiply_matrix(bone_matrix, &light->normal_matrix, &tmp);
+                                    multiply_matrix(bone_matrix, &light->normal_matrix, &tmp);
 
-									ff7_externals.sub_69C69F(&tmp, light);
-								}
-								else ff7_externals.sub_69C69F(bone_matrix, light);
+                                    ff7_externals.sub_69C69F(&tmp, light);
+                                }
+                                else
+                                    ff7_externals.sub_69C69F(bone_matrix, light);
 
-								common_externals.generic_light_polygon_set((struct polygon_set *)polygon_set, (struct light *)light);
-							}
-						}
+                                common_externals.generic_light_polygon_set((struct polygon_set *)polygon_set, (struct light *)light);
+                            }
+                        }
 
-						if(hrc_data->field_4 && hrc_data->flags & 0x100000) ff7gl_field_78(polygon_set, game_object);
-					}
-				}
-			}
-			if(bone_list_member->bone_type == 2) ff7_externals.stack_pop(matrix_stack);
-		}
-	}
+                        if (hrc_data->field_4 && hrc_data->flags & 0x100000)
+                            ff7gl_field_78(polygon_set, game_object);
+                    }
+                }
+            }
+            if (bone_list_member->bone_type == 2)
+                ff7_externals.stack_pop(matrix_stack);
+        }
+    }
 
-	ff7_externals.stack_pop(matrix_stack);
+    ff7_externals.stack_pop(matrix_stack);
 }
 
 void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *anim_header, struct struc_110 *struc_110, struct hrc_data *hrc_data, struct ff7_game_obj *game_object)
 {
-	struct anim_frame *anim_frame;
-	struct stack *matrix_stack;
-	struct matrix *root_matrix;
-	struct matrix world_matrix;
-	void (*root_animation_sub)(struct matrix *, struct anim_frame *, struct anim_header *, struct hrc_data *);
-	void (*frame_animation_sub)(uint32_t, struct matrix *, vector3<float> *, struct anim_frame *, struct anim_header *, struct hrc_bone *, struct hrc_data *);
+    struct anim_frame *anim_frame;
+    struct stack *matrix_stack;
+    struct matrix *root_matrix;
+    struct matrix world_matrix;
+    void (*root_animation_sub)(struct matrix *, struct anim_frame *, struct anim_header *, struct hrc_data *);
+    void (*frame_animation_sub)(uint32_t, struct matrix *, vector3<float> *, struct anim_frame *, struct anim_header *, struct hrc_bone *, struct hrc_data *);
 
-	if(!anim_header) return;
-	if(!hrc_data) return;
-	if(current_frame >= anim_header->num_frames) return;
+    if (!anim_header)
+        return;
+    if (!hrc_data)
+        return;
+    if (current_frame >= anim_header->num_frames)
+        return;
 
-	anim_frame = &anim_header->anim_frames[current_frame];
+    anim_frame = &anim_header->anim_frames[current_frame];
 
-	if(anim_header->use_matrix_array)
-	{
-		anim_header->current_matrix_array = &anim_header->matrix_array[(anim_header->num_bones + 1) * current_frame];
-	}
+    if (anim_header->use_matrix_array)
+    {
+        anim_header->current_matrix_array = &anim_header->matrix_array[(anim_header->num_bones + 1) * current_frame];
+    }
 
-	matrix_stack = game_object->matrix_stack1;
+    matrix_stack = game_object->matrix_stack1;
 
-	ff7_externals.stack_push(matrix_stack);
+    ff7_externals.stack_push(matrix_stack);
 
-	root_matrix = (matrix*)ff7_externals.stack_top(matrix_stack);
+    root_matrix = (matrix *)ff7_externals.stack_top(matrix_stack);
 
-	if(hrc_data->field_A4 && *hrc_data->field_A4)
-	{
-		root_animation_sub = ff7_externals._root_animation;
-		frame_animation_sub = ff7_externals._frame_animation;
-	}
-	else
-	{
-		root_animation_sub = ff7_externals.root_animation;
-		frame_animation_sub = ff7_externals.frame_animation;
-	}
+    if (hrc_data->field_A4 && *hrc_data->field_A4)
+    {
+        root_animation_sub = ff7_externals._root_animation;
+        frame_animation_sub = ff7_externals._frame_animation;
+    }
+    else
+    {
+        root_animation_sub = ff7_externals.root_animation;
+        frame_animation_sub = ff7_externals.frame_animation;
+    }
 
-	root_animation_sub(root_matrix, anim_frame, anim_header, hrc_data);
+    root_animation_sub(root_matrix, anim_frame, anim_header, hrc_data);
 
-	if(hrc_data->flags & 0x400) memcpy(&hrc_data->field_24, root_matrix, sizeof(*root_matrix));
+    if (hrc_data->flags & 0x400)
+        memcpy(&hrc_data->field_24, root_matrix, sizeof(*root_matrix));
 
-	ExternalMesh* external_mesh = getExternalMesh(hrc_data);
-	bool is_external_mesh = external_mesh != nullptr;
-	float external_mesh_clock = 0.0f;
-	if(is_external_mesh)
-	{
-		// Start from the animation's root motion (e.g. the height that stands the model on the floor, the train
-		// jump), then apply the struc_110 transforms on top of it, exactly like the vanilla path below
-		memcpy_code((uint32_t)&world_matrix, root_matrix, sizeof(world_matrix));
-		apply_struc110_transforms(&world_matrix, struc_110);
+    ExternalMesh *external_mesh = getExternalMesh(hrc_data);
+    bool is_external_mesh = external_mesh != nullptr;
+    float external_mesh_clock = 0.0f;
+    if (is_external_mesh)
+    {
+        // Start from the animation's root motion (e.g. the height that stands the model on the floor, the train
+        // jump), then apply the struc_110 transforms on top of it, exactly like the vanilla path below
+        memcpy_code((uint32_t)&world_matrix, root_matrix, sizeof(world_matrix));
+        apply_struc110_transforms(&world_matrix, struc_110);
 
-		// world_matrix already includes the root motion, so it's used as is (like root_matrix in the vanilla path)
-		if(hrc_data->flags & 0x800) memcpy_code((uint32_t)&hrc_data->field_64, &world_matrix, sizeof(world_matrix));
+        // world_matrix already includes the root motion, so it's used as is (like root_matrix in the vanilla path)
+        if (hrc_data->flags & 0x800)
+            memcpy_code((uint32_t)&hrc_data->field_64, &world_matrix, sizeof(world_matrix));
 
-		if(hrc_data->flags & 0x2000 && struc_110->bone_positions)
-		{
-			struc_110->bone_positions[0].x = world_matrix._41;
-			struc_110->bone_positions[0].y = world_matrix._42;
-			struc_110->bone_positions[0].z = world_matrix._43;
-		}
+        if (hrc_data->flags & 0x2000 && struc_110->bone_positions)
+        {
+            struc_110->bone_positions[0].x = world_matrix._41;
+            struc_110->bone_positions[0].y = world_matrix._42;
+            struc_110->bone_positions[0].z = world_matrix._43;
+        }
 
-		// When the gltf animates its own root node, draw the model with that root motion instead, so new
-		// animations can carry their own (e.g. a different standing height). The game keeps reading its own above.
-		std::string anim_name = get_external_mesh_anim_name(anim_header);
-		external_mesh_clock = external_mesh->getAnimationClock(anim_name);
-		struct matrix gltf_root_matrix;
-		float model_scale = gl_get_field_model_scale();
-		if(external_mesh->getRootMotionMatrix(anim_name, current_frame, anim_header->num_frames, external_mesh_clock, model_scale, &gltf_root_matrix))
-		{
-			if((trace_all || trace_loaders) && external_mesh->rootMotionChecked.insert(anim_name).second)
-				ffnx_trace("External mesh: %s uses the gltf root motion\n", anim_name.c_str());
+        // When the gltf animates its own root node, draw the model with that root motion instead, so new
+        // animations can carry their own (e.g. a different standing height). The game keeps reading its own above.
+        std::string anim_name = get_external_mesh_anim_name(anim_header);
+        external_mesh_clock = external_mesh->getAnimationClock(anim_name);
+        struct matrix gltf_root_matrix;
+        float model_scale = gl_get_field_model_scale();
+        if (external_mesh->getRootMotionMatrix(anim_name, current_frame, anim_header->num_frames, external_mesh_clock, model_scale, &gltf_root_matrix))
+        {
+            if ((trace_all || trace_loaders) && external_mesh->rootMotionChecked.insert(anim_name).second)
+                ffnx_trace("External mesh: %s uses the gltf root motion\n", anim_name.c_str());
 
-			memcpy_code((uint32_t)&world_matrix, &gltf_root_matrix, sizeof(world_matrix));
-			apply_struc110_transforms(&world_matrix, struc_110);
-		}
-	}
-	else
-	{
-		if(struc_110)
-		{
-			struct matrix scale_matrix;
+            memcpy_code((uint32_t)&world_matrix, &gltf_root_matrix, sizeof(world_matrix));
+            apply_struc110_transforms(&world_matrix, struc_110);
+        }
+    }
+    else
+    {
+        if (struc_110)
+        {
+            struct matrix scale_matrix;
 
-			if(struc_110->scale_factor != 1.0f)
-			{
-				float scale_factor = struc_110->scale_factor;
+            if (struc_110->scale_factor != 1.0f)
+            {
+                float scale_factor = struc_110->scale_factor;
 
-				root_matrix->_41 *= scale_factor;
-				root_matrix->_42 *= scale_factor;
-				root_matrix->_43 *= scale_factor;
+                root_matrix->_41 *= scale_factor;
+                root_matrix->_42 *= scale_factor;
+                root_matrix->_43 *= scale_factor;
 
-				uniform_scaling_matrix(scale_factor, &scale_matrix);
-				multiply_matrix_unary(root_matrix, &scale_matrix);
-			}
+                uniform_scaling_matrix(scale_factor, &scale_matrix);
+                multiply_matrix_unary(root_matrix, &scale_matrix);
+            }
 
-			if(struc_110->scale.x != 1.0f || struc_110->scale.y != 1.0f || struc_110->scale.z != 1.0f)
-			{
-				scaling_matrix(&struc_110->scale, &scale_matrix);
-				multiply_matrix_unary(root_matrix, &scale_matrix);
+            if (struc_110->scale.x != 1.0f || struc_110->scale.y != 1.0f || struc_110->scale.z != 1.0f)
+            {
+                scaling_matrix(&struc_110->scale, &scale_matrix);
+                multiply_matrix_unary(root_matrix, &scale_matrix);
 
-				root_matrix->_41 *= struc_110->scale.x;
-				root_matrix->_42 *= struc_110->scale.y;
-				root_matrix->_43 *= struc_110->scale.z;
-			}
+                root_matrix->_41 *= struc_110->scale.x;
+                root_matrix->_42 *= struc_110->scale.y;
+                root_matrix->_43 *= struc_110->scale.z;
+            }
 
-			if(*ff7_externals.model_mode & MDL_USE_STRUC110_MATRIX) multiply_matrix_unary(root_matrix, &struc_110->matrix);
+            if (*ff7_externals.model_mode & MDL_USE_STRUC110_MATRIX)
+                multiply_matrix_unary(root_matrix, &struc_110->matrix);
 
-			if(struc_110->rotation.y != 0.0) rotate_matrix_y(DEG2RAD(struc_110->rotation.y), root_matrix);
-			if(struc_110->rotation.x != 0.0) rotate_matrix_x(DEG2RAD(struc_110->rotation.x), root_matrix);
-			if(struc_110->rotation.z != 0.0) rotate_matrix_z(DEG2RAD(struc_110->rotation.z), root_matrix);
+            if (struc_110->rotation.y != 0.0)
+                rotate_matrix_y(DEG2RAD(struc_110->rotation.y), root_matrix);
+            if (struc_110->rotation.x != 0.0)
+                rotate_matrix_x(DEG2RAD(struc_110->rotation.x), root_matrix);
+            if (struc_110->rotation.z != 0.0)
+                rotate_matrix_z(DEG2RAD(struc_110->rotation.z), root_matrix);
 
-			root_matrix->_41 += struc_110->position.x;
-			root_matrix->_42 += struc_110->position.y;
-			root_matrix->_43 += struc_110->position.z;
-		}
+            root_matrix->_41 += struc_110->position.x;
+            root_matrix->_42 += struc_110->position.y;
+            root_matrix->_43 += struc_110->position.z;
+        }
 
-		if(hrc_data->flags & 0x800) memcpy(&hrc_data->field_64, root_matrix, sizeof(*root_matrix));
+        if (hrc_data->flags & 0x800)
+            memcpy(&hrc_data->field_64, root_matrix, sizeof(*root_matrix));
 
-		if(hrc_data->flags & 0x2000 && struc_110->bone_positions)
-		{
-			struc_110->bone_positions[0].x = root_matrix->_41;
-			struc_110->bone_positions[0].y = root_matrix->_42;
-			struc_110->bone_positions[0].z = root_matrix->_43;
-		}
-	}
+        if (hrc_data->flags & 0x2000 && struc_110->bone_positions)
+        {
+            struc_110->bone_positions[0].x = root_matrix->_41;
+            struc_110->bone_positions[0].y = root_matrix->_42;
+            struc_110->bone_positions[0].z = root_matrix->_43;
+        }
+    }
 
-	if(hrc_data->bone_list)
-	{
-		struct list_node *bone_list_node;
+    if (hrc_data->bone_list)
+    {
+        struct list_node *bone_list_node;
 
-		LIST_FOR_EACH(bone_list_node, hrc_data->bone_list)
-		{
-			struct bone_list_member *bone_list_member = (struct bone_list_member *)&bone_list_node->object;
+        LIST_FOR_EACH(bone_list_node, hrc_data->bone_list)
+        {
+            struct bone_list_member *bone_list_member = (struct bone_list_member *)&bone_list_node->object;
 
-			if(bone_list_member->bone_type == 1)
-			{
-				uint32_t bone_index = bone_list_member->bone_index;
-				struct hrc_bone *bone = &hrc_data->bones[bone_index];
-				struct matrix *parent_matrix;
-				struct matrix *bone_matrix;
-				vector3<float> *frame_rotation;
-				struct matrix local_matrix;
-				struct matrix eye_matrix;
-				struct matrix *matrix;
-				vector3<float> dummy_point = {0.0f, 0.0f, 0.0f};
+            if (bone_list_member->bone_type == 1)
+            {
+                uint32_t bone_index = bone_list_member->bone_index;
+                struct hrc_bone *bone = &hrc_data->bones[bone_index];
+                struct matrix *parent_matrix;
+                struct matrix *bone_matrix;
+                vector3<float> *frame_rotation;
+                struct matrix local_matrix;
+                struct matrix eye_matrix;
+                struct matrix *matrix;
+                vector3<float> dummy_point = {0.0f, 0.0f, 0.0f};
 
-				parent_matrix = (struct matrix*)ff7_externals.stack_top(matrix_stack);
-				ff7_externals.stack_push(matrix_stack);
-				bone_matrix = (struct matrix*)ff7_externals.stack_top(matrix_stack);
+                parent_matrix = (struct matrix *)ff7_externals.stack_top(matrix_stack);
+                ff7_externals.stack_push(matrix_stack);
+                bone_matrix = (struct matrix *)ff7_externals.stack_top(matrix_stack);
 
-				if(anim_header->num_bones <= bone_index) frame_rotation = &dummy_point;
-				else frame_rotation = &anim_frame->data[bone_index];
+                if (anim_header->num_bones <= bone_index)
+                    frame_rotation = &dummy_point;
+                else
+                    frame_rotation = &anim_frame->data[bone_index];
 
-				frame_animation_sub(bone_index, &local_matrix, frame_rotation, anim_frame, anim_header, bone, hrc_data);
+                frame_animation_sub(bone_index, &local_matrix, frame_rotation, anim_frame, anim_header, bone, hrc_data);
 
-				multiply_matrix(&local_matrix, parent_matrix, bone_matrix);
+                multiply_matrix(&local_matrix, parent_matrix, bone_matrix);
 
-				if(*ff7_externals.model_mode & MDL_USE_CAMERA_MATRIX)
-				{
-					if(hrc_data->flags & 0x4000 && struc_110->bone_matrices) matrix = &struc_110->bone_matrices[bone_index + 1];
-					else matrix = &eye_matrix;
+                if (*ff7_externals.model_mode & MDL_USE_CAMERA_MATRIX)
+                {
+                    if (hrc_data->flags & 0x4000 && struc_110->bone_matrices)
+                        matrix = &struc_110->bone_matrices[bone_index + 1];
+                    else
+                        matrix = &eye_matrix;
 
-					multiply_matrix(bone_matrix, game_object->camera_matrix, matrix);
+                    multiply_matrix(bone_matrix, game_object->camera_matrix, matrix);
 
-					matrix->_14 = 0.0f;
-					matrix->_24 = 0.0f;
-					matrix->_34 = 0.0f;
-					matrix->_44 = 1.0f;
+                    matrix->_14 = 0.0f;
+                    matrix->_24 = 0.0f;
+                    matrix->_34 = 0.0f;
+                    matrix->_44 = 1.0f;
 
-					if(hrc_data->flags & 0x2000 && struc_110->bone_positions)
-					{
-						struc_110->bone_positions[bone_index + 1].x = bone_matrix->_41;
-						struc_110->bone_positions[bone_index + 1].y = bone_matrix->_42;
-						struc_110->bone_positions[bone_index + 1].z = bone_matrix->_43;
-					}
-				}
-				else matrix = bone_matrix;
+                    if (hrc_data->flags & 0x2000 && struc_110->bone_positions)
+                    {
+                        struc_110->bone_positions[bone_index + 1].x = bone_matrix->_41;
+                        struc_110->bone_positions[bone_index + 1].y = bone_matrix->_42;
+                        struc_110->bone_positions[bone_index + 1].z = bone_matrix->_43;
+                    }
+                }
+                else
+                    matrix = bone_matrix;
 
-				struct matrix model_view_matrix;
-				if(*ff7_externals.model_mode & MDL_USE_CAMERA_MATRIX)
-				{
-					multiply_matrix( &world_matrix, game_object->camera_matrix, &model_view_matrix);
-				}
+                struct matrix model_view_matrix;
+                if (*ff7_externals.model_mode & MDL_USE_CAMERA_MATRIX)
+                {
+                    multiply_matrix(&world_matrix, game_object->camera_matrix, &model_view_matrix);
+                }
 
-				if(bone->rsd_array)
-				{
-					uint32_t i;
-					struct rsd_array_member *rsd_array_member;
+                if (bone->rsd_array)
+                {
+                    uint32_t i;
+                    struct rsd_array_member *rsd_array_member;
 
-					for(i = 0, rsd_array_member = bone->rsd_array; i < bone->num_rsd; i++, rsd_array_member++)
-					{
-						struct ff7_polygon_set *polygon_set;
+                    for (i = 0, rsd_array_member = bone->rsd_array; i < bone->num_rsd; i++, rsd_array_member++)
+                    {
+                        struct ff7_polygon_set *polygon_set;
 
-						if(!rsd_array_member->rsd_data) continue;
+                        if (!rsd_array_member->rsd_data)
+                            continue;
 
-						polygon_set = rsd_array_member->rsd_data->polygon_set;
+                        polygon_set = rsd_array_member->rsd_data->polygon_set;
 
-						if(!polygon_set) continue;
+                        if (!polygon_set)
+                            continue;
 
-						if (is_external_mesh && polygon_set->polygon_data->field_48 == nullptr) continue;
+                        if (is_external_mesh && polygon_set->polygon_data->field_48 == nullptr)
+                            continue;
 
-						if(polygon_set->polygon_data->field_48)
-						{
-							if(*ff7_externals.model_mode & MDL_USE_CAMERA_MATRIX)
-							{
-								common_setmatrix(0, &model_view_matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
-							}
-							else
-							{
-								common_setmatrix(0, &world_matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
-							}							
-						}
-						else
-						{
-							common_setmatrix(0, matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
-							// The set keeps one view matrix for the bone matrix copied below (the game's draw passes a stack matrix)
-							if(polygon_set->matrix_set && !polygon_set->matrix_set->matrix_view) polygon_set->matrix_set->matrix_view = (struct matrix*)external_calloc(sizeof(struct matrix), 1);
-							common_setmatrix(1, bone_matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
-						}
+                        if (polygon_set->polygon_data->field_48)
+                        {
+                            if (*ff7_externals.model_mode & MDL_USE_CAMERA_MATRIX)
+                            {
+                                common_setmatrix(0, &model_view_matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
+                            }
+                            else
+                            {
+                                common_setmatrix(0, &world_matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
+                            }
+                        }
+                        else
+                        {
+                            common_setmatrix(0, matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
+                            // The set keeps one view matrix for the bone matrix copied below (the game's draw passes a stack matrix)
+                            if (polygon_set->matrix_set && !polygon_set->matrix_set->matrix_view)
+                                polygon_set->matrix_set->matrix_view = (struct matrix *)external_calloc(sizeof(struct matrix), 1);
+                            common_setmatrix(1, bone_matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
+                        }
 
-						if(hrc_data->flags & 0x2000000)
-						{
-							struct ff7_light *light = polygon_set->light;
+                        if (hrc_data->flags & 0x2000000)
+                        {
+                            struct ff7_light *light = polygon_set->light;
 
-							if(light)
-							{
-								if(polygon_set->matrix_set) light->matrix_pointer = polygon_set->matrix_set->matrix_world;
-								else light->matrix_pointer = 0;
+                            if (light)
+                            {
+                                if (polygon_set->matrix_set)
+                                    light->matrix_pointer = polygon_set->matrix_set->matrix_world;
+                                else
+                                    light->matrix_pointer = 0;
 
-								if(light->field_138)
-								{
-									struct matrix tmp;
+                                if (light->field_138)
+                                {
+                                    struct matrix tmp;
 
-									multiply_matrix(bone_matrix, &light->normal_matrix, &tmp);
+                                    multiply_matrix(bone_matrix, &light->normal_matrix, &tmp);
 
-									ff7_externals.sub_69C69F(&tmp, light);
-								}
-								else ff7_externals.sub_69C69F(bone_matrix, light);
+                                    ff7_externals.sub_69C69F(&tmp, light);
+                                }
+                                else
+                                    ff7_externals.sub_69C69F(bone_matrix, light);
 
-								common_externals.generic_light_polygon_set((struct polygon_set *)polygon_set, (struct light *)light);
-							}
-						}
-						if (polygon_set->polygon_data->field_48)
-						{
-							auto externalMesh = reinterpret_cast<ExternalMesh*>(polygon_set->polygon_data->field_48);
+                                common_externals.generic_light_polygon_set((struct polygon_set *)polygon_set, (struct light *)light);
+                            }
+                        }
+                        if (polygon_set->polygon_data->field_48)
+                        {
+                            auto externalMesh = reinterpret_cast<ExternalMesh *>(polygon_set->polygon_data->field_48);
 
-							externalMesh->skins[0].current_anim = get_external_mesh_anim_name(anim_header);
-							externalMesh->skins[0].current_frame = current_frame;
-							externalMesh->skins[0].current_frame_count = anim_header->num_frames;
-							externalMesh->skins[0].current_clock = external_mesh_clock;
-						}
-						if(hrc_data->field_4 && hrc_data->flags & 0x100000) ff7gl_field_78(polygon_set, game_object);
-					}
-				}
-			}
-			if(bone_list_member->bone_type == 2) ff7_externals.stack_pop(matrix_stack);
-		}
-	}
+                            externalMesh->skins[0].current_anim = get_external_mesh_anim_name(anim_header);
+                            externalMesh->skins[0].current_frame = current_frame;
+                            externalMesh->skins[0].current_frame_count = anim_header->num_frames;
+                            externalMesh->skins[0].current_clock = external_mesh_clock;
+                        }
+                        if (hrc_data->field_4 && hrc_data->flags & 0x100000)
+                            ff7gl_field_78(polygon_set, game_object);
+                    }
+                }
+            }
+            if (bone_list_member->bone_type == 2)
+                ff7_externals.stack_pop(matrix_stack);
+        }
+    }
 
-	ff7_externals.stack_pop(matrix_stack);
+    ff7_externals.stack_pop(matrix_stack);
 }
 
 int battle_sub_684CC6(hrc_data *a1, ff7_game_obj *game_object)
 {
-  int result = 0; // eax
-  int j; // [esp+4h] [ebp-10h]
-  struct rsd_array_member *rsd_array; // [esp+8h] [ebp-Ch]
-  int bone_index; // [esp+Ch] [ebp-8h]
-  struct hrc_bone *bones; // [esp+10h] [ebp-4h]
+    int result = 0;                     // eax
+    int j;                              // [esp+4h] [ebp-10h]
+    struct rsd_array_member *rsd_array; // [esp+8h] [ebp-Ch]
+    int bone_index;                     // [esp+Ch] [ebp-8h]
+    struct hrc_bone *bones;             // [esp+10h] [ebp-4h]
 
-  if ( a1 )
-  {
-    bones = a1->bones;
-    for ( bone_index = 0; ; ++bone_index )
+    if (a1)
     {
-      result = (int)a1;
-      if ( bone_index >= a1->num_bones )
-        break;
-
-      if ( bones->num_rsd > 0 )
-      {
-        rsd_array = bones->rsd_array;
-        if ( rsd_array )
+        bones = a1->bones;
+        for (bone_index = 0;; ++bone_index)
         {
-          for ( j = 0; j < bones->num_rsd; ++j )
-          {
-            if ( rsd_array->rsd_data )
-			{
-              	ff7gl_field_78(rsd_array->rsd_data->polygon_set, game_object);
-			}
-            ++rsd_array;
-          }
+            result = (int)a1;
+            if (bone_index >= a1->num_bones)
+                break;
+
+            if (bones->num_rsd > 0)
+            {
+                rsd_array = bones->rsd_array;
+                if (rsd_array)
+                {
+                    for (j = 0; j < bones->num_rsd; ++j)
+                    {
+                        if (rsd_array->rsd_data)
+                        {
+                            ff7gl_field_78(rsd_array->rsd_data->polygon_set, game_object);
+                        }
+                        ++rsd_array;
+                    }
+                }
+            }
+            ++bones;
         }
-      }
-      ++bones;
     }
-  }
-  return result;
+    return result;
 }
-void fill_light_data(struct light_data* lightData, struct ff7_polygon_set *polygon_set)
+void fill_light_data(struct light_data *lightData, struct ff7_polygon_set *polygon_set)
 {
-	lightData->global_light_color = polygon_set->light->global_light_color_abgr_norm;
-	lightData->light_dir_1 = polygon_set->light->color_1->point;
-	lightData->light_color_1 = polygon_set->light->color_1->d3dcol;
-	lightData->light_dir_2 = polygon_set->light->color_2->point;
-	lightData->light_color_2 = polygon_set->light->color_2->d3dcol;
-	lightData->light_dir_3 = polygon_set->light->color_3->point;
-	lightData->light_color_3 = polygon_set->light->color_3->d3dcol;
+    lightData->global_light_color = polygon_set->light->global_light_color_abgr_norm;
+    lightData->light_dir_1 = polygon_set->light->color_1->point;
+    lightData->light_color_1 = polygon_set->light->color_1->d3dcol;
+    lightData->light_dir_2 = polygon_set->light->color_2->point;
+    lightData->light_color_2 = polygon_set->light->color_2->d3dcol;
+    lightData->light_dir_3 = polygon_set->light->color_3->point;
+    lightData->light_color_3 = polygon_set->light->color_3->d3dcol;
 
-	lightData->scripted_light_color = {1.0, 1.0, 1.0, 1.0};
+    lightData->scripted_light_color = {1.0, 1.0, 1.0, 1.0};
 
-	if ((polygon_set->light->flags & 4) != 0)
-	{
-		lightData->scripted_light_color.r = polygon_set->light->color.r / 255.0f;
-		lightData->scripted_light_color.g = polygon_set->light->color.g / 255.0f;
-		lightData->scripted_light_color.b = polygon_set->light->color.b / 255.0f;
-	}
+    if ((polygon_set->light->flags & 4) != 0)
+    {
+        lightData->scripted_light_color.r = polygon_set->light->color.r / 255.0f;
+        lightData->scripted_light_color.g = polygon_set->light->color.g / 255.0f;
+        lightData->scripted_light_color.b = polygon_set->light->color.b / 255.0f;
+    }
 }
 
 void ff7_get_field_view_matrix(struct matrix *outViewMatrix)
 {
-	struct matrix viewMatrix;
-	identity_matrix(&viewMatrix);
+    struct matrix viewMatrix;
+    identity_matrix(&viewMatrix);
 
-	byte *level_data = *ff7_externals.field_level_data_pointer;
-	if (!level_data)
-	{
-		return;
-	}
+    byte *level_data = *ff7_externals.field_level_data_pointer;
+    if (!level_data)
+    {
+        return;
+    }
 
-	ff7_camdata *field_camera_data = *ff7_externals.field_camera_data;
-	if (!field_camera_data)
-	{
-		return;
-	}
+    ff7_camdata *field_camera_data = *ff7_externals.field_camera_data;
+    if (!field_camera_data)
+    {
+        return;
+    }
 
-	vector3<float> vx = {(float)(field_camera_data->eye.x), (float)(field_camera_data->eye.y), (float)(field_camera_data->eye.z)};
-	vector3<float> vy = {(float)(field_camera_data->target.x), (float)(field_camera_data->target.y), (float)(field_camera_data->target.z)};
-	vector3<float> vz = {(float)(field_camera_data->up.x), (float)(field_camera_data->up.y), (float)(field_camera_data->up.z)};
+    vector3<float> vx = {(float)(field_camera_data->eye.x), (float)(field_camera_data->eye.y), (float)(field_camera_data->eye.z)};
+    vector3<float> vy = {(float)(field_camera_data->target.x), (float)(field_camera_data->target.y), (float)(field_camera_data->target.z)};
+    vector3<float> vz = {(float)(field_camera_data->up.x), (float)(field_camera_data->up.y), (float)(field_camera_data->up.z)};
 
-	divide_vector(&vx, 4096.0f, &vx);
-	divide_vector(&vy, 4096.0f, &vy);
-	divide_vector(&vz, 4096.0f, &vz);
+    divide_vector(&vx, 4096.0f, &vx);
+    divide_vector(&vy, 4096.0f, &vy);
+    divide_vector(&vz, 4096.0f, &vz);
 
-	float ox = static_cast<float>(field_camera_data->position.x);
-	float oy = static_cast<float>(field_camera_data->position.y);
-	float oz = static_cast<float>(field_camera_data->position.z);
+    float ox = static_cast<float>(field_camera_data->position.x);
+    float oy = static_cast<float>(field_camera_data->position.y);
+    float oz = static_cast<float>(field_camera_data->position.z);
 
-	float tx = ox;
-	float ty = oy;
-	float tz = oz;
+    float tx = ox;
+    float ty = oy;
+    float tz = oz;
 
-	viewMatrix._11 = vx.x;
-	viewMatrix._21 = vx.y;
-	viewMatrix._31 = vx.z;
-	viewMatrix._12 = vy.x;
-	viewMatrix._22 = vy.y;
-	viewMatrix._32 = vy.z;
-	viewMatrix._13 = vz.x;
-	viewMatrix._23 = vz.y;
-	viewMatrix._33 = vz.z;
-	viewMatrix._41 = tx;
-	viewMatrix._42 = ty;
-	viewMatrix._43 = tz;
-	viewMatrix._44 = 1.0;
+    viewMatrix._11 = vx.x;
+    viewMatrix._21 = vx.y;
+    viewMatrix._31 = vx.z;
+    viewMatrix._12 = vy.x;
+    viewMatrix._22 = vy.y;
+    viewMatrix._32 = vy.z;
+    viewMatrix._13 = vz.x;
+    viewMatrix._23 = vz.y;
+    viewMatrix._33 = vz.z;
+    viewMatrix._41 = tx;
+    viewMatrix._42 = ty;
+    viewMatrix._43 = tz;
+    viewMatrix._44 = 1.0;
 
-	memcpy(outViewMatrix, &viewMatrix, sizeof(matrix));
+    memcpy(outViewMatrix, &viewMatrix, sizeof(matrix));
 }
 
 void update_view_matrix(struct ff7_game_obj *game_object)
 {
-	if (newRenderer.isViewMatrixSet()) return;
+    if (newRenderer.isViewMatrixSet())
+        return;
 
-	struct game_mode *mode = getmode_cached();
+    struct game_mode *mode = getmode_cached();
 
-	struct matrix viewMatrix;
-	struct matrix *pViewMatrix = &viewMatrix;
+    struct matrix viewMatrix;
+    struct matrix *pViewMatrix = &viewMatrix;
 
-	switch(mode->driver_mode)
-	{
-		case MODE_FIELD:
-			// Get Field view matrix
-			ff7_get_field_view_matrix(&viewMatrix);
-			newRenderer.setViewMatrix(&viewMatrix);
-			break;
-		case MODE_WORLDMAP:
-		{
-			if (enable_worldmap_external_mesh)
-			{
-				int world_pos_x = ff7_externals.world_player_pos_E04918->x;
-				int world_pos_y = ff7_externals.world_player_pos_E04918->y;
-				int world_pos_z = ff7_externals.world_player_pos_E04918->z;
+    switch (mode->driver_mode)
+    {
+    case MODE_FIELD:
+        // Get Field view matrix
+        ff7_get_field_view_matrix(&viewMatrix);
+        newRenderer.setViewMatrix(&viewMatrix);
+        break;
+    case MODE_WORLDMAP: {
+        if (enable_worldmap_external_mesh)
+        {
+            int world_pos_x = ff7_externals.world_player_pos_E04918->x;
+            int world_pos_y = ff7_externals.world_player_pos_E04918->y;
+            int world_pos_z = ff7_externals.world_player_pos_E04918->z;
 
-				auto rot_matrix = ff7_externals.world_camera_direction_matrix_DFC448;
-				auto tr_matrix = ff7_externals.world_camera_position_matrix_DE6A20;
+            auto rot_matrix = ff7_externals.world_camera_direction_matrix_DFC448;
+            auto tr_matrix = ff7_externals.world_camera_position_matrix_DE6A20;
 
-				float cameraRotationMatrixFloat[16];
+            float cameraRotationMatrixFloat[16];
 
-				cameraRotationMatrixFloat[0] = rot_matrix->r3_sub_matrix[0][0] / 4096.0f;
-				cameraRotationMatrixFloat[1] = rot_matrix->r3_sub_matrix[0][1] / 4096.0f;
-				cameraRotationMatrixFloat[2] = rot_matrix->r3_sub_matrix[0][2] / 4096.0f;
-				cameraRotationMatrixFloat[3] = 0.0f;
+            cameraRotationMatrixFloat[0] = rot_matrix->r3_sub_matrix[0][0] / 4096.0f;
+            cameraRotationMatrixFloat[1] = rot_matrix->r3_sub_matrix[0][1] / 4096.0f;
+            cameraRotationMatrixFloat[2] = rot_matrix->r3_sub_matrix[0][2] / 4096.0f;
+            cameraRotationMatrixFloat[3] = 0.0f;
 
-				cameraRotationMatrixFloat[4] = rot_matrix->r3_sub_matrix[1][0] / 4096.0f;
-				cameraRotationMatrixFloat[5] = rot_matrix->r3_sub_matrix[1][1] / 4096.0f;
-				cameraRotationMatrixFloat[6] = rot_matrix->r3_sub_matrix[1][2] / 4096.0f;
-				cameraRotationMatrixFloat[7] = 0.0f;
+            cameraRotationMatrixFloat[4] = rot_matrix->r3_sub_matrix[1][0] / 4096.0f;
+            cameraRotationMatrixFloat[5] = rot_matrix->r3_sub_matrix[1][1] / 4096.0f;
+            cameraRotationMatrixFloat[6] = rot_matrix->r3_sub_matrix[1][2] / 4096.0f;
+            cameraRotationMatrixFloat[7] = 0.0f;
 
-				cameraRotationMatrixFloat[8] = rot_matrix->r3_sub_matrix[2][0] / 4096.0f;
-				cameraRotationMatrixFloat[9] = rot_matrix->r3_sub_matrix[2][1] / 4096.0f;
-				cameraRotationMatrixFloat[10] = rot_matrix->r3_sub_matrix[2][2] / 4096.0f;
-				cameraRotationMatrixFloat[11] = 0.0f;
+            cameraRotationMatrixFloat[8] = rot_matrix->r3_sub_matrix[2][0] / 4096.0f;
+            cameraRotationMatrixFloat[9] = rot_matrix->r3_sub_matrix[2][1] / 4096.0f;
+            cameraRotationMatrixFloat[10] = rot_matrix->r3_sub_matrix[2][2] / 4096.0f;
+            cameraRotationMatrixFloat[11] = 0.0f;
 
-				cameraRotationMatrixFloat[12] = 0.0f;
-				cameraRotationMatrixFloat[13] = 0.0f;
-				cameraRotationMatrixFloat[14] = 0.0f;
-				cameraRotationMatrixFloat[15] = 1.0f;
+            cameraRotationMatrixFloat[12] = 0.0f;
+            cameraRotationMatrixFloat[13] = 0.0f;
+            cameraRotationMatrixFloat[14] = 0.0f;
+            cameraRotationMatrixFloat[15] = 1.0f;
 
-				float cameraTranslationMatrixFloat[16];
-				bx::mtxTranslate(cameraTranslationMatrixFloat, 0, 0, -tr_matrix->position[2]);
+            float cameraTranslationMatrixFloat[16];
+            bx::mtxTranslate(cameraTranslationMatrixFloat, 0, 0, -tr_matrix->position[2]);
 
-				float cameraTranslationMatrixFloat2[16];
-				bx::mtxTranslate(cameraTranslationMatrixFloat2, world_pos_x, world_pos_y, world_pos_z);
+            float cameraTranslationMatrixFloat2[16];
+            bx::mtxTranslate(cameraTranslationMatrixFloat2, world_pos_x, world_pos_y, world_pos_z);
 
-				float tmp[16];
-				bx::mtxMul(tmp, cameraTranslationMatrixFloat, cameraRotationMatrixFloat);
+            float tmp[16];
+            bx::mtxMul(tmp, cameraTranslationMatrixFloat, cameraRotationMatrixFloat);
 
-				float cameraMatrixFloat[16];
-				bx::mtxMul(cameraMatrixFloat, tmp, cameraTranslationMatrixFloat2);
+            float cameraMatrixFloat[16];
+            bx::mtxMul(cameraMatrixFloat, tmp, cameraTranslationMatrixFloat2);
 
-				float viewMatrixFloat[16];
-				bx::mtxInverse(viewMatrixFloat, cameraMatrixFloat);
+            float viewMatrixFloat[16];
+            bx::mtxInverse(viewMatrixFloat, cameraMatrixFloat);
 
-				struct matrix viewMatrix;
-				::memcpy(&viewMatrix.m[0][0], viewMatrixFloat, sizeof(viewMatrix.m));
+            struct matrix viewMatrix;
+            ::memcpy(&viewMatrix.m[0][0], viewMatrixFloat, sizeof(viewMatrix.m));
 
-				newRenderer.setViewMatrix(&viewMatrix);
-			}
-			else
-			{
-				pViewMatrix = game_object->camera_matrix;
-				if (pViewMatrix)
-				{
-					newRenderer.setViewMatrix(pViewMatrix);
-				}
-			}
-		}
-			break;
-		default:
-			pViewMatrix = game_object->camera_matrix;
-			if (pViewMatrix)
-			{
-				newRenderer.setViewMatrix(pViewMatrix);
-			}
-			break;
-	}
+            newRenderer.setViewMatrix(&viewMatrix);
+        }
+        else
+        {
+            pViewMatrix = game_object->camera_matrix;
+            if (pViewMatrix)
+            {
+                newRenderer.setViewMatrix(pViewMatrix);
+            }
+        }
+    }
+    break;
+    default:
+        pViewMatrix = game_object->camera_matrix;
+        if (pViewMatrix)
+        {
+            newRenderer.setViewMatrix(pViewMatrix);
+        }
+        break;
+    }
 };
