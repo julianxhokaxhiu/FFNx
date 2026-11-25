@@ -31,7 +31,7 @@
 - Core: Fix the Doom countdown drawn lower than on PSX and overlapping the second status countdown above battle models ( https://github.com/julianxhokaxhiu/FFNx/pull/1086 )
 - Core: Fix the missing light on Cure, Cura, Potion and Hi-Potion, the missing swirl on Hypnotize, and the missing flash on Boko's ChocoBocle ( https://github.com/julianxhokaxhiu/FFNx/pull/1083 )
 - Core: Fix the missing sword slash on Gilgamesh's Masamune, the Eden sparkles drawn off screen and the long spikes Magic Summon throws across the screen ( https://github.com/julianxhokaxhiu/FFNx/pull/1088 )
-- Core: Fix battle weapons shivering against the hand holding them, for eg. Selphie's nunchaku: party models and weapons are drawn from full precision bone matrices. See `ff8_battle_precise_bones` in FFNx.toml
+- Core: Fix battle weapons shivering against the hand holding them, for eg. Selphie's nunchaku: party models and weapons are drawn from full precision bone matrices. See `ff8_battle_precise_bones` in FFNx.toml ( https://github.com/julianxhokaxhiu/FFNx/pull/1110 )
 - Core: Fix the world map check that lifts the camera when terrain hides the player: it tested a point near the top-left corner of the screen instead of the player ( https://github.com/julianxhokaxhiu/FFNx/pull/1089 )
 - Direct mode: Add the chunk feature for the character and weapon battle files (dXcNNN.dat, dXwNNN.dat), see [Direct mode](docs/mods/direct_mode.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/1074 )
 - Direct mode: Allow to override Remastered models for FF8R edition, see [Direct mode](docs/mods/direct_mode.md)
