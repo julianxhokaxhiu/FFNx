@@ -18,8 +18,6 @@
 #include "fx_params.h"
 #include "fx_model_sweep.h"
 
-#include <windows.h>
-
 namespace ff8fx
 {
 namespace abadon314
@@ -1304,47 +1302,6 @@ static uint32_t __cdecl RootTask(TaskNode *n)
     return 0;
 }
 
-// For the verifier: the shard sweep marks broken polygons (bit 0x80 of byte 0xF) inside the caster's model,
-// so the model's polygon block is effect state. Same walk as ShardModel, every object.
-void ModelPolyRegions(void (*add)(uint32_t addr, uint32_t size, const char *name))
-{
-    uint8_t *ent = Caster();
-    if (!ent || IsBadReadPtr(ent + 0x64, 4))
-        return;
-    const uint8_t *model = *(const uint8_t *const *)(ent + 0x64);
-    if (!model || IsBadReadPtr(model + 4, 4))
-        return;
-    const uint8_t *base = *(const uint8_t *const *)(model + 4);
-    if (!base || IsBadReadPtr(base, 4))
-        return;
-    const uint32_t count = *(const uint32_t *)base;
-    if (count == 0 || count > 32 || IsBadReadPtr(base, 4 + count * 4))
-        return;
-    uint32_t end = 0;
-    for (uint32_t i = 0; i < count; i++)
-    {
-        const uint8_t *p = base + ((const uint32_t *)base)[1 + i];
-        if (IsBadReadPtr(p, 2))
-            return;
-        const int32_t groups = *(const int16_t *)p;
-        p += 2;
-        for (int32_t g = 0; g < groups; g++)
-        {
-            if (IsBadReadPtr(p, 4))
-                return;
-            p += 2;
-            p += *(const int16_t *)p * 6 + 2;
-        }
-        p = (const uint8_t *)(((uint32_t)p + 3) & ~3u);
-        if (IsBadReadPtr(p, 4))
-            return;
-        const uint32_t e = (uint32_t)(p + 0xC) + *(const uint16_t *)p * 0x10u + *(const uint16_t *)(p + 2) * 0x14u - (uint32_t)base;
-        if (e > end)
-            end = e;
-    }
-    if (end && end <= 0x80000 && !IsBadReadPtr(base, end))
-        add((uint32_t)base, end, "Abadon model polygons");
-}
 } // namespace abadon314
 
 void register_mag314_abadon()

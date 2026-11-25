@@ -329,7 +329,6 @@ const char *port_name(uint32_t orig);
 extern bool g_active;
 void register_all();
 void install();
-extern void (*g_queue_seen)(TaskQueue *q);
 
 namespace prim
 {
@@ -353,7 +352,6 @@ struct Record
 };
 typedef void(__cdecl *Callback)(Layout *l, Record *r, int arg);
 int play(Layout *l, Callback cb, int arg, int paused);
-void install_verify();
 } // namespace prim
 
 void register_mag069_griever();
