@@ -792,6 +792,16 @@ ff8_use_gamepad_icons = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff8_always_capture_input = false
 
+# Battle models drawn from full precision bone matrices
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Party models and their weapons use a small skeleton scale, which leaves each bone matrix with
+# very little precision: every bone snaps on its own and weapons shiver against the hand holding them.
+# This option draws them from full precision bone matrices. The game's own matrices are unchanged,
+# so effects, shadows and attach points are not affected.
+# PLEASE NOTE: THIS IS A VALID OPTION ONLY FOR THE ENGLISH VERSION OF THE GAME.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff8_battle_precise_bones = true
+
 # FPS Limiter
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This flag will overwrite the internal FPS limiter of the game.

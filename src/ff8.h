@@ -1982,6 +1982,11 @@ struct ff8_externals
     uint32_t battle_link_task_failed_call;
     uint32_t sub_5099D0;
     int16_t (*world_calc_zoom_sub_50F900)(int16_t *, int16_t **, uint32_t **);
+    uint32_t gte_load_transform_sub_509B30;
+    uint32_t battle_render_entity_sub_502D40;
+    uint32_t battle_rebuild_entity_bones_sub_508F60;
+    uint32_t battle_build_bone_matrices_sub_508C90;
+    uint32_t battle_compute_bones_world_matrices_sub_5095B0;
     uint32_t sub_506C90;
     uint32_t sub_506CF0;
     uint32_t sub_5084B0;

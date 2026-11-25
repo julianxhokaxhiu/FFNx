@@ -1127,6 +1127,14 @@ void ff8_find_externals()
     uint32_t battle_animation_update = get_relative_call(battle_entity_update, 0x10E);
     uint32_t battle_animation_opcode = get_absolute_value(battle_animation_update, 0x53);
     ff8_externals.battle_status_countdown = get_relative_call(get_relative_call(battle_entity_update, 0xAD), 0xBD);
+    if (FF8_US_VERSION)
+    {
+        ff8_externals.gte_load_transform_sub_509B30 = get_relative_call(ff8_externals.sub_5099D0, 0xBD);
+        ff8_externals.battle_render_entity_sub_502D40 = get_relative_call(battle_entity_update, 0xE5);
+        ff8_externals.battle_rebuild_entity_bones_sub_508F60 = get_relative_call(battle_entity_update, 0x125);
+        ff8_externals.battle_build_bone_matrices_sub_508C90 = get_relative_call(ff8_externals.battle_rebuild_entity_bones_sub_508F60, 0x9);
+        ff8_externals.battle_compute_bones_world_matrices_sub_5095B0 = get_relative_call(ff8_externals.battle_render_entity_sub_502D40, 0xB2);
+    }
     ff8_externals.battle_actor_sound = get_relative_call(get_relative_call(battle_animation_opcode, 0x5CD), 0xEF);
     ff8_externals.battle_actor_sound_3d = get_relative_call(battle_animation_update, 0x1F3);
     ff8_externals.battle_actor_sound_pan = get_relative_call(ff8_externals.battle_actor_sound_3d, 0xBF);

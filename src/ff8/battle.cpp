@@ -24,6 +24,7 @@
 #include "battle/anim_set.h"
 #include "battle/ui.h"
 #include "battle/effects.h"
+#include "battle/precise_bones.h"
 
 void ff8_battle_init()
 {
@@ -37,4 +38,6 @@ void ff8_battle_init()
     ff8_battle_anim_set_init();
     ff8_battle_ui_init();
     ff8_battle_effects_init();
+    // Party models and weapons drawn from full precision bone matrices
+    ff8_battle_precise_bones_init();
 }
