@@ -1342,6 +1342,39 @@ struct ff8_battle_com_file_data
     void *sequences;
 };
 
+// PSX fixed point rotation and translation (4096 = 1)
+struct ff8_psx_transform
+{
+    int16_t matrix[3][3];
+    int16_t pad;
+    int32_t translation[3];
+};
+
+// Battle skeleton bone (0x30 bytes), its transform is rebuilt from the pose every frame
+struct ff8_battle_skeleton_bone
+{
+    uint8_t unknown_00[0x10];
+    ff8_psx_transform transform;
+};
+
+// Battle skeleton section, followed by its bones
+struct ff8_battle_skeleton
+{
+    uint8_t bone_count;
+    uint8_t unknown_01;
+    int16_t model_scale; // 0x1000 = 1
+    uint8_t unknown_04[0x0C];
+    ff8_battle_skeleton_bone bones[1];
+};
+
+// Battle model animation header (body or weapon)
+struct ff8_battle_anim_header
+{
+    uint32_t unknown_00;
+    ff8_battle_com_file_data *com_file_data;
+    uint32_t unknown_08;
+};
+
 // Battle menu drawing context shared by the window and text helpers
 struct ff8_battle_ui_context
 {
@@ -1982,11 +2015,12 @@ struct ff8_externals
     uint32_t battle_link_task_failed_call;
     uint32_t sub_5099D0;
     int16_t (*world_calc_zoom_sub_50F900)(int16_t *, int16_t **, uint32_t **);
-    uint32_t gte_load_transform_sub_509B30;
+    int (*gte_load_transform_sub_509B30)(ff8_psx_transform *);
     uint32_t battle_render_entity_sub_502D40;
     uint32_t battle_rebuild_entity_bones_sub_508F60;
-    uint32_t battle_build_bone_matrices_sub_508C90;
-    uint32_t battle_compute_bones_world_matrices_sub_5095B0;
+    uint32_t battle_read_animation_sub_508F90;
+    void (*battle_build_bone_matrices_sub_508C90)(ff8_battle_anim_header *);
+    void (*battle_compute_bones_world_matrices_sub_5095B0)(ff8_battle_anim_header *, ff8_psx_transform *);
     uint32_t sub_506C90;
     uint32_t sub_506CF0;
     uint32_t sub_5084B0;

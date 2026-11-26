@@ -38,6 +38,6 @@ void ff8_battle_init()
     ff8_battle_anim_set_init();
     ff8_battle_ui_init();
     ff8_battle_effects_init();
-    // Party models and weapons drawn from full precision bone matrices
+    // Party models and weapons drawn from full precision bone transforms
     ff8_battle_precise_bones_init();
 }

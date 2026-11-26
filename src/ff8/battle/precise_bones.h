@@ -16,5 +16,5 @@
 
 #pragma once
 
-// Battle models drawn from full precision bone matrices (ff8_battle_precise_bones). Call once.
+// Battle models drawn from full precision bone transforms. Call once.
 void ff8_battle_precise_bones_init();
