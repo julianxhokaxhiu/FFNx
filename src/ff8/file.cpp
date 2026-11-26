@@ -150,6 +150,13 @@ bool check_direct_sub_archive_exists(const char *ext, const char *path_without_e
     return set_direct_path(archive_path, direct_path, sizeof(direct_path));
 }
 
+bool ff8_fs_direct_file_exists(const char *archive_path)
+{
+    char direct_path[MAX_PATH] = {};
+
+    return set_direct_path(archive_path, direct_path, sizeof(direct_path));
+}
+
 bool set_classic_mch_path(const char *fullpath, char *output, size_t output_size)
 {
     const size_t fullpath_length = strlen(fullpath);

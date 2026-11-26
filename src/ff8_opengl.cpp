@@ -45,6 +45,7 @@
 #include "ff8/kernel.h"
 #include "ff8/remaster.h"
 #include "ff8/menu/volume.h"
+#include "ff8/menu/pictures.h"
 #include "ff8/esc_menu.h"
 #include "ff8/input.h"
 #include "metadata.h"
@@ -2491,6 +2492,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
     // Config menu: Sound volumes
     // #####################
     ff8_menu_volume_init();
+
+    // #####################
+    // Magazines and tutorial books: pictures past the 30 of the game (mngrp.bin slots 185-255)
+    // #####################
+    ff8_menu_pictures_init();
 
     // #####################
     // Esc menu
