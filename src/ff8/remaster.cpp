@@ -227,6 +227,11 @@ double ff8_remaster_get_model_divisor_by_name(const char *name)
     return 1.0;
 }
 
+bool ff8_remaster_field_model_scaled()
+{
+    return next_field_model_divisor != 1.0;
+}
+
 void field_sub_530C30(int a1, int a2, int **a3)
 {
     next_field_model_divisor = get_model_divisor(uint32_t(*a3));
@@ -270,7 +275,6 @@ void ff8_remaster_set_field_model_scaling(const std::unordered_map<uint32_t, Cha
 
 void ff8_remaster_init()
 {
-    replace_call(ff8_externals.sub_533C30 + 0x44, field_model_vertices_scale);
     replace_call(ff8_externals.sub_533CD0 + 0x28E, field_sub_530C30);
 
     char fullpath[MAX_PATH];

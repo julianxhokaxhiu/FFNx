@@ -276,11 +276,6 @@ void ff8_find_externals()
         uint32_t battle_link_task = get_relative_call(ff8_externals.sub_500CC0, 0x11A);
         ff8_externals.battle_link_task_failed_call = battle_link_task + 0x49;
     }
-    if (FF8_US_VERSION)
-    {
-        ff8_externals.sub_5099D0 = ff8_externals.sub_500870 + 0x9160;
-        ff8_externals.world_calc_zoom_sub_50F900 = reinterpret_cast<int16_t (*)(int16_t *, int16_t **, uint32_t **)>(get_relative_call(ff8_externals.sub_5099D0, 0xCD));
-    }
     ff8_externals.sub_506C90 = get_relative_call(ff8_externals.sub_500CC0, 0x7F);
     ff8_externals.sub_506CF0 = get_absolute_value(ff8_externals.sub_506C90, 0x2F);
     ff8_externals.sub_5084B0 = get_relative_call(ff8_externals.sub_506CF0, 0x2A);
@@ -1127,6 +1122,14 @@ void ff8_find_externals()
     uint32_t battle_animation_update = get_relative_call(battle_entity_update, 0x10E);
     uint32_t battle_animation_opcode = get_absolute_value(battle_animation_update, 0x53);
     ff8_externals.battle_status_countdown = get_relative_call(get_relative_call(battle_entity_update, 0xAD), 0xBD);
+    ff8_externals.battle_render_entity_sub_502D40 = get_relative_call(battle_entity_update, 0xE5);
+    ff8_externals.battle_rebuild_entity_bones_sub_508F60 = get_relative_call(battle_entity_update, 0x125);
+    ff8_externals.battle_read_animation_sub_508F90 = get_relative_call(get_relative_call(battle_animation_update, 0xD0), 0x11);
+    ff8_externals.battle_build_bone_matrices_sub_508C90 = reinterpret_cast<void (*)(ff8_battle_anim_header *)>(get_relative_call(ff8_externals.battle_rebuild_entity_bones_sub_508F60, 0x9));
+    ff8_externals.battle_compute_bones_world_matrices_sub_5095B0 = reinterpret_cast<void (*)(ff8_battle_anim_header *, ff8_psx_transform *)>(get_relative_call(ff8_externals.battle_render_entity_sub_502D40, 0xB2));
+    ff8_externals.sub_5099D0 = get_relative_call(ff8_externals.battle_render_entity_sub_502D40, 0x11B);
+    ff8_externals.world_calc_zoom_sub_50F900 = reinterpret_cast<int16_t (*)(int16_t *, int16_t **, uint32_t **)>(get_relative_call(ff8_externals.sub_5099D0, 0xCD));
+    ff8_externals.gte_load_transform_sub_509B30 = reinterpret_cast<int (*)(ff8_psx_transform *)>(get_relative_call(ff8_externals.sub_5099D0, 0xBD));
     ff8_externals.battle_actor_sound = get_relative_call(get_relative_call(battle_animation_opcode, 0x5CD), 0xEF);
     ff8_externals.battle_actor_sound_3d = get_relative_call(battle_animation_update, 0x1F3);
     ff8_externals.battle_actor_sound_pan = get_relative_call(ff8_externals.battle_actor_sound_3d, 0xBF);
