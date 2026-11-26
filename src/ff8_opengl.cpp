@@ -41,6 +41,7 @@
 #include "ff8/kernel_item.h"
 #include "ff8/battle.h"
 #include "ff8/field/movie.h"
+#include "ff8/field/precise_models.h"
 #include "ff8/sound.h"
 #include "ff8/kernel.h"
 #include "ff8/remaster.h"
@@ -2511,6 +2512,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
     // Field scripts and models in sync with movies above 15 FPS
     // #####################
     ff8_field_movie_init();
+
+    // #####################
+    // Field models drawn without rounding their camera space position
+    // #####################
+    ff8_field_precise_models_init();
 
     // #####################
     // Game sounds

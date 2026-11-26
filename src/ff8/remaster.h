@@ -29,6 +29,10 @@
 
 void ff8_remaster_init();
 void ff8_remaster_set_field_model_scaling(const std::unordered_map<uint32_t, CharaOneModel> &chara_one_models);
+// True while a field model drawn now needs the Remastered scale divisor
+bool ff8_remaster_field_model_scaled();
+// Field model projection (GTE RTPT) with the Remastered scale divisor
+void field_model_vertices_scale();
 
 extern Zzz g_FF8ZzzArchiveMain;
 extern Zzz g_FF8ZzzArchiveOther;

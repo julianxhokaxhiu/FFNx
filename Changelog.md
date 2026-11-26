@@ -27,6 +27,7 @@
 - Core: Fix battle sounds playing almost all on the right and field footsteps jumping from one side to the other, they are panned from the screen position like on PSX ( https://github.com/julianxhokaxhiu/FFNx/pull/1084 )
 - Core: Fix battle weapons shaking in the hand holding them, for eg. Selphie's nunchaku ( https://github.com/julianxhokaxhiu/FFNx/pull/1110 )
 - Core: Fix Eden's summon showing the pit and the sky in flat blue for one frame: a triangle with a vertex far off screen covered the screen, the PS1 never draws it ( https://github.com/julianxhokaxhiu/FFNx/pull/1091 )
+- Core: Fix field models looking warped, for eg. Squall's face in the infirmary: their vertices are drawn without rounding ( https://github.com/julianxhokaxhiu/FFNx/pull/1110 )
 - Core: Fix lightning and acid streams drawn as thin or crossed lines (Quezacotl, Breath, Electric Discharge, Gastric Juice, Electrocute, Acid, Saliva, Dissolving Acid, Mega Spark, Mega Pulse Cannon, X-ATM092, Ultimecia), they are as wide as on PSX ( https://github.com/julianxhokaxhiu/FFNx/pull/1085 )
 - Core: Fix Scan not saving scanned enemies in the vanilla savemap field when no loose scene.out is found ( https://github.com/julianxhokaxhiu/FFNx/issues/1077 )
 - Core: Fix the Doom countdown drawn lower than on PSX and overlapping the second status countdown above battle models ( https://github.com/julianxhokaxhiu/FFNx/pull/1086 )
