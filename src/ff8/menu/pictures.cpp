@@ -55,6 +55,14 @@ struct ff8_menu_texture_upload
     void *destination; // the buffer the slot is loaded into
 };
 
+// Whether a mod provides menu/magNNN.TEX for an added slot, checked the first time the slot is asked for
+enum class AddedPicture : uint8_t
+{
+    Unchecked,
+    Missing,
+    Present
+};
+
 static struct
 {
     uint32_t load_mngrp_texture_async; // Menu_LoadMngrpTextureAsync (0x4AC400 in US)
@@ -64,9 +72,9 @@ static struct
     const uint8_t *vanilla_case_table; // one byte per slot 9-184, which case of the switch it takes
     int32_t *upload_count;
     ff8_menu_texture_upload *uploads;
-    int upload_capacity;                      // the list ends where the count starts (11 entries)
-    int8_t added_exists[ADDED_LAST_SLOT + 1]; // -1 unknown, 0 no file, 1 menu/magNNN.TEX provided
-    int current_added_slot;                   // the added slot Menu_images is loading, -1 none
+    int upload_capacity;                                   // the list ends where the count starts (11 entries)
+    AddedPicture added_pictures[ADDED_LAST_SLOT + 1] = {}; // all Unchecked
+    int current_added_slot = -1;                           // the added slot Menu_images is loading, -1 none
 } pictures;
 
 static void added_picture_path(int slot, const char *extension, bool in_archive, char *output, size_t output_size)
@@ -92,19 +100,19 @@ static bool is_added_slot(int slot)
         return false;
     }
 
-    if (pictures.added_exists[slot] < 0)
+    if (pictures.added_pictures[slot] == AddedPicture::Unchecked)
     {
         char path[MAX_PATH] = {};
         added_picture_path(slot, "TEX", true, path, sizeof(path));
-        pictures.added_exists[slot] = ff8_fs_direct_file_exists(path) ? 1 : 0;
+        pictures.added_pictures[slot] = ff8_fs_direct_file_exists(path) ? AddedPicture::Present : AddedPicture::Missing;
 
-        if (pictures.added_exists[slot])
+        if (pictures.added_pictures[slot] == AddedPicture::Present)
         {
             ffnx_info("AddMorePictures: mngrp.bin slot %d shows %s\n", slot, path);
         }
     }
 
-    return pictures.added_exists[slot] == 1;
+    return pictures.added_pictures[slot] == AddedPicture::Present;
 }
 
 // Replaces Menu_RegisterTexUpload: the vanilla slots as before, plus the added ones
@@ -175,9 +183,6 @@ void ff8_menu_pictures_init()
     {
         return; // The Remastered menu textures are not these files
     }
-
-    memset(pictures.added_exists, -1, sizeof(pictures.added_exists));
-    pictures.current_added_slot = -1;
 
     // The item menu loads a magazine page's picture through Menu_LoadMngrpTextureAsync
     pictures.load_mngrp_texture_async = get_relative_call(uint32_t(ff8_externals.menu_use_items_sub_4F81F0), JP_VERSION ? 0x3159 : 0x334F);
