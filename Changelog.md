@@ -23,6 +23,7 @@
 
 ## FF8
 
+- Core: Allow magazines and tutorial books to show new pictures: a page on mngrp.bin slot 185-255 shows `menu/magNNN.TEX` from the direct folder, the game stops at its 30 pictures ( https://github.com/julianxhokaxhiu/FFNx/pull/1111 )
 - Core: Fix battle menu windows disappearing for a few frames while another window opens, like the Magic or Item list when choosing an ally target ( https://github.com/julianxhokaxhiu/FFNx/pull/1076 )
 - Core: Fix battle sounds playing almost all on the right and field footsteps jumping from one side to the other, they are panned from the screen position like on PSX ( https://github.com/julianxhokaxhiu/FFNx/pull/1084 )
 - Core: Fix battle weapons shaking in the hand holding them (Selphie's nunchaku) and field models looking warped (Squall's face in the infirmary) ( https://github.com/julianxhokaxhiu/FFNx/pull/1110 )

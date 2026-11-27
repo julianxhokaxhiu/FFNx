@@ -58,3 +58,5 @@ void ff8_fs_lang_string(char *data);
 bool ff8_fs_last_fopen_is_redirected();
 bool ff8_steam_redirection(const char *path, char *out, bool *is_zzz_file = nullptr);
 bool ff8_is_remastered_font_asset();
+// Whether a file of the archives, given by its archive path ("c:\ff8\data\eng\..."), is provided in the direct folder
+bool ff8_fs_direct_file_exists(const char *archive_path);

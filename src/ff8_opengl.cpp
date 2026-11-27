@@ -44,7 +44,7 @@
 #include "ff8/sound.h"
 #include "ff8/kernel.h"
 #include "ff8/remaster.h"
-#include "ff8/menu/volume.h"
+#include "ff8/menu/menu.h"
 #include "ff8/esc_menu.h"
 #include "ff8/input.h"
 #include "metadata.h"
@@ -2488,9 +2488,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
     ff8_world_init();
 
     // #####################
-    // Config menu: Sound volumes
+    // Menu: sound volumes, magazine and tutorial pictures
     // #####################
-    ff8_menu_volume_init();
+    ff8_menu_init();
 
     // #####################
     // Esc menu
