@@ -19,5 +19,5 @@
 // AddMorePictures: lets the magazines and tutorial books show new pictures. A page whose picture
 // is mngrp.bin slot 185-255 shows menu/magNNN.TEX (NNN = the slot) when a mod provides that file
 // in the direct folder; the slot itself must hold a TIM in mngrp.bin, as the game's pictures do.
-// Inert without such a file. Call once from ff8_init_hooks().
+// Inert without such a file. Called by ff8_menu_init().
 void ff8_menu_pictures_init();
