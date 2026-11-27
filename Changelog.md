@@ -18,6 +18,7 @@
 - Core: Fix Safer Sephiroth missing eyes and mouth in death animation ( https://github.com/julianxhokaxhiu/FFNx/issues/1057 )
 - Core: Fix field transitions and background rendering, for eg. Whirlwind Maze illusion ( https://github.com/julianxhokaxhiu/FFNx/issues/1103 )
 - Core: Restore FF7's stock battle shadows with PSX-style shadows when Advanced Lighting is off ( https://github.com/julianxhokaxhiu/FFNx/issues/1104 )
+- Core: gltf animations no longer need one key per game frame; idles loop on their own and animation switches blend ( https://github.com/julianxhokaxhiu/FFNx/pull/1078 )
 - Renderer: Restore PSX-style field facial lighting and texture modulation across all `game_lighting` modes, including scripted colors and fades ( https://github.com/julianxhokaxhiu/FFNx/issues/1095 )
 - Cheats: Add support to skip credits using the Skip FMV cheat shortcut
 
